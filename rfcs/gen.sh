@@ -9,7 +9,7 @@ xml2txt=/usr/local/share/xml2rfc/xml2txt
 ls rfc*.xml > tmp1.txt
 sed s/^rfc// tmp1.txt > tmp2.txt
 sed s/.xml$// tmp2.txt > names.txt
-#rm tmp*.txt
+rm tmp*.txt
 
 while read f
 do
