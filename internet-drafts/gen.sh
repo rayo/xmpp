@@ -23,4 +23,3 @@ mv draft-*.txt $idpath/
 cp index.shtml $idpath/
 
 # END
-

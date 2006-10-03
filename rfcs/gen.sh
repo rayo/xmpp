@@ -25,4 +25,3 @@ cp reference*.xml $rfcpath/
 cp index.shtml $rfcpath/
 
 # END
-
