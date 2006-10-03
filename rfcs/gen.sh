@@ -6,18 +6,21 @@ rfcpath=/var/www/stage.xmpp.org/rfcs
 xml2html=/usr/local/share/xml2rfc/xml2html
 xml2txt=/usr/local/share/xml2rfc/xml2txt
 
-ls rfc*.xml > tmp.txt
-sed s/rfc\(.*\).xml/rfc\1/ tmp.txt > names.txt
-rm tmp.txt
+ls rfc*.xml > tmp1.txt
+sed s/^rfc// tmp1.txt > tmp2.txt
+sed s/.xml$// tmp2.txt > names.txt
+#rm tmp*.txt
 
 while read f
 do
-    $xml2html $f.xml > $rfcpath/$f.html
-    $xml2txt $f.xml > $rfcpath/$f.txt
+    $xml2html rfc$f.xml
+    $xml2txt rfc$f.xml
 done < names.txt
 
 rm names.txt
 
+mv rfc*.html $rfcpath/
+mv rfc*.txt $rfcpath/
 cp reference*.xml $rfcpath/
 
 # END
