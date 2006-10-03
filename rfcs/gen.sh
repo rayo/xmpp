@@ -22,6 +22,7 @@ rm names.txt
 mv rfc*.html $rfcpath/
 mv rfc*.txt $rfcpath/
 cp reference*.xml $rfcpath/
+cp index.shtml $rfcpath/
 
 # END
 

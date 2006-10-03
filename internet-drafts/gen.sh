@@ -20,6 +20,7 @@ rm names.txt
 
 mv draft-*.html $idpath/
 mv draft-*.txt $idpath/
+cp index.shtml $idpath/
 
 # END
 
