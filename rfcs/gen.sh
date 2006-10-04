@@ -2,7 +2,7 @@
 # for one RFC XML file, generates HTML file and TXT file
 # usage: ./gen.sh num
 
-rfcpath=/var/www/stage.xmpp.org/rfcs
+rfcpath=/var/www/xmpp.org/rfcs
 xml2html=/usr/local/share/xml2rfc/xml2html
 xml2txt=/usr/local/share/xml2rfc/xml2txt
 

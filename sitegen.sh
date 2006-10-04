@@ -11,7 +11,7 @@
 # rfcs/
 # 
 
-basepath=/var/www/stage.xmpp.org
+basepath=/var/www/xmpp.org
 
 cp about/*.* $basepath/about/
 cp council/*.* $basepath/council/
