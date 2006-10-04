@@ -1,25 +1,17 @@
 #!/bin/sh
-# for each Internet-Draft XML file, generates HTML file and TXT file
-# usage: ./gen.sh
+# for one Internet-Draft XML file, generates HTML file and TXT file
+# usage: ./gen.sh filename
+# where filename is what comes after "draft-" and before ".xml"
 
 idpath=/var/www/stage.xmpp.org/internet-drafts
 xml2html=/usr/local/share/xml2rfc/xml2html
 xml2txt=/usr/local/share/xml2rfc/xml2txt
 
-ls draft-*.xml > tmp.txt
-sed s/.xml// tmp.txt > names.txt
-rm tmp.txt
+$xml2html $1.xml
+$xml2txt $1.xml
 
-while read f
-do
-    $xml2html $f.xml
-    $xml2txt $f.xml
-done < names.txt
-
-rm names.txt
-
-mv draft-*.html $idpath/
-mv draft-*.txt $idpath/
+mv draft-$1.html $idpath/
+mv draft-$1.txt $idpath/
 cp index.shtml $idpath/
 
 # END

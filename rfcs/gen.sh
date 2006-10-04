@@ -1,27 +1,17 @@
 #!/bin/sh
-# for each RFC XML file, generates HTML file and TXT file
-# usage: ./gen.sh
+# for one RFC XML file, generates HTML file and TXT file
+# usage: ./gen.sh num
 
 rfcpath=/var/www/stage.xmpp.org/rfcs
 xml2html=/usr/local/share/xml2rfc/xml2html
 xml2txt=/usr/local/share/xml2rfc/xml2txt
 
-ls rfc*.xml > tmp1.txt
-sed s/^rfc// tmp1.txt > tmp2.txt
-sed s/.xml$// tmp2.txt > names.txt
-rm tmp*.txt
+$xml2html rfc$1.xml
+$xml2txt rfc$1.xml
 
-while read f
-do
-    $xml2html rfc$f.xml
-    $xml2txt rfc$f.xml
-done < names.txt
-
-rm names.txt
-
-mv rfc*.html $rfcpath/
-mv rfc*.txt $rfcpath/
-cp reference*.xml $rfcpath/
+mv rfc$1.html $rfcpath/
+mv rfc$1.txt $rfcpath/
+cp reference.RFC.$1.xml $rfcpath/
 cp index.shtml $rfcpath/
 
 # END

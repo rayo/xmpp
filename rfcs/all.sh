@@ -1,6 +1,6 @@
 #!/bin/sh
 # for each RFC XML file, generates HTML file and TXT file
-# usage: ./gen.sh
+# usage: ./all.sh
 
 rfcpath=/var/www/stage.xmpp.org/rfcs
 xml2html=/usr/local/share/xml2rfc/xml2html
