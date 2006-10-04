@@ -1,5 +1,6 @@
 #!/bin/sh
 # copies permanent files for the xmpp.org website
+# usage: ./sitegen.sh
 #
 # NOTE: after running this script, you still need to 
 # run the all.sh scripts from the following directories:
