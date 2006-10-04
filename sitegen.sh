@@ -1,8 +1,8 @@
 #!/bin/sh
 # copies permanent files for the xmpp.org website
 #
-# NOTEL: after this you still need to run the gen.sh 
-# scripts from the following directories:
+# NOTE: after running this script, you still need to 
+# run the all.sh scripts from the following directories:
 #
 # extensions/
 # internet-drafts/
@@ -16,6 +16,7 @@ cp about/*.* $basepath/about/
 cp council/*.* $basepath/council/
 cp council/agendas/*.* $basepath/council/agendas/
 cp council/members/*.* $basepath/council/members/
+cp extensions/*.shtml $basepath/extensions/
 cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
 cp index.shtml $basepath/
