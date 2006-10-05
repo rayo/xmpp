@@ -7,8 +7,8 @@ idpath=/var/www/xmpp.org/internet-drafts
 xml2html=/usr/local/share/xml2rfc/xml2html
 xml2txt=/usr/local/share/xml2rfc/xml2txt
 
-$xml2html $1.xml
-$xml2txt $1.xml
+$xml2html draft-$1.xml
+$xml2txt draft-$1.xml
 
 mv draft-$1.html $idpath/
 mv draft-$1.txt $idpath/
