@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2006" month="October" day="5"/>
+    <date year="2006" month="October" day="6"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -1070,7 +1070,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
         <t>When a server receives an XML stanza within the context of an authenticated stream qualified by the 'jabber:client' namespace, it MUST do one of the following:
           <list style="numbers">
             <t>validate that the value of the 'from' attribute provided by the client is that of a connected resource for the associated entity</t>
-            <t>add a 'from' address to the stanza whose value is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination">Determination of Addresses</xref>)</t>
+            <t>add a 'from' address to the stanza whose value is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination">Determination of Addresses</xref>), or the bare JID (&lt;node@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='XMPP-IM'/> for details)</t>
           </list>
         </t>
         <t>If a client attempts to send an XML stanza for which the value of the 'from' attribute does not match one of the connected resources for that entity, the server SHOULD return an &lt;invalid-from/&gt; stream error to the client.  If a client attempts to send an XML stanza over a stream that is not yet authenticated, the server SHOULD return a &lt;not-authorized/&gt; stream error to the client.  If generated, both of these conditions MUST result in closure of the stream and termination of the underlying TCP connection; this helps to prevent a denial of service attack launched from a rogue client.</t>
@@ -1240,6 +1240,20 @@ Requesting                 Responding
           ]]></artwork>
         </figure>
       </section>
+    </section>
+
+    <section title="Extended Namespaces" anchor="stanzas-extended">
+      <t>While the message, presence, and IQ stanza kinds provide basic semantics for messaging, availability, and request-response interactions, XMPP uses XML namespaces to extend the stanzas for the purpose of providing additional functionality.  Thus a message or presence stanza MAY contain one or more optional child elements specifying content that extends the meaning of the message (e.g., an XHTML-formatted version of the message body), and an IQ stanza MAY contain one such child element.  This child element MAY have any name and MUST possess an 'xmlns' namespace declaration (other than "jabber:client", "jabber:server", or "http://etherx.jabber.org/streams") that defines all data contained within the child element.</t>
+      <t>Support for any given extended namespace is OPTIONAL on the part of any implementation.  If an entity does not understand such a namespace, the entity's expected behavior depends on whether the entity is (1) the recipient or (2) an entity that is routing the stanza to the recipient:</t>
+      <t><list style="hanging">
+        <t hangText="Recipient:">If a recipient receives a stanza that contains a child element it does not understand, it SHOULD ignore that specific XML data, i.e., it SHOULD not process it or present it to a user or associated application (if any).  In particular:
+          <list style='symbols'>
+            <t>If an entity receives a message or presence stanza that contains XML data qualified by a namespace it does not understand, the portion of the stanza that is in the unknown namespace SHOULD be ignored.</t>
+            <t>If an entity receives a message stanza whose only child element is qualified by a namespace it does not understand, it MUST ignore the entire stanza.</t>
+            <t>If an entity receives an IQ stanza of type "get" or "set" containing a child element qualified by a namespace it does not understand, the entity SHOULD return an IQ stanza of type "error" with an error condition of &lt;service-unavailable/&gt;.</t>
+          </list></t>
+        <t hangText="Router:">If a routing entity (usually a server) handles a stanza that contains a child element it does not understand, it SHOULD ignore the associated XML data by passing it on untouched to the recipient.</t>
+      </list></t>
     </section>
 
   </section>
