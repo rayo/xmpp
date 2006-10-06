@@ -15,7 +15,7 @@
         <email>stpeter@jabber.org</email>
       </address>
     </author>
-    <date year="2006" month="October" day="4"/>
+    <date year="2006" month="October" day="6"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -32,7 +32,7 @@
     <keyword>Extensible Markup Language</keyword>
     <abstract>
       <t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779.</t>
-      <t>This document obseletes RFC 3291.</t>
+      <t>This document obseletes RFC 3921.</t>
     </abstract>
   </front>
 
@@ -48,19 +48,20 @@
       <t><list style="symbols">
         <t>Exchange messages with other users</t>
         <t>Exchange presence information with other users</t>
-        <t>Manage subscriptions to and from other users</t>
+        <t>Exchange structured data (via IQ stanzas) with other users</t>
+        <t>Manage presence subscriptions to and from other users</t>
         <t>Manage items in a contact list (in XMPP this is called a "roster")</t>
-        <t>Block communications to or from specific other users</t>
+        <t>Block communications with specific other users</t>
       </list></t>
       <t>Detailed definitions of these functionality areas are contained in <xref target="IMP-REQS"/>, and the interested reader is directed to that document regarding the requirements addressed herein.</t>
-      <t><xref target="IMP-REQS"/> also stipulates that presence services must be separable from instant messaging services; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.</t>
-      <t>Note: While XMPP-based instant messaging and presence meets the requirements of <xref target="IMP-REQS"/>, it was not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Note also that although protocols addressing many other functionality areas have been defined in the Jabber Software Foundation's XEP series, such protocols are not included in this document because they are not required by <xref target="IMP-REQS"/>.</t>
+      <t><xref target="IMP-REQS"/> also stipulates that presence services must be separable from instant messaging services; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return &lt;service-unavailable/&gt; errors in response to attempts to route &lt;message/&gt; stanzas.)</t>
+      <t>Note: While XMPP-based instant messaging and presence meets the requirements of <xref target="IMP-REQS"/>, it was not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Note also that although XMPP protocol extensions addressing many other functionality areas have been defined in the Jabber Software Foundation's XEP series, such extensions are not included in this document because they are not required by <xref target="IMP-REQS"/>.</t>
     </section>
     <section title="Preconditions" anchor="intro-preconditions">
-      <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions (including XML stream establishment, authentication, and binding of a resource to the stream) that must be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  The reader is referred to <xref target="XMPP-CORE"/> for details, since knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
+      <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions (including XML stream establishment, authentication, and binding of a resource to the stream) that must be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  The reader is referred to <xref target="XMPP-CORE"/> for details, and knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
     </section>
     <section title="Typical Session Flow" anchor="intro-session">
-      <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a session with an XMPP server and may send and receive an unlimited (though, subject to service provisioning, a potentially rate limited) number of XML stanzas over the underlying XML stream; the typical flow for an instant messaging and presence session is as follows:</t>
+      <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a session with an XMPP server and may send and receive a potentially unlimited number of XML stanzas over the underlying XML stream; the typical flow for an instant messaging and presence session is as follows:</t>
       <t>
         <list style='numbers'>
           <t>Retrieve the user's roster.</t>
@@ -79,11 +80,11 @@
 
   <section title="Managing the Roster" anchor="roster">
     <t>In XMPP, one's contact list is called a roster, which consists of any number of specific roster items.  A user's roster is stored by the user's server on the user's behalf so that the user may access roster information from any resource.</t>
-    <t>Note: When the item added represents another IM user, the value of the 'jid' attribute MUST be of the form &lt;contact@domain.tld&gt; rather &lt;contact@domain.tld/resource&gt;.</t>
-    <t>Note: There are important interactions between rosters and subscriptions; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of roster management (however, such an understanding is necessary only for developers of XMPP servers, since most of the complexity is shielded from client developers).</t>
+    <t>Note: There are important interactions between rosters and subscriptions; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of roster management (however, such an understanding is necessary only for developers of XMPP servers, since most of the complexity is shielded from clients).</t>
     <section title="Syntax and Semantics" anchor="roster-syntax">
       <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The &lt;query/&gt; element MAY contain one or more &lt;item/&gt; children, each describing a unique roster item or "contact".</t>
-      <t>The "key" or unique identifier for each roster item is a JID, encapsulated in the 'jid' attribute of the &lt;item/&gt; element (which is REQUIRED).  The value of the 'jid' attribute SHOULD be of the form &lt;user@domain&gt; if the item is associated with another (human) instant messaging user.</t>
+      <t>The "key" or unique identifier for each roster item is a JID, encapsulated in the 'jid' attribute of the &lt;item/&gt; element (which is REQUIRED).</t>
+      <t>Note: When the item added represents another IM user, the value of the 'jid' attribute MUST be of the form &lt;contact@domain&gt; rather &lt;contact@domain/resource&gt;.</t>
       <t>The state of the presence subscription in relation to a roster item is captured in the 'subscription' attribute of the &lt;item/&gt; element.  Allowable values for this attribute are:</t>
       <t><list style="symbols">
         <t>"none" -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
@@ -119,14 +120,10 @@
     </item>
     <item jid='mercutio@example.org'
           name='Mercutio'
-          subscription='from'>
-      <group>Friends</group>
-    </item>
+          subscription='from'/>
     <item jid='benvolio@example.org'
           name='Benvolio'
-          subscription='both'>
-      <group>Friends</group>
-    </item>
+          subscription='both'/>
   </query>
 </iq>
         ]]></artwork>
@@ -148,7 +145,7 @@
         ]]></artwork>
       </figure>
       <t>Note: The &lt;query/&gt; element MUST NOT contain more than one &lt;item/&gt; child element when the client sends an IQ set to the server.  In addition, the &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element but the XML character data of each &lt;group/&gt; element MUST specify distinct groups (where duplicates are to be determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>).  If either of these rules is violated, the server MUST return a &lt;bad-format/&gt; error to the client.</t>
-      <t>Note: A client MUST NOT add itself to its own roster; i.e., the value of the &lt;item/&gt; element's 'jid' attribute MUST NOT match the bare JID (node@domain.tld) portion of the &lt;iq/&gt; element's 'from' attribute.  If this rule is violated, the server MUST return a &lt;not-allowed/&gt; error to the client.</t>
+      <t>Note: A client MUST NOT add itself to its own roster; i.e., the value of the &lt;item/&gt; element's 'jid' attribute MUST NOT match the bare JID (node@domain) portion of the &lt;iq/&gt; element's 'from' attribute.  If this rule is violated, the server MUST return a &lt;not-allowed/&gt; error to the client.</t>
       <t>If the server can successfully process the roster addition, it MUST update the roster information in persistent storage and push the change out to all of the user's available resources that have requested the roster.  This "roster push" consists of an IQ stanza of type "set" from the server to the client and enables all available resources to remain in sync with the server-based roster information.</t>
       <figure>
         <preamble>Example: Server (1) pushes the updated roster information to all available resources that have requested the roster and (2) replies with an IQ result to the sending resource:</preamble>
@@ -198,7 +195,7 @@
     <section title="Updating a Roster Item" anchor="roster-update">
       <t>Updating an existing roster item (e.g., changing the group) is done in the same way as adding a new roster item, i.e., by sending the roster item in an IQ set to the server.</t>
       <figure>
-        <preamble>Example: User updates roster item (added group):</preamble>
+        <preamble>Example: User updates roster item (add group):</preamble>
         <artwork><![CDATA[
 <iq from='juliet@example.com/chamber' type='set' id='roster_3'>
   <query xmlns='jabber:iq:roster'>
@@ -211,10 +208,49 @@
 </iq>
         ]]></artwork>
       </figure>
+      <figure>
+        <preamble>Example: User updates roster item (remove group):</preamble>
+        <artwork><![CDATA[
+<iq from='juliet@example.com/chamber' type='set' id='roster_4'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'
+          name='Romeo'>
+      <group>Lovers</group>
+    </item>
+  </query>
+</iq>
+        ]]></artwork>
+      </figure>
+      <figure>
+        <preamble>Example: User updates roster item (change handle):</preamble>
+        <artwork><![CDATA[
+<iq from='juliet@example.com/chamber' type='set' id='roster_5'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'
+          name='MyRomeo'>
+      <group>Lovers</group>
+    </item>
+  </query>
+</iq>
+        ]]></artwork>
+      </figure>
+      <figure>
+        <preamble>Example: User updates roster item (remove nick):</preamble>
+        <artwork><![CDATA[
+<iq from='juliet@example.com/chamber' type='set' id='roster_3'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'
+          name=''>
+      <group>Lovers</group>
+    </item>
+  </query>
+</iq>
+        ]]></artwork>
+      </figure>
       <t>As with adding a roster item, when updating a roster item the server MUST update the roster information in persistent storage, initiate a roster push to all of the user's available resources that have requested the roster, and send an IQ result to the initiating resource.</t>
     </section>
     <section title="Deleting a Roster Item" anchor="roster-delete">
-      <t>At any time, a user MAY delete an item from his or her roster by sending an IQ set to the server and making sure that the value of the 'subscription' attribute is "remove" (a compliant server MUST ignore any other values of the 'subscription' attribute when received from a client).</t>
+      <t>At any time, a user MAY delete an item from his or her roster by sending an IQ set to the server and setting the value of the 'subscription' attribute to "remove" (a compliant server MUST ignore any other values of the 'subscription' attribute when received from a client).</t>
       <figure>
         <preamble>Example: Client removes an item:</preamble>
         <artwork><![CDATA[
@@ -226,36 +262,44 @@
         ]]></artwork>
       </figure>
       <t>As with adding a roster item, when deleting a roster item the server MUST update the roster information in persistent storage, initiate a roster push to all of the user's available resources that have requested the roster (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource.</t>
-      <t>For further information about the implications of this command, see <xref target="int-remove">Removing a Roster Item and Cancelling All Subscriptions</xref>.</t>
+      <t>This command will result in cancellation of existing presence subscriptions; for details, see <xref target="int-remove">Removing a Roster Item and Cancelling All Subscriptions</xref>.</t>
     </section>
   </section>
 
   <section title="Managing Presence Subscriptions" anchor="sub">
     <t>In order to protect the privacy of instant messaging users and any other entities, presence and availability information is disclosed only to other entities that the user has approved.  When a user has agreed that another entity may view its presence, the entity is said to have a subscription to the user's presence information.  A subscription lasts across sessions; indeed, it lasts until the subscriber unsubscribes or the subscribee cancels the previously-granted subscription.</t>
-    <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes.  In particular, a subscription request is a presence stanza whose 'type' attribute has a value of "subscribe".  If the subscription request is being sent to an instant messaging contact, the JID supplied in the 'to' attribute SHOULD be of the form &lt;contact@example.org&gt; rather than &lt;contact@example.org/resource&gt;, since the desired result is normally for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.</t>
+    <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes.  In particular, a subscription request is a presence stanza whose 'type' attribute has a value of "subscribe".  If the subscription request is being sent to an instant messaging contact, the JID supplied in the 'to' attribute SHOULD be of the form &lt;contact@domain&gt; rather than &lt;contact@domain/resource&gt;, since the desired result is normally for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.</t>
     <t>Note: There are important interactions between subscriptions and rosters; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of presence subscriptions.</t>
     <section title="Requesting a Subscription" anchor="sub-request">
       <t>A request to subscribe to another entity's presence is made by sending a presence stanza of type "subscribe".</t>
       <figure>
         <preamble>Example: Sending a subscription request:</preamble>
         <artwork><![CDATA[
-<presence to='juliet@example.com' type='subscribe'/>
+<presence from='romeo@example.net' 
+          to='juliet@example.com' 
+          type='subscribe'/>
         ]]></artwork>
       </figure>
-      <t>A user's server MUST NOT automatically approve subscription requests on the user's behalf.  All subscription requests MUST be directed to the user's client, specifically to one or more of the user's available resources that have requested the roster.  If there is no available resource associated with the user when the subscription request is received by the user's server, the user's server MUST keep a record of the complete subscription request (including any <xref target='stanzas-extended'>extended namespaces</xref> contained therein) and deliver the request when the user next creates an available resource and requests the roster, until the user either approves or denies the request.  If there is more than one available resource associated with the user when the subscription request is received by the user's server, the user's server MUST broadcast that subscription request to all available resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.  (Note: If a connected resource has not provided initial presence, the server MUST NOT consider it to be available and therefore MUST NOT send subscription requests to it.)   However, if the user receives a presence stanza of type "subscribe" from a contact to whom the user has already granted permission to see the user's presence information (e.g., in cases when the contact is seeking to resynchronize subscription states), the user's server SHOULD auto-reply on behalf of the user.  In addition, the user's server MAY choose to re-send an unapproved pending subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
+      <t>A user's server MUST NOT automatically approve subscription requests on the user's behalf.  All subscription requests MUST be directed to the user's client, specifically to one or more of the user's available resources that have requested the roster.  If there is no available resource associated with the user when the subscription request is received by the user's server, the user's server MUST keep a record of the complete subscription request (including any extended namespacescontained therein) and deliver the request when the user next creates an available resource and requests the roster, until the user either approves or denies the request.  If there is more than one available resource associated with the user when the subscription request is received by the user's server, the user's server MUST broadcast that subscription request to all available resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.  (Note: If a connected resource has not provided initial presence, the server MUST NOT consider it to be available and therefore MUST NOT send subscription requests to it.)   However, if the user receives a presence stanza of type "subscribe" from a contact to whom the user has already granted permission to see the user's presence information (e.g., in cases when the contact is seeking to resynchronize subscription states), the user's server SHOULD auto-reply on behalf of the user.  In addition, the user's server MAY choose to re-send an unapproved pending subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
+      <t>Note: When a contact generates a subscription request to a user, the contact's server MUST stamp the outgoing presence stanza with the bare JID (&lt;contact@domain&gt;) of the contact, not the full JID (&lt;contact@domain/resource&gt;).  The same is true for presence stanzas of type "subscribed", "unsubscribe", and "unsubscribed".</t>
+      <t>Note: If a user sends a presence subscription request to a contact but has not already added the contact to the user's roster, the user's server MUST send a roster push to all of the user's available resoruces that have requested the roster.  Thus a client MAY simply wait for the roster push rather than proactively adding to the contact to the user's roster.</t>
     </section>
     <section title="Handling a Subscription Request" anchor="sub-handle">
       <t>When a client receives a subscription request from another entity, it MUST either approve the request by sending a presence stanza of type "subscribed" or refuse the request by sending a presence stanza of type "unsubscribed".</t>
       <figure>
         <preamble>Example: Approving a subscription request:</preamble>
         <artwork><![CDATA[
-<presence to='romeo@example.net' type='subscribed'/>
+<presence from='juliet@example.com'
+          to='romeo@example.net' 
+          type='subscribed'/>
         ]]></artwork>
       </figure>
       <figure>
         <preamble>Example: Refusing a presence subscription request:</preamble>
         <artwork><![CDATA[
-<presence to='romeo@example.net' type='unsubscribed'/>
+<presence from='juliet@example.com'
+          to='romeo@example.net' 
+          type='unsubscribed'/>
         ]]></artwork>
       </figure>
     </section>
@@ -264,7 +308,9 @@
       <figure>
         <preamble>Example: Cancelling a previously granted subscription request:</preamble>
         <artwork><![CDATA[
-<presence to='romeo@example.net' type='unsubscribed'/>
+<presence from='juliet@example.com'
+          to='romeo@example.net' 
+          type='unsubscribed'/>
         ]]></artwork>
       </figure>
     </section>
@@ -273,7 +319,9 @@
       <figure>
         <preamble>Example: Unsubscribing from an entity's presence:</preamble>
         <artwork><![CDATA[
-<presence to='juliet@example.com' type='unsubscribe'/>
+<presence from='romeo@example.net'
+          to='juliet@example.com' 
+          type='unsubscribe'/>
         ]]></artwork>
       </figure>
     </section>
@@ -281,91 +329,150 @@
 
   <section title="Exchanging Presence Information" anchor="presence">
     <section title="Overview" anchor="presence-overview">
-      <t>Presence is typically used in instant messaging systems to signal an entity's availability for communication (but note that an XMPP server routes message and IQ stanzas between entities that do not provide presence, so presence is not required for stanza routing).  Presence can also be used as a standalone application that is not tied to delivery of other information.</t>
-      <t>When a client sends presence to its server, the client can be seen as establishing a "presence session" at the server.  In order to establish such a session, a client sends initial presence as described below.</t>
-      <t>Exchanging presence information is made relatively straightforward within XMPP by using presence stanzas.  However, we see here a contrast to the handling of messages: although a client MAY send directed presence information to another entity by including a 'to' address, normally presence notifications (i.e., presence stanzas with no 'type' or of type "unavailable" and with no 'to' address) are sent from a client to its server and then broadcasted by the server to any entities that are subscribed to the presence of the sending entity (in the terminology of <xref target="IMP-MODEL">RFC 2778</xref>, these entities are subscribers).  This broadcast model does not apply to subscription-related presence stanzas or presence stanzas of type "error", but to presence notifications only as defined above.  (Note: While presence information MAY be provided on a user's behalf by an automated service, normally it is provided by the user's client.)</t>
-      <t>For information regarding the syntax of presence stanzas as well as their defined attributes and child elements, refer to <xref target="XMPP-CORE"/>.</t>
+      <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication; the terms "online" and "offline" are also used.  In XMPP, a principal's availability is signalled when a client controlled by the principal generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when a client or entity generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".  In XMPP-based applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, XMPP-based applications are not required to combine messaging and presence functionality, and can provide standalone presence features without messaging (in addition, XMPP servers do not require presence information in order to successfully route message and IQ stanzas).</t>
+      <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence information to its server, and its server then broadcasts or multiplexes that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL">RFC 2778</xref>, an entity that generates presence information is a "presentity" and the entities that receive presence information are "subscribers").  A user's server MUST NOT leak the user's network availability to entities who are not authorized to know the user's presence, either via an explicit subscription as described herein or via an existing trust relationship (such as presence-enabled user directories within organizations).  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable".  A client MAY also send "directed presence" by specifying a 'to' address on the relevant presence stanza.  (Note: While presence information MAY be provided on a user's behalf by an automated service, normally it is provided by the user's client.)</t>
+      <t>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a "presence session" at its server by sending "initial presence" as described below, that is by sending a presence stanza with to 'type' or 'to' attribute.</t>
+      <t>The XMPP presence stanza is also used to negotiate and manage subscriptions to the presence of other entities.  These tasks are completed via presence stanzas of type "subscribe", "unsubscribe", "subscribed", and "unsubscribed" as described below.</t>
+      <t>If a user and contact are associated with different XMPP servers, those servers also use a special presence stanza of type "probe" in order to determine the availability of the entity on the peer server.  Clients SHOULD NOT send presence stanzas of type "probe".</t>
+      <t>Naturally, a presence stanza may also be of type "error".</t>
+      <t>The values of the 'type' attribute are summarized below (the reader is reminded that a presence stanza with no 'type' attribute signals that the relevant entity is available for communication):</t>
+      <t>
+        <list style="symbols">
+          <t>unavailable -- Signals that the entity is no longer available for communication.</t>
+          <t>subscribe -- The sender wishes to subscribe to the recipient's presence.</t>
+          <t>subscribed -- The sender has allowed the recipient to receive their presence.</t>
+          <t>unsubscribe -- The sender is unsubscribing from another entity's presence.</t>
+          <t>unsubscribed -- The subscription request has been denied or a previously-granted subscription has been cancelled.</t>
+          <t>probe -- A request for an entity's current presence; SHOULD be generated only by a server on behalf of a user.</t>
+          <t>error -- An error has occurred regarding processing or delivery of a previously-sent presence stanza.</t>
+        </list>
+      </t>
     </section>
-    <section title="Client and Server Presence Responsibilities" anchor="presence-resp">
-      <section title="Initial Presence" anchor="presence-resp-initial">
-        <t>After establishing a session, a client SHOULD send initial presence to the server in order to signal its availability for communications.  As defined herein, the initial presence stanza (1) MUST possess no 'to' address (signalling that it is meant to be broadcasted by the server on behalf of the client) and (2) MUST possess no 'type' attribute (signalling the user's availability).  After sending initial presence, a connected resource (in the terminology of <xref target="XMPP-CORE"/>) is said to be an "available resource".</t>
-        <t>Upon receiving initial presence from a client, the user's server MUST do the following if there is not already one or more available resources for the user (if there is already one or more available resources for the user, the server obviously does not need to send the presence probes, since it already possesses the requisite information):</t>
-        <t><list style="numbers">
-          <t>Send presence probes (i.e., presence stanzas whose 'type' attribute is set to a value of "probe") from the full JID (e.g., &lt;user@example.com/resource&gt;) of the user to all contacts to which the user is subscribed in order to determine if they are available; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "to" or "both".  (Note: The user's server MUST NOT send presence probes to contacts that are being blocked by the user as described under <xref target="blocking">Blocking Communications</xref>.)</t>
-          <t>Broadcast initial presence from the full JID (e.g., &lt;user@example.com/resource&gt;) of the user to all contacts that are subscribed to the user's presence information; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "from" or "both".  (Note: The user's server MUST NOT broadcast initial presence to contacts that the user is blocking as described under <xref target="blocking">Blocking Communications</xref>.)</t>
-        </list></t>
-        <t>In addition, the user's server MUST broadcast initial presence from the user's new available resource to any of the user's existing available resources (if any).</t>
-        <t>Upon receiving initial presence from the user, the contact's server MUST deliver the user's presence stanza to the full JIDs (&lt;contact@example.org/resource&gt;) associated with all of the contact's available resources, but only if the user is in the contact's roster with a subscription state of "to" or "both" and the contact has not blocked communications from the user as defined under <xref target="blocking">Blocking Communications</xref>).</t>
-        <t>If the user's server receives a presence stanza of type "error" in response to the initial presence that it sent to a contact on behalf of the user, it SHOULD NOT send further presence updates to that contact (until and unless it receives a presence stanza from the contact).</t>
-      </section>
-      <section title="Presence Broadcast" anchor="presence-resp-broadcast">
-        <t>After sending initial presence, the user MAY update its presence information for broadcasting at any time during its session by sending a presence stanza with no 'to' address and either no 'type' attribute or a 'type' attribute with a value of "unavailable".  (Note: A user's client SHOULD NOT send a presence update to broadcast information that changes independently of the user's presence and availability.)</t>
-        <t>If the presence stanza lacks a 'type' attribute (i.e., expresses availability), the user's server MUST broadcast the full XML of that presence stanza to all contacts (1) that are in the user's roster with a subscription type of "from" or "both", (2) to whom the user has not blocked outbound presence notifications, and (3) from whom the server has not received a presence error during the user's session (as well as to any of the user's other available resources).</t>
-        <t>If the presence stanza has a 'type' attribute set to a value of "unavailable", the user's server MUST broadcast the full XML of that presence stanza to all entities that fit the above description, as well as to any entities to which the user has sent directed available presence during the user's session (if the user has not yet sent directed unavailable presence to that entity).</t>
-      </section>
-      <section title="Presence Probes" anchor="presence-resp-probes">
-        <t>Upon receiving a presence probe from the user, the contact's server SHOULD reply as follows:</t>
-        <t><list style="numbers">
-          <t>If the user is not in the contact's roster with a subscription state of "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'>Subscription States</xref>), the contact's server MUST return a presence stanza of type "error" in response to the presence probe (however, if a server receives a presence probe from a subdomain of the server's hostname or another such trusted service, it MAY provide presence information about the user to that entity).  Specifically:
+    <section title="Initial Presence" anchor="presence-initial">
+      <t>After completing the preconditions described in <xref target="XMPP-CORE"/> (REQUIRED) and requesting the roster (RECOMMENDED), a client SHOULD send initial presence to the server in order to signal its availability for communications.  As defined herein, the initial presence stanza (1) MUST possess no 'to' address (signalling that it is meant to be broadcasted by the server on behalf of the client) and (2) MUST possess no 'type' attribute (signalling the user's availability).  After sending initial presence, a connected resource (in the terminology of <xref target="XMPP-CORE"/>) is said to be an "available resource".</t>
+      <t>Upon receiving initial presence from a client, the user's server MUST do the following if there is not already one or more available resources for the user (if there is already one or more available resources for the user, the server obviously does not need to send the presence probes, since it already possesses the requisite information):</t>
+      <t>
+        <list style="numbers">
+          <t>Send presence probes (i.e., presence stanzas whose 'type' attribute is set to a value of "probe") from the full JID (e.g., &lt;juliet@example.com/balcony&gt;) of the user to all contacts to which the user is subscribed in order to determine if they are available; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "to" or "both".  (Note: The user's server MUST NOT send presence probes to contacts that are being blocked by the user as described under <xref target="blocking">Blocking Communications</xref>.)</t>
+          <t>Broadcast initial presence from the full JID (e.g., &lt;juliet@example.com/balcony&gt;) of the user to all contacts that are subscribed to the user's presence information; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "from" or "both".  (Note: The user's server MUST NOT broadcast initial presence to contacts that the user is blocking as described under <xref target="blocking">Blocking Communications</xref>.)</t>
+        </list>
+      </t>
+      <t>In addition, the user's server MUST broadcast initial presence from the user's newly available resource to the user's existing available resources (if any).</t>
+      <t>Upon receiving initial presence from the user, the contact's server MUST deliver the user's presence stanza to the full JIDs (e.g., &lt;romeo@example.net/orchard&gt;) associated with all of the contact's available resources, but only if the user is in the contact's roster with a subscription state of "to" or "both" and the contact has not blocked communications from the user as defined under <xref target="blocking">Blocking Communications</xref>.</t>
+      <t>If the user's server receives a presence stanza of type "error" in response to the initial presence that it sent to a contact on behalf of the user, it SHOULD NOT send further presence updates to that contact (until and unless it receives a presence stanza from the contact).</t>
+    </section>
+    <section title="Presence Probes" anchor="presence-probes">
+      <t>Upon receiving a presence probe from the user's server on behalf of the user, the contact's server SHOULD reply as follows:</t>
+      <t>
+        <list style="numbers">
+          <t>If the contact is blocking communications with the user (as defined under <xref target="blocking">Blocking Communications</xref>), the server MUST NOT reply to the presence probe.</t>
+          <t>Else, if the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'>Subscription States</xref>), the contact's server MUST return a presence stanza of type "error" in response to the presence probe (however, if a server receives a presence probe from a subdomain of the server's hostname or another such trusted service, it MAY provide presence information about the user to that entity).  Specifically:
             <list style='symbols'>
               <t>if the user is in the contact's roster with a subscription state of "None", "None + Pending Out", or "To" (or is not in the contact's roster at all), the contact's server MUST return a &lt;forbidden/&gt; stanza error in response to the presence probe.</t>
               <t>if the user is in the contact's roster with a subscription state of "None + Pending In", "None + Pending Out/In", or "To + Pending In", the contact's server MUST return a &lt;not-authorized/&gt; stanza error in response to the presence probe.</t>
             </list>
           </t>
-          <t>Else, if the contact is blocking communications with the user (as defined under <xref target="blocking">Blocking Communications</xref>), the server MUST NOT reply to the presence probe.</t>
           <t>Else, if the contact has no available resources, the server MUST either (1) reply to the presence probe by sending to the user the full XML of the last presence stanza of type "unavailable" received by the server from the contact, or (2) not reply at all.</t>
-          <t>Else, if the contact has at least one available resource, the server MUST reply to the presence probe by sending to the user the full XML of the last presence stanza with no 'to' attribute received by the server from each of the contact's available resources (again, subject to communications blocking).</t>
-        </list></t>
-      </section>
-      <section title="Directed Presence" anchor="presence-resp-directed">
-        <t>A user MAY send directed presence to another entity (i.e., a presence stanza with a 'to' attribute whose value is the JID of the other entity and with either no 'type' attribute or a 'type' attribute whose value is "unavailable").  There are three possible cases:</t>
-        <t><list style="numbers">
-          <t>If the user sends directed presence to a contact that is in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending unavailable presence broadcast, the user's server MUST route or deliver the full XML of that presence stanza (subject to communications blocking) but SHOULD NOT otherwise modify the contact's status regarding presence broadcast (i.e., it SHOULD include the contact's JID in any subsequent presence broadcasts initiated by the user).</t>
-          <t>If the user sends directed presence to an entity that is not in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending unavailable presence broadcast, the user's server MUST route or deliver the full XML of that presence stanza to the entity but MUST NOT modify the contact's status regarding available presence broadcast (i.e., it MUST NOT include the entity's JID in any subsequent broadcasts of available presence initiated by the user); however, if the available resource from which the user sent the directed presence become unavailable, the user's server MUST broadcast that unavailable presence to the entity (if the user has not yet sent directed unavailable presence to that entity).</t>
-          <t>If the user sends directed presence without first sending initial presence or after having sent unavailable presence broadcast (i.e., the resource is active but not available), the user's server MUST treat the entities to which the user sends directed presence in the same way that it treats the entities listed in case #2 above.</t>
-        </list></t>
-      </section>
-      <section title="Unavailable Presence" anchor="presence-resp-unavailable">
-        <t>Before ending its session with a server, a client SHOULD gracefully become unavailable by sending a final presence stanza that possesses no 'to' attribute and that possesses a 'type' attribute whose value is "unavailable" (optionally, the final presence stanza MAY contain one or more &lt;status/&gt; elements specifying the reason why the user is no longer available).  However, the user's server MUST NOT depend on receiving final presence from an available resource, since the resource may become unavailable unexpectedly or may be timed out by the server.  If one of the user's resources becomes unavailable for any reason (either gracefully or ungracefully), the user's server MUST broadcast unavailable presence to all contacts (1) that are in the user's roster with a subscription type of "from" or "both", (2) to whom the user has not blocked outbound presence, and (3) from whom the server has not received a presence error during the user's session; the user's server MUST also send that unavailable presence stanza to any of the user's other available resources, as well as to any entities to which the user has sent directed presence during the user's session for that resource (if the user has not yet sent directed unavailable presence to that entity).  Any presence stanza with no 'type' attribute and no 'to' attribute that is sent after sending directed unavailable presence or broadcasted unavailable presence MUST be broadcasted by the server to all subscribers.</t>
-      </section>
+          <t>Else, if the contact has at least one available resource, the server MUST reply to the presence probe by sending to the user the full XML of the last presence stanza with no 'to' attribute received by the server from each of the contact's available resources.</t>
+        </list>
+      </t>
     </section>
-    <section title="Specifying Availability Status" anchor="presence-show">
-      <t>A client MAY provide further information about its availability status by using the &lt;show/&gt; element (see <xref target="stanzas-presence-children-show">Show</xref>).</t>
-      <figure>
-        <preamble>Example: Availability status:</preamble>
-        <artwork><![CDATA[
+    <section title="Subsequent Presence Broadcast" anchor="presence-broadcast">
+      <t>After sending initial presence, the user MAY update its presence information for broadcasting at any time during its session by sending a presence stanza with no 'to' address and either no 'type' attribute or a 'type' attribute with a value of "unavailable".  (Note: A user's client SHOULD NOT send a presence update to broadcast information that changes independently of the user's presence and availability.)</t>
+      <t>If the presence stanza lacks a 'type' attribute (i.e., expresses availability), the user's server MUST broadcast the full XML of that presence stanza to all contacts (1) that are in the user's roster with a subscription type of "from" or "both", (2) with whom the user has not blocked communications, and (3) from whom the server has received available presence but has not received unavailable presence or a presence error during the user's session (as well as to the user's other available resources).</t>
+      <t>If the presence stanza has a 'type' attribute set to a value of "unavailable", the user's server MUST broadcast the full XML of that presence stanza to all entities that fit the above description, as well as to any entities to which the user has sent directed available presence during the user's session (if the user has not yet sent directed unavailable presence to that entity).</t>
+    </section>
+    <section title="Directed Presence" anchor="presence-directed">
+      <t>A user MAY send directed presence to another entity (i.e., a presence stanza with a 'to' attribute whose value is the JID of the other entity and with either no 'type' attribute or a 'type' attribute whose value is "unavailable").  Subject to communications blocking, there are three possible cases:</t>
+      <t>
+        <list style="numbers">
+          <t>If the user sends directed presence to a contact that is in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending unavailable presence broadcast, the user's server MUST route or deliver the full XML of that presence stanza but SHOULD NOT otherwise modify the contact's status regarding presence broadcast (i.e., it SHOULD include the contact's JID in any subsequent presence broadcasts initiated by the user).</t>
+          <t>If the user sends directed presence to an entity that is not in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending unavailable presence broadcast, the user's server MUST route or deliver the full XML of that presence stanza to the entity but MUST NOT modify the contact's status regarding available presence broadcast (i.e., it MUST NOT include the entity's JID in any subsequent broadcasts of available presence initiated by the user); however, if the available resource from which the user sent the directed presence become unavailable, the user's server MUST broadcast that unavailable presence to the entity (if the user has not yet sent directed unavailable presence to that entity).</t>
+          <t>If the user sends directed presence without first sending initial presence or after having sent unavailable presence broadcast (i.e., the resource is connected but not available), the user's server MUST treat the entities to which the user sends directed presence in the same way that it treats the entities listed in case #2 above.</t>
+        </list>
+      </t>
+    </section>
+    <section title="Unavailable Presence" anchor="presence-unavailable">
+      <t>Before ending its session with a server, a client SHOULD gracefully become unavailable by sending a final presence stanza that possesses no 'to' attribute and that possesses a 'type' attribute whose value is "unavailable" (optionally, the final presence stanza MAY contain one or more &lt;status/&gt; elements specifying the reason why the user is no longer available).  However, the user's server MUST NOT depend on receiving final presence from an available resource, since the resource may become unavailable unexpectedly or may be timed out by the server.  If one of the user's resources becomes unavailable for any reason (either gracefully or ungracefully), the user's server MUST broadcast unavailable presence to all contacts (1) that are in the user's roster with a subscription type of "from" or "both", (2) with whom the user has not blocked communications, and (3) from whom the server has received available presence but has not received unavailable presence or a presence error during the user's session; the user's server MUST also send that unavailable presence stanza to the user's other available resources, as well as to any entities to which the user has sent directed presence during the user's session for that resource (if the user has not yet sent directed unavailable presence to that entity).  Any presence stanza with no 'type' attribute and no 'to' attribute that is sent after sending directed unavailable presence or broadcasted unavailable presence MUST be broadcasted by the server to all subscribers (i.e., must be treated as "initial presence" for another presence session).</t>
+    </section>
+    <section title="Presence Syntax" anchor="presence-syntax">
+      <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are provided only if the presence stanza possesses no 'type' attribute, although exceptions are noted below.</t>
+      <section title="Availability States" anchor="presence-show">
+        <t>The OPTIONAL &lt;show/&gt; element contains non-human-readable XML character data that specifies the particular availability sub-state of an entity or a specific resource thereof.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  The &lt;show/&gt; element MUST NOT possess any attributes.  If provided, the XML character data value MUST be one of the following (additional availability types could be defined through a properly-namespaced child element of the presence stanza):</t>
+        <t>
+          <list style="symbols">
+            <t>away -- The entity or resource is temporarily away.</t>
+            <t>chat -- The entity or resource is actively interested in chatting.</t>
+            <t>dnd -- The entity or resource is busy (dnd = "Do Not Disturb").</t>
+            <t>xa -- The entity or resource is away for an extended period (xa = "eXtended Away").</t>
+          </list>
+        </t>
+        <t>If no &lt;show/&gt; element is provided, the entity is assumed to be online and available.</t>
+        <figure>
+          <preamble>Example: Availability status:</preamble>
+          <artwork><![CDATA[
 <presence>
   <show>dnd</show>
 </presence>
-        ]]></artwork>
-      </figure>
-    </section>
-    <section title="Specifying Detailed Status Information" anchor="presence-status">
-      <t>In conjunction with the &lt;show/&gt; element, a client MAY provide detailed status information by using the &lt;status/&gt; element (see <xref target="stanzas-presence-children-status">Status</xref>).</t>
-      <figure>
-        <preamble>Example: Detailed status information:</preamble>
-        <artwork><![CDATA[
-<presence xml:lang='en'>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Availability Description" anchor="presence-status">
+        <t>The OPTIONAL &lt;status/&gt; element contains XML character data specifying a natural-language description of an entity's availability.  It is normally used in conjunction with the show element to provide a detailed description of an availability state (e.g., "In a meeting") when the presence stanza has no 'type' attribute.  The &lt;status/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;status/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance of the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in Section 4.4 of <xref target="XMPP-CORE"/>).</t>
+        <figure>
+          <preamble>Example: Availability description:</preamble>
+          <artwork><![CDATA[
+<presence from='romeo@example.net/orchard'
+          xml:lang='en'>
   <show>dnd</show>
   <status>Wooing Juliet</status>
   <status xml:lang='cz'>Ja dvo&#x0159;&#x00ED;m Juliet</status>
 </presence>
-        ]]></artwork>
-      </figure>
-    </section>
-    <section title="Specifying Presence Priority" anchor="presence-priority">
-      <t>A client MAY provide a priority for its resource by using the &lt;priority/&gt; element (see <xref target="stanzas-presence-children-priority">Priority</xref>).</t>
-      <figure>
-        <preamble>Example: Presence priority:</preamble>
-        <artwork><![CDATA[
+          ]]></artwork>
+        </figure>
+        <t>A presence stanza of type "unavailable" MAY also include a &lt;status/&gt; element to provide detailed information about why the entity is going offline.</t>
+        <figure>
+          <preamble>Example: Unavailability description:</preamble>
+          <artwork><![CDATA[
+<presence from='romeo@example.net/orchard'
+          type='unavailable'>
+  <status>Busy IRL</status>
+</presence>
+          ]]></artwork>
+        </figure>
+        <t>The &lt;status/&gt; child MAY also be sent in a presence stanza of type "subscribe" to provide a description of the subscription request:</t>
+        <figure>
+          <preamble>Example: Description of subscription request:</preamble>
+          <artwork><![CDATA[
+<presence from='romeo@example.net'
+          to='nurse@example.com'
+          type='subscribe'>
+  <status>Hi, Juliet said I should add you to my buddy list.</status>
+</presence>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Resource Priority" anchor="presence-priority">
+        <t>The OPTIONAL &lt;priority/&gt; element contains non-human-readable XML character data that specifies the priority level of the resource.  The value MUST be an integer between -128 and +127.  A presence stanza MUST NOT contain more than one &lt;priority/&gt; element.  The &lt;priority/&gt; element MUST NOT possess any attributes.  If no priority is provided, a server SHOULD consider the priority to be zero.</t>
+        <figure>
+          <preamble>Example: Presence priority:</preamble>
+          <artwork><![CDATA[
 <presence xml:lang='en'>
   <show>dnd</show>
   <status>Wooing Juliet</status>
   <status xml:lang='cz'>Ja dvo&#x0159;&#x00ED;m Juliet</status>
   <priority>1</priority>
 </presence>
-        ]]></artwork>
-      </figure>
+          ]]></artwork>
+        </figure>
+        <t>For information regarding the semantics of priority values in stanza routing within instant messaging and presence applications, refer to <xref target="rules">Server Rules for Handling XML Stanzas</xref>.</t>
+      </section>
+      <section title="Presence Errors" anchor="presence-errors">
+        <t>If the presence stanza is of type "error", it MUST include an &lt;error/&gt; child element; for details, see <xref target="XMPP-CORE"/>.</t>
+      </section>
+      <section title="Extended Namespaces" anchor="presence-extended">
+        <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any properly-namespaced child element; this applies to the presence stanza as well.</t>
+      </section>
     </section>
     <section title="Presence Examples" anchor="presence-examples">
       <t>The examples in this section illustrate the presence-related protocols described above.  The user is romeo@example.net, he has an available resource whose resource identifier is "orchard", and he has the following individuals in his roster:</t>
@@ -494,6 +601,7 @@
         <preamble>Example 9: Contact's server delivers updated presence information to all of the contact's available resources:</preamble>
         <artwork><![CDATA[
 [to "balcony" resource...]
+
 <presence
     from='romeo@example.net/orchard'
     to='juliet@example.com'
@@ -504,6 +612,7 @@
 </presence>
 
 [to "chamber" resource...]
+
 <presence
     from='romeo@example.net/orchard'
     to='juliet@example.com'
@@ -562,30 +671,27 @@
     </section>
   </section>
 
-  <section title="Exchanging Messages" anchor="messaging">
-    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged it &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Handling XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).</t>
-    <t>For information regarding the syntax of message stanzas as well as their defined attributes and child elements, refer to <xref target="stanzas-message">Message Syntax</xref>.</t>
-    <section title="Specifying an Intended Recipient" anchor="messaging-to">
+  <section title="Exchanging Messages" anchor="message">
+    <section title="Overview" anchor="message-overview">
+      <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Handling XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus the message stanza is used to "push" information to another entity.</t>
       <t>An instant messaging client SHOULD specify an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.  If the message is being sent in reply to a message previously received from an address of the form &lt;user@domain/resource&gt; (e.g., within the context of a chat session), the value of the 'to' address SHOULD be of the form &lt;user@domain/resource&gt; rather than of the form &lt;user@domain&gt; unless the sender has knowledge (via presence) that the intended recipient's resource is no longer available.  If the message is being sent outside the context of any existing chat session or received message, the value of the 'to' address SHOULD be of the form &lt;user@domain&gt; rather than of the form &lt;user@domain/resource&gt;.</t>
+      <t>Common uses of the message stanza in instant messaging applications include single messages, messages sent in the context of a chat conversation, messages sent in the context of a multi-user chat room, headlines and other alerts, and errors.  These uses are differentiated via 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
+      <t>
+        <list style="symbols">
+          <t>chat -- The message is sent in the context of a one-to-one chat conversation.  A compliant client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.</t>
+          <t>error -- An error has occurred related to a previous message sent by the sender (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A compliant client SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
+          <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A compliant client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details see <xref target="XEP-0045"/>).</t>
+          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, etc.).  No reply to the message is expected, and a compliant client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).</t>
+          <t>normal -- The message is a single message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  A compliant client SHOULD present the message in an interface enabling the recipient to reply, but without a conversation history.  This is the default value of the 'type' attribute.</t>
+        </list>
+      </t>
+      <t>An IM application SHOULD support all of the foregoing message types; if an application receives a message with no 'type' attribute or the application does not understand the value of the 'type' attribute provided, it MUST consider the message to be of type "normal" (i.e., "normal" is the default).  The "error" type MUST be generated only in response to an error related to a message received from another entity.</t>
+      <t>Although the 'type' attribute is OPTIONAL, it is considered polite to mirror the type in any replies to a message; furthermore, some specialized applications (e.g., a multi-user chat service) MAY at their discretion enforce the use of a particular message type (e.g., type='groupchat').</t>
+      <t>In addition to the 'type' attribute (which differentiates the conversational context of the message), an XMPP message stanza MAY contain any allowable child elements qualified by the 'jabber:client' (or 'jabber:server') namespace, as well as any other properly-namespaced child element.  These payloads are described below.</t>
     </section>
-    <section title="Specifying a Message Type" anchor="messaging-types">
-      <t>As noted, it is RECOMMENDED for a message stanza to possess a 'type' attribute whose value captures the conversational context (if any) of the message (see <xref target="stanzas-message-type">Type</xref>).</t>
-      <t>The following example shows a valid value of the 'type' attribute:</t>
-      <figure>
-        <preamble>Example: A message of a defined type:</preamble>
-        <artwork><![CDATA[
-<message
-    to='romeo@example.net'
-    from='juliet@example.com/balcony'
-    type='chat'
-    xml:lang='en'>
-  <body>Wherefore art thou, Romeo?</body>
-</message>
-        ]]></artwork>
-      </figure>
-    </section>
-    <section title="Specifying a Message Body" anchor="messaging-body">
-      <t>A message stanza MAY (and often will) contain a child &lt;body/&gt; element whose XML character data specifies the primary meaning of the message (see <xref target="stanzas-message-children-body">Body</xref>).</t>
+    <section title="Specifying a Message Body" anchor="message-body">
+      <t>The &lt;body/&gt; element contains human-readable XML character data that specifies the textual contents of the message; this child element is normally included but is OPTIONAL.  The &lt;body/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;body/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance of the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in Section 4.4 of <xref target="XMPP-CORE"/>).  The &lt;body/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
+      <t>A message stanza often will contain a child &lt;body/&gt; element whose XML character data specifies the primary meaning of the message.</t>
       <figure>
         <preamble>Example: A message with a body:</preamble>
         <artwork><![CDATA[
@@ -600,8 +706,8 @@
         ]]></artwork>
       </figure>
     </section>
-    <section title="Specifying a Message Subject" anchor="messaging-subject">
-      <t>A message stanza MAY contain one or more child &lt;subject/&gt; elements specifying the topic of the message (see <xref target="stanzas-message-children-subject">Subject</xref>).</t>
+    <section title="Specifying a Message Subject" anchor="message-subject">
+      <t>The &lt;subject/&gt; element contains human-readable XML character data that specifies the topic of the message.  The &lt;subject/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;subject/&gt; element MAY be included for the purpose of providing alternate versions of the same subject, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance of the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in Section 4.4 of <xref target="XMPP-CORE"/>).  The &lt;subject/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
       <figure>
         <preamble>Example: A message with a subject:</preamble>
         <artwork><![CDATA[
@@ -619,8 +725,8 @@
         ]]></artwork>
       </figure>
     </section>
-    <section title="Specifying a Conversation Thread" anchor="messaging-thread">
-      <t>A message stanza MAY contain a child &lt;thread/&gt; element specifying the conversation thread in which the message is situated, for the purpose of tracking the conversation (see <xref target="stanzas-message-children-thread">Thread</xref>).</t>
+    <section title="Specifying a Conversation Thread" anchor="message-thread">
+      <t>The &lt;thread/&gt; element contains non-human-readable XML character data specifying an identifier that is used for tracking a conversation thread (sometimes referred to as an "instant messaging session") between two entities.  The value of the &lt;thread/&gt; element is generated by the sender and SHOULD be copied back in any replies.  If used, it MUST be unique to that conversation thread within the stream and MUST be consistent throughout that conversation (a client that receives a message from the same full JID but with a different thread ID MUST assume that the message in question exists outside the context of the existing conversation thread).  The use of the &lt;thread/&gt; element is OPTIONAL and is not used to identify individual messages, only conversations.  A message stanza MUST NOT contain more than one &lt;thread/&gt; element.  The &lt;thread/&gt; element MUST NOT possess any attributes.  The value of the &lt;thread/&gt; element MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
       <figure>
         <preamble>Example: A threaded conversation:</preamble>
         <artwork><![CDATA[
@@ -653,16 +759,29 @@
         ]]></artwork>
       </figure>
     </section>
+
+    <section title="Message Errors" anchor="message-errors">
+      <t>If the message stanza is of type "error", it MUST include an &lt;error/&gt; child; for details, see <xref target="XMPP-CORE"/>.</t>
+    </section>
+
+    <section title="Extended Namespaces" anchor="message-extended">
+      <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any properly-namespaced child element; this applies to the message stanza as well.</t>
+    </section>
+
+  </section>
+
+  <section title="IQ Syntax" anchor="stanzas-iq">
+    <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is required) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all cases by an extended namespace.  Note that the 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the common &lt;error/&gt;.  This document defines two such extended namespaces, one for <xref target="roster">Managing the Roster</xref> and the other for <xref target="blocking">Blocking Communications</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
   </section>
 
   <section title="Blocking Communications" anchor="blocking">
     <t><xref target='IMP-REQS'>RFC 2779</xref> requires that a compliant instant messaging and presence technology must enable a user to block communications from selected users.  This section specifies an XMPP protocol extension that supports the following use cases:</t>
     <t>
       <list style='symbols'>
-        <t>Block communications from a specific contact.</t>
+        <t>Block communications with a specific contact.</t>
         <t>Determine which contacts are currently blocked.</t>
-        <t>Unblock communications from a specific contact.</t>
-        <t>Unblock communications from all contacts.</t>
+        <t>Unblock communications with a specific contact.</t>
+        <t>Unblock communications with all contacts.</t>
       </list>
     </t>
     <t>The protocol flows supporting these use cases are described in the following sections.</t>
@@ -677,7 +796,7 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>If the server can successfully process the block command, it MUST return an IQ-result:</t>
+      <t>If the server can successfully process the block command, it MUST return an IQ result:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='result' id='block1'/>
@@ -685,15 +804,15 @@
       </figure>
       <t>(Standard XMPP stanza errors apply; see <xref target='XMPP-CORE'/>.)</t>
       <t>Note: The &lt;block/&gt; element MAY contain more than one &lt;item/&gt; child, thus enabling a user to block more than one contact at the same time.</t>
-      <t>Once the user has blocked communications from the contact, the user's server MUST NOT deliver any XML stanzas from the contact to the user.  If the contact attempts to send a stanza to the user (i.e., an inbound stanza from the user's perspective), the user's server shall return an error according to the following rules:</t>
+      <t>Once the user has blocked communications with the contact, the user's server MUST NOT deliver any XML stanzas from the contact to the user.  If the contact attempts to send a stanza to the user (i.e., an inbound stanza from the user's perspective), the user's server shall return an error according to the following rules:</t>
       <t>
         <list style='symbols'>
           <t>For presence stanzas, it is NOT RECOMMENDED to return an error.</t>
-          <t>For message stanzas, the server MAY return an error, which SHOULD be &unavailable;.</t>
-          <t>For IQ stanzas, the server MUST return an error, which SHOULD be &unavailable;.</t>
+          <t>For message stanzas, the server MAY return an error, which SHOULD be &lt;service-unavailable/&gt;.</t>
+          <t>For IQ stanzas, the server MUST return an error, which SHOULD be &lt;service-unavailable/&gt;.</t>
         </list>
       </t>
-      <t>If the user attempts to send an outbound stanza to the contact, the user's server MUST NOT route the stanza to the contact but instead SHOULD return a &notacceptable; error, which SHOULD in turn contain an application-specific error condition of &lt;blocked/&gt; qualified by the 'urn:ietf:params:xml:ns:xmpp-blocking-errors' namespace:</t>
+      <t>If the user attempts to send an outbound stanza to the contact, the user's server MUST NOT route the stanza to the contact but instead SHOULD return a &notacceptable; error.</t>
       <figure>
         <artwork><![CDATA[
 <message type='error' from='romeo@montague.net' to='juliet@capulet.com'>
@@ -701,14 +820,13 @@
   <error type='cancel'>
     <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas' 
                     type='modify'/>
-    <blocked xmlns='urn:ietf:params:xml:ns:xmpp-blocking-errors'>
   </error>
 </message>
         ]]></artwork>
       </figure>
     </section>
     <section title='User Retrieves Block List' anchor='blocklist'>
-      <t>In order for a client to request a user's list of blocked contacts (e.g., in order to determine whether to unblock a contact), it shall send an IQ-get with no 'to' address (thus handled by the user's server) containing a &lt;blocklist/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-blocking' namespace:</t>
+      <t>In order for a client to request a user's list of blocked contacts (e.g., in order to determine whether to unblock a contact), it shall send an IQ get with no 'to' address (thus handled by the user's server) containing a &lt;blocklist/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-blocking' namespace:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='get' id='blocklist1'>
@@ -716,7 +834,7 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>If the user has any contacts in its blocklist, the server MUST return an IQ-result containing a &lt;blocklist/&gt; element that in turn contains one child &lt;item/&gt; element for each blocked contact:</t>
+      <t>If the user has any contacts in its blocklist, the server MUST return an IQ result containing a &lt;blocklist/&gt; element that in turn contains one child &lt;item/&gt; element for each blocked contact:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='result' id='blocklist1'>
@@ -727,7 +845,7 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>If the user has no contacts in its blocklist, the server MUST return an IQ-result containing an empty &lt;blocklist/&gt; element:</t>
+      <t>If the user has no contacts in its blocklist, the server MUST return an IQ result containing an empty &lt;blocklist/&gt; element:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='result' id='blocklist1'>
@@ -735,10 +853,10 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>A client SHOULD retrieve the block list after authenticating with its server.</t>
+      <t>A client SHOULD retrieve the block list after authenticating with its server and retrieving its roster (But before sending initial presence).</t>
     </section>
     <section title='User Unblocks Contact' anchor='unblock'>
-      <t>In order for a user to unblock communications from a contact, the user's client must send an IQ set with no 'to' address (thus handled by the user's server) containing an &lt;unblock/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-blocking' namespace, where the JID to be unblocked is encapsulated as the 'jid' attribute of the &lt;item/&gt; child element:</t>
+      <t>In order for a user to unblock communications from a contact, the user's client shall send an IQ set with no 'to' address (thus handled by the user's server) containing an &lt;unblock/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-blocking' namespace, where the JID to be unblocked is encapsulated as the 'jid' attribute of the &lt;item/&gt; child element:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='set' id='unblock1'>
@@ -748,7 +866,7 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>If the server can successfully process the unblock command, it MUST return an IQ-result:</t>
+      <t>If the server can successfully process the unblock command, it MUST return an IQ result:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='result' id='unblock1'/>
@@ -765,7 +883,7 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>If the server can successfully process the unblock command, it MUST return an IQ-result:</t>
+      <t>If the server can successfully process the unblock command, it MUST return an IQ result:</t>
       <figure>
         <artwork><![CDATA[
 <iq type='result' id='unblock2'/>
@@ -786,10 +904,10 @@
         <t>Else if the JID is of the form &lt;user@domain&gt; and there is at least one available resource available for the user, the recipient's server MUST follow these rules:
         <list style="numbers">
           <t>For message stanzas, the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.  However, the server MUST NOT deliver the stanza to an available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources (defined below).  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          <t>For presence stanzas other than those of type "probe", the server MUST deliver the stanza to all available resources; for presence probes, the server SHOULD reply based on the rules defined in <xref target="presence-resp-probes">Presence Probes</xref>.  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to any of the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide, the server MUST reply to the stanza on behalf of the user; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+          <t>For presence stanzas other than those of type "probe", the server MUST deliver the stanza to all available resources; for presence probes, the server SHOULD reply based on the rules defined in <xref target="presence-probes">Presence Probes</xref>.  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide, the server MUST reply to the stanza on behalf of the user; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
         </list></t>
-        <t>Else if the JID is of the form &lt;user@domain&gt; and there are no available resources associated with the user, how the stanza is handled depends on the stanza type:
+        <t>Else if the JID is of the form &lt;user@domain&gt; and there are no available resources associated with the user, how the stanza shall be handled depends on the stanza type:
         <list style="numbers">
           <t>For presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed", the server MUST maintain a record of the stanza and deliver the stanza at least once (i.e., when the user next creates an available resource and requests the roster); in addition, the server MUST continue to deliver presence stanzas of type "subscribe" until the user either approves or denies the subscription request (see also <xref target="sub">Managing Presence Subscriptions</xref>).</t>
           <t>For all other presence stanzas, the server SHOULD silently ignore the stanza by not storing it for later delivery or replying to it on behalf of the user.</t>
@@ -838,23 +956,14 @@
     <t>Additional considerations that apply only to instant messaging and presence applications of XMPP are defined in several places within this document; specifically:</t>
     <t><list style="symbols">
       <t>When a server processes an inbound stanza of any kind whose intended recipient is a user associated with one of the server's hostnames, the server MUST first apply any rules for <xref target='blocking'>Blocking Communications</xref> that are in force (see <xref target="rules">Server Rules for Handling XML Stanzas</xref>).</t>
-      <t>When a server processes an inbound presence stanza of type "probe" whose intended recipient is a user associated with one of the server's hostnames, the server MUST NOT reveal the user's presence information if the sender is an entity that is not authorized to receive that information as determined by presence subscriptions (see <xref target="presence-resp">Client and Server Presence Responsibilities</xref>).</t>
-      <t>When a server processes an outbound presence stanza with no type or of type "unavailable", it MUST follow the rules defined under <xref target="presence-resp">Client and Server Presence Responsibilities</xref> in order to ensure that such presence information is not broadcasted to entities that are not authorized to know such information.</t>
+      <t>When a server processes an inbound presence stanza of type "probe" whose intended recipient is a user associated with one of the server's hostnames, the server MUST NOT reveal the user's presence information if the sender is an entity that is not authorized to receive that information as determined by presence subscriptions (see <xref target="presence">Exchanging Presence Information</xref>).</t>
+      <t>When a server processes an outbound presence stanza with no type or of type "unavailable", it MUST follow the rules defined under <xref target="presence">Exchanging Presence Information</xref> in order to ensure that such presence information is not broadcasted to entities that are not authorized to know such information.</t>
       <t>When a server generates an error stanza in response to receiving a stanza for a user who does not exist, the use of the &lt;service-unavailable/&gt; error condition helps protect against well-known dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.</t>
     </list></t>
   </section>
 
   <section title="IANA Considerations" anchor="ref">
     <t>For a number of related IANA considerations, refer to the relevant section of <xref target="XMPP-CORE"/>.</t>
-    <section title="XML Namespace Name for Session Data" anchor="iana-ns-session">
-      <t>A URN sub-namespace for session-related data in the Extensible Messaging and Presence Protocol (XMPP) is defined as follows. (This namespace name adheres to the format defined in <xref target="XML-REG">The IETF XML Registry</xref>.)</t>
-      <t><list style='hanging'>
-        <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-session</t>
-        <t hangText='Specification:'>RFC 3921</t>
-        <t hangText='Description:'>This is the XML namespace name for session-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3921.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
-      </list></t>
-    </section>
     <section title="Instant Messaging SRV Protocol Label Registration" anchor="iana-reg-im">
       <t><xref target="IMP-SRV">Address Resolution for Instant Messaging and Presence</xref> defines an Instant Messaging SRV Protocol Label registry for protocols that can provide services that conform to the "_im" SRV Service label.  Because XMPP is one such protocol, the IANA registers the "_xmpp" protocol label in the appropriate registry, as follows:</t>
       <t><list style='hanging'>
@@ -1289,121 +1398,7 @@
 <format type='XML' octets='77828' target='http://xml.resource.org/public/rfc/xml/rfc2426.xml' />
 </reference>
 
-<reference anchor="XML-REG">
-<front>
-<title>The IETF XML Registry</title>
-<author initials='M.' surname='Mealling' fullname='M. Mealling'>
-<organization /></author>
-<date month='January' year='2004' /></front>
-
-<seriesInfo name='BCP' value='81' />
-<seriesInfo name='RFC' value='3688' />
-<format type='TXT' octets='17325' target='ftp://ftp.isi.edu/in-notes/rfc3688.txt' />
-</reference>
-
     </references>
-
-  <section title="Syntax of XML Stanzas" anchor="stanzas">
-    <t>The basic semantics and common attributes of XML stanzas qualified by the 'jabber:client' and 'jabber:server' namespaces are defined in <xref target="XMPP-CORE"/>.  However, these namespaces also define various child elements, as well as values for the common 'type' attribute, that are specific to instant messaging and presence applications.  Thus, before addressing particular "use cases" for such applications, we here further describe the syntax of XML stanzas, thereby supplementing the discussion in <xref target="XMPP-CORE"/>.</t>
-
-    <section title="Message Syntax" anchor="stanzas-message">
-      <t>Message stanzas qualified by the 'jabber:client' or 'jabber:server' namespace are used to "push" information to another entity.  Common uses in instant messaging applications include single messages, messages sent in the context of a chat conversation, messages sent in the context of a multi-user chat room, headlines and other alerts, and errors.</t>
-
-      <section title="Types of Message" anchor="stanzas-message-type">
-        <t>The 'type' attribute of a message stanza is RECOMMENDED; if included, it specifies the conversational context of the message, thus providing a hint regarding presentation (e.g., in a GUI).  If included, the 'type' attribute MUST have one of the following values:</t>
-        <t><list style="symbols">
-          <t>chat -- The message is sent in the context of a one-to-one chat conversation.  A compliant client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.</t>
-          <t>error -- An error has occurred related to a previous message sent by the sender (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A compliant client SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
-          <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A compliant client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details see <xref target="XEP-0045"/>).</t>
-          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, RSS feeds, etc.).  No reply to the message is expected, and a compliant client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).</t>
-          <t>normal -- The message is a single message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  A compliant client SHOULD present the message in an interface enabling the recipient to reply, but without a conversation history.</t>
-        </list></t>
-        <t>An IM application SHOULD support all of the foregoing message types; if an application receives a message with no 'type' attribute or the application does not understand the value of the 'type' attribute provided, it MUST consider the message to be of type "normal" (i.e., "normal" is the default).  The "error" type MUST be generated only in response to an error related to a message received from another entity.</t>
-        <t>Although the 'type' attribute is OPTIONAL, it is considered polite to mirror the type in any replies to a message; furthermore, some specialized applications (e.g., a multi-user chat service) MAY at their discretion enforce the use of a particular message type (e.g., type='groupchat').</t>
-      </section>
-
-      <section title="Child Elements" anchor="stanzas-message-children">
-        <t>As described under <xref target="stanzas-extended">extended namespaces</xref>, a message stanza MAY contain any properly-namespaced child element.</t>
-        <t>In accordance with the default namespace declaration, by default a message stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of message stanzas.  If the message stanza is of type "error", it MUST include an &lt;error/&gt; child; for details, see <xref target="XMPP-CORE"/>.  Otherwise, the message stanza MAY contain any of the following child elements without an explicit namespace declaration:</t>
-        <t><list style="numbers">
-          <t>&lt;subject/&gt;</t>
-          <t>&lt;body/&gt;</t>
-          <t>&lt;thread/&gt;</t>
-        </list></t>
-        <section title="Subject" anchor="stanzas-message-children-subject">
-          <t>The &lt;subject/&gt; element contains human-readable XML character data that specifies the topic of the message.  The &lt;subject/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;subject/&gt; element MAY be included for the purpose of providing alternate versions of the same subject, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance of the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in Section 4.4 of <xref target="XMPP-CORE"/>).  The &lt;subject/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
-        </section>
-        <section title="Body" anchor="stanzas-message-children-body">
-          <t>The &lt;body/&gt; element contains human-readable XML character data that specifies the textual contents of the message; this child element is normally included but is OPTIONAL.  The &lt;body/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;body/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance of the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in Section 4.4 of <xref target="XMPP-CORE"/>).  The &lt;body/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
-        </section>
-        <section title="Thread" anchor="stanzas-message-children-thread">
-          <t>The &lt;thread/&gt; element contains non-human-readable XML character data specifying an identifier that is used for tracking a conversation thread (sometimes referred to as an "instant messaging session") between two entities.  The value of the &lt;thread/&gt; element is generated by the sender and SHOULD be copied back in any replies.  If used, it MUST be unique to that conversation thread within the stream and MUST be consistent throughout that conversation (a client that receives a message from the same full JID but with a different thread ID MUST assume that the message in question exists outside the context of the existing conversation thread).  The use of the &lt;thread/&gt; element is OPTIONAL and is not used to identify individual messages, only conversations.  A message stanza MUST NOT contain more than one &lt;thread/&gt; element.  The &lt;thread/&gt; element MUST NOT possess any attributes.  The value of the &lt;thread/&gt; element MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
-        </section>
-      </section>
-    </section>
-
-    <section title="Presence Syntax" anchor="stanzas-presence">
-      <t>Presence stanzas are used qualified by the 'jabber:client' or 'jabber:server' namespace to express an entity's current network availability (offline or online, along with various sub-states of the latter and optional user-defined descriptive text), and to notify other entities of that availability.  Presence stanzas are also used to negotiate and manage subscriptions to the presence of other entities.</t>
-
-      <section title="Types of Presence" anchor="stanzas-presence-type">
-        <t>The 'type' attribute of a presence stanza is OPTIONAL.  A presence stanza that does not possess a 'type' attribute is used to signal to the server that the sender is online and available for communication.  If included, the 'type' attribute specifies a lack of availability, a request to manage a subscription to another entity's presence, a request for another entity's current presence, or an error related to a previously-sent presence stanza.  If included, the 'type' attribute MUST have one of the following values:</t>
-        <t><list style="symbols">
-          <t>unavailable -- Signals that the entity is no longer available for communication.</t>
-          <t>subscribe -- The sender wishes to subscribe to the recipient's presence.</t>
-          <t>subscribed -- The sender has allowed the recipient to receive their presence.</t>
-          <t>unsubscribe -- The sender is unsubscribing from another entity's presence.</t>
-          <t>unsubscribed -- The subscription request has been denied or a previously-granted subscription has been cancelled.</t>
-          <t>probe -- A request for an entity's current presence; SHOULD be generated only by a server on behalf of a user.</t>
-          <t>error -- An error has occurred regarding processing or delivery of a previously-sent presence stanza.</t>
-        </list></t>
-        <t>For detailed information regarding presence semantics and the subscription model used in the context of XMPP-based instant messaging and presence applications, refer to <xref target="presence">Exchanging Presence Information</xref> and <xref target="sub">Managing Subscriptions</xref>.</t>
-      </section>
-
-      <section title="Child Elements" anchor="stanzas-presence-children">
-        <t>As described under <xref target="stanzas-extended">extended namespaces</xref>, a presence stanza MAY contain any properly-namespaced child element.</t>
-        <t>In accordance with the default namespace declaration, by default a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas.  If the presence stanza is of type "error", it MUST include an &lt;error/&gt; child; for details, see <xref target="XMPP-CORE"/>.  If the presence stanza possesses no 'type' attribute, it MAY contain any of the following child elements (note that the &lt;status/&gt; child MAY be sent in a presence stanza of type "unavailable" or, for historical reasons, "subscribe"):</t>
-        <t><list style="numbers">
-          <t>&lt;show/&gt;</t>
-          <t>&lt;status/&gt;</t>
-          <t>&lt;priority/&gt;</t>
-        </list></t>
-        <section title="Show" anchor="stanzas-presence-children-show">
-          <t>The OPTIONAL &lt;show/&gt; element contains non-human-readable XML character data that specifies the particular availability status of an entity or specific resource.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  The &lt;show/&gt; element MUST NOT possess any attributes.  If provided, the XML character data value MUST be one of the following (additional availability types could be defined through a properly-namespaced child element of the presence stanza):</t>
-          <t><list style="symbols">
-            <t>away -- The entity or resource is temporarily away.</t>
-            <t>chat -- The entity or resource is actively interested in chatting.</t>
-            <t>dnd -- The entity or resource is busy (dnd = "Do Not Disturb").</t>
-            <t>xa -- The entity or resource is away for an extended period (xa = "eXtended Away").</t>
-          </list></t>
-          <t>If no &lt;show/&gt; element is provided, the entity is assumed to be online and available.</t>
-        </section>
-        <section title="Status" anchor="stanzas-presence-children-status">
-          <t>The OPTIONAL &lt;status/&gt; element contains XML character data specifying a natural-language description of availability status.  It is normally used in conjunction with the show element to provide a detailed description of an availability state (e.g., "In a meeting").  The &lt;status/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;status/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance of the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in Section 4.4 of <xref target="XMPP-CORE"/>).</t>
-        </section>
-        <section title="Priority" anchor="stanzas-presence-children-priority">
-          <t>The OPTIONAL &lt;priority/&gt; element contains non-human-readable XML character data that specifies the priority level of the resource.  The value MUST be an integer between -128 and +127.  A presence stanza MUST NOT contain more than one &lt;priority/&gt; element.  The &lt;priority/&gt; element MUST NOT possess any attributes.  If no priority is provided, a server SHOULD consider the priority to be zero.  For information regarding the semantics of priority values in stanza routing within instant messaging and presence applications, refer to <xref target="rules">Server Rules for Handling XML Stanzas</xref>.</t>
-        </section>
-      </section>
-    </section>
-
-    <section title="IQ Syntax" anchor="stanzas-iq">
-      <t>IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is REQUIRED) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all cases by an <xref target="stanzas-extended">extended namespace</xref> (note that the 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the common &lt;error/&gt;).  This document defines two such extended namespaces, one for <xref target="roster">Managing the Roster</xref> and the other for <xref target="blocking">Blocking Communications</xref>; however, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
-    </section>
-
-    <section title="Extended Namespaces" anchor="stanzas-extended">
-      <t>While the three XML stanza kinds defined in the "jabber:client" or "jabber:server" namespace (along with their attributes and child elements) provide a basic level of functionality for messaging and presence, XMPP uses XML namespaces to extend the stanzas for the purpose of providing additional functionality.  Thus a message or presence stanza MAY contain one or more optional child elements specifying content that extends the meaning of the message (e.g., an XHTML-formatted version of the message body), and an IQ stanza MAY contain one such child element.  This child element MAY have any name and MUST possess an 'xmlns' namespace declaration (other than "jabber:client", "jabber:server", or "http://etherx.jabber.org/streams") that defines all data contained within the child element.</t>
-      <t>Support for any given extended namespace is OPTIONAL on the part of any implementation (aside from the extended namespaces defined herein).  If an entity does not understand such a namespace, the entity's expected behavior depends on whether the entity is (1) the recipient or (2) an entity that is routing the stanza to the recipient:</t>
-      <t><list style="hanging">
-        <t hangText="Recipient:">If a recipient receives a stanza that contains a child element it does not understand, it SHOULD ignore that specific XML data, i.e., it SHOULD not process it or present it to a user or associated application (if any).  In particular:
-          <list style='symbols'>
-            <t>If an entity receives a message or presence stanza that contains XML data qualified by a namespace it does not understand, the portion of the stanza that is in the unknown namespace SHOULD be ignored.</t>
-            <t>If an entity receives a message stanza whose only child element is qualified by a namespace it does not understand, it MUST ignore the entire stanza.</t>
-            <t>If an entity receives an IQ stanza of type "get" or "set" containing a child element qualified by a namespace it does not understand, the entity SHOULD return an IQ stanza of type "error" with an error condition of &lt;service-unavailable/&gt;.</t>
-          </list></t>
-        <t hangText="Router:">If a routing entity (usually a server) handles a stanza that contains a child element it does not understand, it SHOULD ignore the associated XML data by passing it on untouched to the recipient.</t>
-      </list></t>
-    </section>
-  </section>
 
   <section title="Integration of Roster Management and Presence Subscriptions" anchor="int">
     <t>This Appendix provides a detailed description of how roster management and presence subscriptions are integrated in XMPP-based instant messaging and presence applications, mainly for the benefit of server developers (most of the complexity specified here can be safely ignored by client developers).</t>
