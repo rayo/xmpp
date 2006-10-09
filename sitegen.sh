@@ -18,6 +18,7 @@ cp council/*.* $basepath/council/
 cp council/agendas/*.* $basepath/council/agendas/
 cp council/members/*.* $basepath/council/members/
 cp extensions/*.shtml $basepath/extensions/
+cp extensions/inbox/*.html $basepath/extensions/inbox/
 cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
 cp index.shtml $basepath/
