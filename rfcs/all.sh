@@ -19,6 +19,7 @@ done < names.txt
 
 rm names.txt
 
+cp rfc*.xml $rfcpath/
 mv rfc*.html $rfcpath/
 mv rfc*.txt $rfcpath/
 cp reference*.xml $rfcpath/
