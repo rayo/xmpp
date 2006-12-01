@@ -5,12 +5,12 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc ipr="full3978" docName="draft-saintandre-rfc3920bis-00">
+<rfc ipr="full3978" docName="draft-saintandre-rfc3920bis-01">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre" role="editor">
-      <organization abbrev="JSF">Jabber Software Foundation</organization>
+      <organization abbrev="XSF">XMPP Standards Foundation</organization>
       <address>
         <email>stpeter@jabber.org</email>
         <uri>xmpp:stpeter@jabber.org</uri>
@@ -450,7 +450,7 @@ S: </stream:stream>
         <t>During TLS negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the TLS examples below are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
         <t>The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing "&gt;" character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing "&gt;" character of the &lt;proceed/&gt; element from the receiving entity.</t>
         <t>The initiating entity MUST validate the certificate presented by the receiving entity; see <xref target="security-validation">Certificate Validation</xref> regarding certificate validation procedures.</t>
-        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.com" but a <xref target="DNS-SRV"/> lookup returned "im.example.com", the certificate MUST be checked as "example.com".  If a JID for any kind of XMPP entity (e.g., client or server) is represented in a certificate, it MUST at a minimum be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document; however, subject to local service policy the JID for an XMPP server or service MAY also be represented as a Common Name.</t>
+        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "im.example.net", the certificate MUST be checked as "example.net".  If a JID for an XMPP client (e.g., an end user account) is represented in a certificate, it MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document.  If a JID for an XMPP server is represented in a certificate, it SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document; however, the JID for an XMPP server MAY also or instead be represented as a subjectAltName extension of type dNSName, where the dNSName may contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.org matches im1.example.net and im2.example.net but not chat.example.net).</t>
         <t>If the TLS negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity.</t>
         <t>If the TLS negotiation is successful, the receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS takes effect.</t>
         <t>If the TLS negotiation is successful, the initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS takes effect.</t>
@@ -1420,7 +1420,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
     </section>
 
     <section title="White Space" anchor="xml-whitespace">
-      <t>Except where explicitly disallowed (i.e., during <xref target='tls'>TLS negotiation</xref> and <xref target='SASL'>SASL negotiation</xref>), either entity MAY send white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between XML stanzas or between any other elements sent over the stream.  Any meaning attached to such white space characters by the entity that receives them is out of scope for this document.</t>
+      <t>Except where explicitly disallowed (i.e., during <xref target='tls'>TLS negotiation</xref> and <xref target='SASL'>SASL negotiation</xref>), either entity MAY send white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between XML stanzas or between any other first-level elements sent over the stream; one common use for sending such white space characters is to check the viability of the underlying TCP connection after a period of inactivity.</t>
     </section>
 
   </section>
@@ -1472,7 +1472,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
       </list></t>
       <t>In Case #1, the validating peer MUST do one of two things:
         <list style="numbers">
-          <t>Verify the peer certificate according to the rules of <xref target="X509"/>.  The certificate SHOULD then be checked against the expected identity of the peer following the rules described in <xref target="HTTP-TLS"/>, except that a subjectAltName extension of type "xmpp" MUST be used as the identity if present.  If one of these checks fails, user-oriented clients MUST either notify the user (clients MAY give the user the opportunity to continue with the connection in any case) or terminate the connection with a bad certificate error.  Automated clients SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log.  Automated clients MAY provide a configuration setting that disables this check, but MUST provide a setting that enables it.</t>
+          <t>Verify the peer certificate according to the rules of <xref target="X509"/>.  The certificate SHOULD then be checked against the expected identity of the peer following the rules described in <xref target="HTTP-TLS"/>, except that if present an <xref target="ASN.1"/> Object Identifier of "id-on-xmppAddr" (represented as a UTF8String in an otherName entity inside the subjectAltName) MUST be used as the identity.  If one of these checks fails, user-oriented clients MUST either notify the user (clients MAY give the user the opportunity to continue with the connection in any case) or terminate the connection with a bad certificate error.  Automated clients SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log.  Automated clients MAY provide a configuration setting that disables this check, but MUST provide a setting that enables it.</t>
           <t>The peer SHOULD show the certificate to a user for approval, including the entire certificate chain.  The peer MUST cache the certificate (or some non-forgeable representation such as a hash).  In future connections, the peer MUST verify that the same certificate was presented and MUST notify the user if it has changed.</t>
         </list>
       </t>
@@ -2559,7 +2559,7 @@ specifications of each URI scheme.
     </author>
     <date day="13" month="September" year="2006"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0045"/>
+  <seriesInfo name="XSF XEP" value="0045"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0045.html"/>
 </reference>
 
@@ -2574,7 +2574,7 @@ specifications of each URI scheme.
     </author>
     <date day="11" month="January" year="2006"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0071"/>
+  <seriesInfo name="XSF XEP" value="0071"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0071.html"/>
 </reference>
 
@@ -2589,8 +2589,8 @@ specifications of each URI scheme.
     </author>
     <date day="24" month="January" year="2006"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0077"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/jep-0077.html"/>
+  <seriesInfo name="XSF XEP" value="0077"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0077.html"/>
 </reference>
 
 <reference anchor="XEP-0086">
@@ -2610,7 +2610,7 @@ specifications of each URI scheme.
     </author>
     <date day="17" month="February" year="2004"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0086"/>
+  <seriesInfo name="XSF XEP" value="0086"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0086.html"/>
 </reference>
 
@@ -2637,7 +2637,7 @@ specifications of each URI scheme.
     </author>
     <date day="28" month="April" year="2006"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0124"/>
+  <seriesInfo name="XSF XEP" value="0124"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0124.html"/>
 </reference>
 
@@ -2658,8 +2658,8 @@ specifications of each URI scheme.
     </author>
     <date day="16" month="May" year="2005"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0156"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/jep-0156.html"/>
+  <seriesInfo name="XSF XEP" value="0156"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0156.html"/>
 </reference>
 
 <reference anchor="XEP-0174">
@@ -2673,8 +2673,8 @@ specifications of each URI scheme.
     </author>
     <date day="31" month="July" year="2006"/>
   </front>
-  <seriesInfo name="JSF XEP" value="0174"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/jep-0174.html"/>
+  <seriesInfo name="XSF XEP" value="0174"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0174.html"/>
 </reference>
 
 <reference anchor="XML-REG">
