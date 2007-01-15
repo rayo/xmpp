@@ -3,7 +3,11 @@
 # usage: ./gen.sh filename
 # where filename is what comes after "draft-" and before ".xml"
 
+# STAGE
+#idpath=/var/www/stage.xmpp.org/internet-drafts
+# PRODUCTION
 idpath=/var/www/xmpp.org/internet-drafts
+
 xml2html=/usr/local/share/xml2rfc/xml2html
 xml2txt=/usr/local/share/xml2rfc/xml2txt
 
