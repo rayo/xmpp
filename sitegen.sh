@@ -11,6 +11,9 @@
 # rfcs/
 # 
 
+# STAGE
+#basepath=/var/www/stage.xmpp.org
+# PRODUCTION
 basepath=/var/www/xmpp.org
 
 cp about/*.* $basepath/about/
@@ -25,5 +28,15 @@ cp index.shtml $basepath/
 cp schemas/*.* $basepath/schemas/
 cp sorttable.js $basepath/
 cp xmpp.css $basepath/
+cp xsf/*.* $basepath/xsf/
+cp xsf/board/*.* $basepath/xsf/board/
+cp xsf/board/meetings/*.* $basepath/xsf/board/meetings/
+cp xsf/docs/*.* $basepath/xsf/docs/
+cp xsf/members/*.* $basepath/xsf/members/
+cp xsf/members/meetings/*.* $basepath/xsf/members/meetings/
+cp xsf/people/*.* $basepath/xsf/people/
+cp xsf/press/*.* $basepath/xsf/press/
+cp xsf/proposals/*.* $basepath/xsf/proposals/
+cp xsf/sponsors/*.* $basepath/xsf/sponsors/
 
 # END
