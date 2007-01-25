@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2006" month="October" day="13"/>
+    <date year="2006" month="January" day="25"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -45,23 +45,29 @@
       <t>The purpose of XMPP is to enable the exchange of relatively small pieces of structured data (called "XML stanzas") over a network between any two (or more) entities.  XMPP is implemented using a client-server architecture, wherein a client must connect to a server in order to gain access to the network and thus be allowed to exchange XML stanzas with other entities.  The process whereby a client connects to a server, exchanges XML stanzas, and ends the connection is as follows:</t>
       <t>
         <list style='numbers'>
+          <t>Determine the hostname and port at which to connect</t>
+          <t>Open a TCP connection</t>
           <t>Open an XML stream</t>
           <t>Complete TLS negotiation for channel encryption (RECOMMENDED)</t>
           <t>Complete SASL negotiation for authentication</t>
           <t>Bind a resource to the stream</t>
           <t>Exchange XML stanzas with other entities on the network</t>
           <t>Close the stream when further communications are not needed or desired</t>
+          <t>Close the TCP connection.</t>
         </list>
       </t>
-      <t>This document specifies how clients connect to servers and specifies the basic semantics of XML stanzas, but does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, definition of such semantics is provided by various XMPP extensions (e.g., <xref target='XMPP-IM'/> for basic instant messaging and presence applications).</t>
-      <t>Furthermore, in the client-server architecture used by XMPP, one server may optionally connect to another server to enable inter-domain or inter-server communication.  For this to happen, the two servers must negotiate a connection between themselves and then exchange XML stanzas; the process for doing so is as follows:</t>
+      <t>In the sections following discussion of XMPP architecture and XMPP addresses, this document specifies how clients connect to servers and specifies the basic semantics of XML stanzas, but does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, definition of such semantics is provided by various XMPP extensions (e.g., <xref target='XMPP-IM'/> for basic instant messaging and presence applications).</t>
+      <t>Within the client-server architecture used by XMPP, one server may optionally connect to another server to enable inter-domain or inter-server communication.  For this to happen, the two servers must negotiate a connection between themselves and then exchange XML stanzas; the process for doing so is as follows:</t>
       <t>
         <list style='numbers'>
+          <t>Determine the hostname and port at which to connect</t>
+          <t>Open a TCP connection</t>
           <t>Open an XML stream</t>
           <t>Complete TLS negotiation for channel encryption (RECOMMENDED)</t>
           <t>Complete SASL negotiation for authentication</t>
           <t>Exchange XML stanzas both directly for the servers and indirectly on behalf of entities associated with each server (e.g., connected clients)</t>
           <t>Close the stream when further communications are not needed or desired</t>
+          <t>Close the TCP connection.</t>
         </list>
       </t>
       <t>Note: Depending on local policies, a service may wish to use server dialback to provide weak verification in cases where SASL negotiation would not result in strong authentication (e.g., because the certificate presented by the peer service during TLS negotiation is self-signed and thus provides only weak identity); for details, see <xref target='dialback'/>.</t>
@@ -169,6 +175,25 @@ romeo@example.net               juliet@example.com
 
   </section>
 
+  <section title="TCP Binding" anchor="tcp">
+    <t>Although there is no necessary coupling of an XML stream to a <xref target="TCP"/> connection (e.g., two entities could connect to each other via another transport, e.g. <xref target="HTTP"/> as specified in <xref target="XEP-0124"/>), this specification defines a binding of XMPP to TCP only.</t>
+    <t>Therefore, as XMPP is defined herein, an initiating entity (client or server) MUST open a TCP connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  However, prior to opening the TCP connection the initiating entity first MUST resolve the DNS hostname associated with the receiving entity and determine the appropriate TCP port for communications with the receiving entity.  The process is as follows:</t>
+    <t>
+      <list style='numbers'>
+        <t>Attempt to resolve the hostname using a <xref target="DNS-SRV"/> Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections) and Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.com." or "_xmpp-server._tcp.example.com."; the IP address and port at which the initiating entity attempts to connect to the receiving entity shall be those specified in the SRV lookup result.</t>
+         <t>If the SRV lookup fails, the fallback SHOULD be a normal IPv4 or <xref target='IPv6'/> address record resolution to determine the IP address, where the port used is the "xmpp-client" port of 5222 for client-to-server connectionsn or the "xmpp-server" port 5269 for client-to-server connections.</t>
+         <t>However, the fallback MAY be a DNS TXT lookup (see <xref target='DNS-TXT'/>) for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
+      </list>
+    </t>
+    <t>TCP connections are handled differently in client-to-server communications and server-to-server communications.  Specifically:</t>
+    <t>
+      <list style='symbols'>
+        <t>Because a client is subordinate to a server and therefore a client authenticates to the server but the server does not authenticate to the client, it is necessary to have only one TCP connection between client and server.  Thus the server MUST allow the client to share a single TCP connection for XML stanzas sent from client to server and from server to client (i.e., the inital stream and response stream as specified under <xref target='streams'>XML Streams</xref>).</t>
+        <t>Because two servers are peers and therefore each peers must authenticate with the other, the servers MUST use two TCP connections: one for XML stanzas sent from the first server to the second server and another (initiated by the second server) for stanzas from the second server to the first server.</t>
+      </list>
+    </t>
+  </section>
+
   <section title="XML Streams" anchor="streams">
 
     <section title="Overview" anchor="streams-overview">
@@ -203,10 +228,6 @@ romeo@example.net               juliet@example.com
 |--------------------|
         ]]></artwork>
       </figure>
-    </section>
-
-    <section title="Binding to TCP" anchor="streams-tcp">
-      <t>Although there is no necessary coupling of an XML stream to a <xref target="TCP"/> connection (e.g., two entities could connect to each other via another mechanism such as <xref target="HTTP"/>, as specified in <xref target="XEP-0124"/>), this specification defines a binding of XMPP to TCP only.  In the context of client-to-server communications, a server MUST allow a client to share a single TCP connection for XML stanzas sent from client to server and from server to client (i.e., the inital stream and response stream).  In the context of server-to-server communications, a server MUST use one TCP connection for XML stanzas sent from the server to the peer and another TCP connection (initiated by the peer) for stanzas from the peer to the server, for a total of two TCP connections.</t>
     </section>
 
     <section title="Stream Security" anchor="streams-security">
@@ -450,7 +471,7 @@ S: </stream:stream>
         <t>During TLS negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the TLS examples below are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
         <t>The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing "&gt;" character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing "&gt;" character of the &lt;proceed/&gt; element from the receiving entity.</t>
         <t>The initiating entity MUST validate the certificate presented by the receiving entity; see <xref target="security-validation">Certificate Validation</xref> regarding certificate validation procedures.</t>
-        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "im.example.net", the certificate MUST be checked as "example.net".  If a JID for an XMPP client (e.g., an end user account) is represented in a certificate, it MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document.  If a JID for an XMPP server is represented in a certificate, it SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document; however, the JID for an XMPP server MAY also or instead be represented as a subjectAltName extension of type dNSName, where the dNSName may contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.org matches im1.example.net and im2.example.net but not chat.example.net).</t>
+        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "im.example.net", the certificate MUST be checked as "example.net".  If a JID for an XMPP client (e.g., an end user account) is represented in a certificate, it MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document.  If a JID for an XMPP server is represented in a certificate, it SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document; however, the JID for an XMPP server MAY also or instead be represented as a subjectAltName extension of type dNSName, where the dNSName may contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.net matches im1.example.net and im2.example.net but not chat.example.net).</t>
         <t>If the TLS negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity.</t>
         <t>If the TLS negotiation is successful, the receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS takes effect.</t>
         <t>If the TLS negotiation is successful, the initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS takes effect.</t>
@@ -1477,14 +1498,14 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
       <t>A compliant client implementation MUST support both TLS and SASL for connections to a server.</t>
       <t>The TLS protocol for encrypting XML streams (defined under <xref target='tls'>TLS negotiation</xref>) provides a reliable mechanism for helping to ensure the confidentiality and data integrity of data exchanged between two entities.</t>
       <t>The SASL protocol for authenticating XML streams (defined under <xref target='sasl'>SASL negotiation</xref>) provides a reliable mechanism for validating that a client connecting to a server is who it claims to be.</t>
-      <t>Client-to-server communications MUST NOT proceed until the DNS hostname asserted by the server has been resolved.  Such resolutions SHOULD first attempt to resolve the hostname using a <xref target="DNS-SRV"/> Service of "xmpp-client" and Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.com." (the use of the string "xmpp-client" for the service identifier is consistent with the IANA registration).  If the SRV lookup fails, the fallback SHOULD be a normal IPv4 or <xref target='IPv6'/> address record resolution to determine the IP address, using the "xmpp-client" port 5222 that is registered with the IANA; hoever, the fallback MAY be a DNS TXT lookup (see <xref target='DNS-TXT'/>) for alternative connection methods, for example as described in <xref target='XEP-0156'/>.  If there is a mismatch between the hostname to which the client attempted to connect (e.g., "example.org") and the hostname to which the client actually connects (e.g., "theconnector.example.org"), the client MUST warn a human user about the mismatch and the human user MUST approve the connection before the client proceeds; however, the client MAY allow the user to add the presented hostname to a configured set of accepted hostnames in order to expedite future connections.</t>
+      <t>Client-to-server communications MUST NOT proceed until the DNS hostname asserted by the server has been resolved as specified under <xref target='tcp'>TCP Binding</xref>.  If there is a mismatch between the hostname to which a client attempted to connect (e.g., "example.net") and the hostname to which the client actually connects (e.g., "im.example.net"), the client MUST warn a human user about the mismatch and the human user MUST approve the connection before the client proceeds; however, the client MAY allow the user to add the presented hostname to a configured set of accepted hostnames in order to expedite future connections.</t>
       <t>The IP address and method of access of clients MUST NOT be made public by a server, nor are any connections other than the original server connection required.  This helps to protect the client's server from direct attack or identification by third parties.</t>
     </section>
     <section title="Server-to-Server Communications" anchor="security-server">
       <t>A compliant server implementation MUST support both TLS and SASL for inter-domain communications.  For historical reasons, a compliant implementation SHOULD also support <xref target="dialback">Server Dialback</xref>.</t>
       <t>Because service provisioning is a matter of policy, it is OPTIONAL for any given domain to communicate with other domains, and server-to-server communications MAY be disabled by the administrator of any given deployment.  If a particular domain enables inter-domain communications, it SHOULD enable high security.</t>
       <t>Administrators may want to require use of SASL for server-to-server communications in order to ensure both authentication and confidentiality (e.g., on an organization's private network).  Compliant implementations SHOULD support SASL for this purpose.</t>
-      <t>Inter-domain connections MUST NOT proceed until the DNS hostnames asserted by the servers have been resolved.  Such resolutions MUST first attempt to resolve the hostname using a <xref target="DNS-SRV"/> Service of "xmpp-server" and Proto of "tcp", resulting in resource records such as "_xmpp-server._tcp.example.com." (the use of the string "xmpp-server" for the service identifier is consistent with the IANA registration; note well that the "xmpp-server" service identifier supersedes the earlier use of a "jabber" service identifier, since the earlier usage did not conform to <xref target="DNS-SRV"/>; implementations desiring to be backward compatible should continue to look for or answer to the "jabber" service identifier as well).  If the SRV lookup fails, the fallback is a normal IPv4/IPv6 address record resolution to determine the IP address, using the "xmpp-server" port 5269, registered with the IANA.</t>
+      <t>Server-to-server communications MUST NOT proceed until the DNS hostnames asserted by both servers have been resolved as specified under <xref target='tcp'>TCP Binding</xref>.</t>
       <t>Server dialback helps protect against domain spoofing, thus making it more difficult to spoof XML stanzas.  It is not a mechanism for authenticating, securing, or encrypting streams between servers as is done via SASL and TLS, and results in weak verification of server identities only.  Furthermore, it is susceptible to DNS poisoning attacks unless <xref target="DNSSEC"/> is used, and even if the DNS information is accurate, dialback cannot protect from attacks where the attacker is capable of hijacking the IP address of the remote domain.  Domains requiring robust security SHOULD use TLS and SASL.  If SASL is used for server-to-server authentication, dialback SHOULD NOT be used since it is unnecessary.</t>
     </section>
     <section title="Order of Layers" anchor="security-layers">
@@ -1531,7 +1552,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-tls</t>
         <t hangText='Specification:'>RFC 3920</t>
         <t hangText='Description:'>This is the XML namespace name for TLS-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
+        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for SASL Data" anchor="iana-ns-sasl">
@@ -1540,7 +1561,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-sasl</t>
         <t hangText='Specification:'>RFC 3920</t>
         <t hangText='Description:'>This is the XML namespace name for SASL-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
+        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for Stream Errors" anchor="iana-ns-streams">
@@ -1549,7 +1570,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-streams</t>
         <t hangText='Specification:'>RFC 3920</t>
         <t hangText='Description:'>This is the XML namespace name for stream-related error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
+        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for Resource Binding" anchor="iana-ns-bind">
@@ -1558,7 +1579,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-bind</t>
         <t hangText='Specification:'>RFC 3920</t>
         <t hangText='Description:'>This is the XML namespace name for resource binding in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
+        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for Stanza Errors" anchor="iana-ns-stanzas">
@@ -1567,7 +1588,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-stanzas</t>
         <t hangText='Specification:'>RFC 3920</t>
         <t hangText='Description:'>This is the XML namespace name for stanza-related error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
+        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
     <section title='Nodeprep Profile of Stringprep' anchor="iana-nodeprep">
@@ -2657,6 +2678,27 @@ specifications of each URI scheme.
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0156.html"/>
 </reference>
 
+<reference anchor="XEP-0157">
+  <front>
+    <title>Contact Addresses for XMPP Services</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <author initials="J." surname="Konieczny" fullname="Jacek Konieczny">
+      <organization/>
+      <address>
+        <email>jajcus@jajcus.net</email>
+      </address>
+    </author>
+    <date day="25" month="January" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0157"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0157.html"/>
+</reference>
+
 <reference anchor="XEP-0174">
   <front>
     <title>Link-Local Messaging</title>
@@ -3580,8 +3622,8 @@ that is,
     </section>
 
     <section title="Contact Addresses" anchor="contact">
-      <t>Consistent with <xref target='MAILBOXES'/>, an organization that offers an XMPP service SHOULD provide an Internet mailbox of "XMPP" for inquiries related to that service, where the host portion of the resulting mailto URI SHOULD be the organization's domain, not necessarily the domain of the XMPP service itself (e.g., the XMPP service might be offered at jabber.example.com but the Internet mailbox should be &lt;xmpp@example.com&gt;).</t>
-      <t>In addition, the mere domain of the XMPP service SHOULD be used as an alias for the server administrators when routing &lt;message/&gt; stanzas, such that an XMPP message addressed to the service's domain name (e.g., "jabber.example.com") shall be delivered to the JIDs of the server administrators (this does not apply to &lt;iq/&gt; or &lt;presence/&gt; stanzas).</t>
+      <t>Consistent with <xref target='MAILBOXES'/>, an organization that offers an XMPP service SHOULD provide an Internet mailbox of "XMPP" for inquiries related to that service, where the host portion of the resulting mailto URI SHOULD be the organization's domain, not necessarily the domain of the XMPP service itself (e.g., the XMPP service might be offered at im.example.net but the Internet mailbox should be &lt;xmpp@example.net&gt;).</t>
+      <t>In addition, the XMPP service SHOULD provide a way to discover the XMPP contact address(es) of the service administrator(s), as specified in <xref target='XEP-0157'/>.</t>
     </section>
 
     <section title="Differences From RFC 3920" anchor="diffs">
