@@ -47,7 +47,7 @@
         <email>jhildebrand@jabber.com</email>
       </address>
     </author>
-    <date year="2007" month="February" day="6"/>
+    <date year="2007" month="February" day="7"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Jabber</keyword>
@@ -295,9 +295,9 @@
    +-----------------------------+--------------------------+
    |  <body/>                    |  body of MESSAGE         |
    |  <subject/>                 |  Subject                 |
-   |  <thread/>                  |  (no mapping)            |
+   |  <thread/>                  |  Call-ID                 |
    |  from                       |  From                    |
-   |  id                         |  (no mapping)            |
+   |  id                         |  CSeq integer            |
    |  to                         |  To                      |
    |  type                       |  (no mapping)            |
    |  xml:lang                   |  Content-Language        |
@@ -340,9 +340,9 @@
    +--------------------------+-----------------------------+
    |  SIP Header or Contents  |  XMPP Element or Attribute  |
    +--------------------------+-----------------------------+
-   |  Call-ID                 |  (no mapping)               |
+   |  Call-ID                 |  <thread/>                  |
    |  Content-Language        |  xml:lang                   |
-   |  CSeq                    |  id (OPTIONAL)              |
+   |  CSeq integer            |  id                         |
    |  From                    |  from                       |
    |  Subject                 |  <subject/>                 |
    |  To                      |  to                         |
@@ -350,7 +350,7 @@
    +--------------------------+-----------------------------+
           ]]></artwork>
         </figure>
-        <t>Note: When transforming SIP page-mode messages, a SIMPLE-XMPP gateway SHOULD specify no XMPP 'type' attribute or a 'type' attribute whose value is "normal" (alternatively, the value of the 'type' attribute MAY be "chat", SHOULD NOT be "headline", and MUST NOT be "groupchat").</t>
+        <t>Note: When transforming SIP page-mode messages, a SIMPLE-XMPP gateway SHOULD specify no XMPP 'type' attribute or a 'type' attribute whose value is "normal" (alternatively, the value of the 'type' attribute MAY be "chat", although it SHOULD NOT be "headline" and MUST NOT be "groupchat").</t>
         <t>Note: See the <xref target='content'>Content Types</xref> of this document regarding handling of SIP message bodies that contain content types other than plain text.</t>
       </section>
     </section>
@@ -625,9 +625,9 @@
 |  <presence from='juliet@example.com/balcony'/>
           ]]></artwork>
         </figure>
-        <t>Upon receiving such a stanza, the XMPP server to which Juliet has connected broadcasts it to all subscribers who are authorized to receive presence notifications from Juliet.  For each subscriber, broadcasting the presence notification involves either delivering it to a local recipient (if the hostname in the subscriber's address matches one of the hostnames serviced by the XMPP server) or attempting to route it to the foreign domain that services the hostname in the subscriber's address.  Naturally, in this document we assume that the hostname is a SIP presence service hosted by a separate server.  As specified in <xref target="XMPP-IM"/>, the XMPP server needs to determine the identity of the foreign domain, which it does by performing one or more <xref target="SRV"/> lookups.  For presence stanzas, the order of lookups recommended by <xref target="XMPP-IM"/> is to first try the "_xmpp-server" service as specified in <xref target="XMPP-CORE"/> and to then try the "_pres" service as specified in <xref target="IMP-SRV"/>.  Here we assume that the first lookup will fail but that the second lookup will succeed and return a resolution "_pres._simple.example.net.", since we have already assumed that the example.net hostname is running a SIP presence service.  (Note: The XMPP server may have previously determined that the foreign domain is a SIMPLE server, e.g., when it sent a SIP SUBSCRIBE to the SIP user when Juliet sent initial presence to the XMPP server, in which case it would not need to perform the SRV lookups; the caching of such information is a matter of implementation and local service policy, and is therefore out of scope for this document.)</t>
+        <t>Upon receiving such a stanza, the XMPP server to which Juliet has connected broadcasts it to all subscribers who are authorized to receive presence notifications from Juliet (this is similar to the SIP NOTIFY method; sending "directed presence" as specified in <xref target='XMPP-IM'/> is similar to the SIP PUBLISH method).  For each subscriber, broadcasting the presence notification involves either delivering it to a local recipient (if the hostname in the subscriber's address matches one of the hostnames serviced by the XMPP server) or attempting to route it to the foreign domain that services the hostname in the subscriber's address.  Naturally, in this document we assume that the hostname is a SIP presence service hosted by a separate server.  As specified in <xref target="XMPP-IM"/>, the XMPP server needs to determine the identity of the foreign domain, which it does by performing one or more <xref target="SRV"/> lookups.  For presence stanzas, the order of lookups recommended by <xref target="XMPP-IM"/> is to first try the "_xmpp-server" service as specified in <xref target="XMPP-CORE"/> and to then try the "_pres" service as specified in <xref target="IMP-SRV"/>.  Here we assume that the first lookup will fail but that the second lookup will succeed and return a resolution "_pres._simple.example.net.", since we have already assumed that the example.net hostname is running a SIP presence service.  (Note: The XMPP server may have previously determined that the foreign domain is a SIMPLE server, e.g., when it sent a SIP SUBSCRIBE to the SIP user when Juliet sent initial presence to the XMPP server, in which case it would not need to perform the SRV lookups; the caching of such information is a matter of implementation and local service policy, and is therefore out of scope for this document.)</t>
         <t>Once the XMPP server has determined that the foreign domain is serviced by a SIMPLE server, it must determine how to proceed.  We here assume that the XMPP server contains or has available to it an XMPP-SIMPLE gateway.  The XMPP server would then deliver the presence stanza to the XMPP-SIMPLE gateway.</t>
-        <t>The XMPP-SIMPLE gateway is then responsible for translating the XMPP presence stanza into a SIP NOTIFY request and included PIDF document from the XMPP user to the SIP user:</t>
+        <t>The XMPP-SIMPLE gateway is then responsible for translating the XMPP presence stanza into a SIP NOTIFY request and included PIDF document from the XMPP user to the SIP user.  (If the XMPP user sent directed presence instead of broadcasted presence and the XMPP-SIMPLE gateway has knowledge of that fact, the gateway MAY generate a SIP PUBLISH request instead of a SIP NOTIFY request.)</t>
         <figure>
           <preamble>Example: XMPP user sends presence notification (SIP transformation):</preamble>
           <artwork><![CDATA[
@@ -665,19 +665,19 @@
    |  <presence/> stanza         |  "Event: presence" [1]    |
    |  XMPP resource identifer    |  tuple 'id' attribute     |
    |  from                       |  From                     |
-   |  id                         |  (no mapping)             |
+   |  id                         |  Call-ID                  |
    |  to                         |  To                       |
-   |  type                       |  basic status [2]         |
+   |  type                       |  basic status [2][3]      |
    |  xml:lang                   |  Content-Language         |
    |  <priority/>                |  PIDF priority for tuple  |
    |  <show/>                    |  (no mapping)             |
-   |  <status/>                  |  note [3]                 |
+   |  <status/>                  |  note [4]                 |
    +-----------------------------+---------------------------+
           ]]></artwork>
         </figure>
         <t>Note the following regarding these mappings:</t>
         <t><list style='numbers'>
-          <t>Only a presence stanza which lacks a 'type' attribute or whose 'type' attribute has a value of "unavailable" should be mapped by an XMPP-SIMPLE gateway to a SIP NOTIFY request, since those are the only presence stanzas that represent notifications.</t>
+          <t>Only a presence stanza that lacks a 'type' attribute or whose 'type' attribute has a value of "unavailable" should be mapped by an XMPP-SIMPLE gateway to a SIP NOTIFY request, since those are the only presence stanzas that represent notifications.</t>
           <t>Because the lack of a 'type' attribute indicates that an XMPP entity is available for communications, the gateway SHOULD map that information to a PIDF &lt;basic/&gt; status of "open".  Because a 'type' attribute with a value of "unavailable" indicates that an XMPP entity is not available for communications, the gateway SHOULD map that information to a PIDF &lt;basic/&gt; status of "closed".</t>
           <t>When the XMPP-SIMPLE gateway receives XMPP presence of type "unavailable" from the XMPP contact, it SHOULD (1) send a SIP NOTIFY request to the SIP user containing a PIDF document specifying that the XMPP contact now has a basic status of "closed" and (2) send a SIP SUBSCRIBE request to the SIP user with an "Expires" header set to a value of "0" (zero).</t>
           <t>The character data of the XMPP &lt;status/&gt; element MAY be mapped to the character data of the PIDF &lt;note/&gt; element.</t>
