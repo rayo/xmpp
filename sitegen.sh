@@ -20,7 +20,7 @@ cp about/*.* $basepath/about/
 cp council/*.* $basepath/council/
 cp council/agendas/*.* $basepath/council/agendas/
 cp council/members/*.* $basepath/council/members/
-cp extensions/*.shtml $basepath/extensions/
+cp extensions/*html $basepath/extensions/
 cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
 cp index.shtml $basepath/
