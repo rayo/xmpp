@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="January" day="26"/>
+    <date year="2007" month="April" day="10"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -135,8 +135,8 @@ romeo@example.net               juliet@example.com
                      ; stringprep
    domain          = fqdn / address-literal / idnlabel
    fqdn            = (idnlabel 1*("." idnlabel))
-                     ; an "idnlabel" is an internationalized domain
-                     ; label as described in RFC 3490
+                     ; an "idnlabel" is an internationalized label
+                     ; as described in RFC 3490
    address-literal = IPv4address / IPv6address
                      ; the "IPv4address" and "IPv6address" rules are
                      ; defined in Appendix B of RFC 3513
@@ -152,18 +152,19 @@ romeo@example.net               juliet@example.com
     </section>
 
     <section title="Domain Identifier" anchor="addressing-domain">
-      <t>The DOMAIN IDENTIFIER is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  It usually represents the network or "home" server to which other entities connect for XML routing and data management capabilities.  However, the entity referenced by a domain identifier is not always a server, and may be a service that is addressed as a subdomain of a server that provides functionality above and beyond the capabilities of a server (e.g., a multi-user chat service or a user directory).</t>
-      <t>The domain identifier for every server or service that will communicate over a network MAY be an IP address but SHOULD be a fully qualified domain name (see <xref target="DNS"/>).  A domain identifier MUST be an "internationalized domain name" as defined in <xref target="IDNA"/>, to which the <xref target="NAMEPREP"/> profile of <xref target="STRINGPREP"/> can be applied without failing.  Before comparing two domain identifiers, a server MUST (and a client SHOULD) first apply the Nameprep profile to the labels (as defined in <xref target="IDNA"/>) that make up each identifier.  Note: When applying the Nameprep profile, the UseSTD3ASCIIRules flag MUST be set to true.</t>
+      <t>The DOMAIN IDENTIFIER is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  It usually represents the network or "home" server to which other entities connect for XML routing and data management capabilities.  Note that a single server may host multiple domain identifiers (local domains), and that it is not necessary for domain identifiers to reference entities that provide traditional server functionality (e.g., a multi-user chat service or a user directory).</t>
+      <t>The domain identifier for every server or service that will communicate over a network SHOULD be a fully qualified domain name (see <xref target="DNS"/>) but MAY be either an IPv4 or IPv6 address or a text label (commonly called a "host name") that is resolvable on a local network.</t>
+      <t>A domain identifier MUST be an "internationalized domain name" as defined in <xref target="IDNA"/>, that is, "a domain name in which every label is an internationalized label".  When preparing a text label (consisting of a sequence of Unicode code points) for representation as an internationalized label in the process of constructing an XMPP domain identifier or comparing two XMPP domain identifiers, an application MUST apply the ToASCII operation specified in <xref target="IDNA"/> to each text label, with the UseSTD3ASCIIRules flag set (thus forbidding ASCII code points other than letters, digits, and hyphens).  If the ToASCII operation does not fail, then the resulting label is an internationalized label.  An internationalized domain name (and therefore an XMPP domain identifier) is constructed from its constituent internationalized labels by following the rules specified in <xref target='IDNA'/>.  Note: The ToASCII operation includes application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> and encoding using the algorithm specified in <xref target='PUNYCODE'/>; for details, see <xref target='IDNA'/>.</t>
     </section>
 
     <section title="Node Identifier" anchor="addressing-node">
       <t>The NODE IDENTIFIER is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  It usually represents the entity requesting and using network access provided by a server (i.e., a client), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user chat service).  The entity represented by a node identifier is addressed within the context of a specific domain; within instant messaging and presence applications of XMPP, this address is called a "bare JID" and is of the form &lt;node@domain&gt;.</t>
-      <t>A node identifier MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two node identifiers, a server MUST (and a client SHOULD) first apply the Nodeprep profile to each identifier.</t>
+      <t>A node identifier MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two node identifiers, an application MUST first apply the Nodeprep profile to each identifier.</t>
     </section>
 
     <section title="Resource Identifier" anchor="addressing-resource">
       <t>The RESOURCE IDENTIFIER is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier may modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  It usually represents a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user chat room) belonging to the entity associated with a node identifier.  A resource identifier is opaque to both servers and other clients, and is typically defined by a client implementation when it provides the information necessary to complete <xref target="bind">Resource Binding</xref> (although it may be generated by a server on behalf of a client), after which the entity is referred to as a "connected resource" and its address is referrred to as a "full JID" (&lt;node@domain/resource&gt;).  An entity MAY maintain multiple connected resources simultaneously, with each connected resource differentiated by a distinct resource identifier.</t>
-      <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, a server MUST (and a client SHOULD) first apply the Resourceprep profile to each identifier.</t>
+      <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, an application MUST first apply the Resourceprep profile to each identifier.</t>
     </section>
 
     <section title="Determination of Addresses" anchor="addressing-determination">
@@ -735,7 +736,7 @@ XmppAddr ::= UTF8String
         </t>
         <t>If a client attempts to send an XML stanza for which the value of the 'from' attribute does not exactly match one of the connected resources for that entity, the server SHOULD return an &lt;invalid-from/&gt; stream error to the client.  If a client attempts to send an XML stanza over a stream that is not yet authenticated, the server SHOULD return a &lt;not-authorized/&gt; stream error to the client.  If generated, both of these conditions MUST result in closure of the stream and termination of the underlying TCP connection; this helps to prevent a denial of service attack launched from a rogue client.</t>
         <t>When a server generates a stanza from the server itself for delivery to a connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (1) not include a 'from' attribute or (2) include a 'from' attribute whose value is the account's bare JID (&lt;node@domain&gt;) or connected resource's full JID (&lt;node@domain/resource&gt;).  A server MUST NOT send to the client a stanza without a 'from' attribute if the stanza was not generated by the server itself.  When a client receives a stanza that does not include a 'from' attribute, it MUST assume that the stanza is from the server to which the client is connected.</t>
-        <t>In the 'jabber:server' namespace, a stanza MUST possess a 'from' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error condition.  Furthermore, the domain identifier portion of the JID contained in the 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof, such as a validated subdomain of the sending server's hostname or another validated domain hosted by the sending server) as communicated in the SASL negotiation or dialback negotiation; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error condition.  Both of these conditions MUST result in closure of the stream and termination of the underlying TCP connection; this helps to prevent a denial of service attack launched from a rogue server.</t>
+        <t>In the 'jabber:server' namespace, a stanza MUST possess a 'from' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error condition.  Furthermore, the domain identifier portion of the JID contained in the 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof, such as a validated local domain hosted by the sending server) as communicated in the SASL negotiation, dialback negotiation or other means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error condition.  Both of these conditions MUST result in closure of the stream and termination of the underlying TCP connection; this helps to prevent a denial of service attack launched from a rogue server.</t>
       </section>
       <section title="id" anchor="stanzas-attributes-id">
         <t>The optional 'id' attribute MAY be used by a sending entity for internal tracking of stanzas that it sends and receives (especially for tracking the request-response interaction inherent in the semantics of IQ stanzas).  It is OPTIONAL for the value of the 'id' attribute to be unique globally, within a domain, or within a stream.  The semantics of IQ stanzas impose additional restrictions; see <xref target="stanzas-semantics-iq">IQ Semantics</xref>.</t>
@@ -1357,15 +1358,15 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
       <t>If the stanza possesses no 'to' attribute, the server SHOULD process it directly on behalf of the entity that sent it.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a registered entity (such as a client) that is connected to the server.  If the server receives a presence stanza with no 'to' attribute, the server SHOULD broadcast it to the entities that are subscribed to the sending entity's presence, if applicable (the semantics of presence broadcast for presence applications are defined in <xref target="XMPP-IM"/>).  If the server receives an IQ stanza of type "get" or "set" with no 'to' attribute and it understands the namespace that qualifies the content of the stanza, it MUST either process the stanza directly on behalf of sending entity (where the meaning of "process" is determined by the semantics of the qualifying namespace) or return an error to the sending entity.</t>
     </section>
     <section title="Foreign Domain" anchor="rules-foreign">
-      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server itself or a configured subdomain thereof, the server SHOULD route the stanza to the foreign domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is OPTIONAL).  There are two possible cases:</t>
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server itself or a configured local domain thereof, the server SHOULD route the stanza to the foreign domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is OPTIONAL).  There are two possible cases:</t>
       <t><list style='hanging'>
         <t hangText='A server-to-server stream already exists between the two domains:'>The sender's server routes the stanza to the authoritative server for the foreign domain over the existing stream</t>
         <t hangText='There exists no server-to-server stream between the two domains:'>The sender's server (1) resolves the hostname of the foreign domain (as defined under <xref target="security-server">Server-to-Server Communications</xref>), (2) negotiates a server-to-server stream between the two domains (as defined under <xref target='tls'>TLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref>), and (3) routes the stanza to the authoritative server for the foreign domain over the newly-established stream</t>
       </list></t>
       <t>If routing to the recipient's server is unsuccessful, the sender's server MUST return an error to the sender; if the recipient's server can be contacted but delivery by the recipient's server to the recipient is unsuccessful, the recipient's server MUST return an error to the sender by way of the sender's server.</t>
     </section>
-    <section title="Subdomain" anchor="rules-subdomain">
-      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a subdomain of one of the configured hostnames of the server itself, the server MUST either process the stanza itself or route the stanza to a specialized service that is responsible for that subdomain (if the subdomain is configured), or return an error to the sender (if the subdomain is not configured).</t>
+    <section title="Local Domain" anchor="rules-localdomain">
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches one of the configured hostnames of the server, or one of the configured local domains hosted by the server, the server MUST either process the stanza itself or route the stanza to a specialized service that is responsible for that local domain, or return an error to the sender (if the service providing the local domain is not available).</t>
     </section>
     <section title="Mere Domain or Specific Resource" anchor="rules-domain">
       <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a configured hostname of the server itself and the JID contained in the 'to' attribute is of the form &lt;domain&gt; or &lt;domain/resource&gt;, the server (or a defined resource thereof) MUST either process the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
@@ -1861,6 +1862,18 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
 <date month='March' year='2003' /></front>
 <seriesInfo name='RFC' value='3491' />
 <format type='TXT' octets='10316' target='ftp://ftp.isi.edu/in-notes/rfc3491.txt' />
+</reference>
+
+<reference anchor='PUNYCODE'>
+<front>
+<title>Punycode: A Bootstring encoding of Unicode for Internationalized Domain Names in Applications (IDNA)</title>
+<author initials='A.' surname='Costello' fullname='A. Costello'>
+<organization /></author>
+<date year='2003' month='March' />
+<abstract>
+<t>Punycode is a simple and efficient transfer encoding syntax designed for use with Internationalized Domain Names in Applications (IDNA). It uniquely and reversibly transforms a Unicode string into an ASCII string. ASCII characters in the Unicode string are represented literally, and non-ASCII characters are represented by ASCII characters that are allowed in host name labels (letters, digits, and hyphens). This document defines a general algorithm called Bootstring that allows a string of basic code points to uniquely represent any string of code points drawn from a larger set. Punycode is an instance of Bootstring that uses particular parameter values specified by this document, appropriate for IDNA. [STANDARDS TRACK] </t></abstract></front>
+<seriesInfo name='RFC' value='3492' />
+<format type='TXT' octets='67439' target='ftp://ftp.isi.edu/in-notes/rfc3492.txt' />
 </reference>
 
 <reference anchor='RANDOM'>
