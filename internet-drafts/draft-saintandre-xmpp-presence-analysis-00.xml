@@ -1,0 +1,345 @@
+<?xml version="1.0"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocdepth="3"?>
+<?rfc symrefs="yes"?>
+<?rfc compact="yes"?>
+<?rfc strict="yes"?>
+<rfc ipr="full3978" docName="draft-saintandre-xmpp-presence-analysis-00">
+
+  <front>
+    <title abbrev="XMPP Presence Analysis">Interdomain Presence Scaling Analysis for the Extensible Messaging and Presence Protocol (XMPP)</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization abbrev="XSF">XMPP Standards Foundation</organization>
+      <address>
+        <postal>
+          <street>P.O. Box 1641</street>
+          <city>Denver</city>
+          <region>CO</region>
+          <code>80201</code>
+          <country>USA</country>
+        </postal>
+        <email>stpeter@jabber.org</email>
+        <uri>xmpp:stpeter@jabber.org</uri>
+      </address>
+    </author>
+    <date year="2007" month="April" day="11"/>
+    <area>Applications</area>
+    <keyword>Extensible Messaging and Presence Protocol</keyword>
+    <keyword>XMPP</keyword>
+    <keyword>Jabber</keyword>
+    <keyword>Presence</keyword>
+    <abstract>
+      <t>This document analyzes the traffic that is generated as a result of presence subscriptions between users of federated domains that support the Extensible Messaging and Presence Protocol (XMPP).  This analysis is provided as a source of comparison with a similar analysis being performed regarding domains that support federated presence using Session Initiation Protocol (SIP) for Instant Messaging and Presence Leveraging Extensions (SIMPLE).</t>
+    </abstract>
+  </front>
+
+  <middle>
+
+    <section title="Introduction" anchor="intro">
+      <t>Presence is information about the network availability of an individual (or, more precisely, of a presence address of the kind that is often but not necessarily associated with an individual).  As typically designed and deployed, presence is shared only with authorized entities, where the authorization takes the form of a subscription.  (In this document, we employ the term "user" to signify an account that generates presence information and the term "contact" to signify an annount that is subscribed to the user's presence.)</t>
+      <t>The sharing of presence information can result in a large volume of traffic as users log on or off throughout the life of a presence session, especially for users with large numbers of contacts (e.g., the author of this document has approximately 1,500 contacts in his list of presence subscribers).  The volume is increased by communication of information beyond boolean network availability, such as availability substates (e.g., "away" and "do not disturb").  The volume is further increased if the presence "transport" is used to communicate information such as geolocation, mood, activity, even the music to which an individual is listening.  While such traffic may not be a concern in a standalone presence domain, interdomain communications may introduce a more significant impact on the functioning of the Internet as a whole.</t>
+      <t>There are several standardized technologies for sharing presence information.  One is a set of extensions to the Session Initiation Protocol (SIP), where the base protocol is defined in <xref target='SIP'/> and the extensions are defined in <xref target='SIP-EVENT'/> and <xref target='SIP-PRES'/>.  Another is the Extensible Messaging and Presence Protocol (XMPP) as defined in <xref target='XMPP-CORE'/> and <xref target='XMPP-IM'/>.</t>
+      <t><xref target='PROBLEM'/> analyzes several factors regarding the scalability of interdomain communication of presence information using SIP/SIMPLE technologies.  For the sake of comparison, this document aims to provide a similar analysis regarding XMPP technologies; in its first iteration, it discusses traffic load exclusively since bandwidth usage has the greatest potential impact on the Internet (whereas issues such as state management and server processing of presence information are implementation-specific).</t>
+    </section>
+
+    <section title="Traffic Load" anchor="load">
+      <section title="Assumptions" anchor="assumptions">
+        <t>The model for XMPP presence subscriptions is different from that of SIP.  In particular, XMPP presence subscriptions are long-lived, and once established last until cancelled.  Thus XMPP does not have subscription timeouts and refresh periods as SIP presence does.  In addition, this document does not include presence subscriptions in its protocol flows since in XMPP they are preconditions for the exchange of presence notifications (in any case, the number of XML stanzas exchanged in the process of establishing a presence subscription is negligible compared to the volume of presence notifications).</t>
+        <t>XMPP presence subscriptions are typically bidirectional (i.e., the contact has a subscription to the user's presence and the user has a subscription to the contact's presence).  However, because <xref target='PROBLEM'/> assumes that subscriptions are uni-directional (i.e., the contact has a subscription to the user's presence but not vice-versa), the same assumption is made herein.</t>
+        <t>Although an XMPP user or contact may have multiple connected "resources" (e.g., client or device) at any one time, for the sake of simplification this document assumes that each entity has only one simultaneous resource.</t>
+        <t>Note that, unlike in SIP, XMPP packets are not typically acknowledged with the equivalent of a 200/OK message.</t>
+        <t><xref target='PROBLEM'/> assumes that presence notification packets will typically be on the order of 4 kilobytes in size (not including TCP or UDP overhead).  XMPP presence notification packets tend to be much smaller than SIP presence notification packets; in this document we assume (based on deployment experience) that they are typically 200 bytes in size.</t>
+      </section>
+      <section title="Protocol Flows" anchor="flows">
+        <t>When a contact (in these examples romeo@example.net) becomes available, the contact's server sends an XMPP presence stanza of type "probe" to the user (in these examples juliet@example.com) on behalf of the contact, as shown in the following example (this can be seen as similar to the initial SUBSCRIBE in SIP presence):</t>
+        <figure>
+          <preamble>Contact's server sends presence probe to user:</preamble>
+          <artwork><![CDATA[
+<presence
+    from='romeo@example.net/orchard'
+    to='juliet@example.com'
+    type='probe'/>
+          ]]></artwork>
+        </figure>
+        <t>If the user's server determines that the contact is authorized to see the user's presence, the user's server return's the user's current presence state to the contact (this is equivalent to the "Initial NOTIFY" in SIP presence).</t>
+        <figure>
+          <preamble>User's server sends presence to contact:</preamble>
+          <artwork><![CDATA[
+<presence
+    from='juliet@example.com/balcony'
+    to='romeo@example.net/orchard'
+    xml:lang='en'>
+  <show>away</show>
+  <status>be right back</status>
+  <priority>0</priority>
+</presence>
+          ]]></artwork>
+        </figure>
+        <t>If the user subsequently changes her presence, the user's server sends an updated presence notification to the contact.</t>
+        <figure>
+          <preamble>User's server sends updated presence to contact:</preamble>
+          <artwork><![CDATA[
+<presence
+    from='juliet@example.com/balcony'
+    to='romeo@example.net/orchard'
+    xml:lang='en'>
+  <priority>0</priority>
+</presence>
+          ]]></artwork>
+        </figure>
+        <t>A presence session can include any number of presence changes.</t>
+        <t>When the user goes offline, the user's server sends a presence stanza of type "unavailable" to the contact.</t>
+        <figure>
+          <preamble>User's server sends unavailable presence to contact:</preamble>
+          <artwork><![CDATA[
+<presence
+    from='juliet@example.com/balcony'
+    to='romeo@example.net/orchard'
+    type='unavailable'
+    xml:lang='en'/>
+          ]]></artwork>
+        </figure>
+        <t>Naturally, similar protocol flows are generated by the contact during the life of his presence session.</t>
+      </section>
+      <section title="Analysis" anchor="analysis">
+        <t>To enable valid comparison between SIMPLE and XMPP with regard to interdomain presence scaling, this document adheres as closely as possible to the analysis presented in <xref target='PROBLEM'/>, witih appropriate modifications given differences between the two technologies.  In particular, traffic calculations are based on the following inputs and formulae, where the numbering follows that in <xref target='PROBLEM'/> and the terminology is adjusted to conform to XMPP:</t>
+        <t>
+          <list style='symbols'>
+            <t>(A01) Presence session lifetime in hours -- assumed to be 8 hours.</t>
+            <t>(A02) Presence state changes per hour -- assumed to be 3 times per hour.</t>
+            <t>(A03) Subscription refresh interval per hour -- does not apply to XMPP.</t>
+            <t>(A04) Total federated contacts per user -- varies based on the scenario under discussion.</t>
+            <t>(A05) Number of dialogs to maintain per watcher -- does not apply to XMPP.</t>
+            <t>(A06) Number of contacts in a federated presence domain -- varies based on the scenario under discussion.</t>
+            <t>(A07) Initial presence subscription exchange -- deemed out of scope here since XMPP presence subscriptions are long-lived.</t>
+            <t>(A08) Initial presence notification -- on the model of SIP NOTIFY plus 200, this is XMPP presence probe plus initial notification, thus 2 per contact.</t>
+            <t>(A09) Total initial messages -- (A08*A06).</t>
+            <t>(A10) Presence notifications per user = (A02*A01*A04).</t>
+            <t>(A11) Subscription refreshes -- does not apply to XMPP.</t>
+            <t>(A12) NOTIFY/200 due to subscribe refresh -- does not apply to XMPP.</t>
+            <t>(A13) Number of steady state messages = (A10*A06).</t>
+            <t>(A14) SUBSCRIBE termination -- does not apply to XMPP.</t>
+            <t>(A15) Unavailable presence -- sent when user goes offline (equivalent to NOTIFY terminated), 1 per contact.</t>
+            <t>(A16) Number of sign-out messages = (A15*A06).</t>
+            <t>(A17) Total number of messages between domains = ((A09+A13+A16)*2).</t>
+            <t>(A18) Total number of messages per second = (A17/A01/3600).</t>
+            <t>(A19) Total number of kilobytes per second = (A18*.2).</t>
+          </list>
+        </t>
+      </section>
+      <section title="Scenarios" anchor="scenarios">
+        <section title="Basic" anchor="scenarios-basic">
+          <t>This scenario assumes two domains, each with 20,000 users, where each user has 4 contacts in the other domain and changes presence 3 times per hour.  The calculations are as follows:</t>
+          <t>
+            <list style='symbols'>
+              <t>(A01) = 8.</t>
+              <t>(A02) = 3.</t>
+              <t>(A03) N/A.</t>
+              <t>(A04) = 4.</t>
+              <t>(A05) N/A.</t>
+              <t>(A06) = 20,000.</t>
+              <t>(A07) N/A.</t>
+              <t>(A08) = 8.</t>
+              <t>(A09) = (A08*A06) = 160,000.</t>
+              <t>(A10) = (A02*A01*A04) = 96.</t>
+              <t>(A11) N/A.</t>
+              <t>(A12) N/A.</t>
+              <t>(A13) = (A10*A06) = 1,920,000.</t>
+              <t>(A14) N/A.</t>
+              <t>(A15) = 4.</t>
+              <t>(A16) = (A15*A06) = 80,000.</t>
+              <t>(A17) = ((A09+A13+A16)*2) = 4,320,000 total messages.</t>
+              <t>(A18) = (A17/A01/3600) = 150 messages per second.</t>
+              <t>(A19) = (A18*.2) = 30 kilobtyes per second.</t>
+            </list>
+          </t>
+          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 14,080,000 total messages, 489 messages per second, and 830 kilobytes per second.</t>
+        </section>
+        <section title="Widely Distributed Inter-Domain Presence" anchor="scenarios-widely">
+          <t>This scenario assumes two domains, each with 20,000 users, where each user has 20 contacts in the other domain and changes presence 3 times per hour.  The calculations are as follows:</t>
+          <t>
+            <list style='symbols'>
+              <t>(A01) = 8.</t>
+              <t>(A02) = 3.</t>
+              <t>(A03) N/A.</t>
+              <t>(A04) = 20.</t>
+              <t>(A05) N/A.</t>
+              <t>(A06) = 20,000.</t>
+              <t>(A07) N/A.</t>
+              <t>(A08) = 40.</t>
+              <t>(A09) = (A08*A06) = 800,000.</t>
+              <t>(A10) = (A02*A01*A04) = 480.</t>
+              <t>(A11) N/A.</t>
+              <t>(A12) N/A.</t>
+              <t>(A13) = (A10*A06) = 9,600,000.</t>
+              <t>(A14) N/A.</t>
+              <t>(A15) = 20.</t>
+              <t>(A16) = (A15*A06) = 400,000.</t>
+              <t>(A17) = ((A09+A13+A16)*2) = 21,600,000 total messages.</t>
+              <t>(A18) = (A17/A01/3600) = 750 messages per second.</t>
+              <t>(A19) = (A18*.2) = 150 kilobtyes per second.</t>
+            </list>
+          </t>
+          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 70,400,000 total messages, 2,444 messages per second, and 1,968 kilobytes per second.</t>
+        </section>
+        <section title="Very Large Network Peering" anchor="scenarios-large">
+          <t>This scenario assumes two domains, each with 10,000,000 users, where each user has 10 contacts in the other domain and changes presence 6 times per hour.  The calculations are as follows:</t>
+          <t>
+            <list style='symbols'>
+              <t>(A01) = 8.</t>
+              <t>(A02) = 6.</t>
+              <t>(A03) N/A.</t>
+              <t>(A04) = 10.</t>
+              <t>(A05) N/A.</t>
+              <t>(A06) = 10,000,000.</t>
+              <t>(A07) N/A.</t>
+              <t>(A08) = 20.</t>
+              <t>(A09) = (A08*A06) = 200,000,000.</t>
+              <t>(A10) = (A02*A01*A04) = 480.</t>
+              <t>(A11) N/A.</t>
+              <t>(A12) N/A.</t>
+              <t>(A13) = (A10*A06) = 4,800,000,000.</t>
+              <t>(A14) N/A.</t>
+              <t>(A15) = 10.</t>
+              <t>(A16) = (A15*A06) = 100,000,000.</t>
+              <t>(A17) = ((A09+A13+A16)*2) = 10,200,000,000 total messages.</t>
+              <t>(A18) = (A17/A01/3600) = 354,166 messages per second.</t>
+              <t>(A19) = (A18*.2) = 70,833 kilobtyes per second.</t>
+            </list>
+          </t>
+          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 27,200,000,000 total messages, 944,444 messages per second, and 880,555 kilobytes per second.</t>
+        </section>
+        <section title="Intra-Domain Peering" anchor="scenarios-intra">
+          <t>This scenario assumes two domains, each with 60,000 users, where each user has 10 contacts in the other domain and changes presence 3 times per hour.  The calculations are as follows:</t>
+          <t>
+            <list style='symbols'>
+              <t>(A01) = 8.</t>
+              <t>(A02) = 3.</t>
+              <t>(A03) N/A.</t>
+              <t>(A04) = 10.</t>
+              <t>(A05) N/A.</t>
+              <t>(A06) = 60,000.</t>
+              <t>(A07) N/A.</t>
+              <t>(A08) = 20.</t>
+              <t>(A09) = (A08*A06) = 1,200,000.</t>
+              <t>(A10) = (A02*A01*A04) = 240.</t>
+              <t>(A11) N/A.</t>
+              <t>(A12) N/A.</t>
+              <t>(A13) = (A10*A06) = 14,400,000.</t>
+              <t>(A14) N/A.</t>
+              <t>(A15) = 10.</t>
+              <t>(A16) = (A15*A06) = 600,000.</t>
+              <t>(A17) = ((A09+A13+A16)*2) = 32,400,000 total messages.</t>
+              <t>(A18) = (A17/A01/3600) = 1125 messages per second.</t>
+              <t>(A19) = (A18*.2) = 225 kilobtyes per second.</t>
+            </list>
+          </t>
+          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 105,600,000 total messages, 3,667 messages per second, and 3,683 kilobytes per second.</t>
+        </section>
+      </section>
+    </section>
+
+    <section title="Security Considerations" anchor="security">
+      <t>This document introduces and addresses no security concerns above and beyond those already defined in <xref target='XMPP-CORE'/> and <xref target='XMPP-IM'/>.</t>
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references title="Informative References">
+
+<reference anchor='PROBLEM'>
+<front>
+<title>Problem Statement for SIP/SIMPLE</title>
+<author initials='A' surname='Houri' fullname='Avshalom Houri'>
+    <organization />
+</author>
+<date month='February' day='27' year='2007' />
+<abstract><t>The document analyses the traffic that is generated due to presence subscriptions between domains. It is shown that the amount of traffic can be extremely big. In addition to the very large traffic the document also analyses the affects of a large presence system on the memory footprint and the CPU load. Several suggested optimization to the SIMPLE protocol are analysed with the possible impact on the load.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-simple-interdomain-scaling-analysis-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-simple-interdomain-scaling-analysis-00.txt' />
+</reference>
+
+<reference anchor='SIP'>
+<front>
+<title>SIP: Session Initiation Protocol</title>
+<author initials='J.' surname='Rosenberg' fullname='J. Rosenberg'>
+<organization /></author>
+<author initials='H.' surname='Schulzrinne' fullname='H. Schulzrinne'>
+<organization /></author>
+<author initials='G.' surname='Camarillo' fullname='G. Camarillo'>
+<organization /></author>
+<author initials='A.' surname='Johnston' fullname='A. Johnston'>
+<organization /></author>
+<author initials='J.' surname='Peterson' fullname='J. Peterson'>
+<organization /></author>
+<author initials='R.' surname='Sparks' fullname='R. Sparks'>
+<organization /></author>
+<author initials='M.' surname='Handley' fullname='M. Handley'>
+<organization /></author>
+<author initials='E.' surname='Schooler' fullname='E. Schooler'>
+<organization /></author>
+<date year='2002' month='June' />
+<abstract>
+<t>This document describes Session Initiation Protocol (SIP), an application-layer control (signaling) protocol for creating, modifying, and terminating sessions with one or more participants. These sessions include Internet telephone calls, multimedia distribution, and multimedia conferences. [STANDARDS TRACK] </t></abstract></front>
+<seriesInfo name='RFC' value='3261' />
+<format type='TXT' octets='647976' target='ftp://ftp.isi.edu/in-notes/rfc3261.txt' />
+</reference>
+
+<reference anchor='SIP-EVENT'>
+<front>
+<title>Session Initiation Protocol (SIP)-Specific Event Notification</title>
+<author initials='A.B.' surname='Roach' fullname='A.B. Roach'>
+<organization /></author>
+<date year='2002' month='June' />
+<abstract>
+<t>This document describes an extension to the Session Initiation Protocol (SIP). The purpose of this extension is to provide an extensible framework by which SIP nodes can request notification from remote nodes indicating that certain events have occurred. [STANDARDS TRACK] </t></abstract></front>
+<seriesInfo name='RFC' value='3265' />
+<format type='TXT' octets='89005' target='ftp://ftp.isi.edu/in-notes/rfc3265.txt' />
+</reference>
+
+<reference anchor='SIP-PRES'>
+<front>
+<title>A Presence Event Package for the Session Initiation Protocol (SIP)</title>
+<author initials='J.' surname='Rosenberg' fullname='J. Rosenberg'>
+<organization /></author>
+<date year='2004' month='August' />
+<abstract>
+<t>This document describes the usage of the Session Initiation Protocol (SIP) for subscriptions and notifications of presence. Presence is defined as the willingness and ability of a user to communicate with other users on the network. Historically, presence has been limited to "on-line" and "off-line" indicators; the notion of presence here is broader. Subscriptions and notifications of presence are supported by defining an event package within the general SIP event notification framework. This protocol is also compliant with the Common Presence Profile (CPP) framework. [STANDARDS TRACK] </t></abstract></front>
+<seriesInfo name='RFC' value='3856' />
+<format type='TXT' octets='62956' target='ftp://ftp.isi.edu/in-notes/rfc3856.txt' />
+</reference>
+
+<reference anchor="XMPP-CORE">
+  <front>
+    <title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+    <author initials='P.' surname='Saint-Andre' fullname='P. Saint-Andre'>
+      <organization>Jabber Software Foundation</organization>
+    </author>
+    <date year='2004' month='October' />
+  </front>
+  <seriesInfo name='RFC' value='3920' />
+  <format type='TXT' octets='194313' target='ftp://ftp.isi.edu/in-notes/rfc3920.txt' />
+</reference>
+
+<reference anchor="XMPP-IM">
+  <front>
+    <title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
+    <author initials='P.' surname='Saint-Andre' fullname='P. Saint-Andre'>
+      <organization>Jabber Software Foundation</organization>
+    </author>
+    <date year='2004' month='October' />
+  </front>
+  <seriesInfo name='RFC' value='3921' />
+  <format type='TXT' octets='217527' target='ftp://ftp.isi.edu/in-notes/rfc3921.txt' />
+</reference>
+
+    </references>
+
+  </back>
+
+</rfc>
