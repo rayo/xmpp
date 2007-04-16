@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc ipr="full3978" docName="draft-saintandre-xmpp-simple-09">
+<rfc ipr="full3978" docName="draft-saintandre-xmpp-simple-10">
 
   <front>
     <title abbrev="Basic XMPP-SIMPLE Interworking">Basic Messaging and Presence Interworking between the Extensible Messaging and Presence Protocol (XMPP) and Session Initiation Protocol (SIP) for Instant Messaging and Presence Leveraging Extensions (SIMPLE)</title>
@@ -193,23 +193,19 @@
 +---+----------------------------------+
           ]]></artwork>
         </figure>
-        <t>The following table shows the complement of allowed US-ASCII characters in each addressing scheme when compared individually to the other schemes, which we will use in transforming one address format into another (each cell shows the characters that are allowed in the row protocol but forbidden in the column protocol).</t>
-        <figure>
-          <preamble>Table 3: Partial complements of allowed characters</preamble>
-          <artwork><![CDATA[
-   +----------+----------+-----------+-------+
-   |          | SIP/SIPS |  IM/PRES  |  XMPP |
-   +----------+----------+-----------+-------+
-   | SIP/SIPS |  N/A     | (),.;     | &'/   |
-   +----------+----------+-----------+-------+
-   | IM/PRES  | #%/^`{\} |  N/A      | &'/   |
-   +----------+----------+-----------+-------+
-   | XMPP     | #%[\]^`  | (),.;[\]  |  N/A  |
-   |          | {|}      |           |       |
-   +----------+----------+-----------+-------+
-          ]]></artwork>
-        </figure>
-        <t>In addition to the US-ASCII characters described above, many non-US-ASCII (specifically, UTF-8) characters are allowed in XMPP addresses but not allowed in sip:/sips: or im:/pres: URIs, since XMPP allows internationalized local-part addresses.  A straightforward mapping of these characters to US-ASCII characters is provided in Section 2.6 of <xref target="URL-GUIDE"/>, namely to encode unsafe octets using percent-encoding (%hexhex).</t>
+        <t>When transforming a local-part address from one scheme to another, an application SHOULD proceed as follows:</t>
+        <t>
+          <list style='numbers'>
+            <t>Unescape any escaped characters in the source address (e.g., from SIP to XMPP unescape "%2F" to "/" and from XMPP to SIP unescape "\27" to "'").</t>
+            <t>Leave unmodified any characters that are allowed in the destination scheme.</t>
+            <t>Escape any characters that are allowed in the source scheme but forbidden in the destination scheme, as escaping is defined for the destination scheme.  In particular:
+              <list style='symbols'>
+                <t>Where the destination scheme is a URI (i.e., an im:, pres:, sip:, or sips: URI), each forbidden character MUST be percent-encoded to "%hexhex" as specified in Section 2.6 of <xref target='URL-GUIDE'/> (e.g., when transforming from XMPP to SIP, encode "/" as "%2F").</t>
+                <t>Where the destination scheme is a native XMPP address, each forbidden character MUST be encoded to "\hexhex" as specified in <xref target='XEP-0106'/> (e.g., when transforming from SIP to XMPP, encode "'" as "\27").</t>
+              </list>
+            </t>
+          </list>
+        </t>
       </section>
       <section title="XMPP to SIP" anchor="addr-xmpp">
         <t>The following is a high-level algorithm for mapping an XMPP address to a sip:, sips:, im:, or pres: URI:</t>
