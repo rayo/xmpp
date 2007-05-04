@@ -24,6 +24,7 @@ cp extensions/*html $basepath/extensions/
 cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
 cp index.shtml $basepath/
+cp interop/*.* $basepath/interop/
 cp schemas/*.* $basepath/schemas/
 cp sorttable.js $basepath/
 cp xmpp.css $basepath/
