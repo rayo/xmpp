@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc ipr="full3978" docName="draft-saintandre-xmpp-simple-10">
+<rfc ipr="full3978" category="info" docName="draft-saintandre-xmpp-simple-10">
 
   <front>
     <title abbrev="Basic XMPP-SIMPLE Interworking">Basic Messaging and Presence Interworking between the Extensible Messaging and Presence Protocol (XMPP) and Session Initiation Protocol (SIP) for Instant Messaging and Presence Leveraging Extensions (SIMPLE)</title>
@@ -47,7 +47,7 @@
         <email>jhildebrand@jabber.com</email>
       </address>
     </author>
-    <date year="2007" month="February" day="28"/>
+    <date year="2007" month="June" day="13"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Jabber</keyword>
@@ -103,9 +103,9 @@
         <artwork><![CDATA[
 #####################################################################
 #                               #                                   #
-#         +---s2x.example.net---#--------------example.com          #
+#         +-- s2x.example.net---#------------- example.com          #
 #         |                     #               |     |             #
-#  example.net------------------#----x2s.example.com  |             #
+#  example.net -----------------#--- x2s.example.com  |             #
 #       |                       #                     |             #
 #       |                       #                     |             #
 #  romeo@example.net            #               juliet@example.com  #
@@ -125,7 +125,7 @@
       <section title="Overview" anchor="addr-over">
         <t>The address formats used to identify XMPP entities are different from those used to identify SIP entities.  The XMPP address format is specified in <xref target="XMPP-CORE"/>; as specified in <xref target="XMPP-IM"/>, instant messaging and presence applications of XMPP must also support 'im:' and 'pres:' URIs as specified in <xref target="CPIM"/> and <xref target="CPP"/> respectively, although such support may simply involve leaving resolution of such addresses up to an XMPP server.  The SIP address format for instant messaging is specified in <xref target="SIP-IM"/>; it may use either 'sip:' or 'sips:' URIs as specified in <xref target="SIP"/> or an 'im:' URI as specified in <xref target="CPIM"/>.  The SIP address format for presence is specified in <xref target="SIP-PRES"/>; it may use either 'sip:' or 'sips:' URIs as specified in <xref target="SIP"/> or a 'pres:' URI as specified in <xref target="CPP"/>.</t>
         <t>In this document we describe mappings for addresses of the form &lt;user@domain&gt; only, ignoring (for the purpose of address mapping) any protocol-specific extensions such as XMPP resource identifiers or SIP telephone numbers and passwords.  In addition, we have ruled the mapping of domain names as out of scope for now since that is a matter for the Domain Name System; specifically, the issue for interworking between SIP and XMPP relates to the translation of fully internationalized domain names (which the SIP address format does not allow, but which the XMPP address format does allow via <xref target="IDNA"/>) into non-internationalized domain names.  Therefore, in the following sections we discuss local-part addresses only (these are called variously "usernames", "instant inboxes", "presentities", and "node identifiers" in the protocols at issue).</t>
-        <t>The sip:/sips:, im:/pres:, and XMPP address schemes allow different sets of characters (although all three allow alphanumeric characters and disallow both spaces and control characters).  In some cases, characters allowed in one scheme are forbidden in others; these characters must be mapped appropriately in order to ensure interworking across systems.</t>
+        <t>The sip:/sips:, im:/pres:, and XMPP address schemes allow different sets of characters (although all three allow alphanumeric characters and disallow both spaces and control characters).  In some cases, characters allowed in one scheme are disallowed in others; these characters must be mapped appropriately in order to ensure interworking across systems.</t>
         <t>The local-part address in sip:/sips: URIs inherits from the "userinfo" rule in <xref target="URI"/> with several changes; here we discuss the SIP "user" rule only:</t>
         <figure>
           <artwork><![CDATA[
@@ -136,60 +136,43 @@
                        / "(" / ")"
           ]]></artwork>
         </figure>
-        <t>The local-part address in im:/pres: URIs inherits from the "local-part" rule in <xref target="RFC822"/>:</t>
+        <t>Here we make the simplifying assumption that the local-part address in im:/pres: URIs inherits from the "dot-atom-text" rule in <xref target="RFC2822"/> rather than the more complicated "local-part" rule:</t>
         <figure>
           <artwork><![CDATA[
-   local-part  =  word *("." word)
-   word        =  atom / quoted-string
-   atom        =  1*<any CHAR except specials, SPACE and CTLs>
-   CHAR        =  <any ASCII character>
-   specials    =  "(" / ")" / "<" / ">" / "@" / "," / ";" 
-                  / ":" / "\" / <"> /  "." / "[" / "]" 
+   dot-atom-text =  1*atext *("." 1*atext)
+   atext         =  ALPHA / DIGIT / ; Any character except controls,
+                    "!" / "#" /     ;  SP, and specials.
+                    "$" / "%" /     ;  Used for atoms
+                    "&" / "'" /
+                    "*" / "+" /
+                    "-" / "/" /
+                    "=" / "?" /
+                    "^" / "_" /
+                    "`" / "{" /
+                    "|" / "}" /
+                    "~"
           ]]></artwork>
         </figure>
-        <t>The local-part address in XMPP addresses allows any US-ASCII character except space, controls, and the " & ' / : < > @ characters.</t>
-        <t>Therefore, following table lists the allowed and forbidden characters in the local-part addresses of each protocol (aside from the alphanumeric, space, and control characters):</t>
+        <t>The local-part address in XMPP addresses allows any US-ASCII character except space, controls, and the " &amp; ' / : &lt; &gt; @ characters.</t>
+        <t>Therefore, following table lists the allowed and disallowed characters in the local-part addresses of each protocol (aside from the alphanumeric, space, and control characters), in order by hexadecimal character number (where the "A" row shows the allowed characters and the "D" row shows the disallowed characters).</t>
         <figure>
-          <preamble>Table 1: Allowed and forbidden characters (view #1)</preamble>
-          <artwork><![CDATA[
-   +----------+--------------+--------------+
-   | TYPE     | ALLOWED      | FORBIDDEN    |
-   +----------+--------------+--------------+
-   | SIP/SIPS | ! $ & ' ( )  | " # % / : <  |
-   |          | * + , - . /  | > @ [ \ ] ^  |
-   |          | ; = ? _ ~    | ` { | }      |
-   +----------+--------------+--------------+
-   | IM/PRES  | ! # $ % & '  | " ( ) , . :  |
-   |          | * + - / = ?  | ; < > @ [ \  |
-   |          | ^ _ ` { | }  | ]            |
-   |          | ~            |              |
-   +----------+--------------+--------------+
-   | XMPP     | ! # $ % ( )  | " & ' / : <  |
-   |          | * + , - . ;  | > @          |
-   |          | = ? [ \ ] ^  |              |
-   |          | _ `{ | } ~   |              |
-   +----------+--------------+--------------+
-          ]]></artwork>
-        </figure>
-        <t>Now we arrange them in an easier-to-read format, in order by hexadecimal character number (where the "A" row shows the allowed characters and the "F" row shows the forbidden characters).</t>
-        <figure>
-          <preamble>Table 2: Allowed and forbidden characters (view #2)</preamble>
+          <preamble>Table 1: Allowed and disallowed characters</preamble>
           <artwork><![CDATA[
 +---+----------------------------------+
 | SIP/SIPS CHARACTERS                  |
 +---+----------------------------------+
 | A | !  $ &'()*+,-./ ; = ?     _    ~ |
-| F |  "# %          : < > @[\]^ `{|}  |
+| D |  "# %          : < > @[\]^ `{|}  |
 +---+----------------------------------+
 | IM/PRES CHARACTERS                   |
 +---+----------------------------------+
 | A | ! #$%&'  *+ - /   = ?    ^_`{|}~ |
-| F |  "     ()  , . :;< > @[\]        |
+| D |  "     ()  , . :;< > @[\]        |
 +---+----------------------------------+
 | XMPP CHARACTERS                      |
 +---+----------------------------------+
 | A | ! #$%  ()*+,-.  ; = ? [\]^_`{|}~ |
-| F |  "   &'       /: < > @           |
+| D |  "   &'       /: < > @           |
 +---+----------------------------------+
           ]]></artwork>
         </figure>
@@ -198,10 +181,10 @@
           <list style='numbers'>
             <t>Unescape any escaped characters in the source address (e.g., from SIP to XMPP unescape "%2F" to "/" and from XMPP to SIP unescape "\27" to "'").</t>
             <t>Leave unmodified any characters that are allowed in the destination scheme.</t>
-            <t>Escape any characters that are allowed in the source scheme but forbidden in the destination scheme, as escaping is defined for the destination scheme.  In particular:
+            <t>Escape any characters that are allowed in the source scheme but reserved in the destination scheme, as escaping is defined for the destination scheme.  In particular:
               <list style='symbols'>
-                <t>Where the destination scheme is a URI (i.e., an im:, pres:, sip:, or sips: URI), each forbidden character MUST be percent-encoded to "%hexhex" as specified in Section 2.6 of <xref target='URL-GUIDE'/> (e.g., when transforming from XMPP to SIP, encode "/" as "%2F").</t>
-                <t>Where the destination scheme is a native XMPP address, each forbidden character MUST be encoded to "\hexhex" as specified in <xref target='XEP-0106'/> (e.g., when transforming from SIP to XMPP, encode "'" as "\27").</t>
+                <t>Where the destination scheme is a URI (i.e., an im:, pres:, sip:, or sips: URI), each reserved character MUST be percent-encoded to "%hexhex" as specified in Section 2.6 of <xref target='URL-GUIDE'/> (e.g., when transforming from XMPP to SIP, encode "/" as "%2F").</t>
+                <t>Where the destination scheme is a native XMPP address, each reserved character MUST be encoded to "\hexhex" as specified in <xref target='XEP-0106'/> (e.g., when transforming from SIP to XMPP, encode "'" as "\27").</t>
               </list>
             </t>
           </list>
@@ -229,7 +212,7 @@
             <t>Split at the first '@' character into local-part and hostname (mapping the latter is out of scope).</t>
             <t>Translate %hexhex to equivalent octets.</t>
             <t>Treat result as a UTF-8 string.</t>
-            <t>Translate "&amp;" to "\26", "'" to "\27", and "/" to "\2f" respectively in order to properly handle the characters forbidden in XMPP addresses but allowed in sip:/sips: URIs and im:/pres: URIs as shown in Column 3 of Table 3 above (this is consistent with <xref target="XEP-0106"/>).</t>
+            <t>Translate "&amp;" to "\26", "'" to "\27", and "/" to "\2f" respectively in order to properly handle the characters disallowed in XMPP addresses but allowed in sip:/sips: URIs and im:/pres: URIs as shown in Column 3 of Table 3 above (this is consistent with <xref target="XEP-0106"/>).</t>
             <t>Apply Nodeprep profile of <xref target="STRINGPREP"/> (as specified in <xref target="XMPP-CORE"/>) for canonicalization (OPTIONAL).</t>
             <t>Recombine local-part with mapped hostname to form local@domain address.</t>
           </list>
@@ -872,7 +855,7 @@
     </section>
 
     <section title="Acknowledgements" anchor="acks">
-      <t>The authors wish to thank Nathaniel Borenstein and Rohan Mahy for suggestions and encouragement; Daniel-Constantin Mierla for earlier work on SIMPLE-XMPP interworking; Jack Erwin and Sandeep Sharma for feedback based on implementation experience; and Dave Cridland, Johann Daigremont, Alan Johnston, Benny Prijono, and Adam Roach for their helpful comments.</t>
+      <t>The authors wish to thank Nathaniel Borenstein and Rohan Mahy for suggestions and encouragement; Daniel-Constantin Mierla for earlier work on SIMPLE-XMPP interworking; Jack Erwin, Tory Patnoe, and Sandeep Sharma for feedback based on implementation experience; and Dave Cridland, Johann Daigremont, Alan Johnston, Benny Prijono, and Adam Roach for their helpful comments.</t>
     </section>
 
   </middle>
@@ -1332,23 +1315,16 @@ specifications of each URI scheme.
 <format type='TXT' octets='47420' target='ftp://ftp.isi.edu/in-notes/rfc2779.txt' />
 </reference>
 
-<reference anchor='RFC822'>
+<reference anchor='RFC2822'>
 <front>
-<title abbrev='Standard for ARPA Internet Text Messages'>Standard for the format of ARPA Internet text messages</title>
-<author initials='D.H.' surname='Crocker' fullname='David H. Crocker'>
-<organization>University of Delaware, Dept. of Electrical Engineering</organization>
-<address>
-<postal>
-<street />
-<city>Newark</city>
-<region>DE</region>
-<code>19711</code>
-<country>US</country></postal>
-<email>DCrocker@UDel-Relay</email></address></author>
-<date year='1982' day='13' month='August' /></front>
-<seriesInfo name='STD' value='11' />
-<seriesInfo name='RFC' value='822' />
-<format type='TXT' octets='109200' target='ftp://ftp.isi.edu/in-notes/rfc822.txt' />
+<title>Internet Message Format</title>
+<author initials='P.' surname='Resnick' fullname='P. Resnick'>
+<organization /></author>
+<date year='2001' month='April' />
+<abstract>
+<t>This document specifies a syntax for text messages that are sent between computer users, within the framework of "electronic mail" messages. [STANDARDS TRACK] </t></abstract></front>
+<seriesInfo name='RFC' value='2822' />
+<format type='TXT' octets='110695' target='ftp://ftp.isi.edu/in-notes/rfc2822.txt' />
 </reference>
 
 <reference anchor="XEP-0071">
