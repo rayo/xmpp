@@ -5,12 +5,12 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc ipr="full3978" category='std' docName="draft-saintandre-rfc3921bis-03">
+<rfc ipr="full3978" category='std' docName="draft-saintandre-rfc3921bis-03" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre" role="editor">
-      <organization abbrev="XSF">XMPP Standards Foundation</organization>
+      <organization>XMPP Standards Foundation</organization>
       <address>
         <postal>
           <street>P.O. Box 1641</street>
@@ -23,7 +23,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="April" day="17"/>
+    <date year="2007" month="June" day="15"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -48,7 +48,7 @@
 
   <section title="Introduction" anchor="intro">
     <section title="Overview" anchor="intro-overview">
-      <t>The Extensible Messaging and Presence Protocol (XMPP) is a protocol for streaming <xref target="XML">Extensible Markup Language</xref> elements in order to exchange messages, presence (availability) information, and other structured data in close to real time.  The core features of XMPP are defined in <xref target="XMPP-CORE"/>.  These features -- mainly XML streams, use of TLS and SASL, and the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; children of the stream root -- provide the building blocks for many types of near-real-time applications, which may be layered on top of the core by sending application-specific data qualified by particular XML namespaces (see <xref target="XML-NAMES"/>).  This document describes extensions to the core features of XMPP that provide the basic functionality expected of an instant messaging (IM) and presence application as defined in <xref target="IMP-REQS"/>.</t>
+      <t>The Extensible Messaging and Presence Protocol (XMPP) is a technology for streaming <xref target="XML">Extensible Markup Language</xref> elements in order to exchange messages, presence information, and other structured data in close to real time.  The core features of XMPP are defined in <xref target="XMPP-CORE"/>.  These features -- mainly XML streams, use of Transport Layer Security (<xref target='TLS'/>) and Simple Authentication and Security Layer (<xref target='SASL'/>), and the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; children of the stream root -- provide the building blocks for many types of near-real-time applications, which may be layered on top of the core by sending application-specific data qualified by particular XML namespaces (see <xref target="XML-NAMES"/>).  This document describes extensions to the core features of XMPP that provide the basic functionality expected of an instant messaging (IM) and presence application as defined in <xref target="IMP-REQS"/>.</t>
       <t>This document obsoletes RFC 3921.</t>
     </section>
     <section title="Requirements" anchor="intro-requirements">
@@ -68,24 +68,27 @@
         <t>Exchange presence information with one's contacts</t>
         <t>Manage presence subscriptions to and from one's contacts</t>
       </list></t>
-      <t>Detailed definitions of these functionality areas are contained in <xref target="IMP-REQS"/>, and the interested reader should refer to that document regarding the requirements addressed herein.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of <xref target="IMP-REQS"/>, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Note also that although XMPP protocol extensions addressing many other functionality areas have been defined in the Jabber Software Foundation's XEP series, such extensions are not included in this document because they are not required by <xref target="IMP-REQS"/>.</t>
-      <t>Note: <xref target="IMP-REQS"/> stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return &lt;service-unavailable/&gt; errors in response to attempts to route &lt;message/&gt; stanzas.)</t>
+      <t>Detailed definitions of these functionality areas are contained in <xref target="IMP-REQS"/>, and the interested reader should refer to that document regarding the requirements addressed herein.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of <xref target="IMP-REQS"/>, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Although XMPP protocol extensions addressing many other functionality areas have been defined in the XMPP Standards Foundation's XEP series (e.g., multi-user text chat as specified in <xref target='XEP-0045'/>), such extensions are not included in this document because they are not required by <xref target="IMP-REQS"/>.</t>
+      <t>Note: <xref target="IMP-REQS"/> stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return &lt;service-unavailable/&gt; errors in response to attempts to send &lt;message/&gt; stanzas.)</t>
+      <t>Note: For convenience, this document employs the term "user" to refer to the owner of an XMPP account; however, account owners need not be human persons and may be bots, devices, or other non-human applications.</t>
     </section>
     <section title="Typical Session Flow" anchor="intro-session">
       <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions (including XML stream establishment, authentication, and binding of a resource to the stream) that must be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  The reader is referred to <xref target="XMPP-CORE"/> for details, and knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
-      <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a session with an XMPP server and may send and receive a potentially unlimited number of XML stanzas over the underlying XML stream.  The typical flow for an instant messaging and presence session is as follows:</t>
+      <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a long-lived XML stream with an XMPP server, which enables the user to send and receive a potentially unlimited number of XML stanzas over the stream.  Such a stream can be used as the basis for the exchange of instant messaging, presence, and other information in close to real time.  The typical flow for an instant messaging and presence session is as follows:</t>
       <t>
         <list style='numbers'>
-          <t>Retrieve one's roster. (See <xref target='roster-login'/>.)</t>
-          <t>Send initial presence to the server for broadcasting to all subscribed contacts, thus "going online" from the perspective of XMPP communications. (See <xref target='presence-initial'/>.)</t>
-          <t>Exchange messages, manage presence subscriptions, perform roster updates, and in general process and generate other XML stanzas with particular semantics throughout the life of the session.</t>
+          <t>Negotiate an XML stream with one's server.  (See <xref target='XMPP-CORE'/>.)</t>
+          <t>Retrieve one's roster.  (See <xref target='roster-login'/>.)</t>
+          <t>Send initial presence to the server for broadcasting to all subscribed contacts, thus "going online" from the perspective of XMPP communications.  (See <xref target='presence-initial'/>.)</t>
+          <t>Exchange messages, manage presence subscriptions, perform roster updates, and in general process and generate other XML stanzas with particular semantics throughout the life of the session.  (See <xref target='message'/> and <xref target='iq'/>.)</t>
           <t>Terminate the session when desired by sending unavailable presence and closing the underlying XML stream. (See <xref target='presence-unavailable'/>.)</t>
         </list>
       </t>
     </section>
-    <section title="Terminology" anchor="intro-terms">
+    <section title="Conventions" anchor="intro-conventions">
       <t>This document inherits the terminology defined in <xref target="XMPP-CORE"/>.</t>
       <t>The following keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
+      <t>In examples, lines have been wrapped for improved readability.</t>
     </section>
   </section>
 
@@ -93,26 +96,33 @@
     <t>In XMPP, one's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user may access roster information from any resource.</t>
     <t>Note: There are important interactions between rosters and subscriptions; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of roster management (however, such an understanding is necessary only for developers of XMPP servers, since most of the complexity is shielded from clients).</t>
     <section title="Syntax and Semantics" anchor="roster-syntax">
-      <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The &lt;query/&gt; element MAY contain one or more &lt;item/&gt; children, each describing a unique roster item or "contact".</t>
-      <t>The "key" or unique identifier for each roster item is a Jabber Identifier or JID, encapsulated in the 'jid' attribute of the &lt;item/&gt; element (which is REQUIRED).</t>
-      <t>Note: When the item added represents another IM user, the value of the 'jid' attribute MUST be of the form &lt;contact@domain&gt; rather &lt;contact@domain/resource&gt;.</t>
+      <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The &lt;query/&gt; element MAY contain one or more &lt;item/&gt; children, each describing a unique roster item or "contact".  The following rules apply:</t>
+      <t>
+        <list style="symbols">
+          <t>An IQ stanza of type "get" sent from client to server and containing a &lt;query/&gt; element is defined as a ROSTER GET.  The &lt;query/&gt; element in a roster get MUST be empty (i.e., contain no child elements).</t>
+          <t>An IQ stanza of type "set" sent from client to server and containing a &lt;query/&gt; element is defined as a ROSTER SET.  The &lt;query/&gt; element in a roster set MUST contain one and only one &lt;item/&gt; element.</t>
+          <t>An IQ stanza of type "set" sent from server to client and containing a &lt;query/&gt; element is defined as a ROSTER PUSH.  The &lt;query/&gt; element in a roster get MUST contain one and only one &lt;item/&gt; element.</t>
+          <t>An IQ stanza of type "result" sent from server to client and containing a &lt;query/&gt; element is defined as a ROSTER RESULT.  The &lt;query/&gt; element in a roster result MUST contain at least one &lt;item/&gt; element and MAY contain multiple &lt;item/&gt; elements.</t>
+        </list>
+      </t>
+      <t>The "key" or unique identifier for each roster item is a Jabber Identifier or JID, encapsulated in the 'jid' attribute of the &lt;item/&gt; element, which is REQUIRED.  Note: When the item added represents another IM user, the value of the 'jid' attribute MUST be a bare JID (&lt;contact@domain&gt;) rather a full JID (&lt;contact@domain/resource&gt;).</t>
       <t>The state of the presence subscription in relation to a roster item is captured in the 'subscription' attribute of the &lt;item/&gt; element.  Allowable values for this attribute are:</t>
-      <t><list style="symbols">
-        <t>"none" -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
-        <t>"to" -- the user has a subscription to the contact's presence information, but the contact does not have a subscription to the user's presence information</t>
-        <t>"from" -- the contact has a subscription to the user's presence information, but the user does not have a subscription to the contact's presence information</t>
-        <t>"both" -- both the user and the contact have subscriptions to each other's presence information (also called a "mutual subscription")</t>
-      </list></t>
-      <t>Each &lt;item/&gt; element MAY possess a 'name' attribute, which sets the "handle" to be associated with the JID, as determined by the user (not the contact).  The value of the 'name' attribute is opaque.</t>
-      <t>Each &lt;item/&gt; element MAY contain one or more &lt;group/&gt; child elements, for use in collecting roster items into various categories.  The XML character data of the &lt;group/&gt; element is opaque.</t>
-    </section>
-    <section title="Business Rules" anchor="roster-rules">
-      <t>A server MUST ignore any 'to' address on a roster "set", and MUST treat any roster "set" as applying to the sender.  For added safety, a client SHOULD check the "from" address of a ROSTER PUSH (i.e., an incoming IQ of type "set" containing a roster item) to ensure that it is from a trusted source; specifically, the stanza MUST either have no 'from' attribute (i.e., implicitly from the server) or have a 'from' attribute whose value matches the user's bare JID (of the form &lt;user@domain&gt;) or full JID (of the form &lt;user@domain/resource&gt;); otherwise, the client SHOULD ignore the "roster push".</t>
+      <t>
+        <list style="symbols">
+          <t>"none" -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
+          <t>"to" -- the user has a subscription to the contact's presence information, but the contact does not have a subscription to the user's presence information</t>
+          <t>"from" -- the contact has a subscription to the user's presence information, but the user does not have a subscription to the contact's presence information</t>
+          <t>"both" -- both the user and the contact have subscriptions to each other's presence information (also called a "mutual subscription")</t>
+        </list>
+      </t>
+      <t>Each &lt;item/&gt; element MAY possess a 'name' attribute, which specifies the "handle" to be associated with the JID, as determined by the user (not the contact).  The value of the 'name' attribute is opaque to the server but may have meaning to a human user.</t>
+      <t>Each &lt;item/&gt; element MAY contain one or more &lt;group/&gt; child elements, for use in collecting roster items into various categories.  The XML character data of the &lt;group/&gt; element is opaque to the server but may have meaning to a human user.</t>
     </section>
     <section title="Retrieving One's Roster on Login" anchor="roster-login">
-      <t>Upon authenticating with a server and binding a resource (thus becoming a CONNECTED RESOURCE), a client SHOULD request the roster before sending initial presence (however, because receiving the roster may not be desirable for all resources, e.g., a connection with limited bandwidth, the client's request for the roster is recommended and not required).  If an available resource does not request the roster during a session, the server MUST NOT send it presence subscriptions and associated roster updates.  For the sake of brevity, the term INTERESTED RESOURCE is used herein to refer to the concept of "an available resource that has requested the roster".</t>
+      <t>Upon authenticating with a server and binding a resource (thus becoming a connected resource), a client SHOULD request the roster before sending initial presence (however, because receiving the roster may not be desirable for all resources, e.g., a connection with limited bandwidth, the client's request for the roster is recommended and not required).  After a connected resource sends initial presence (see <xref target='presence-initial'/>), it is referred to as an AVAILABLE RESOURCE.  If a connected resource requests the roster but does not send initial presence, the server SHOULD NOT send it presence subscriptions and SHOULD NOT send it associated roster updates.  If an available resource does not request the roster during a session, the server SHOULD NOT send it presence subscriptions and MUST NOT associated roster updates.  For the sake of brevity, the term INTERESTED RESOURCE is used herein to refer to the concept of "an available resource that has requested the roster".</t>
+      <t>A client requests the roster by sending a roster get over its stream to the server.</t>
       <figure>
-        <preamble>Example: Client requests current roster from server:</preamble>
+        <preamble>Example: Client requests roster from server:</preamble>
         <artwork><![CDATA[
 <iq from='juliet@example.com/balcony' type='get' id='roster_1'>
   <query xmlns='jabber:iq:roster'/>
@@ -139,6 +149,7 @@
 </iq>
         ]]></artwork>
       </figure>
+      <t>If the server cannot process the roster get, it MUST return an appropriate stanza error as described in <xref target='XMPP-CORE'/> (such as &lt;service-unavailable/&gt; if the roster namespace is not supported or &lt;internal-server-error/&gt; if the server experiences trouble returning the roster).</t>
     </section>
     <section title="Adding a Roster Item" anchor="roster-add">
       <t>At any time, a user MAY add an item to his or her roster by sending an IQ stanza of type "set" containing a &lt;query/&gt; element that in turn contains one &lt;item/&gt; element.</t>
@@ -275,6 +286,10 @@
       <t>As with adding a roster item, when deleting a roster item the server MUST update the roster information in persistent storage, initiate a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource.</t>
       <t>This command will result in cancellation of existing presence subscriptions; for details, see <xref target="int-remove">Removing a Roster Item and Cancelling All Subscriptions</xref>.</t>
     </section>
+    <section title="Business Rules" anchor="roster-rules">
+      <t>A server MUST ignore any 'to' address on a roster set and MUST treat any roster set as applying to the sender's bare JID.</t>
+      <t>A client MUST ignore a roster push unless it has no 'from' attribute (i.e., implicitly from the server) or it has a 'from' attribute whose value matches the user's bare JID (of the form &lt;user@domain&gt;) or full JID (of the form &lt;user@domain/resource&gt;).</t>
+    </section>
   </section>
 
   <section title="Managing Presence Subscriptions" anchor="sub">
@@ -300,7 +315,7 @@
           type='unsubscribed'/>
         ]]></artwork>
       </figure>
-      <t>A user's server MUST NOT automatically approve subscription requests on the user's behalf.  All subscription requests MUST be delivered to the user's client, specifically to one or more of the user's interested resources.  If the user has no interested resources when the subscription request is received by the user's server, the user's server MUST keep a record of the complete subscription request (including any extended namespacescontained therein) and deliver the request when the user next has an interested resource, until the user either approves or denies the request.  If there is more than one interested resource associated with the user when the subscription request is received by the user's server, the user's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.  However, if the user receives a presence stanza of type "subscribe" from a contact to whom the user has already granted permission to see the user's presence information (e.g., in cases when the contact is seeking to resynchronize subscription states), the user's server SHOULD auto-reply on behalf of the user.  In addition, the user's server MAY choose to re-send an unapproved pending subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
+      <t>A user's server MUST NOT automatically approve subscription requests on the user's behalf.  All subscription requests MUST be delivered to the user's client, specifically to one or more of the user's interested resources.  If the user has no interested resources when the subscription request is received by the user's server, the user's server MUST keep a record of the complete subscription request (including any extended namespaces contained therein) and deliver the request when the user next has an interested resource, until the user either approves or denies the request; however, the server MUST NOT deliver more than one subscription request from any given entity when the user next has an interested resource (e.g., if an entity sends multiple subscription requests to the user while the user is offline, the server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the user next has an interested resource).  If there is more than one interested resource associated with the user when the subscription request is received by the user's server, the user's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.  However, if the user receives a presence stanza of type "subscribe" from a contact to whom the user has already granted permission to see the user's presence information (e.g., in cases when the contact is seeking to resynchronize subscription states), the user's server SHOULD auto-reply on behalf of the user.  In addition, the user's server MAY choose to re-send an unapproved pending subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
       <t>Note: When a contact generates a subscription request to a user, the contact's server MUST stamp the outgoing presence stanza with the bare JID (&lt;contact@domain&gt;) of the contact, not the full JID (&lt;contact@domain/resource&gt;).  The same is true for presence stanzas of type "subscribed", "unsubscribe", and "unsubscribed".</t>
       <t>Note: If a user sends a presence subscription request to a contact but has not already added the contact to the user's roster, the user's server MUST send a roster push to all of the user's interested resources.  Thus a client MAY simply wait for the roster push rather than proactively adding to the contact to the user's roster.</t>
     </section>
@@ -881,8 +896,8 @@
         <t>Else if the JID is of the form &lt;user@domain/resource&gt; and no connected or available resource exactly matches the full JID, the recipient's server (a) SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error) if it is a presence stanza, (b) MUST return a &lt;service-unavailable/&gt; stanza error to the sender if it is an IQ stanza, and (c) SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; if it is a message stanza.</t>
         <t>Else if the JID is of the form &lt;user@domain&gt; and there is at least one available resource available for the user, the recipient's server MUST follow these rules:
         <list style="numbers">
-          <t>For message stanzas, the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.  However, the server MUST NOT deliver the stanza to an available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources (defined in the text that follows).  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          <t>For presence stanzas other than those of type "probe", the server MUST deliver the stanza to all available resources; for presence probes, the server SHOULD reply based on the rules defined in <xref target="presence-probes">Presence Probes</xref>.  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+          <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.  For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.  However, the server MUST NOT deliver the stanza to an available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources (defined in the text that follows).  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+          <t>For presence stanzas other than those of type "probe", the server MUST deliver the stanza to all available resources; for presence probes, the server SHOULD reply based on the rules defined under <xref target="presence-probes">Presence Probes</xref>.  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
           <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide, the server MUST reply to the stanza on behalf of the user; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
         </list></t>
         <t>Else if the JID is of the form &lt;user@domain&gt; and there are no available resources associated with the user, how the stanza shall be handled depends on the stanza type:
@@ -966,16 +981,6 @@
   <back>
 
     <references title="Normative References">
-
-<reference anchor="CPIM">
-<front>
-<title>Common Profile for Instant Messaging (CPIM)</title>
-<author initials='J.' surname='Peterson' fullname='J. Peterson'>
-<organization /></author>
-<date year='2004' month='August' /></front>
-<seriesInfo name='RFC' value='3860' />
-<format type='TXT' octets='26486' target='ftp://ftp.isi.edu/in-notes/rfc3860.txt' />
-</reference>
 
 <reference anchor="IMP-REQS">
 <front>
@@ -1258,6 +1263,16 @@
 
     <references title="Informative References">
 
+<reference anchor="CPIM">
+<front>
+<title>Common Profile for Instant Messaging (CPIM)</title>
+<author initials='J.' surname='Peterson' fullname='J. Peterson'>
+<organization /></author>
+<date year='2004' month='August' /></front>
+<seriesInfo name='RFC' value='3860' />
+<format type='TXT' octets='26486' target='ftp://ftp.isi.edu/in-notes/rfc3860.txt' />
+</reference>
+
 <reference anchor="IMP-MODEL">
 <front>
 <title>A Model for Presence and Instant Messaging</title>
@@ -1309,6 +1324,34 @@
 <t>&lt;p>This document is an update describing the architecture of the current IRC protocol and the role of its different components. Other documents describe in detail the protocol used between the various components defined here. This memo provides information for the Internet community. &lt;/p></t></abstract></front>
 <seriesInfo name='RFC' value='2810' />
 <format type='TXT' octets='19087' target='ftp://ftp.isi.edu/in-notes/rfc2810.txt' />
+</reference>
+
+<reference anchor="SASL">
+<front>
+<title>Simple Authentication and Security Layer (SASL)</title>
+<author initials='A.' surname='Melnikov' fullname='A. Melnikov'>
+<organization /></author>
+<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>&lt;p>The Simple Authentication and Security Layer (SASL) is a framework for providing authentication and data security services in connection-oriented protocols via replaceable mechanisms. It provides a structured interface between protocols and mechanisms. The resulting framework allows new protocols to reuse existing mechanisms and allows old protocols to make use of new mechanisms. The framework also provides a protocol for securing subsequent protocol exchanges within a data security layer.&lt;/p>&lt;p> This document describes how a SASL mechanism is structured, describes how protocols include support for SASL, and defines the protocol for carrying a data security layer over a connection. In addition, this document defines one SASL mechanism, the EXTERNAL mechanism.&lt;/p>&lt;p> This document obsoletes RFC 2222. [STANDARDS TRACK]&lt;/p></t></abstract></front>
+<seriesInfo name='RFC' value='4422' />
+<format type='TXT' octets='73206' target='ftp://ftp.isi.edu/in-notes/rfc4422.txt' />
+</reference>
+
+<reference anchor='TLS'>
+<front>
+<title>The Transport Layer Security (TLS) Protocol Version 1.1</title>
+<author initials='T.' surname='Dierks' fullname='T. Dierks'>
+<organization /></author>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<date year='2006' month='April' />
+<abstract>
+<t>&lt;p>This document specifies Version 1.1 of the Transport Layer Security (TLS) protocol. The TLS protocol provides communications security over the Internet. The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS TRACK]&lt;/p></t></abstract></front>
+<seriesInfo name='RFC' value='4346' />
+<format type='TXT' octets='187041' target='ftp://ftp.isi.edu/in-notes/rfc4346.txt' />
 </reference>
 
 <reference anchor="XEP-0016">
@@ -2766,7 +2809,7 @@
       <t>Based on consensus derived from interoperability testing and implementation experience, the following modifications were made from RFC 3921.  In addition, several smaller changes were made to more clearly specify and explain the protocols.</t>
       <t>
         <list style='symbols'>
-          <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, server implementations may still want to advertise support for the feature in order to ensure backwards-compatibility, even though it is a "no-op".</t>
+          <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, server implementations may still want to advertise support for the feature in order to ensure backward-compatibility, even though it is a "no-op".</t>
           <t>The protocol for communications blocking specified in Section 10 of RFC 3921 has been moved to <xref target='XEP-0016'/> and a simplified "front-end" to that functionality has been defined in <xref target='XEP-0191'/> to ease the task of implementing communications blocking in servers and clients.</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between servers, error handling related to presence probes and presence notifications was modified to return presence stanzas of type "unbsubscribe" or "unsubscribed" rather than error stanzas.</t>
         </list>
