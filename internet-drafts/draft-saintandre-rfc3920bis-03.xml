@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="June" day="15"/>
+    <date year="2007" month="June" day="18"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -88,7 +88,16 @@
     </section>
     <section title="Conventions" anchor="intro-conventions">
       <t>The following keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>In examples, lines have been wrapped for improved readability and the prepended strings "C:", "S:", and "P:" stand for "client", "server", "peer server" respectively.</t>
+      <t>In examples, lines have been wrapped for improved readability and the following prepended strings are used:</t>
+      <t>
+        <list style='symbols'>
+          <t>C: = client</t>
+          <t>I: = initiating entity</t>
+          <t>P: = peer server</t>
+          <t>R: = receiving entity</t>
+          <t>S: = server</t>
+        </list>
+      </t>
     </section>
   </section>
 
@@ -145,7 +154,7 @@ romeo@example.net               juliet@example.com
   <section title="Addresses" anchor="addressing">
 
     <section title="Overview" anchor="addressing-overview">
-      <t>An ENTITY is anything that is network-addressable and that can communicate using XMPP.  For historical reasons, the native address of an XMPP entity is called a JABBER IDENTIFIER or JID.  A valid JID contains a set of ordered elements formed of a domain identifier, node identifier, and resource identifier.</t>
+      <t>An ENTITY is anything that is network-addressable and that can communicate using XMPP.  For historical reasons, the native address of an XMPP entity is called a JABBER IDENTIFIER or JID.  A valid JID contains a set of ordered elements formed of an XMPP domain identifier, node identifier, and resource identifier.</t>
       <t>The syntax for a JID is defined as follows using the Augmented Backus-Naur Form as defined in <xref target="ABNF"/>.</t>
       <figure>
         <artwork><![CDATA[
@@ -173,18 +182,18 @@ romeo@example.net               juliet@example.com
     </section>
 
     <section title="Domain Identifier" anchor="addressing-domain">
-      <t>The DOMAIN IDENTIFIER portion of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  Typically it identifies the "home" server to which clients connect for XML routing and data management functionality.  A single server may host multiple domain identifiers (local domains).  Furthermore, it is not necessary for a domain identifier to identify an entity that provides core XMPP server functionality (e.g., domain identifier may identity an entity such as a multi-user conference service, a publish-subscribe service, or a user directory).</t>
+      <t>The DOMAIN IDENTIFIER portion of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  Typically it identifies the "home" server to which clients connect for XML routing and data management functionality.  A single server may host multiple domain identifiers (local domains).  Furthermore, it is not necessary for an XMPP domain identifier to identify an entity that provides core XMPP server functionality (e.g., domain identifier may identity an entity such as a multi-user conference service, a publish-subscribe service, or a user directory).</t>
       <t>The domain identifier for every server or service that will communicate over a network SHOULD be a fully qualified domain name (see <xref target='DNS'/>) but MAY be either an IPv4 or IPv6 address or a text label (commonly called an "unqualified hostname") that is resolvable on a local network.  If the domain identifier includes a final character considered to be a label separator (dot) by <xref target='IDNA'/> or <xref target='STD13'/>, this character MUST be stripped from the domain identifier before the JID of which it is a part is used for the purpose of routing an XML stanza, comparing against another JID, or constructing an <xref target='XMPP-URI'/>; in particular, the character should be stripped before any other canonicalization steps are taken (such as application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> or completion of the ToASCII operation as described in <xref target='IDNA'/>).</t>
       <t>A domain identifier MUST be an "internationalized domain name" as defined in <xref target='IDNA'/>, that is, "a domain name in which every label is an internationalized label".  When preparing a text label (consisting of a sequence of Unicode code points) for representation as an internationalized label in the process of constructing an XMPP domain identifier or comparing two XMPP domain identifiers, an application MUST ensure that for each text label it is possible to apply without failing the ToASCII operation specified in <xref target='IDNA'/> with the UseSTD3ASCIIRules flag set (thus forbidding ASCII code points other than letters, digits, and hyphens).  If the ToASCII operation can be applied without failing, then the label is an internationalized label.  An internationalized domain name (and therefore an XMPP domain identifier) is constructed from its constituent internationalized labels by following the rules specified in <xref target='IDNA'/>.  (Note: The ToASCII operation includes application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> and encoding using the algorithm specified in <xref target='PUNYCODE'/>; for details, see <xref target='IDNA'/>.)</t>
     </section>
 
     <section title='Node Identifier' anchor='addressing-node'>
-      <t>The NODE IDENTIFIER portion of a JID is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  Typically it uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user conference service).  The entity represented by a node identifier is addressed within the context of a specific domain.  When the domain is an XMPP server and the entity is a local account on the server, the resulting address (of the form &lt;node@domain&gt;) is called a BARE JID.</t>
+      <t>The NODE IDENTIFIER portion of a JID is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  Typically it uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user conference service).  The entity represented by an XMPP node identifier is addressed within the context of a specific domain.  When the domain is an XMPP server and the entity is a local account on the server, the resulting address (of the form &lt;node@domain&gt;) is called a BARE JID.</t>
       <t>A node identifier MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two node identifiers, an application MUST first apply the Nodeprep profile to each identifier.</t>
     </section>
 
     <section title="Resource Identifier" anchor="addressing-resource">
-      <t>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier may modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  Typically it uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with a node identifier at a local domain.  A resource identifier has no semantic meaning and is opaque to both servers and clients.  It is negotiated between a client and a server during <xref target='bind'>Resource Binding</xref>, after which the entity is referred to as a CONNECTED RESOURCE and its address (of the form &lt;node@domain/resource&gt;) is referred to as a FULL JID.  An entity MAY maintain multiple connected resources simultaneously, with each connected resource differentiated by a distinct resource identifier.</t>
+      <t>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier may modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  Typically it uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP node identifier at a local domain.  A resource identifier has no semantic meaning and is opaque to both servers and clients.  It is negotiated between a client and a server during <xref target='bind'>Resource Binding</xref>, after which the entity is referred to as a CONNECTED RESOURCE and its address (of the form &lt;node@domain/resource&gt;) is referred to as a FULL JID.  An entity MAY maintain multiple connected resources simultaneously, with each connected resource differentiated by a distinct resource identifier.</t>
       <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, an application MUST first apply the Resourceprep profile to each identifier.</t>
     </section>
 
@@ -1100,28 +1109,47 @@ S: </stream:stream>
     <section title="Overview" anchor="tls-overview">
       <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the <xref target="TLS">Transport Layer Security (TLS) protocol</xref>, along with a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
       <t>Support for TLS is REQUIRED in XMPP client and server implementations.  An administrator of a given deployment MAY require the use of TLS for client-to-server communications, server-to-server communications, or both.  Clients SHOULD use TLS to secure the streams prior to attempting the completion of <xref target='sasl'>SASL negotiation</xref>, and servers SHOULD use TLS between two domains for the purpose of securing server-to-server communications.</t>
-      <t>The following rules apply:</t>
+      <t>Examples of TLS negotiation are provided under <xref target="examples"/>.</t>
+    </section>
+    <section title="Rules" anchor="tls-rules">
+      <t>The following rules apply to TLS negotiation in XMPP:</t>
       <t><list style='numbers'>
-        <t>An initiating entity that complies with this specification MUST include the 'version' attribute set to a value of "1.0" in the initial stream header.</t>
-        <t>If the TLS negotiation occurs between two servers, communications MUST NOT proceed until the Domain Name System (DNS) hostnames asserted by the servers have been resolved (see <xref target="security-server">Server-to-Server Communications</xref>).</t>
-        <t>When a receiving entity that complies with this specification receives an initial stream header that includes the 'version' attribute set to a value of at least "1.0", after sending a stream header in reply (including the version flag), it MUST include a &lt;starttls/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) along with the list of other stream features it supports.</t>
+        <t>If the initiating entity is capable of TLS negotiation, then it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
+        <t>If the receiving entity is capable of TLS negotiation, it MUST respond to the initial stream header with a response stream header and then send stream features to the initiating entity; the stream features SHOULD include a &lt;starttls/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to indicate that the receiving entity supports TLS negotiation.</t>
+        <t>If the receiving entity requires the use of TLS, it SHOULD include an empty &lt;required/&gt; element as a child of the &lt;starttls/&gt; element.</t>
         <t>If the initiating entity chooses to use TLS, TLS negotiation MUST be completed before proceeding to SASL negotiation; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate provided during prior TLS negotiation.</t>
         <t>During TLS negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the TLS examples that follow are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
         <t>The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
         <t>The initiating entity MUST validate the certificate presented by the receiving entity; see <xref target="security-validation">Certificate Validation</xref> regarding certificate validation procedures.</t>
-        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "im.example.net", the certificate MUST be checked as "example.net".  If a JID for an XMPP client (e.g., an end user account) is represented in a certificate, it MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document.  If a JID for an XMPP server is represented in a certificate, it SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in <xref target="tls-overview-oid"/> of this document; however, the JID for an XMPP server MAY also or instead be represented as a subjectAltName extension of type dNSName, where the dNSName may contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.net matches im1.example.net and im2.example.net but not chat.example.net).</t>
-        <t>If the TLS negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity.</t>
+        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "im.example.net", the certificate MUST be checked as "example.net".</t>
+        <t>If the TLS negotiation results in failure, the receiving entity MUST terminate both the XML stream and the underlying TCP connection.</t>
         <t>If the TLS negotiation is successful, the receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS takes effect.</t>
         <t>If the TLS negotiation is successful, the initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS takes effect.</t>
-        <t>If the TLS negotiation is successful, the receiving entity MUST NOT offer the STARTTLS extension to the initiating entity along with the other stream features that are offered after the new stream header is received and responded to.</t>
-        <t>If the TLS negotiation is successful, the initiating entity MUST continue with SASL negotiation.</t>
-        <t>If the TLS negotiation results in failure, the receiving entity MUST terminate both the XML stream and the underlying TCP connection.</t>
+        <t>If the TLS negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity.</t>
+        <t>After the receiving entity receives the new stream header from the initiating entity, it MUST respond with a stream header and offer stream features, which MUST NOT include the STARTTLS feature but which SHOULD include the SASL stream feature.</t>
+        <t>If the initiating entity receives the SASL stream feature from the receiving entity, it MUST then continue with SASL negotiation.</t>
         <t>See <xref target="security-mandatory">Mandatory-to-Implement Technologies</xref> regarding mechanisms that MUST be supported.</t>
       </list></t>
-      <section title="ASN.1 Object Identifier for XMPP Address" anchor="tls-overview-oid">
-        <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" described above is defined as follows.</t>
-        <figure>
-          <artwork><![CDATA[
+    </section>
+    <section title="Narrative" anchor="tls-narr">
+      <t>When an initiating entity secures a stream with a receiving entity using TLS, the steps involved are:</t>
+      <t><list style='numbers'>
+        <t>The initiating entity opens a TCP connection and initiates the stream by sending the opening XML stream header to the receiving entity (including the 'version' attribute set to a value of at least "1.0").</t>
+        <t>The receiving entity responds by sending an XML stream header to the initiating entity (including the 'version' attribute set to a value of at least "1.0") over the TCP connection opened by the initiating entity (for client-to-server streams) or over a new TCP connection (for server-to-server streams).</t>
+        <t>The receiving entity offers the STARTTLS extension to the initiating entity by including it with the list of other supported stream features (if successful TLS negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;starttls/&gt; element).</t>
+        <t>The initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a TLS negotiation to secure the stream.</t>
+        <t>The receiving entity MUST reply with either a &lt;proceed/&gt; element or a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.  If the failure case occurs, the receiving entity MUST terminate both the XML stream and the underlying TCP connection (failure cases include when the initiating entity sends a malformed STARTTLS command, when the receiving entity does not offer TLS negotiation either temporarily or permanently, and when the receiving entity cannot complete TLS negotiation because of an internal error).  If the proceed case occurs, the entities MUST attempt to complete the TLS negotiation over the TCP connection and MUST NOT send any further XML data until the TLS negotiation is complete.</t>
+        <t>The initiating entity and receiving entity attempt to complete a TLS negotiation in accordance with <xref target="TLS"/>.</t>
+        <t>If the TLS negotiation is unsuccessful, the receiving entity MUST terminate the TCP connection.  If the TLS negotiation is successful, the initiating entity MUST initiate a new stream by sending an opening XML stream header to the receiving entity (it is not necessary to send a closing &lt;/stream&gt; tag first, since the receiving entity and initiating entity MUST consider the original stream to be closed upon successful TLS negotiation).</t>
+        <t>Upon receiving the new stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity along with the available features (but not including the STARTTLS feature).</t>
+      </list></t>
+    </section>
+    <section title="Representation of JIDs in Certificates" anchor="tls-rep">
+      <t>If a JID for an XMPP user account is represented in a certificate, it MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in this section.</t>
+      <t>If a JID for an XMPP server is represented in a certificate, it SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in this section.  However, in addition to or instead of the "id-on-xmppAddr" representation, it MAY be represented as a subjectAltName extension of type dNSName; this dNSName MAY contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.net matches im1.example.net and im2.example.net but not chat.example.net).</t>
+      <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" is defined as follows.</t>
+      <figure>
+        <artwork><![CDATA[
 id-pkix OBJECT IDENTIFIER ::= { iso(1) identified-organization(3)
         dod(6) internet(1) security(5) mechanisms(5) pkix(7) }
 
@@ -1130,52 +1158,48 @@ id-on  OBJECT IDENTIFIER ::= { id-pkix 8 }  -- other name forms
 id-on-xmppAddr  OBJECT IDENTIFIER ::= { id-on 5 }
 
 XmppAddr ::= UTF8String
-          ]]></artwork>
-        </figure>
-        <t>This Object Identifier MAY also be represented in dotted display format (i.e., "1.3.6.1.5.5.7.8.5") or in the Uniform Resource Name notation specified in <xref target='URN-OID'/> (i.e., "urn:oid:1.3.6.1.5.5.7.8.5").</t>
-        <t>Thus for example the JID "example.com" as included in a certificate might be formatted as "subjectAltName=otherName:1.3.6.1.5.5.7.8.5;UTF8:example.com".</t>
-      </section>
+        ]]></artwork>
+      </figure>
+      <t>This Object Identifier MAY be represented in dotted display format (i.e., "1.3.6.1.5.5.7.8.5") or in the Uniform Resource Name notation specified in <xref target='URN-OID'/> (i.e., "urn:oid:1.3.6.1.5.5.7.8.5").</t>
+      <t>Thus for example the JID "juliet@example.com" as included in a certificate could be formatted in any of the following three ways:</t>
+      <t>
+        <list style='symbols'>
+          <t>subjectAltName=otherName:id-on-xmppAddr;UTF8:juliet@example.com</t>
+          <t>subjectAltName=otherName:1.3.6.1.5.5.7.8.5;UTF8:juliet@example.com</t>
+          <t>subjectAltName=otherName:urn:oid:1.3.6.1.5.5.7.8.5;UTF8:juliet@example.com</t>
+        </list>
+      </t>
     </section>
-    <section title="Narrative" anchor="tls-narr">
-      <t>When an initiating entity secures a stream with a receiving entity using TLS, the steps involved are:</t>
-      <t><list style='numbers'>
-        <t>The initiating entity opens a TCP connection and initiates the stream by sending the opening XML stream header to the receiving entity, including the 'version' attribute set to a value of at least "1.0".</t>
-        <t>The receiving entity responds by opening a TCP connection and sending an XML stream header to the initiating entity, including the 'version' attribute set to a value of at least "1.0".</t>
-        <t>The receiving entity offers the STARTTLS extension to the initiating entity by including it with the list of other supported stream features (if successful TLS negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;starttls/&gt; element); the receiving entity SHOULD also include a list of supported SASL mechanisms in the stream features.</t>
-        <t>The initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a TLS negotiation to secure the stream.</t>
-        <t>The receiving entity MUST reply with either a &lt;proceed/&gt; element or a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.  If the failure case occurs, the receiving entity MUST terminate both the XML stream and the underlying TCP connection (failure cases include when the initiating entity sends a malformed STARTTLS command, when the receiving entity does not offer TLS negotiation either temporarily or permanently, and when the receiving entity cannot complete TLS negotiation because of an internal error).  If the proceed case occurs, the entities MUST attempt to complete the TLS negotiation over the TCP connection and MUST NOT send any further XML data until the TLS negotiation is complete.</t>
-        <t>The initiating entity and receiving entity attempt to complete a TLS negotiation in accordance with <xref target="TLS"/>.</t>
-        <t>If the TLS negotiation is unsuccessful, the receiving entity MUST terminate the TCP connection.  If the TLS negotiation is successful, the initiating entity MUST initiate a new stream by sending an opening XML stream header to the receiving entity (it is not necessary to send a closing &lt;/stream&gt; tag first, since the receiving entity and initiating entity MUST consider the original stream to be closed upon successful TLS negotiation).</t>
-        <t>Upon receiving the new stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity along with the available features (but not including the STARTTLS feature) and SHOULD include an updated list of SASL mechanisms so that the initiating entity can detect any changes to the list of SASL mechanisms supported by the receiving entity.</t>
-      </list></t>
-    </section>
-    <t>Examples of TLS negotiation are provided under <xref target="examples"/>.</t>
   </section>
 
   <section title="SASL Negotiation" anchor="sasl">
     <section title="Overview" anchor="sasl-overview">
       <t>XMPP includes a method for authenticating a stream by means of an XMPP-specific profile of the Simple Authentication and Security Layer protocol (see <xref target="SASL"/>).  SASL provides a generalized method for adding authentication support to connection-based protocols, and XMPP uses a generic XML namespace profile for SASL that conforms to the profiling requirements of <xref target="SASL"/>.</t>
-      <t>The following rules apply:</t>
-      <t><list style='numbers'>
-        <t>If the SASL negotiation occurs between two servers, communications MUST NOT proceed until the Domain Name System (DNS) hostnames asserted by the servers have been resolved (see <xref target="security-server">Server-to-Server Communications</xref>).</t>
-        <t>If the initiating entity is capable of SASL negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
-        <t>If the receiving entity is capable of SASL negotiation, it MUST advertise one or more authentication mechanisms within a &lt;mechanisms/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace in reply to the opening stream tag received from the initiating entity (if the opening stream tag included the 'version' attribute set to a value of at least "1.0").</t>
-        <t>During SASL negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the SASL examples that follow are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
-        <t>Any XML character data contained within the XML elements used during SASL negotiation MUST be encoded using base64, where the encoding adheres to the definition in Section 4 of <xref target="BASE64">RFC 3548</xref>.</t>
-        <t>If the receiving entity does not include a 'realm' value, the initiating entity must default it to the domain identifier portion of the receiving entity's JID.</t>
-        <t>If provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms), during authentication the initiating entity SHOULD provide as the simple username its sending domain (IP address or fully qualified domain name as contained in a domain identifier) in the case of server-to-server communications or its registered account name (user or node name as contained in an XMPP node identifier) in the case of client-to-server communications.  In either case, the initiating entity MUST ensure that the username adheres to the <xref target="NAMEPREP"/> or <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> (as appropriate) before sending it to the receiving entity.  (Note: Account provisioning is out of scope for this specification; possible methods for account provisioning include account creation by a server administrator and in-band account registration using the 'jabber:iq:register' namespace as documented in <xref target="XEP-0077"/>.)</t>
-        <t>If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be of the form &lt;domain&gt; (i.e., a domain identifier only) for servers and of the form &lt;node@domain&gt; (i.e., node identifier and domain identifier) for clients.</t>
-        <t>If the SASL negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity.</t>
-        <t>Upon successful SASL negotiation that involves negotiation of a security layer, the receiving entity MUST discard any knowledge obtained from the initiating entity which was not obtained from the SASL negotiation itself; the receiving entity SHOULD also send new stream features (including an updated list of SASL mechanisms) so that the initiating entity can detect any changes to the list of mechanisms supported by the receiving entity.</t>
-        <t>Upon successful SASL negotiation that involves negotiation of a security layer, the initiating entity MUST discard any knowledge obtained from the receiving entity which was not obtained from the SASL negotiation itself.</t>
-        <t>See <xref target="security-mandatory">Mandatory-to-Implement Technologies</xref> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well (best practices for the use of several SASL mechanisms in the context of XMPP are described in <xref target='XEP-0175'/> and <xref target='XEP-0178'/>).</t>
-      </list></t>
+      <t>Examples of SASL negotiation are provided under <xref target="examples"/>.</t>
+    </section>
+    <section title="Rules" anchor="sasl-rules">
+      <t>The following rules apply to SASL negotiation in XMPP:</t>
+      <t>
+        <list style='numbers'>
+          <t>If the initiating entity is capable of SASL negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
+          <t>If the receiving entity is capable of SASL negotiation, it MUST respond to the initial stream header with a response stream header and then send stream features to the initiating entity; the stream features SHOULD include a &lt;mechanisms/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace) that contains one &lt;mechanism/&gt; child element for each authentication mechanism the receiving entity offers to the initiating entity.</t>
+          <t>During SASL negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the SASL examples that follow are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
+          <t>Any XML character data contained within the XML elements used during SASL negotiation MUST be encoded using base64, where the encoding adheres to the definition in Section 4 of <xref target="BASE64">RFC 3548</xref>.</t>
+          <t>If the receiving entity does not include a 'realm' value, the initiating entity MUST default it to the domain identifier portion of the receiving entity's JID.</t>
+          <t>If provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms), during authentication the initiating entity SHOULD provide as the simple username its sending domain (IP address or fully qualified domain name as contained in an XMPP domain identifier) in the case of server-to-server communications or its registered account name (user or node name as contained in an XMPP node identifier) in the case of client-to-server communications.  In either case, the initiating entity MUST ensure that the username adheres to the <xref target="NAMEPREP"/> or <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> (as appropriate) before sending it to the receiving entity.</t>
+          <t>If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be of the form &lt;domain&gt; (i.e., an XMPP domain identifier only) for servers and of the form &lt;node@domain&gt; (i.e., node identifier and domain identifier) for clients.</t>
+          <t>If the SASL negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity, to which the receiving entity MUST repond with a response stream header and stream features.</t>
+          <t>Upon successful SASL negotiation that involves negotiation of a security layer, the receiving entity MUST discard any knowledge obtained from the initiating entity which was not obtained from the SASL negotiation itself; the receiving entity SHOULD also send new stream features (including an updated list of SASL mechanisms) so that the initiating entity can detect any changes to the list of mechanisms supported by the receiving entity.</t>
+          <t>Upon successful SASL negotiation that involves negotiation of a security layer, the initiating entity MUST discard any knowledge obtained from the receiving entity which was not obtained from the SASL negotiation itself.</t>
+          <t>See <xref target="security-mandatory">Mandatory-to-Implement Technologies</xref> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well (best practices for the use of several SASL mechanisms in the context of XMPP are described in <xref target='XEP-0175'/> and <xref target='XEP-0178'/>).</t>
+        </list>
+      </t>
     </section>
     <section title="Narrative" anchor="sasl-narr">
       <t>When an initiating entity authenticates with a receiving entity using SASL, the steps involved are:</t>
       <t><list style="numbers">
         <t>The initiating entity requests SASL authentication by including the 'version' attribute in the opening XML stream header sent to the receiving entity, with the value set to "1.0".</t>
-        <t>After sending an XML stream header in reply, the receiving entity advertises a list of available SASL authentication mechanisms as stream features; each of these is a &lt;mechanism/&gt; element included as a child within a &lt;mechanisms/&gt; container element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace, which in turn is a child of a &lt;features/&gt; element in the streams namespace.  If <xref target='tls'>TLS negotiation</xref> needs to be completed before a particular authentication mechanism may be used, the receiving entity MUST NOT provide that mechanism in the list of available SASL authentication mechanisms prior to TLS negotiation.  If the initiating entity presents a valid certificate during prior TLS negotiation, the receiving entity SHOULD offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>), although the EXTERNAL mechanism MAY be offered under other circumstances as well.  If successful SASL negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;mechanisms/&gt; element.  The receiving entity MAY include an application-specific child element inside the &lt;mechanisms/&gt; element in order to provide information that may be needed by the initiating in order to complete successful SASL negotiation using one or more of the offered mechanisms; the syntax and semantics of such an element are out of scope for this specification.</t>
+        <t>After sending an XML stream header in reply, the receiving entity advertises a list of available SASL authentication mechanisms as stream features; each of these is a &lt;mechanism/&gt; element included as a child within a &lt;mechanisms/&gt; container element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace, which in turn is a child of a &lt;features/&gt; element qualified by the streams namespace.  If <xref target='tls'>TLS negotiation</xref> needs to be completed before a particular authentication mechanism may be used, the receiving entity MUST NOT provide that mechanism in the list of available SASL authentication mechanisms prior to TLS negotiation.  If the initiating entity presents a valid certificate during prior TLS negotiation, the receiving entity SHOULD offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>), although the EXTERNAL mechanism MAY be offered under other circumstances as well.  If successful SASL negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;mechanisms/&gt; element.  The receiving entity MAY include an application-specific child element inside the &lt;mechanisms/&gt; element in order to provide information that may be needed by the initiating in order to complete successful SASL negotiation using one or more of the offered mechanisms; the syntax and semantics of such an element are out of scope for this specification.</t>
         <t>The initiating entity selects a mechanism by sending an &lt;auth/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace to the receiving entity and including an appropriate value for the 'mechanism' attribute.  This element MAY contain XML character data (in SASL terminology, the INITIAL RESPONSE) if the mechanism supports or requires it; if the initiating entity needs to send a zero-length initial response, it MUST transmit the response as a single equals sign ("="), which indicates that the response is present but contains no data.</t>
         <t>If necessary, the receiving entity challenges the initiating entity by sending to the initiating entity a &lt;challenge/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be computed in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
         <t>The initiating entity responds to the challenge by sending to the receiving entity a &lt;response/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be computed in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
@@ -1183,9 +1207,9 @@ XmppAddr ::= UTF8String
       </list></t>
       <t>This series of challenge/response pairs continues until one of three things happens:</t>
       <t><list style="numbers">
-        <t>The initiating entity aborts the handshake by sending an &lt;abort/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace to the receiving entity.  Upon receiving an &lt;abort/&gt; element, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5), after which it MUST terminate the TCP connection; this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
-        <t>The receiving entity reports failure of the handshake by sending a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace to the initiating entity (the particular cause of failure SHOULD be communicated in an appropriate child element of the &lt;failure/&gt; element as defined under <xref target="sasl-errors">SASL Errors</xref>).  If the failure case occurs, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2), after which it MUST terminate the TCP connection; this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
-        <t>The receiving entity reports success of the handshake by sending a &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace to the initiating entity; this element MAY contain XML character data (in SASL terminology, "additional data with success") if required by the chosen SASL mechanism; if the receiving entity needs to send additional data of zero length, it MUST transmit the data as a single equals sign ("=").  Upon receiving the &lt;success/&gt; element, the initiating entity MUST initiate a new stream by sending an opening XML stream header to the receiving entity (it is not necessary to send a closing &lt;/stream&gt; tag first, since the receiving entity and initiating entity MUST consider the original stream to be closed upon sending or receiving the &lt;success/&gt; element).  Upon receiving the new stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity, along with any available features or an empty &lt;features/&gt; element (to signify that no additional features are available); any such additional features not defined herein MUST be defined by the relevant extension to XMPP.  As noted, if SASL negotiation involved establishment of a security layer, the receiving entity SHOULD send an updated list of SASL mechanisms so that the initiating entity can detect any changes to the list of mechanisms supported by the receiving entity.</t>
+        <t>The initiating entity aborts the handshake by sending an &lt;abort/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace.  Upon receiving an &lt;abort/&gt; element, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5), after which it MUST terminate the TCP connection; this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
+        <t>The receiving entity reports failure of the handshake by sending a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace (the particular cause of failure SHOULD be communicated in an appropriate child element of the &lt;failure/&gt; element as defined under <xref target="sasl-errors">SASL Errors</xref>).  If the failure case occurs, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5), after which it MUST terminate the TCP connection; this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
+        <t>The receiving entity reports success of the handshake by sending a &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (in SASL terminology, "additional data with success") if required by the chosen SASL mechanism; if the receiving entity needs to send additional data of zero length, it MUST transmit the data as a single equals sign ("=").  Upon receiving the &lt;success/&gt; element, the initiating entity MUST initiate a new stream by sending an opening XML stream header to the receiving entity (it is not necessary to send a closing &lt;/stream&gt; tag first, since the receiving entity and initiating entity MUST consider the original stream to be closed upon sending or receiving the &lt;success/&gt; element).  Upon receiving the new stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity, along with any available features or an empty &lt;features/&gt; element (to signify that no additional features are available); any such additional features not defined herein MUST be defined by the relevant extension to XMPP.  As noted, if SASL negotiation involved establishment of a security layer, the receiving entity SHOULD send an updated list of SASL mechanisms so that the initiating entity can detect any changes to the list of mechanisms supported by the receiving entity.</t>
       </list></t>
     </section>
     <section title="SASL Definition" anchor="sasl-def">
@@ -1199,23 +1223,128 @@ XmppAddr ::= UTF8String
       </list></t>
     </section>
     <section title="SASL Errors" anchor="sasl-errors">
-      <t>The following SASL-related error conditions are defined:</t>
-      <t><list style='symbols'>
-        <t>&lt;aborted/&gt; -- The receiving entity acknowledges an &lt;abort/&gt; element sent by the initiating entity; sent in reply to the &lt;abort/&gt; element.</t>
-        <t>&lt;incorrect-encoding/&gt; -- The data provided by the initiating entity could not be processed because the <xref target="BASE64"/> encoding is incorrect (e.g., because the encoding does not adhere to the definition in Section 4 of <xref target="BASE64"/>); sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
-        <t>&lt;invalid-authzid/&gt; -- The authzid provided by the initiating entity is invalid, either because it is incorrectly formatted or because the initiating entity does not have permissions to authorize that ID; sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
-        <t>&lt;invalid-mechanism/&gt; -- The initiating entity did not provide a mechanism or requested a mechanism that is not supported by the receiving entity; sent in reply to an &lt;auth/&gt; element.</t>
-        <t>&lt;malformed-request/&gt; -- The challenge or response is malformed (e.g., the &lt;auth/&gt; element includes an initial response but the mechanism does not allow that); sent in reply to an &lt;abort/&gt;, &lt;auth/&gt;, &lt;challenge/&gt;, or &lt;response/&gt; element.</t>
-        <t>&lt;mechanism-too-weak/&gt; -- The mechanism requested by the initiating entity is weaker than server policy permits for that initiating entity; sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
-        <t>&lt;not-authorized/&gt; -- The authentication failed because the initiating entity did not provide proper credentials (this includes but is not limited to the case of an unknown username, and no differentiation is made between an unknown username and incorrect credentials); sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
-        <t>&lt;temporary-auth-failure/&gt; -- The authentication failed because of a temporary error condition within the receiving entity, and the initiating entity should try again later; sent in reply to an &lt;auth/&gt; element or &lt;response/&gt; element.</t>
-      </list></t>
+      <t>The following SASL-related error conditions are defined.</t>
+      <section title="aborted" anchor="sasl-errors-aborted">
+        <t>The receiving entity acknowledges an &lt;abort/&gt; element sent by the initiating entity; sent in reply to the &lt;abort/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <abort xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <aborted/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="incorrect-encoding" anchor="sasl-errors-incorrect-encoding">
+        <t>The data provided by the initiating entity could not be processed because the <xref target="BASE64"/> encoding is incorrect (e.g., because the encoding does not adhere to the definition in Section 4 of <xref target="BASE64"/>); sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
+         mechanism='DIGEST-MD5'>***</auth>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <incorrect-encoding/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="invalid-authzid" anchor="sasl-errors-invalid-authzid">
+        <t>The authzid provided by the initiating entity is invalid, either because it is incorrectly formatted or because the initiating entity does not have permissions to authorize that ID; sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+   dXNlcm5hbWU9Imp1bGlldCIscmVhbG09ImV4YW1wbGUuY29tIixub25jZT0iT0E2
+   TUc5dEVRR20yaGgiLGNub25jZT0iT0E2TUhYaDZWcVRyUmsiLG5jPTAwMDAwMDAx
+   LHFvcD1hdXRoLGRpZ2VzdC11cmk9InhtcHAvZXhhbXBsZS5jb20iLHJlc3BvbnNl
+   PWQzODhkYWQ5MGQ0YmJkNzYwYTE1MjMyMWYyMTQzYWY3LGNoYXJzZXQ9dXRmLTgK
+   </response>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <invalid-authzid/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="invalid-mechanism" anchor="sasl-errors-invalid-mechanism">
+        <t>The initiating entity did not provide a mechanism or requested a mechanism that is not supported by the receiving entity; sent in reply to an &lt;auth/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
+         mechanism='CRAM-MD5'/>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <invalid-mechanism/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="malformed-request" anchor="sasl-errors-malformed-request">
+        <t>The request is malformed (e.g., the &lt;auth/&gt; element includes an initial response but the mechanism does not allow that); sent in reply to an &lt;abort/&gt;, &lt;auth/&gt;, &lt;challenge/&gt;, or &lt;response/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
+         mechanism='ANONYMOUS'>ZXhhbXBsZS5jb20K</auth>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <malformed-request/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="mechanism-too-weak" anchor="sasl-errors-mechanism-too-weak">
+        <t>The mechanism requested by the initiating entity is weaker than server policy permits for that initiating entity; sent in reply to an &lt;auth/&gt; element (with or without initial response data) or a &lt;response/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
+         mechanism='PLAIN'/>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <mechanism-too-weak/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="not-authorized" anchor="sasl-errors-not-authorized">
+        <t>The authentication failed because the initiating entity did not provide proper credentials; sent in reply to a &lt;response/&gt; element or an &lt;auth/&gt; element with initial response data.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+   dXNlcm5hbWU9Imp1bGlldCIscmVhbG09ImV4YW1wbGUuY29tIixub25jZT0iT0E2
+   TUc5dEVRR20yaGgiLGNub25jZT0iT0E2TUhYaDZWcVRyUmsiLG5jPTAwMDAwMDAx
+   LHFvcD1hdXRoLGRpZ2VzdC11cmk9InhtcHAvZXhhbXBsZS5jb20iLHJlc3BvbnNl
+   PWQzODhkYWQ5MGQ0YmJkNzYwYTE1MjMyMWYyMTQzYWY3LGNoYXJzZXQ9dXRmLTgK
+   </response>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <not-authorized/>
+   </failure>
+          ]]></artwork>
+        </figure>
+        <t>Note: This error condition includes but is not limited to the case of incorrect credentials or an unknown username.  In order to discourage directory harvest attacks, no differentiation is made between incorrect credentials and an unknown username.</t>
+      </section>
+      <section title="temporary-auth-failure" anchor="sasl-errors-temporary-auth-failure">
+        <t>The authentication failed because of a temporary error condition within the receiving entity, and the initiating entity should try again later; sent in reply to an &lt;auth/&gt; element or &lt;response/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+   dXNlcm5hbWU9Imp1bGlldCIscmVhbG09ImV4YW1wbGUuY29tIixub25jZT0iT0E2
+   TUc5dEVRR20yaGgiLGNub25jZT0iT0E2TUhYaDZWcVRyUmsiLG5jPTAwMDAwMDAx
+   LHFvcD1hdXRoLGRpZ2VzdC11cmk9InhtcHAvZXhhbXBsZS5jb20iLHJlc3BvbnNl
+   PWQzODhkYWQ5MGQ0YmJkNzYwYTE1MjMyMWYyMTQzYWY3LGNoYXJzZXQ9dXRmLTgK
+   </response>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <temporary-auth-failure/>
+   </failure>
+          ]]></artwork>
+        </figure>
+      </section>
     </section>
-    <t>Examples of SASL negotiation are provided under <xref target="examples"/>.</t>
   </section>
 
   <section title="Resource Binding" anchor="bind">
-    <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing">addresses</xref>) and route XML stanzas to and from the client (see <xref target="rules">stanza delivery rules</xref>).  That is, there MUST be a resource identifier associated with the "bare JID" (&lt;node@domain&gt;) of the client; this ensures that the address for use over that stream is a "full JID" of the form &lt;node@domain/resource&gt;.  After binding a resource to the stream, the client is referred to as a CONNECTED RESOURCE.</t>
+    <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing">addresses</xref>) and route XML stanzas to and from the client (see <xref target="rules">stanza delivery rules</xref>).  That is, there MUST be an XMPP resource identifier associated with the "bare JID" (&lt;node@domain&gt;) of the client; this ensures that the address for use over that stream is a "full JID" of the form &lt;node@domain/resource&gt;.  After binding a resource to the stream, the client is referred to as a CONNECTED RESOURCE.</t>
     <t>Upon receiving a success indication within the SASL negotiation, the client MUST send a new stream header to the server, to which the server MUST respond with a stream header as well as a list of available stream features.  Specifically, if the server requires the client to bind a resource to the stream after successful SASL negotiation, it MUST include a &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace in the stream features list it presents to the client upon sending the header for the response stream sent after successful SASL negotiation (but not before); this &lt;bind/&gt; element SHOULD include an empty &lt;required/&gt; element as well.</t>
     <figure>
       <preamble>Server advertises resource binding feature to client:</preamble>
@@ -1245,7 +1374,7 @@ XmppAddr ::= UTF8String
 </iq>
       ]]></artwork>
     </figure>
-    <t>A server that supports resource binding MUST be able to generate a resource identifier on behalf of a client.  A resource identifier generated by the server MUST be currently unique for that &lt;node@domain&gt;.</t>
+    <t>A server that supports resource binding MUST be able to generate an XMPP resource identifier on behalf of a client.  A resource identifier generated by the server MUST be currently unique for that &lt;node@domain&gt;.</t>
     <t>If the client wishes to specify the resource identifier, it MUST send an IQ stanza of type "set" that contains the desired resource identifier as the non-zero-length XML character data of a &lt;resource/&gt; element that is a child of the &lt;bind/&gt; element.</t>
     <figure>
       <preamble>Client binds a resource:</preamble>
@@ -1257,7 +1386,7 @@ XmppAddr ::= UTF8String
 </iq>
       ]]></artwork>
     </figure>
-    <t>Once the server has generated a resource identifier for the client or accepted the resource identifier provided by the client, it MUST return an IQ stanza of type "result" to the client, which MUST include a &lt;jid/&gt; child element that specifies the full JID for the connected resource as determined by the server.</t>
+    <t>Once the server has generated an XMPP resource identifier for the client or accepted the resource identifier provided by the client, it MUST return an IQ stanza of type "result" to the client, which MUST include a &lt;jid/&gt; child element that specifies the full JID for the connected resource as determined by the server.</t>
     <figure>
       <preamble>Server informs client of successful resource binding:</preamble>
       <artwork><![CDATA[
@@ -1268,8 +1397,8 @@ XmppAddr ::= UTF8String
 </iq>
       ]]></artwork>
     </figure>
-    <t>A server SHOULD accept the resource identifier provided by the client, but MAY override it with a resource identifier that the server generates; in this case, the server SHOULD NOT return a stanza error (e.g., &lt;forbidden/&gt;) to the client but instead SHOULD communicate the generated resource identifier to the client in the IQ result as shown above.</t>
-    <t>When a client supplies a resource identifier, the following stanza error conditions are possible (see <xref target="stanzas-error">Stanza Errors</xref>):</t>
+    <t>A server SHOULD accept the resource identifier provided by the client, but MAY override it with an XMPP resource identifier that the server generates; in this case, the server SHOULD NOT return a stanza error (e.g., &lt;forbidden/&gt;) to the client but instead SHOULD communicate the generated resource identifier to the client in the IQ result as shown above.</t>
+    <t>When a client supplies an XMPP resource identifier, the following stanza error conditions are possible (see <xref target="stanzas-error">Stanza Errors</xref>):</t>
     <t><list style="symbols">
       <t>The provided resource identifier cannot be processed by the server, e.g. because it is not in accordance with <xref target="resourceprep">Resourceprep</xref>.</t>
       <t>The client is not allowed to bind a resource to the stream (e.g., because the node or user has reached a limit on the number of connected resources allowed).</t>
@@ -1305,7 +1434,7 @@ XmppAddr ::= UTF8String
     <t>If there is already a connected resource of the same name, the server MUST do one of the following:</t>
     <t>
       <list style='numbers'>
-        <t>Not accept the resource identifier provided by the client but instead override it with a resource identifier that the server generates.</t>
+        <t>Not accept the resource identifier provided by the client but instead override it with an XMPP resource identifier that the server generates.</t>
         <t>Terminate the current resource and allow the newly-requested resource.</t>
         <t>Disallow the newly-requested resource and maintain the current resource.</t>
       </list>
@@ -1492,7 +1621,7 @@ Requesting                 Responding
           <t>&lt;gone/&gt; -- the recipient or server can no longer be contacted at this address (the error stanza MAY contain a new address in the XML character data of the &lt;gone/&gt; element); the associated error type SHOULD be "cancel" or "modify".</t>
           <t>&lt;internal-server-error/&gt; -- the server could not process the stanza because of a misconfiguration or an otherwise-undefined internal server error; the associated error type SHOULD be "wait".</t>
           <t>&lt;item-not-found/&gt; -- the addressed JID or item requested cannot be found; the associated error type SHOULD be "cancel".</t>
-          <t>&lt;jid-malformed/&gt; -- the sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., a resource identifier) that does not adhere to the syntax defined under <xref target="addressing">Addresses</xref>; the associated error type SHOULD be "modify".</t>
+          <t>&lt;jid-malformed/&gt; -- the sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., an XMPP resource identifier) that does not adhere to the syntax defined under <xref target="addressing">Addresses</xref>; the associated error type SHOULD be "modify".</t>
           <t>&lt;not-acceptable/&gt; -- the recipient or server understands the request but is refusing to process it because it does not meet criteria defined by the recipient or server (e.g., a local policy regarding stanza size limits or acceptable words in messages); the associated error type SHOULD be "modify".</t>
           <t>&lt;not-allowed/&gt; -- the recipient or server does not allow any entity to perform the action (e.g., sending to entities at a blacklisted domain); the associated error type SHOULD be "cancel".</t>
           <t>&lt;not-authorized/&gt; -- the sender must provide proper credentials before being allowed to perform the action, or has provided improper credentials; the associated error type SHOULD be "auth".</t>
@@ -2011,8 +2140,8 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
     <section title="Node in Same Domain" anchor="rules-node">
       <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a configured hostname of the server itself and the JID contained in the 'to' attribute is of the form &lt;node@domain&gt; or &lt;node@domain/resource&gt;, the server SHOULD deliver the stanza to the intended recipient of the stanza as represented by the JID contained in the 'to' attribute.  The following rules apply:</t>
       <t><list style="numbers">
-        <t>If the JID contains a resource identifier (i.e., is of the form &lt;node@domain/resource&gt;) and there exists a connected resource that exactly matches the full JID, the recipient's server SHOULD deliver the stanza to the stream or connection that exactly matches the resource identifier.</t>
-        <t>If the JID contains a resource identifier and there exists no connected resource that exactly matches the full JID, the recipient's server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+        <t>If the JID contains an XMPP resource identifier (i.e., is of the form &lt;node@domain/resource&gt;) and there exists a connected resource that exactly matches the full JID, the recipient's server SHOULD deliver the stanza to the stream or connection that exactly matches the resource identifier.</t>
+        <t>If the JID contains an XMPP resource identifier and there exists no connected resource that exactly matches the full JID, the recipient's server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
         <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, the recipient's server SHOULD deliver the stanza to at least one of the connected resources, according to application-specific rules.</t>
       </list></t>
       <t>Particular XMPP applications MAY specify delivery rules that modify or supplement the foregoing rules; for example, a set of delivery rules for instant messaging and presence applications is defined in <xref target="XMPP-IM"/>.</t>
@@ -3496,7 +3625,7 @@ specifications of each URI scheme.
 
     <section title="Nodeprep" anchor="nodeprep">
       <section title="Introduction" anchor="nodeprep-intro">
-        <t>This appendix defines the "Nodeprep" profile of <xref target="STRINGPREP"/>.  As such, it specifies processing rules that will enable users to enter internationalized node identifiers in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP node identifier is the optional portion of an XMPP address that precedes a domain identifier and the '@' separator; it is often but not exclusively associated with an instant messaging username.)  These processing rules are intended only for XMPP node identifiers and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
+        <t>This appendix defines the "Nodeprep" profile of <xref target="STRINGPREP"/>.  As such, it specifies processing rules that will enable users to enter internationalized node identifiers in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP node identifier is the optional portion of an XMPP address that precedes an XMPP domain identifier and the '@' separator; it is often but not exclusively associated with an instant messaging username.)  These processing rules are intended only for XMPP node identifiers and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
         <t>This profile defines the following, as required by <xref target="STRINGPREP"/>:</t>
         <t><list style="symbols">
           <t>The intended applicability of the profile: internationalized node identifiers within XMPP</t>
@@ -3554,7 +3683,7 @@ specifications of each URI scheme.
 
     <section title="Resourceprep" anchor="resourceprep">
       <section title="Introduction" anchor="resourceprep-introduction">
-      <t>This appendix defines the "Resourceprep" profile of <xref target="STRINGPREP"/>.  As such, it specifies processing rules that will enable users to enter internationalized resource identifiers in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP resource identifier is the optional portion of an XMPP address that follows a domain identifier and the '/' separator.)  These processing rules are intended only for XMPP resource identifiers and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
+      <t>This appendix defines the "Resourceprep" profile of <xref target="STRINGPREP"/>.  As such, it specifies processing rules that will enable users to enter internationalized resource identifiers in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP resource identifier is the optional portion of an XMPP address that follows an XMPP domain identifier and the '/' separator.)  These processing rules are intended only for XMPP resource identifiers and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
       <t>This profile defines the following, as required by <xref target="STRINGPREP"/>:</t>
       <t><list style="symbols">
         <t>The intended applicability of the profile: internationalized resource identifiers within XMPP</t>
@@ -4397,6 +4526,10 @@ that is,
     <section title="Contact Addresses" anchor="contact">
       <t>Consistent with <xref target='MAILBOXES'/>, an organization that offers an XMPP service SHOULD provide an Internet mailbox of "XMPP" for inquiries related to that service, where the host portion of the resulting mailto URI SHOULD be the organization's domain, not necessarily the domain of the XMPP service itself (e.g., the XMPP service might be offered at im.example.net but the Internet mailbox should be &lt;xmpp@example.net&gt;).</t>
       <t>In addition, the XMPP service SHOULD provide a way to discover the XMPP contact address(es) of the service administrator(s), as specified in <xref target='XEP-0157'/>.</t>
+    </section>
+
+    <section title="Account Provisioning" anchor="provisioning">
+      <t>Account provisioning is out of scope for this specification.  Possible methods for account provisioning include account creation by a server administrator and in-band account registration using the 'jabber:iq:register' namespace as documented in <xref target="XEP-0077"/>.</t>
     </section>
 
     <section title="Differences From RFC 3920" anchor="diffs">
