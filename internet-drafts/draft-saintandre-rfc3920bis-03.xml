@@ -1126,7 +1126,7 @@ S: </stream:stream>
         <t>During TLS negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the TLS examples that follow are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
         <t>The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
         <t>The initiating entity MUST validate the certificate presented by the receiving entity; see <xref target="security-validation">Certificate Validation</xref> regarding certificate validation procedures.</t>
-        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "im.example.net", the certificate MUST be checked as "example.net".</t>
+        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returned "xmpp.example.net", the certificate MUST be checked as "example.net".</t>
         <t>If the TLS negotiation results in failure, the receiving entity MUST terminate both the XML stream and the underlying TCP connection.</t>
         <t>If the TLS negotiation is successful, the receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS takes effect.</t>
         <t>If the TLS negotiation is successful, the initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS takes effect.</t>
@@ -2319,7 +2319,7 @@ S: <message from='romeo@example.net'
     </section>
 
     <section title="Extended Content" anchor="stanzas-extended">
-      <t>While the message, presence, and IQ stanza kinds provide basic semantics for messaging, availability, and request-response interactions, XMPP uses XML namespaces to extend the stanzas for the purpose of providing additional functionality.  Thus a message or presence stanza MAY contain one or more optional child elements specifying content that extends the meaning of the message (e.g., an XHTML-formatted version of the message body as described in <xref target="XEP-0071"/>), and an IQ stanza of type "get" or "set" MUST contain one such child element.  This child element MAY have any name and MUST possess an 'xmlns' namespace declaration (other than "jabber:client", "jabber:server", or "http://etherx.jabber.org/streams") that defines all data contained within the child element.  Such a child element is said to be EXTENDED CONTENT and the namespace name is said to be an EXTENDED NAMESPACE.</t>
+      <t>While the message, presence, and IQ stanza kinds provide basic semantics for messaging, availability, and request-response interactions, XMPP uses XML namespaces to extend the stanzas for the purpose of providing additional functionality.  Thus a message or presence stanza MAY contain one or more optional child elements specifying content that extends the meaning of the message (e.g., an XHTML-formatted version of the message body as described in <xref target="XEP-0071"/>), and an IQ stanza of type "get" or "set" MUST contain one such child element.  This child element MAY have any name and MUST possess an 'xmlns' namespace declaration (other than "jabber:client", "jabber:server", or "http://etherx.jabber.org/streams") that defines all data contained within the child element.  Such a child element is said to be EXTENDED CONTENT and its namespace name is said to be an EXTENDED NAMESPACE.</t>
       <t>Support for any given extended namespace is OPTIONAL on the part of any implementation.  If an entity does not understand such a namespace, the entity's expected behavior depends on whether the entity is (1) the recipient or (2) an entity that is routing the stanza to the recipient:</t>
       <t><list style="hanging">
         <t hangText="Recipient:">If a recipient receives a stanza that contains a child element it does not understand, it SHOULD ignore that specific XML data, i.e., it SHOULD not process it or present it to a user or associated application (if any).  In particular:
@@ -2867,35 +2867,95 @@ S2: </stream:stream>
   </section>
 
   <section title="XML Usage" anchor="xml">
-
     <section title="Restrictions" anchor="xml-restrictions">
-      <t>XMPP is a simplified and specialized protocol for streaming XML elements in order to exchange structured information in close to real time.  Because XMPP does not require the parsing of arbitrary and complete XML documents, there is no requirement that XMPP needs to support the full feature set of <xref target="XML"/>.  In particular, the following restrictions apply.</t>
-      <t>With regard to XML generation, an XMPP implementation MUST NOT inject into an XML stream any of the following:</t>
-      <t><list style='symbols'>
-        <t>comments (as defined in Section 2.5 of <xref target="XML"/>)</t>
-        <t>processing instructions (Section 2.6 therein)</t>
-        <t>internal or external DTD subsets (Section 2.8 therein)</t>
-        <t>internal or external entity references (Section 4.2 therein) with the exception of predefined entities (Section 4.6 therein)</t>
-        <t>character data or attribute values containing unescaped characters that map to the predefined entities (Section 4.6 therein); such characters MUST be escaped</t>
-      </list></t>
-      <t>With regard to XML processing, if an XMPP implementation receives such restricted XML data, it MUST return a &lt;restricted-xml/&gt; stream error.</t>
+      <t>XMPP is a simplified and specialized protocol for streaming XML elements in order to exchange structured information in close to real time.  Because XMPP does not require the parsing of arbitrary and complete XML documents, there is no requirement that XMPP needs to support the full feature set of <xref target="XML"/>.  In particular, the following features of XML are prohibited in XMPP:</t>
+      <t>
+        <list style='symbols'>
+          <t>comments (as defined in Section 2.5 of <xref target="XML"/>)</t>
+          <t>processing instructions (Section 2.6 therein)</t>
+          <t>internal or external DTD subsets (Section 2.8 therein)</t>
+          <t>internal or external entity references (Section 4.2 therein) with the exception of predefined entities (Section 4.6 therein)</t>
+          <t>character data or attribute values containing unescaped characters that map to the predefined entities (Section 4.6 therein); such characters MUST be escaped</t>
+        </list>
+      </t>
+      <t>An XMPP implementation MUST behave as follow with regard to these features:</t>
+      <t>
+        <list style='numbers'>
+          <t>An XMPP implementation MUST NOT inject characters matching such features into an XML stream.</t>
+          <t>If an XMPP implementation receives characters matching such features over an XML stream, it MUST return a stream error, which SHOULD be &lt;restricted-xml/&gt; but MAY be &lt;bad-format/&gt;.</t>
+        </list>
+      </t>
     </section>
 
     <section title="XML Namespace Names and Prefixes" anchor="xml-ns">
       <t>XML namespaces (see <xref target="XML-NAMES"/>) are used within all XMPP-compliant XML to create strict boundaries of data ownership.  The basic function of namespaces is to separate different vocabularies of XML elements that are structurally mixed together.  Ensuring that XMPP-compliant XML is namespace-aware enables any allowable XML to be structurally mixed with any data element within XMPP.  Rules for XML namespace names and prefixes are defined in the following subsections.</t>
       <section title="Streams Namespace" anchor="xml-ns-stream">
-        <t>A streams namespace declaration is REQUIRED in all XML stream headers.  The name of the streams namespace MUST be 'http://etherx.jabber.org/streams'.  The element names of the &lt;stream/&gt; element and its &lt;features/&gt; and &lt;error/&gt; children MUST be qualified by the streams namespace prefix in all instances.  An implementation SHOULD generate only the 'stream:' prefix for these elements, and for historical reasons MAY accept only the 'stream:' prefix.</t>
+        <t>A streams namespace declaration is REQUIRED in all XML stream headers and the name of the streams namespace MUST be 'http://etherx.jabber.org/streams'.  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; but MAY be &lt;bad-format/&gt;.</t>
+        <t>The element names of the &lt;stream/&gt; element and its &lt;features/&gt; and &lt;error/&gt; children MUST be qualified by the streams namespace prefix in all instances.  If this rule is violated, the entity that receives the offending element MUST return a stream error to the sending entity, which SHOULD be &lt;bad-format/&gt;.</t>
+        <t>An implementation SHOULD generate only the 'stream:' prefix for these elements, and for historical reasons MAY accept only the 'stream:' prefix.  If an entity receives a stream header with a namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; but MAY be &lt;bad-format/&gt;.</t>
       </section>
       <section title="Default Namespace" anchor="xml-ns-default">
         <t>A default namespace declaration is REQUIRED and is used in all XML streams in order to define the allowable first-level children of the root stream element.  This namespace declaration MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The default namespace declaration applies to the stream and all stanzas sent within a stream (unless explicitly qualified by another namespace, or by the prefix of the streams namespace or the dialback namespace).</t>
-        <t>A server implementation MUST support the following two default namespaces (for historical reasons, some implementations MAY support only these two default namespaces):</t>
+        <t>A server implementation MUST support the following two default namespaces (for historical reasons, an implementation MAY support only these two default namespaces):</t>
         <t><list style="symbols">
           <t>jabber:client -- this default namespace is declared when the stream is used for communications between a client and a server</t>
           <t>jabber:server -- this default namespace is declared when the stream is used for communications between two servers</t>
         </list></t>
         <t>A client implementation MUST support the 'jabber:client' default namespace, and for historical reasons MAY support only that default namespace.</t>
-        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.  An implementation SHOULD NOT generate namespace prefixes for elements qualified by content (as opposed to stream) namespaces other than 'jabber:client' and 'jabber:server'.</t>
-        <t>Note: The 'jabber:client' and 'jabber:server' namespaces are nearly identical but are used in different contexts (client-to-server communications for 'jabber:client' and server-to-server communications for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent within 'jabber:client', whereas they are REQUIRED on stanzas sent within 'jabber:server'.  If a compliant implementation accepts a stream that is qualified by the 'jabber:client' or 'jabber:server' namespace, it MUST support the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza kinds (message, presence, and IQ).</t>
+        <t>If an implementation accepts a stream that is qualified by the 'jabber:client' or 'jabber:server' namespace, it MUST support the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza kinds (message, presence, and IQ).</t>
+        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.</t>
+        <t>Note: The 'jabber:client' and 'jabber:server' namespaces are nearly identical but are used in different contexts (client-to-server communications for 'jabber:client' and server-to-server communications for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent over XML streams qualified by the 'jabber:client' namespace, whereas they are REQUIRED on stanzas sent over XML streams qualified by the 'jabber:server' namespace.</t>
+      </section>
+      <section title="Extended Namespaces" anchor="xml-ns-extended">
+        <t>An EXTENDED NAMESPACE is an XML namespace (other than the default namespace) that is used to qualify XML data contained within an XML stanza.  For example, in the following stanza, the extended namespace is 'jabber:iq:roster':</t>
+        <figure>
+          <artwork><![CDATA[
+<iq from='juliet@capulet.com/balcony'
+    id='roster1'
+    type='get'>
+ <query xmlns='jabber:iq:roster'/>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>An XML stanza MAY contain XML data qualified by more than one extended namespace, either at the direct child level of the stanza (for presence and message stanzas) or in any mix of levels (for all stanzas).</t>
+        <figure>
+          <artwork><![CDATA[
+<presence from='juliet@capulet.com/balcony'>
+  <c xmlns='http://jabber.org/protocol/caps' 
+     node='http://exodus.jabberstudio.org/caps'
+     ver='0.9'/>
+  <x xmlns='vcard-temp:x:update'>
+    <photo>sha1-hash-of-image</photo>
+  </x>
+</presence>
+          ]]></artwork>
+        </figure>
+        <figure>
+          <artwork><![CDATA[
+<message to='juliet@capulet.com'>
+  <body>Hello?</body>
+  <html xmlns='http://jabber.org/protocol/xhtml-im'>
+    <body xmlns='http://www.w3.org/1999/xhtml'>
+      <p style='font-weight:bold'>Hello?</p>
+    </body>
+  </html>
+</message>
+          ]]></artwork>
+        </figure>
+        <figure>
+          <artwork><![CDATA[
+<iq from='juliet@capulet.com/balcony'
+    id='roster2'
+    type='get'>
+ <query xmlns='jabber:iq:roster'>
+    <headers xmlns='http://jabber.org/protocol/shim'>
+      <header name='If-None-Match'>some-long-opaque-string</header>
+    </headers>
+ </query>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>An implementation SHOULD NOT generate namespace prefixes for elements qualified by content (as opposed to stream) namespaces other than 'jabber:client' and 'jabber:server'.  However, if included, the namespace declarations for those prefixes MUST be included on the stanza root or a child thereof, not at the level of the stream element (this helps to ensure that any such namespace declaration is routed and delivered with the stanza, instead of assumed from the stream).</t>
       </section>
       <section title="Dialback Namespace" anchor="xml-ns-db">
         <t>A dialback namespace declaration is REQUIRED for all elements used in <xref target="dialback">server dialback</xref>.  The name of the dialback namespace MUST be 'jabber:server:dialback'.  All elements qualified by this namespace MUST be prefixed.  An implementation SHOULD generate only the 'db:' prefix for such elements and MAY accept only the 'db:' prefix.</t>
@@ -2903,7 +2963,8 @@ S2: </stream:stream>
     </section>
 
     <section title="Validation" anchor="xml-validation">
-      <t>A server is not responsible for validating the XML elements forwarded to a client or another server; an implementation MAY choose to provide only validated data elements but this is OPTIONAL (although an implementation MUST NOT accept XML that is not well-formed).  Clients SHOULD NOT rely on the ability to send data which does not conform to the schemas, and SHOULD ignore any non-conformant elements or attributes on the incoming XML stream.  Validation of XML streams and stanzas is OPTIONAL, and schemas are included herein for descriptive purposes only.</t>
+      <t>A server is not responsible for ensuring that XML data delivered to a client or routed to another server is valid as the term "valid" is defined in Section 2.8 of <xref target='XML'/>.  An implementation MAY choose to provide only validated data, but this is OPTIONAL.  A client SHOULD NOT rely on the ability to send data that does not conform to the schemas, and SHOULD ignore any non-conformant elements or attributes on the incoming XML stream.</t>
+      <t>Note: The terms "valid" and "well-formed" are distinct in XML.  All XMPP data MUST be well-formed as the term "well-formed" is defined in Section 2.1 of <xref target='XML'/>.</t>
     </section>
 
     <section title="Inclusion of Text Declaration" anchor="xml-declaration">
@@ -2911,7 +2972,7 @@ S2: </stream:stream>
     </section>
 
     <section title="Character Encoding" anchor="xml-encoding">
-      <t>Implementations MUST support the <xref target="UTF-8"/> transformation of Universal Character Set (<xref target="UCS2"/>) characters, as required by <xref target="CHARSET"/>.  Implementations MUST NOT attempt to use any other encoding.</t>
+      <t>Implementations MUST support the <xref target="UTF-8"/> transformation of Universal Character Set (<xref target="UCS2"/>) characters, as required by <xref target="CHARSET"/>.  Implementations MUST NOT attempt to use any other encoding.  If an implementation detects that an entity has attempted to send XML data with an encoding other than UTF-8, it MUST return a stream error, which SHOULD be &lt;unsupported-encoding/&gt;.</t>
     </section>
 
     <section title="White Space" anchor="xml-whitespace">
@@ -2950,7 +3011,7 @@ S2: </stream:stream>
   </section>
 
   <section title="Internationalization Considerations" anchor="i18n">
-    <t>XML streams MUST be encoded in UTF-8 as specified under <xref target="xml-encoding">Character Encoding</xref>.  As specified under <xref target="streams-attr">Stream Attributes</xref>, an XML stream SHOULD include an 'xml:lang' attribute specifying the default language for any XML character data sent over the stream that is intended to be presented to a human user.  As specified under <xref target="stanzas-attributes-lang">xml:lang</xref>, an XML stanza SHOULD include an 'xml:lang' attribute if the stanza contains XML character data that is intended to be presented to a human user.  A server SHOULD apply the default 'xml:lang' attribute to stanzas it routes or delivers on behalf of connected entities, and MUST NOT modify or delete 'xml:lang' attributes stanzas it receives from other entities.</t>
+    <t>XML streams MUST be encoded in UTF-8 as specified under <xref target="xml-encoding">Character Encoding</xref>.  As specified under <xref target="streams-attr">Stream Attributes</xref>, an XML stream SHOULD include an 'xml:lang' attribute specifying the default language for any XML character data sent over the stream that is intended to be presented to a human user.  As specified under <xref target="stanzas-attributes-lang">xml:lang</xref>, an XML stanza SHOULD include an 'xml:lang' attribute if the stanza contains XML character data that is intended to be presented to a human user.  A server SHOULD apply the default 'xml:lang' attribute to stanzas it routes or delivers on behalf of connected entities, and MUST NOT modify or delete 'xml:lang' attributes on stanzas it receives from other entities.</t>
   </section>
 
   <section title="Security Considerations" anchor="security">
@@ -2977,7 +3038,7 @@ S2: </stream:stream>
       <t>A compliant client implementation MUST support both TLS and SASL for connections to a server.</t>
       <t>The TLS protocol for encrypting XML streams (defined under <xref target='tls'>TLS negotiation</xref>) provides a reliable mechanism for helping to ensure the confidentiality and data integrity of data exchanged between two entities.</t>
       <t>The SASL protocol for authenticating XML streams (defined under <xref target='sasl'>SASL negotiation</xref>) provides a reliable mechanism for validating that a client connecting to a server is who it claims to be.</t>
-      <t>Client-to-server communications MUST NOT proceed until the DNS hostname asserted by the server has been resolved as specified under <xref target='tcp'>TCP Binding</xref>.  If there is a mismatch between the hostname to which a client attempted to connect (e.g., "example.net") and the hostname to which the client actually connects (e.g., "im.example.net"), the client MUST warn a human user about the mismatch and the human user MUST approve the connection before the client proceeds; however, the client MAY allow the user to add the presented hostname to a configured set of accepted hostnames in order to expedite future connections.</t>
+      <t>Client-to-server communications MUST NOT proceed until the DNS hostname asserted by the server has been resolved as specified under <xref target='tcp'>TCP Binding</xref>.  If there is a mismatch between the hostname to which a client attempted to connect (e.g., "example.net") and the hostname to which the client actually connects (e.g., "xmpp.example.net"), the client MUST warn a human user about the mismatch and the human user MUST approve the connection before the client proceeds; however, the client MAY also allow the user to add the presented hostname to a configured set of accepted hostnames in order to expedite future connections.</t>
       <t>The IP address and method of access of clients MUST NOT be made public by a server, nor are any connections other than the original server connection required.  This helps to protect the client's server from direct attack or identification by third parties.</t>
     </section>
     <section title="Server-to-Server Communications" anchor="security-server">
@@ -2998,7 +3059,7 @@ S2: </stream:stream>
       <t>The rationale for this order is that <xref target="TCP"/> is the base connection layer used by all of the protocols stacked on top of TCP, <xref target="TLS"/> is often provided at the operating system layer, <xref target="SASL"/> is often provided at the application layer, and XMPP is the application itself.</t>
     </section>
     <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
-      <t>The SASL framework does not provide a mechanism to bind SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  This lack of a "channel binding" prevents SASL from being able to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating.  If the end points are not identical, the lower layer's security cannot be trusted to protect data transmitted between the SASL authenticated entities.  In such a situation, a SASL security layer should be negotiated that effectively ignores the presence of the lower layer security.</t>
+      <t>The SASL framework does not provide a mechanism to bind SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  This lack of a "channel binding" prevents SASL from being able to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating.  If the end points are not identical, the lower layer's security cannot be trusted to protect data transmitted between the SASL authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower layer security.</t>
     </section>
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
       <t>At a minimum, all implementations MUST support the following mechanisms:</t>
@@ -3019,7 +3080,7 @@ S2: </stream:stream>
       <t>XMPP makes use of the <xref target="NAMEPREP"/> profile of <xref target="STRINGPREP"/> for processing of domain identifiers; for security considerations related to Nameprep, refer to the appropriate section of <xref target="NAMEPREP"/>.</t>
       <t>In addition, XMPP defines two profiles of <xref target="STRINGPREP"/>: <xref target="nodeprep">Nodeprep</xref> for node identifiers and <xref target="resourceprep">Resourceprep</xref> for resource identifiers.</t>
       <t>The Unicode and ISO/IEC 10646 repertoires have many characters that look similar.  In many cases, users of security protocols might do visual matching, such as when comparing the names of trusted third parties.  Because it is impossible to map similar-looking characters without a great deal of context, such as knowing the fonts used, stringprep does nothing to map similar-looking characters together, nor to prohibit some characters because they look like others.</t>
-      <t>A node identifier can be employed as one part of an entity's address in XMPP.  One common usage is as the username of an instant messaging user; another is as the name of a multi-user conference room; many other kinds of entities could use node identifiers as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized node identifier; for example, a user entering a single internationalized node identifier could access another user's account information, or a user could gain access to an otherwise restricted chat room or service.</t>
+      <t>A node identifier can be employed as one part of an entity's address in XMPP.  One common usage is as the username of an instant messaging user; another is as the name of a multi-user conference room; many other kinds of entities could use node identifiers as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized node identifier; for example, a user entering a single internationalized node identifier could access another user's account information, or a user could gain access to a hidden or otherwise restricted chat room or service.</t>
       <t>A resource identifier can be employed as one part of an entity's address in XMPP.  One common usage is as the name for an instant messaging user's connected resource; another is as the nickname of a user in a multi-user conference room; many other kinds of entities could use resource identifiers as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized resource identifier; for example, a user could attempt to initiate multiple connections with the same name, or a user could send a message to someone other than the intended recipient in a multi-user conference room.</t>
     </section>
     <section title="Presence Leaks" anchor="security-leak">
@@ -3031,12 +3092,13 @@ S2: </stream:stream>
   </section>
 
   <section title="IANA Considerations" anchor="iana">
+    <t>The following sections update the registrations provided in <xref target='RFC3920'/>.</t>
     <section title="XML Namespace Name for TLS Data" anchor="iana-ns-tls">
       <t>A URN sub-namespace for TLS-related data in the Extensible Messaging and Presence Protocol (XMPP) is defined as follows.  (This namespace name adheres to the format defined in <xref target="XML-REG">The IETF XML Registry</xref>.)</t>
       <t><list style='hanging'>
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-tls</t>
-        <t hangText='Specification:'>RFC 3920</t>
-        <t hangText='Description:'>This is the XML namespace name for TLS-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>This is the XML namespace name for TLS-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
@@ -3044,8 +3106,8 @@ S2: </stream:stream>
       <t>A URN sub-namespace for SASL-related data in the Extensible Messaging and Presence Protocol (XMPP) is defined as follows.  (This namespace name adheres to the format defined in <xref target="XML-REG"/>.)</t>
       <t><list style='hanging'>
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-sasl</t>
-        <t hangText='Specification:'>RFC 3920</t>
-        <t hangText='Description:'>This is the XML namespace name for SASL-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>This is the XML namespace name for SASL-related data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
@@ -3053,8 +3115,8 @@ S2: </stream:stream>
       <t>A URN sub-namespace for stream-related error data in the Extensible Messaging and Presence Protocol (XMPP) is defined as follows.  (This namespace name adheres to the format defined in <xref target="XML-REG"/>.)</t>
       <t><list style='hanging'>
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-streams</t>
-        <t hangText='Specification:'>RFC 3920</t>
-        <t hangText='Description:'>This is the XML namespace name for stream-related error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>This is the XML namespace name for stream-related error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
@@ -3062,8 +3124,8 @@ S2: </stream:stream>
       <t>A URN sub-namespace for resource binding in the Extensible Messaging and Presence Protocol (XMPP) is defined as follows.  (This namespace name adheres to the format defined in <xref target="XML-REG"/>.)</t>
       <t><list style='hanging'>
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-bind</t>
-        <t hangText='Specification:'>RFC 3920</t>
-        <t hangText='Description:'>This is the XML namespace name for resource binding in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>This is the XML namespace name for resource binding in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
@@ -3071,8 +3133,8 @@ S2: </stream:stream>
       <t>A URN sub-namespace for stanza-related error data in the Extensible Messaging and Presence Protocol (XMPP) is defined as follows.  (This namespace name adheres to the format defined in <xref target="XML-REG"/>.)</t>
       <t><list style='hanging'>
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-stanzas</t>
-        <t hangText='Specification:'>RFC 3920</t>
-        <t hangText='Description:'>This is the XML namespace name for stanza-related error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3920.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>This is the XML namespace name for stanza-related error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@xmpp.org&gt;</t>
       </list></t>
     </section>
@@ -3084,7 +3146,7 @@ S2: </stream:stream>
       </list></t>
       <t>RFC in which the profile is defined:</t>
       <t><list style='hanging'>
-        <t>RFC 3920</t>
+        <t>&rfc.number;</t>
       </list></t>
       <t>Indicator whether or not this is the newest version of the profile:</t>
       <t><list style='hanging'>
@@ -3099,7 +3161,7 @@ S2: </stream:stream>
       </list></t>
       <t>RFC in which the profile is defined:</t>
       <t><list style='hanging'>
-        <t>RFC 3920</t>
+        <t>&rfc.number;</t>
       </list></t>
       <t>Indicator whether or not this is the newest version of the profile:</t>
       <t><list style='hanging'>
@@ -4821,6 +4883,7 @@ that is,
   </section>
 
     <section title="XML Schemas" anchor="def">
+      <t>Because validation of XML streams and stanzas is optional, the following XML schemas are provided for descriptive purposes only.</t>
       <t>The following schemas formally define various XML namespaces used in the core XMPP protocols, in conformance with <xref target='XML-SCHEMA'/>.  For schemas defining the 'jabber:client' and 'jabber:server' namespaces, refer to <xref target="XMPP-IM"/>.</t>
       <t>These schemas are descriptive, not normative.</t>
       <section title="Streams namespace" anchor="def-streams">
