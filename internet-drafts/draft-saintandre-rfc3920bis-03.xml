@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="June" day="18"/>
+    <date year="2007" month="June" day="19"/>
     <area>Applications</area>
     <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
@@ -92,6 +92,7 @@
       <t>
         <list style='symbols'>
           <t>C: = client</t>
+          <t>E: = any XMPP entity</t>
           <t>I: = initiating entity</t>
           <t>P: = peer server</t>
           <t>R: = receiving entity</t>
@@ -231,7 +232,7 @@ romeo@example.net               juliet@example.com
       <t>Two fundamental concepts make possible the rapid, asynchronous exchange of relatively small payloads of structured information between presence-aware entities: XML streams and XML stanzas.  These terms are defined as follows.</t>
       <t><list style="hanging">
         <t hangText="Definition of XML Stream:">An XML STREAM is a container for the exchange of XML elements between any two entities over a network.  The start of an XML stream is denoted unambiguously by an opening XML &lt;stream&gt; tag (with appropriate attributes and namespace declarations), while the end of the XML stream is denoted unambiguously by a closing XML &lt;/stream&gt; tag.  During the life of the stream, the entity that initiated it can send an unbounded number of XML elements over the stream, either elements used to negotiate the stream (e.g., to complete <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref>) or XML stanzas.  The INITIAL STREAM is negotiated from the initiating entity (typically a client or server) to the receiving entity (typically a server), and can be seen as corresponding to the initiating entity's "connection" with the receiving entity.  The initial stream enables unidirectional communication from the initiating entity to the receiving entity; in order to enable information exchange from the receiving entity to the initiating entity, the receiving entity MUST negotiate a stream in the opposite direction (the RESPONSE STREAM).</t>
-        <t hangText="Definition of XML Stanza:">An XML STANZA is a discrete semantic unit of structured information that is sent from one entity to another over an XML stream, and is the basic unit of meaning in XMPP.  An XML stanza exists at the direct child level of the root &lt;stream/&gt; element and is said to be well-balanced if it matches the production [43] content of <xref target="XML"/>.  The start of any XML stanza is denoted unambiguously by the element start tag at depth=1 of the XML stream (e.g., &lt;presence&gt;), and the end of any XML stanza is denoted unambiguously by the corresponding close tag at depth=1 (e.g., &lt;/presence&gt;); a server MUST NOT process, deliver, or route a partial stanza and MUST NOT attach meaning to the transmission timing of any part of a stanza (before receipt of the close tag).  The only XML stanzas defined herein are the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; elements qualified by the default namespace for the stream, as described under <xref target="stanzas">XML Stanzas</xref>; an XML element sent for the purpose of <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, or <xref target="dialback">server dialback</xref> is not considered to be an XML stanza.  An XML stanza MAY contain child elements (with accompanying attributes, elements, and XML character data) as necessary in order to convey the desired information, which MAY be qualified by any XML namespace (see <xref target='XML-NAMES'/>).</t>
+        <t hangText="Definition of XML Stanza:">An XML STANZA is a discrete semantic unit of structured information that is sent from one entity to another over an XML stream, and is the basic unit of meaning in XMPP.  An XML stanza exists at the direct child level of the root &lt;stream/&gt; element and is said to be well-balanced if it matches the production [43] content of <xref target="XML"/>.  The start of any XML stanza is denoted unambiguously by the element start tag at depth=1 of the XML stream (e.g., &lt;presence&gt;), and the end of any XML stanza is denoted unambiguously by the corresponding close tag at depth=1 (e.g., &lt;/presence&gt;); a server MUST NOT process a partial stanza and MUST NOT attach meaning to the transmission timing of any part of a stanza (before receipt of the close tag).  The only XML stanzas defined herein are the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; elements qualified by the default namespace for the stream, as described under <xref target="stanzas">XML Stanzas</xref>; an XML element sent for the purpose of <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, or <xref target="dialback">server dialback</xref> is not considered to be an XML stanza.  An XML stanza MAY contain child elements (with accompanying attributes, elements, and XML character data) as necessary in order to convey the desired information, which MAY be qualified by any XML namespace (see <xref target='XML-NAMES'/>).</t>
       </list></t>
       <t>Consider the example of a client's connection to a server.  In order to connect to a server, a client MUST initiate an XML stream by sending an opening &lt;stream&gt; tag to the server, optionally preceded by a text declaration specifying the XML version and the character encoding supported (see <xref target="xml-declaration">Inclusion of Text Declaration</xref> and <xref target="xml-encoding">Character Encoding</xref>).  Subject to local policies and service provisioning, the server SHOULD then reply with a second XML stream back to the client, again optionally preceded by a text declaration.  Once the client has completed <xref target='sasl'>SASL negotiation</xref> and <xref target='bind'>resource binding</xref>, the client MAY send an unbounded number of XML stanzas over the stream to any recipient on the network.  When the client desires to close the stream, it simply sends a closing &lt;/stream&gt; tag to the server; for details, see <xref target='streams-close'/>.</t>
       <t>In essence, then, an XML stream acts as an envelope for all the XML stanzas sent during a connection.  We can represent this in a simplistic fashion as follows.</t>
@@ -708,14 +709,15 @@ P: <iq from='example.net'
        id='some-id'
        to='example.com'
        type='subscribe'>
-     <query='urn:xmpp:ping'/>
+     <ping xmlns='urn:xmpp:ping'/>
    </iq>
 
 S: <stream:error>
      <invalid-xml 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
-   </stream:stream>
+
+S: </stream:stream>
             ]]></artwork>
           </figure>
         </section>
@@ -756,7 +758,7 @@ S: <stream:error>
           <t>The entity has violated some local service policy (e.g., the stanza exceeds a configured size limit); the server MAY choose to specify the policy in the &lt;text/&gt; element or an application-specific condition element.</t>
           <figure>
             <artwork><![CDATA[
-C: <message to='juliet@example.com'>
+C: <message to='juliet@example.com' id='foo'>
      <body>::the-emacs-manual::</body>
    </message>
 
@@ -764,7 +766,8 @@ S: <stream:error>
      <policy-violation 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
-   </stream:stream>
+
+S: </stream:stream>
             ]]></artwork>
           </figure>
         </section>
@@ -1372,7 +1375,7 @@ S: <stream:features>
       <t>It is RECOMMENDED for the client to ask its server to generate an appropriate resource identifier on its behalf.  It does so by sending an IQ stanza of type "set" (see <xref target="stanzas-semantics-iq">IQ Semantics</xref>) containing an empty &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace.</t>
       <figure>
         <artwork><![CDATA[
-C: <iq type='set' id='bind_1'>
+C: <iq id='bind_1' type='set'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>
    </iq>
         ]]></artwork>
@@ -1381,9 +1384,11 @@ C: <iq type='set' id='bind_1'>
       <t>Once the server has generated an XMPP resource identifier for the client, it MUST return an IQ stanza of type "result" to the client, which MUST include a &lt;jid/&gt; child element that specifies the full JID for the connected resource as determined by the server.</t>
       <figure>
         <artwork><![CDATA[
-S: <iq type='result' id='bind_1'>
+S: <iq id='bind_1' type='result'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
-      <jid>juliet@example.com/e0ffe42b28561960c6b12b944a092794b9683a38</jid>
+      <jid>
+      juliet@example.com/e0ffe42b28561960c6b12b944a092794b9683a38
+      </jid>
     </bind>
    </iq>
         ]]></artwork>
@@ -1391,7 +1396,7 @@ S: <iq type='result' id='bind_1'>
       <t>It is possible that the client is not allowed to bind a resource to the stream (e.g., because the node or user has reached a limit on the number of connected resources allowed).  In this case, the server MUST return a &lt;not-allowed/&gt; stanza error to the client (see <xref target="stanzas-error">Stanza Errors</xref>):</t>
       <figure>
         <artwork><![CDATA[
-S: <iq type='error' id='bind_1'>
+S: <iq id='bind_1' type='error'>
      <error type='cancel'>
        <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -1403,7 +1408,7 @@ S: <iq type='error' id='bind_1'>
       <t>A client MAY attempt to specify the resource identifier rather than ask the server to generate a resource identifier on its behalf.  To do so, it sends an IQ stanza of type "set" containing a &lt;bind/&gt; element with a child &lt;resource/&gt; element containing non-zero-length XML character data.</t>
       <figure>
         <artwork><![CDATA[
-C: <iq type='set' id='bind_2'>
+C: <iq id='bind_2' type='set'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <resource>balcony</resource>
      </bind>
@@ -1413,7 +1418,7 @@ C: <iq type='set' id='bind_2'>
       <t>The server MAY accept the resource identifier provided by the client, in which case it returns an IQ stanza of type "result" to the client, including a &lt;jid/&gt; child element that specifies the full JID for the connected resource.</t>
       <figure>
         <artwork><![CDATA[
-S: <iq type='result' id='bind_2'>
+S: <iq id='bind_2' type='result'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
       <jid>juliet@example.com/balcony</jid>
     </bind>
@@ -1432,7 +1437,7 @@ S: <iq type='result' id='bind_2'>
       <t>If the client is now allowed to bind a resource to the stream, the server MUST return a &lt;not-allowed/&gt; error.</t>
       <figure>
         <artwork><![CDATA[
-S: <iq type='error' id='bind_2'>
+S: <iq id='bind_2' type='error'>
      <error type='cancel'>
        <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -1442,7 +1447,7 @@ S: <iq type='error' id='bind_2'>
       <t>If the provided resource identifier cannot be processed by the server, the server SHOULD return a &lt;bad-request/&gt; error (but MAY instead apply the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/> or otherwise process the resource identifier so that it is in conformance).</t>
       <figure>
         <artwork><![CDATA[
-S: <iq type='error' id='bind_2'>
+S: <iq id='bind_2' type='error'>
      <error type='modify'>
        <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -1460,7 +1465,7 @@ S: <iq type='error' id='bind_2'>
       <t>Which of these the server does is up to the implementation, although it is RECOMMENDED to implement case #1.  In case #2, the server MUST send a &lt;conflict/&gt; stream error to the current resource, terminate the XML stream and underlying TCP connection for the current resource, and return a IQ stanza of type "result" (indicating success) to the newly-requested resource.  In case #3, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resource identifier before sending another request for resource binding.</t>
       <figure>
         <artwork><![CDATA[
-S: <iq type='error' id='bind_2'>
+S: <iq id='bind_2' type='error'>
      <error type='cancel'>
        <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -1490,19 +1495,19 @@ S: <stream:features>
         <t>A client unbinds a resource by sending an IQ stanza of type "set" containing an &lt;unbind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace, which in turn contains a child element of &lt;resource/&gt; whose XML character data specifies the resource to be unbound:</t>
         <figure>
           <artwork><![CDATA[
-C: <iq type='set' id='unbind_1'>
+C: <iq id='unbind_1' type='set'>
      <unbind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <resource>someresource</resource>
      </unbind>
    </iq>
           ]]></artwork>
         </figure>
-        <t>If the server does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which SHOULD be &lt;feature-not-implemented/&gt;.</t>
+        <t>If the server does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which SHOULD be &lt;bad-request/&gt;.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq type='error' id='unbind_1'>
+S: <iq id='unbind_1' type='error'>
      <error type='modify'>
-       <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
    </iq>
           ]]></artwork>
@@ -1510,7 +1515,7 @@ S: <iq type='error' id='unbind_1'>
         <t>If there is no such resource for that stream, the server MUST return an error of &lt;item-not-found/&gt;.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq type='error' id='unbind_1'>
+S: <iq id='unbind_1' type='error'>
      <error type='cancel'>
        <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -1520,20 +1525,36 @@ S: <iq type='error' id='unbind_1'>
         <t>If no error occurs, the server MUST unbind the resource and no longer accept stanzas whose 'from' address specifies the full JID associated with that resource.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq type='result' id='unbind_1'/>
+S: <iq id='unbind_1' type='result'/>
           ]]></artwork>
         </figure>
         <t>When a client unbinds the only resource associated with the stream, the server SHOULD close the stream and terminate the TCP connection.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq type='result' id='unbind_1'/>
+S: <iq id='unbind_1' type='result'/>
 
 S: <stream:stream>
           ]]></artwork>
         </figure>
       </section>
       <section title="From Addresses" anchor="bind-multi-from">
-        <t>When a client binds multiple resources to the same stream, proper management of 'from' addresses is imperative. In particular, a client MUST specify a 'from' address on every stanza it sends over a stream to which it has bound multiple resources, where the 'from' address is the full JID (&lt;node@domain.tld/resource&gt;) associated with the relevant resource. If a client does not specify a 'from' address on a stanza it sends over a stream to which it has bound multiple resources (or if it specifies as the 'from' address a full JID other than one of the bound resources), the server MUST return the stanza to the client with an &lt;unknown-sender/&gt; stanza error.  Naturally, the rules regarding validation of asserted 'from' addresses still apply (see <xref target='rules'/>).</t>
+        <t>When a client binds multiple resources to the same stream, proper management of 'from' addresses is imperative.  In particular, a client MUST specify a 'from' address on every stanza it sends over a stream to which it has bound multiple resources, where the 'from' address is the full JID (&lt;node@domain.tld/resource&gt;) associated with the relevant resource.  If a client does not specify a 'from' address on a stanza it sends over a stream to which it has bound multiple resources, the server MUST return the stanza to the client with an &lt;unknown-sender/&gt; stanza error.</t>
+        <figure>
+          <artwork><![CDATA[
+C: <message to='romeo@example.net'>
+     <body>Wherefore art thou?</body>
+   </message>
+
+S: <message from='romeo@example.net'
+            type='error'>
+     <body>Wherefore art thou?</body>
+     <error type='modify'>
+       <unknown-sender xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </message>
+          ]]></artwork>
+        </figure>
+        <t>Naturally, the rules regarding validation of asserted 'from' addresses still apply (see <xref target='rules'/>).</t>
       </section>
     </section>
   </section>
@@ -1543,33 +1564,78 @@ S: <stream:stream>
     <t>An XML stanza is the basic unit of meaning in XMPP.  A server MUST NOT process, deliver, or route a partial stanza and a server MUST NOT attach meaning to the transmission timing of any child element within a stanza.</t>
 
     <section title="Common Attributes" anchor="stanzas-attributes">
-      <t>The following five attributes are common to message, presence, and IQ stanzas:</t>
+      <t>The following five attributes are common to message, presence, and IQ stanzas.</t>
       <section title="to" anchor="stanzas-attributes-to">
         <t>The 'to' attribute specifies the JID of the intended recipient for the stanza.</t>
-        <t>In the 'jabber:client' namespace, a stanza with a specific intended recipient MUST possess a 'to' attribute, whereas a stanza sent from a client to a server for direct processing by that server (e.g., presence sent to the server for broadcasting to other entities) SHOULD NOT possess a 'to' attribute.</t>
-        <t>In the 'jabber:server' namespace, a stanza MUST possess a 'to' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error condition and terminate both the XML stream and the underlying TCP connection with the offending server.</t>
-        <t>If the value of the 'to' attribute is invalid or cannot be contacted, the entity discovering that fact (typically the sender's or recipient's server) MUST return an appropriate error to the sender, setting the 'from' attribute of the error stanza to the value provided in the 'to' attribute of the offending stanza.</t>
+        <figure>
+          <artwork><![CDATA[
+<message to='romeo@example.net'>
+    <body>Art thou not Romeo, and a Montague?</body>
+</message>
+          ]]></artwork>
+        </figure>
+        <t>For information about server processing of inbound and outbound XML stanzas based on the nature of the 'to' address, refer to <xref target='rules'/>.</t>
+        <section title="Client-to-Server Streams" anchor="stanzas-attributes-to-c2s">
+          <t>The following rules apply to the 'to' attribute in the context of XML streams qualified by the 'jabber:client' namespace (i.e., client-to-server streams).</t>
+          <t>
+            <list style='numbers'>
+              <t>A stanza with a specific intended recipient MUST possess a 'to' attribute.</t>
+              <t>A stanza sent from a client to a server for direct processing by the server (e.g., presence sent to the server for broadcasting to other entities) SHOULD NOT possess a 'to' attribute.</t>
+            </list>
+          </t>
+        </section>
+        <section title="Server-to-Server Streams" anchor="stanzas-attributes-to-s2s">
+          <t>The following rules apply to the 'to' attribute in the context of XML streams qualified by the 'jabber:server' namespace (i.e., server-to-server streams).</t>
+          <t>
+            <list style='numbers'>
+              <t>A stanza MUST possess a 'to' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error and terminate both the XML stream and the underlying TCP connection with the offending server.</t>
+            </list>
+          </t>
+        </section>
       </section>
       <section title="from" anchor="stanzas-attributes-from">
         <t>The 'from' attribute specifies the JID of the sender.</t>
-        <t>When a server receives an XML stanza within the context of an authenticated stream qualified by the 'jabber:client' namespace, it MUST do one of the following:
-          <list style="numbers">
-            <t>validate that the value of the 'from' attribute provided by the client is that of a connected resource for the associated entity</t>
-            <t>add a 'from' address to the stanza whose value is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination">Determination of Addresses</xref>), or the bare JID (&lt;node@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='XMPP-IM'/> for details)</t>
-          </list>
-        </t>
-        <t>If a client attempts to send an XML stanza for which the value of the 'from' attribute does not exactly match one of the connected resources for that entity, the server SHOULD return an &lt;invalid-from/&gt; stream error to the client.  If a client attempts to send an XML stanza over a stream that is not yet authenticated, the server SHOULD return a &lt;not-authorized/&gt; stream error to the client.  If generated, both of these conditions MUST result in closure of the stream and termination of the underlying TCP connection; this helps to prevent a denial of service attack launched from a rogue client.</t>
-        <t>When a server generates a stanza from the server itself for delivery to a connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (1) not include a 'from' attribute or (2) include a 'from' attribute whose value is the account's bare JID (&lt;node@domain&gt;) or connected resource's full JID (&lt;node@domain/resource&gt;).  A server MUST NOT send to the client a stanza without a 'from' attribute if the stanza was not generated by the server itself.  When a client receives a stanza that does not include a 'from' attribute, it MUST assume that the stanza is from the server to which the client is connected.</t>
-        <t>In the 'jabber:server' namespace, a stanza MUST possess a 'from' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error condition.  Furthermore, the domain identifier portion of the JID contained in the 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof, such as a validated local domain hosted by the sending server) as communicated in the SASL negotiation, dialback negotiation or other means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error condition.  Both of these conditions MUST result in closure of the stream and termination of the underlying TCP connection; this helps to prevent a denial of service attack launched from a rogue server.</t>
+        <figure>
+          <artwork><![CDATA[
+<message from='juliet@example.com/balcony'
+         to='romeo@example.net'>
+    <body>Art thou not Romeo, and a Montague?</body>
+</message>
+          ]]></artwork>
+        </figure>
+        <section title="Client-to-Server Streams" anchor="stanzas-attributes-from-c2s">
+          <t>The following rules apply to the 'from' attribute in the context of XML streams qualified by the 'jabber:client' namespace (i.e., client-to-server streams).</t>
+          <t>
+            <list style='numbers'>
+              <t>When the server receives an XML stanza from a client and the stanza does not include a 'from' attribute, the server MUST add a 'from' attribute to the stanza, where the value of the 'from' attribute is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination">Determination of Addresses</xref>), or the bare JID (&lt;node@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='XMPP-IM'/>).</t>
+              <t>When the server receives an XML stanza from a client and the stanza includes a 'from' attribute, the server MUST either (a) validate that the value of the 'from' attribute provided by the client is that of a connected resource for the associated entity or (b) override the provided 'from' attribute by adding a 'from' attribute as specified under rule #1 above.</t>
+              <t>When the server generates a stanza from the server on behalf of the account of the connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (a) not include a 'from' attribute or (b) include a 'from' attribute whose value is the account's bare JID (&lt;node@domain&gt;) or connected resource's full JID (&lt;node@domain/resource&gt;).</t>
+              <t>When the server generates a stanza from the server itself, the stanza MUST include a 'from' attribute whose value is the mere domain (&lt;domain&gt;) of the server.</t>
+              <t>A server MUST NOT send to the client a stanza without a 'from' attribute if the stanza was not generated by the server (e.g., if it was generated by another client or another server); therefore, when a client receives a stanza that does not include a 'from' attribute, it MUST assume that the stanza is from the server to which the client is connected.</t>
+            </list>
+          </t>
+        </section>
+        <section title="Server-to-Server Streams" anchor="stanzas-attributes-from-s2s">
+          <t>The following rules apply to the 'from' attribute in the context of XML streams qualified by the 'jabber:server' namespace (i.e., server-to-server streams).</t>
+          <t>
+            <list style='numbers'>
+              <t>A stanza MUST possess a 'from' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error and terminate the underlying TCP connection.</t>
+              <t>The domain identifier portion of the JID contained in the 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof, such as a validated local domain hosted by the sending server) as communicated in the SASL negotiation, dialback negotiation or other means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error and terminate the underlying TCP connection.</t>
+            </list>
+          </t>
+          <t>Enforcement of these rules helps to prevent a denial of service attack launched from a rogue server.</t>
+        </section>
       </section>
       <section title="id" anchor="stanzas-attributes-id">
-        <t>The optional 'id' attribute MAY be used by a sending entity for internal tracking of stanzas that it sends and receives (especially for tracking the request-response interaction inherent in the semantics of IQ stanzas).  It is OPTIONAL for the value of the 'id' attribute to be unique globally, within a domain, or within a stream.  The semantics of IQ stanzas impose additional restrictions; see <xref target="stanzas-semantics-iq">IQ Semantics</xref>.</t>
+        <t>The 'id' attribute MAY be used by a sending entity for internal tracking of stanzas that it sends and receives (especially for tracking the request-response interaction inherent in the semantics of IQ stanzas).  It is OPTIONAL for the value of the 'id' attribute to be unique globally, within a domain, or within a stream.  The semantics of IQ stanzas impose additional restrictions; see <xref target="stanzas-semantics-iq">IQ Semantics</xref>.</t>
       </section>
       <section title="type" anchor="stanzas-attributes-type">
         <t>The 'type' attribute specifies detailed information about the purpose or context of the message, presence, or IQ stanza.  The particular allowable values for the 'type' attribute vary depending on whether the stanza is a message, presence, or IQ; the values for message and presence stanzas are specific to instant messaging and presence applications and therefore are defined in <xref target="XMPP-IM"/>, whereas the values for IQ stanzas specify the role of an IQ stanza in a structured request-response "conversation" and thus are defined under <xref target="stanzas-semantics-iq">IQ Semantics</xref> below.  The only 'type' value common to all three stanzas is "error"; see <xref target="stanzas-error">Stanza Errors</xref>.</t>
       </section>
       <section title="xml:lang" anchor="stanzas-attributes-lang">
-        <t>A stanza SHOULD possess an 'xml:lang' attribute (as defined in Section 2.12 of <xref target="XML"/>) if the stanza contains XML character data that is intended to be presented to a human user (as explained in <xref target="CHARSET"/>, "internationalization is for humans").  The value of the 'xml:lang' attribute specifies the default language of any such human-readable XML character data, which MAY be overridden by the 'xml:lang' attribute of a specific child element.  If a stanza does not possess an 'xml:lang' attribute, an implementation MUST assume that the default language is that specified for the stream as defined under <xref target="streams-attr">Stream Attributes</xref> above.  The value of the 'xml:lang' attribute MUST be an NMTOKEN and MUST conform to the format defined in <xref target="LANGTAGS"/>.</t>
+        <t>A stanza SHOULD possess an 'xml:lang' attribute (as defined in Section 2.12 of <xref target="XML"/>) if the stanza contains XML character data that is intended to be presented to a human user (as explained in <xref target="CHARSET"/>, "internationalization is for humans").  The value of the 'xml:lang' attribute specifies the default language of any such human-readable XML character data, which MAY be overridden by the 'xml:lang' attribute of a specific child element.  The value of the 'xml:lang' attribute MUST be an NMTOKEN and MUST conform to the format defined in <xref target="LANGTAGS"/>.</t>
+        <t>If an outbound stanza generated by a client does not possess an 'xml:lang' attribute, the client's server MAY add an 'xml:lang' attribute whose value is that specified for the stream as defined under <xref target="streams-attr">Stream Attributes</xref>.</t>
+        <t>If an inbound stanza does not possess an 'xml:lang' attribute, an implementation MUST assume that the default language is that specified for the stream as defined under <xref target="streams-attr">Stream Attributes</xref>.</t>
       </section>
     </section>
 
@@ -1578,7 +1644,7 @@ S: <stream:stream>
         <t>The &lt;message/&gt; stanza kind can be seen as a "push" mechanism whereby one entity pushes information to another entity, similar to the communications that occur in a system such as email.  All message stanzas SHOULD possess a 'to' attribute that specifies the intended recipient of the message; upon receiving such a stanza, a server SHOULD route or deliver it to the intended recipient (see <xref target="rules">Server Rules for Handling XML Stanzas</xref> for general routing and delivery rules related to XML stanzas).</t>
       </section>
       <section title="Presence Semantics" anchor="stanzas-semantics-presence">
-        <t>The &lt;presence/&gt; element can be seen as a specialized broadcast or "publish-subscribe" mechanism, whereby multiple entities receive information about an entity to which they have subscribed (in this case, network availability information).  In general, a publishing entity SHOULD send a presence stanza with no 'to' attribute, in which case the server to which the entity is connected SHOULD broadcast or multiplex that stanza to all subscribing entities.  However, a publishing entity MAY also send a presence stanza with a 'to' attribute, in which case the server SHOULD route or deliver that stanza to the intended recipient.  See <xref target="rules">Server Rules for Handling XML Stanzas</xref> for general routing and delivery rules related to XML stanzas, and <xref target="XMPP-IM"/> for rules specific to presence applications.</t>
+        <t>The &lt;presence/&gt; element can be seen as a specialized broadcast or "publish-subscribe" mechanism, whereby multiple entities receive information about an entity to which they have subscribed (in this case, network availability information).  In general, a publishing entity (client) SHOULD send a presence stanza with no 'to' attribute, in which case the server to which the entity is connected SHOULD broadcast or multiplex that stanza to all subscribing entities.  However, a publishing entity MAY also send a presence stanza with a 'to' attribute, in which case the server SHOULD route or deliver that stanza to the intended recipient.  See <xref target="rules">Server Rules for Handling XML Stanzas</xref> for general routing and delivery rules related to XML stanzas, and <xref target="XMPP-IM"/> for rules specific to presence applications.</t>
       </section>
       <section title="IQ Semantics" anchor="stanzas-semantics-iq">
         <t>Info/Query, or IQ, is a request-response mechanism, similar in some ways to <xref target="HTTP"/>.  The semantics of IQ enable an entity to make a request of, and receive a response from, another entity.  The data content of the request and response is defined by the schema or other structural definition associated with the XML namespace that qualifies the direct child element of the IQ element (see <xref target='stanzas-extended'>extended namespaces</xref>), and the interaction is tracked by the requesting entity through use of the 'id' attribute.  Thus, IQ interactions follow a common pattern of structured data exchange such as get/result or set/result (although an error may be returned in reply to a request if appropriate):</t>
@@ -1588,16 +1654,16 @@ Requesting                 Responding
   Entity                     Entity
 ----------                 ----------
     |                           |
-    | <iq type='get' id='1'>    |
+    | <iq id='1' type='get'>    |
     | ------------------------> |
     |                           |
-    | <iq type='result' id='1'> |
+    | <iq id='1' type='result'> |
     | <------------------------ |
     |                           |
-    | <iq type='set' id='2'>    |
+    | <iq id='2' type='set'>    |
     | ------------------------> |
     |                           |
-    | <iq type='error' id='2'>  |
+    | <iq id='2' type='error'>  |
     | <------------------------ |
     |                           |
           ]]></artwork>
@@ -1623,12 +1689,12 @@ Requesting                 Responding
     </section>
 
     <section title="Stanza Errors" anchor="stanzas-error">
-      <t>Stanza-related errors are handled in a manner similar to <xref target="streams-error">stream errors</xref>.  However, unlike stream errors, stanza errors are recoverable; therefore error stanzas include hints regarding actions that the original sender can take in order to remedy the error.</t>
+      <t>Stanza-related errors are handled in a manner similar to <xref target="streams-error">stream errors</xref>.  However, unlike stream errors, stanza errors are recoverable; therefore error stanzas include hints regarding actions that the sender can take in order to remedy the error.</t>
       <section title="Rules" anchor="stanzas-error-rules">
         <t>The following rules apply to stanza-related errors:</t>
         <t><list style="symbols">
-          <t>The receiving or processing entity that detects an error condition in relation to a stanza SHOULD return an "error stanza" (and MUST do so for IQ stanzas), where such an "error stanza" is a stanza of the same kind (message, presence, or IQ) whose 'type' attribute is set to a value of "error".</t>
-          <t>The entity that generates an error stanza SHOULD include the original XML sent so that the sender can inspect and, if necessary, correct the XML before attempting to resend.</t>
+          <t>The receiving or processing entity that detects an error condition in relation to a stanza SHOULD return an ERROR STANZA (and MUST do so for IQ stanzas), i.e. a stanza of the same kind (message, presence, or IQ) whose 'type' attribute is set to a value of "error".</t>
+          <t>The entity that generates an error stanza MAY include the original XML sent so that the sender can inspect and, if necessary, correct the XML before attempting to resend.</t>
           <t>An error stanza MUST contain an &lt;error/&gt; child element.</t>
           <t>An &lt;error/&gt; child MUST NOT be included if the 'type' attribute has a value other than "error" (or if there is no 'type' attribute).</t>
           <t>An entity that receives an error stanza MUST NOT respond to the stanza with a further error stanza; this helps to prevent looping.</t>
@@ -1638,8 +1704,8 @@ Requesting                 Responding
         <t>The syntax for stanza-related errors is:</t>
         <figure>
           <artwork><![CDATA[
-<stanza-kind to='sender' type='error'>
-  [RECOMMENDED to include sender XML here]
+<stanza-kind from='intended-recipient' to='sender' type='error'>
+  [OPTIONAL to include sender XML here]
   <error type='error-type'>
     <defined-condition xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     [<text xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'
@@ -1671,38 +1737,560 @@ Requesting                 Responding
       </section>
       <section title="Defined Conditions" anchor="stanzas-error-conditions">
         <t>The following conditions are defined for use in stanza errors.</t>
-        <t><list style="symbols">
-          <t>&lt;bad-request/&gt; -- the sender has sent XML that is malformed or that cannot be processed (e.g., an IQ stanza that includes an unrecognized value of the 'type' attribute); the associated error type SHOULD be "modify".</t>
-          <t>&lt;conflict/&gt; -- access cannot be granted because an existing resource exists with the same name or address; the associated error type SHOULD be "cancel".</t>
-          <t>&lt;feature-not-implemented/&gt; -- the feature requested is not implemented by the recipient or server and therefore cannot be processed; the associated error type SHOULD be "cancel" or "modify".</t>
-          <t>&lt;forbidden/&gt; -- the requesting entity does not possess the required permissions to perform the action; the associated error type SHOULD be "auth".</t>
-          <t>&lt;gone/&gt; -- the recipient or server can no longer be contacted at this address (the error stanza MAY contain a new address in the XML character data of the &lt;gone/&gt; element); the associated error type SHOULD be "cancel" or "modify".</t>
-          <t>&lt;internal-server-error/&gt; -- the server could not process the stanza because of a misconfiguration or an otherwise-undefined internal server error; the associated error type SHOULD be "wait".</t>
-          <t>&lt;item-not-found/&gt; -- the addressed JID or item requested cannot be found; the associated error type SHOULD be "cancel".</t>
-          <t>&lt;jid-malformed/&gt; -- the sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., an XMPP resource identifier) that does not adhere to the syntax defined under <xref target="addressing">Addresses</xref>; the associated error type SHOULD be "modify".</t>
-          <t>&lt;not-acceptable/&gt; -- the recipient or server understands the request but is refusing to process it because it does not meet criteria defined by the recipient or server (e.g., a local policy regarding stanza size limits or acceptable words in messages); the associated error type SHOULD be "modify".</t>
-          <t>&lt;not-allowed/&gt; -- the recipient or server does not allow any entity to perform the action (e.g., sending to entities at a blacklisted domain); the associated error type SHOULD be "cancel".</t>
-          <t>&lt;not-authorized/&gt; -- the sender must provide proper credentials before being allowed to perform the action, or has provided improper credentials; the associated error type SHOULD be "auth".</t>
-          <t>&lt;not-modified/&gt; -- the item requested has not changed since it was last requested; the associated error type SHOULD be "continue".</t>
+        <section title="bad-request" anchor="stanzas-error-conditions-bad-request">
+          <t>The sender has sent a stanza containin XML that does not conform to the appropriate schema or that cannot be processed (e.g., an IQ stanza that includes an unrecognized value of the 'type' attribute); the associated error type SHOULD be "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq from='juliet@example.com/balcony' 
+       id='some-id'
+       to='example.com'
+       type='subscribe'>
+     <ping xmlns='urn:xmpp:ping'/>
+   </iq>
+
+S: <iq from='example.com'
+       id='some-id'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='modify'>
+       <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="conflict" anchor="stanzas-error-conditions-conflict">
+          <t>Access cannot be granted because an existing resource exists with the same name or address; the associated error type SHOULD be "cancel".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq id='bind_2' type='set'>
+     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
+       <resource>balcony</resource>
+     </bind>
+   </iq>
+
+S: <iq id='bind_2' type='error'>
+     <error type='cancel'>
+       <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="feature-not-implemented" anchor="stanzas-error-conditions-feature-not-implemented">
+          <t>The feature represented in the XML stanza is not implemented by the recipient or server and therefore the stanza cannot be processed; the associated error type SHOULD be "cancel" or "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq from='juliet@example.com/balcony'
+       id='subscriptions1'
+       to='pubsub.example.com'
+       type='get'>
+     <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+       <subscriptions/>
+     </pubsub>
+   </iq>
+
+E: <iq from='pubsub.example.com
+       id='subscriptions1'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='cancel'>
+       <feature-not-implemented 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <unsupported 
+           xmlns='http://jabber.org/protocol/pubsub#errors'
+           feature='retrieve-subscriptions'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="forbidden" anchor="stanzas-error-conditions-forbidden">
+          <t>The requesting entity does not possess the required permissions to perform the action; the associated error type SHOULD be "auth".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='auth'>
+       <forbidden xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="gone" anchor="stanzas-error-conditions-gone">
+          <t>The recipient or server can no longer be contacted at this address (the error stanza MAY contain a new address in the XML character data of the &lt;gone/&gt; element); the associated error type SHOULD be "cancel" or "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='modify'>
+       <gone xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+         conference.example.com
+       </gone>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="internal-server-error" anchor="stanzas-error-conditions-internal-server-error">
+          <t>&lt;internal-server-error/&gt; -- the server could not process the stanza because of a misconfiguration or an otherwise-undefined internal server error; the associated error type SHOULD be "wait" or "cancel".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='wait'>
+       <internal-server-error 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="item-not-found" anchor="stanzas-error-conditions-item-not-found">
+          <t>The addressed JID or item requested cannot be found; the associated error type SHOULD be "cancel" or "modify".</t>
+          <t>An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it SHOULD return a &lt;service-unavailable/&gt; error.</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq id='unbind_1' type='set'>
+     <unbind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
+       <resource>someresource</resource>
+     </unbind>
+   </iq>
+
+S: <iq id='unbind_1' type='error'>
+     <error type='cancel'>
+       <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="jid-malformed" anchor="stanzas-error-conditions-jid-malformed">
+          <t>The sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., an XMPP resource identifier) that does not adhere to the syntax defined under <xref target="addressing">Addresses</xref>; the associated error type SHOULD be "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='ch@r@cters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='ch@r@cters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='modify'>
+       <jid-malformed
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="not-acceptable" anchor="stanzas-error-conditions-not-acceptable">
+          <t>The recipient or server understands the request but is refusing to process it because it does not meet criteria defined by the recipient or server (e.g., a local policy regarding stanza size limits or acceptable words in messages); the associated error type SHOULD be "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <message to='juliet@example.com' id='foo'>
+     <body>::the-emacs-manual::</body>
+   </message>
+
+S: <message from='juliet@example.com' id='foo'>
+     <error type='modify'>
+       <not-acceptable
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </message>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="not-allowed" anchor="stanzas-error-conditions-not-allowed">
+          <t>The recipient or server does not allow any entity to perform the action (e.g., sending to entities at a blacklisted domain); the associated error type SHOULD be "cancel".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'>
+     <error type='cancel'>
+       <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="not-authorized" anchor="stanzas-error-conditions-not-authorized">
+          <t>The sender must provide proper credentials before being allowed to perform the action, or has provided improper credentials; the associated error type SHOULD be "auth".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'>
+     <error type='auth'>
+       <not-authorized xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="not-modified" anchor="stanzas-error-conditions-not-modified">
+          <t>The item requested has not changed since it was last requested; the associated error type SHOULD be "continue".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq from='juliet@capulet.com/balcony'
+       id='roster2'
+       type='get'>
+    <query xmlns='jabber:iq:roster'>
+       <headers xmlns='http://jabber.org/protocol/shim'>
+         <header name='If-None-Match'>some-long-opaque-string</header>
+       </headers>
+    </query>
+   </iq>
+
+S: <iq type='error' 
+       to='juliet@capulet.com/balcony'
+       id='roster2'>
+    <query xmlns='jabber:iq:roster'>
+       <headers xmlns='http://jabber.org/protocol/shim'>
+         <header name='If-None-Match'>some-long-opaque-string</header>
+       </headers>
+    </query>
+     <error type='modify'>
+       <not-modified xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="payment-required" anchor="stanzas-error-conditions-payment-required">
           <t>&lt;payment-required/&gt; -- the requesting entity is not authorized to access the requested service because payment is required; the associated error type SHOULD be "auth".</t>
-          <t>&lt;recipient-unavailable/&gt; -- the intended recipient is temporarily unavailable; the associated error type SHOULD be "wait" (note: an application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information).</t>
-          <t>&lt;redirect/&gt; -- the recipient or server is redirecting requests for this information to another entity, typically in a temporary fashion (the error stanza SHOULD contain the alternate address, which MUST be a valid JID, in the XML character data of the &lt;redirect/&gt; element); the associated error type SHOULD be "modify".</t>
-          <t>&lt;registration-required/&gt; -- the requesting entity is not authorized to access the requested service because prior registration is required; the associated error type SHOULD be "auth".</t>
-          <t>&lt;remote-server-not-found/&gt; -- a remote server or service specified as part or all of the JID of the intended recipient does not exist; the associated error type SHOULD be "cancel".</t>
-          <t>&lt;remote-server-timeout/&gt; -- a remote server or service specified as part or all of the JID of the intended recipient (or required to fulfill a request) could not be contacted within a reasonable amount of time; the associated error type SHOULD be "wait".</t>
-          <t>&lt;resource-constraint/&gt; -- the server or recipient lacks the system resources necessary to service the request; the associated error type SHOULD be "wait".</t>
-          <t>&lt;service-unavailable/&gt; -- the server or recipient does not currently provide the requested service; the associated error type SHOULD be "cancel".</t>
-          <t>&lt;subscription-required/&gt; -- the requesting entity is not authorized to access the requested service because a subscription is required; the associated error type SHOULD be "auth".</t>
-          <t>&lt;undefined-condition/&gt; -- the error condition is not one of those defined by the other conditions in this list; any error type may be associated with this condition, and it SHOULD be used only in conjunction with an application-specific condition.</t>
-          <t>&lt;unexpected-request/&gt; -- the recipient or server understood the request but was not expecting it at this time (e.g., the request was out of order); the associated error type SHOULD be "wait" or "modify".</t>
-          <t>&lt;unknown-sender/&gt; -- the stanza 'from' address specified by a remote server or connected client is not known to the receiving server or is not valid for the stream; the associated error type SHOULD be "modify".</t>
-        </list></t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq from='romeo@example.net/foo'
+       id='items1'
+       to='pubsub.example.com'
+       type='get'>
+     <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+       <items node='my_musings'/>
+     </pubsub>
+   </iq>
+
+E: <iq from='pubsub.example.com'
+       id='items1'
+       to='romeo@example.net/foo'
+       type='error'>
+     <error type='auth'>
+       <payment-required 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="recipient-unavailable" anchor="stanzas-error-conditions-recipient-unavailable">
+          <t>The intended recipient is temporarily unavailable; the associated error type SHOULD be "wait".</t>
+          <t>An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it SHOULD return a &lt;service-unavailable/&gt; error.</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'>
+     <error type='wait'>
+       <recipient-unavailable 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="redirect" anchor="stanzas-error-conditions-redirect">
+          <t>The recipient or server is redirecting requests for this information to another entity, typically in a temporary fashion (the error stanza SHOULD contain the alternate address, which MUST be a valid JID, in the XML character data of the &lt;redirect/&gt; element); the associated error type SHOULD be "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'
+       type='error'>
+     <error type='modify'>
+       <redirect xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
+         characters@conference.example.org
+       </redirect>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="registration-required" anchor="stanzas-error-conditions-registration-required">
+          <t>The requesting entity is not authorized to access the requested service because prior registration is required; the associated error type SHOULD be "auth".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'>
+     <error type='auth'>
+       <registration-required
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="remote-server-not-found" anchor="stanzas-error-conditions-remote-server-not-found">
+          <t>A remote server or service specified as part or all of the JID of the intended recipient does not exist; the associated error type SHOULD be "cancel".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'>
+     <error type='wait'>
+       <remote-server-not-found
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="remote-server-timeout" anchor="stanzas-error-conditions-remote-server-timeout">
+          <t>A remote server or service specified as part or all of the JID of the intended recipient (or required to fulfill a request) could not be contacted within a reasonable amount of time; the associated error type SHOULD be "wait".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+       from='juliet@example.com/balcony'
+       to='characters@chat.example.com/JulieC'>
+     <x xmlns='http://jabber.org/protocol/muc'/>
+   </presence>
+
+E: <presence
+       from='characters@chat.example.com/JulieC'
+       to='juliet@example.com/balcony'>
+     <error type='wait'>
+       <remote-server-timeout
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="resource-constraint" anchor="stanzas-error-conditions-resource-constraint">
+          <t>The server or recipient lacks the system resources necessary to service the request; the associated error type SHOULD be "wait".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq from='romeo@example.net/foo'
+       id='items1'
+       to='pubsub.example.com'
+       type='get'>
+     <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+       <items node='my_musings'/>
+     </pubsub>
+   </iq>
+
+E: <iq from='pubsub.example.com'
+       id='items1'
+       to='romeo@example.net/foo'
+       type='error'>
+     <error type='wait'>
+       <resource-constraint
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="service-unavailable" anchor="stanzas-error-conditions-service-unavailable">
+          <t>The server or recipient does not currently provide the requested service; the associated error type SHOULD be "cancel".</t>
+          <t>An application SHOULD return a &lt;service-unavailable/&gt; error instead of &lt;item-not-found/&gt; or &lt;recipient-unavailable/&gt; if sending one of the latter errors would provide information about the intended recipient's network availability to an entity that is not authorized to know such information.</t>
+          <figure>
+            <artwork><![CDATA[
+C: <message from='romeo@example.net/foo'
+            to='juliet@example.com'>
+     <body>Hello?</body>
+   </message>
+
+S: <message from='juliet@example.com/foo'
+            to='romeo@example.net'>
+     <error type='cancel'>
+       <service-unavailable
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </message>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="subscription-required" anchor="stanzas-error-conditions-subscription-required">
+          <t>The requesting entity is not authorized to access the requested service because a subscription is required; the associated error type SHOULD be "auth".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <presence
+      from='romeo@example.net/orchard'
+      to='juliet@example.com'
+      type='probe'/>
+
+S: <presence
+      from='juliet@example.com'
+      to='romeo@example.net/orchard'
+      type='error'>
+     <error type='modify'>
+       <subscription-required
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </presence>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="undefined-condition" anchor="stanzas-error-conditions-undefined-condition">
+          <t>The error condition is not one of those defined by the other conditions in this list; any error type may be associated with this condition, and it SHOULD be used only in conjunction with an application-specific condition.</t>
+          <figure>
+            <artwork><![CDATA[
+C: <message
+       from='northumberland@shakespeare.lit'
+       id='richard2-4.1.247'
+       to='kingrichard@royalty.england.lit'>
+     <body>My lord, dispatch; read o'er these articles.</body>
+     <amp xmlns='http://jabber.org/protocol/amp'>
+       <rule action='notify' 
+             condition='deliver' 
+             value='stored'/>
+     </amp>
+
+S: <message from='example.org'
+            id='amp1'
+            to='northumberland@example.net/field'
+            type='error'>
+     <amp xmlns='http://jabber.org/protocol/amp'
+          from='kingrichard@example.org'
+          status='error'
+          to='northumberland@example.net/field'>
+       <rule action='error' 
+             condition='deliver' 
+             value='stored'/>
+     </amp>
+     <error type='modify'>
+       <undefined-condition 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <failed-rules xmlns='http://jabber.org/protocol/amp#errors'>
+         <rule action='error' 
+               condition='deliver' 
+               value='stored'/>
+       </failed-rules>
+     </error>
+   </message>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="unexpected-request" anchor="stanzas-error-conditions-unexpected-request">
+          <t>The recipient or server understood the request but was not expecting it at this time (e.g., the request was out of order); the associated error type SHOULD be "wait" or "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <iq from='romeo@example.net/foo'
+       id='unsub1'
+       to='pubsub.example.com'
+       type='set'>
+     <pubsub xmlns='http://jabber.org/protocol/pubsub'>
+        <unsubscribe
+            node='my_musings'
+            jid='romeo@example.net'/>
+     </pubsub>
+   </iq>
+
+E: <iq from='pubsub.example.com'
+       id='unsub1'
+       to='romeo@example.net/foo'
+       type='error'>
+     <error type='cancel'>
+       <unexpected-request 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <not-subscribed 
+           xmlns='http://jabber.org/protocol/pubsub#errors'/>
+     </error>
+   </iq>
+            <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="unknown-sender" anchor="stanzas-error-conditions-unknown-sender">
+          <t>The stanza 'from' address specified by a peer server or connected client is not known to the receiving server or is not valid for the stream; the associated error type SHOULD be "modify".</t>
+          <figure>
+            <artwork><![CDATA[
+C: <message to='romeo@example.net'>
+     <body>Wherefore art thou?</body>
+   </message>
+
+S: <message from='romeo@example.net'
+            type='error'>
+     <body>Wherefore art thou?</body>
+     <error type='modify'>
+       <unknown-sender xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </message>
+            ]]></artwork>
+          </figure>
+        </section>
       </section>
       <section title="Application-Specific Conditions" anchor="stanzas-error-app">
         <t>As noted, an application MAY provide application-specific stanza error information by including a properly-namespaced child in the error element.  The application-specific element SHOULD supplement or further qualify a defined element.  Thus, the &lt;error/&gt; element will contain two or three child elements:</t>
         <figure>
           <artwork><![CDATA[
-<iq type='error' id='some-id'>
+<iq id='some-id' type='error'>
   <error type='modify'>
     <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     <too-many-parameters xmlns='application-ns'/>
@@ -1728,8 +2316,8 @@ Requesting                 Responding
       </section>
     </section>
 
-    <section title="Extended Namespaces" anchor="stanzas-extended">
-      <t>While the message, presence, and IQ stanza kinds provide basic semantics for messaging, availability, and request-response interactions, XMPP uses XML namespaces to extend the stanzas for the purpose of providing additional functionality.  Thus a message or presence stanza MAY contain one or more optional child elements specifying content that extends the meaning of the message (e.g., an XHTML-formatted version of the message body as described in <xref target="XEP-0071"/>), and an IQ stanza MAY contain one such child element.  This child element MAY have any name and MUST possess an 'xmlns' namespace declaration (other than "jabber:client", "jabber:server", or "http://etherx.jabber.org/streams") that defines all data contained within the child element.  Such a child element is said to be defined by an EXTENDED NAMESPACE.</t>
+    <section title="Extended Content" anchor="stanzas-extended">
+      <t>While the message, presence, and IQ stanza kinds provide basic semantics for messaging, availability, and request-response interactions, XMPP uses XML namespaces to extend the stanzas for the purpose of providing additional functionality.  Thus a message or presence stanza MAY contain one or more optional child elements specifying content that extends the meaning of the message (e.g., an XHTML-formatted version of the message body as described in <xref target="XEP-0071"/>), and an IQ stanza of type "get" or "set" MUST contain one such child element.  This child element MAY have any name and MUST possess an 'xmlns' namespace declaration (other than "jabber:client", "jabber:server", or "http://etherx.jabber.org/streams") that defines all data contained within the child element.  Such a child element is said to be EXTENDED CONTENT and the namespace name is said to be an EXTENDED NAMESPACE.</t>
       <t>Support for any given extended namespace is OPTIONAL on the part of any implementation.  If an entity does not understand such a namespace, the entity's expected behavior depends on whether the entity is (1) the recipient or (2) an entity that is routing the stanza to the recipient:</t>
       <t><list style="hanging">
         <t hangText="Recipient:">If a recipient receives a stanza that contains a child element it does not understand, it SHOULD ignore that specific XML data, i.e., it SHOULD not process it or present it to a user or associated application (if any).  In particular:
@@ -1944,7 +2532,7 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
       <figure>
         <preamble>Step 15: Client binds a resource:</preamble>
         <artwork><![CDATA[
-<iq type='set' id='bind_1'>
+<iq id='bind_1' type='set'>
   <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
     <resource>balcony</resource>
   </bind>
@@ -1954,9 +2542,9 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
       <figure>
         <preamble>Step 16: Server informs client of successful resource binding:</preamble>
         <artwork><![CDATA[
-<iq type='result'
+<iq id='bind_1'
     to='juliet@example.com/balcony'
-    id='bind_1'>
+    type='result'>
   <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
     <jid>juliet@example.com/balcony</jid>
   </bind>
@@ -2176,6 +2764,11 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
   </section>
 
   <section title="Server Rules for Handling XML Stanzas" anchor="rules">
+
+
+        <t>If the value of the 'to' attribute is invalid or cannot be contacted, the entity discovering that fact (typically the sender's or recipient's server) MUST return an appropriate error to the sender, setting the 'from' attribute of the error stanza to the value provided in the 'to' attribute of the offending stanza.  The error MUST NOT reveal the network availability of the intended recipient (a PRESENCE LEAK) or whether the intended recipient even exists (to help prevent directory harvesting attacks); this is done by not differentiating between, for example, </t>
+
+
     <t>Compliant server implementations MUST ensure in-order processing of XML stanzas between any two entities.  This includes stanzas sent by a client to its server for direct processing by the server.</t>
     <t>Beyond the requirement for in-order processing, each server implementation will contain its own "delivery tree" for handling stanzas it receives.  Such a tree determines whether a stanza needs to be routed to another domain, processed direct, or delivered to a resource associated with a connected node.  The following rules apply.</t>
     <section title="No 'to' Address" anchor="rules-noto">
