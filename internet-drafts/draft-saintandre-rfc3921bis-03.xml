@@ -23,9 +23,8 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="June" day="15"/>
+    <date year="2007" month="June" day="21"/>
     <area>Applications</area>
-    <workgroup>XMPP Working Group</workgroup>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
     <keyword>I-D</keyword>
@@ -69,7 +68,7 @@
         <t>Manage presence subscriptions to and from one's contacts</t>
       </list></t>
       <t>Detailed definitions of these functionality areas are contained in <xref target="IMP-REQS"/>, and the interested reader should refer to that document regarding the requirements addressed herein.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of <xref target="IMP-REQS"/>, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Although XMPP protocol extensions addressing many other functionality areas have been defined in the XMPP Standards Foundation's XEP series (e.g., multi-user text chat as specified in <xref target='XEP-0045'/>), such extensions are not included in this document because they are not required by <xref target="IMP-REQS"/>.</t>
-      <t>Note: <xref target="IMP-REQS"/> stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return &lt;service-unavailable/&gt; errors in response to attempts to send &lt;message/&gt; stanzas.)</t>
+      <t>Note: <xref target="IMP-REQS"/> stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return &lt;service-unavailable/&gt; errors if clients attempt to send &lt;message/&gt; stanzas.)</t>
       <t>Note: For convenience, this document employs the term "user" to refer to the owner of an XMPP account; however, account owners need not be human persons and may be bots, devices, or other non-human applications.</t>
     </section>
     <section title="Typical Session Flow" anchor="intro-session">
@@ -95,6 +94,7 @@
   <section title="Managing the Roster" anchor="roster">
     <t>In XMPP, one's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user may access roster information from any resource.</t>
     <t>Note: There are important interactions between rosters and subscriptions; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of roster management (however, such an understanding is necessary only for developers of XMPP servers, since most of the complexity is shielded from clients).</t>
+
     <section title="Syntax and Semantics" anchor="roster-syntax">
       <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The &lt;query/&gt; element MAY contain one or more &lt;item/&gt; children, each describing a unique roster item or "contact".  The following rules apply:</t>
       <t>
@@ -118,7 +118,8 @@
       <t>Each &lt;item/&gt; element MAY possess a 'name' attribute, which specifies the "handle" to be associated with the JID, as determined by the user (not the contact).  The value of the 'name' attribute is opaque to the server but may have meaning to a human user.</t>
       <t>Each &lt;item/&gt; element MAY contain one or more &lt;group/&gt; child elements, for use in collecting roster items into various categories.  The XML character data of the &lt;group/&gt; element is opaque to the server but may have meaning to a human user.</t>
     </section>
-    <section title="Retrieving One's Roster on Login" anchor="roster-login">
+
+    <section title="Retrieving the Roster on Login" anchor="roster-login">
       <t>Upon authenticating with a server and binding a resource (thus becoming a connected resource), a client SHOULD request the roster before sending initial presence (however, because receiving the roster may not be desirable for all resources, e.g., a connection with limited bandwidth, the client's request for the roster is recommended and not required).  After a connected resource sends initial presence (see <xref target='presence-initial'/>), it is referred to as an AVAILABLE RESOURCE.  If a connected resource requests the roster but does not send initial presence, the server SHOULD NOT send it presence subscriptions and SHOULD NOT send it associated roster updates.  If an available resource does not request the roster during a session, the server SHOULD NOT send it presence subscriptions and MUST NOT associated roster updates.  For the sake of brevity, the term INTERESTED RESOURCE is used herein to refer to the concept of "an available resource that has requested the roster".</t>
       <t>A client requests the roster by sending a roster get over its stream to the server.</t>
       <figure>
@@ -142,6 +143,9 @@
     <item jid='mercutio@example.org'
           name='Mercutio'
           subscription='from'/>
+    <item jid='nurse@example.com'
+          name='Nurse'
+          subscription='to'/>
     <item jid='benvolio@example.org'
           name='Benvolio'
           subscription='both'/>
@@ -151,11 +155,12 @@
       </figure>
       <t>If the server cannot process the roster get, it MUST return an appropriate stanza error as described in <xref target='XMPP-CORE'/> (such as &lt;service-unavailable/&gt; if the roster namespace is not supported or &lt;internal-server-error/&gt; if the server experiences trouble returning the roster).</t>
     </section>
+
     <section title="Adding a Roster Item" anchor="roster-add">
-      <t>At any time, a user MAY add an item to his or her roster by sending an IQ stanza of type "set" containing a &lt;query/&gt; element that in turn contains one &lt;item/&gt; element.</t>
-      <figure>
-        <preamble>Example: Client adds a new item:</preamble>
-        <artwork><![CDATA[
+      <section title="Success Case" anchor="roster-add-success">
+        <t>At any time, a client may add an item to the roster by sending an IQ stanza of type "set" containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace, which in turn contains one &lt;item/&gt; element; this is called a ROSTER SET.</t>
+        <figure>
+          <artwork><![CDATA[
 <iq from='juliet@example.com/balcony' type='set' id='roster_2'>
   <query xmlns='jabber:iq:roster'>
     <item jid='nurse@example.com'
@@ -164,14 +169,11 @@
     </item>
   </query>
 </iq>
-        ]]></artwork>
-      </figure>
-      <t>Note: The &lt;query/&gt; element MUST NOT contain more than one &lt;item/&gt; child element when the client sends an IQ set to the server.  In addition, the &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element but the XML character data of each &lt;group/&gt; element MUST specify distinct groups (where duplicates are to be determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>).  If either of these rules is violated, the server MUST return a &lt;bad-format/&gt; error to the client.</t>
-      <t>Note: A client MUST NOT add itself to its own roster; i.e., the value of the &lt;item/&gt; element's 'jid' attribute MUST NOT match the bare JID (node@domain) portion of the &lt;iq/&gt; element's 'from' attribute.  If this rule is violated, the server MUST return a &lt;not-allowed/&gt; error to the client.</t>
-      <t>If the server can successfully process the roster addition, it MUST update the roster information in persistent storage and push the change out to all of the user's interested resources.  This "roster push" consists of an IQ stanza of type "set" from the server to the client and enables all interested resources to remain in sync with the server-based roster information.</t>
-      <figure>
-        <preamble>Example: Server (1) pushes the updated roster information to all interested resources and (2) replies with an IQ result to the sending resource:</preamble>
-        <artwork><![CDATA[
+          ]]></artwork>
+        </figure>
+        <t>If the server can successfully process the roster set (i.e., if none of the error cases occurs), it MUST create the roster item in persistent storage.  It MUST also send a ROSTER PUSH to all of the user's interested resources, consisting of an IQ stanza of type "set" containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace, which in turn contains one &lt;item/&gt; element that defines the new roster item (this roster push enables all interested resources to remain in sync with the server-based roster information).  Finally, it MUST also return an IQ stanza of type "result" to the connected resource that sent the roster set.</t>
+        <figure>
+          <artwork><![CDATA[
 <iq to='juliet@example.com/balcony'
     type='set'
     id='a78b4q6ha463'>
@@ -197,29 +199,175 @@
 </iq>
 
 <iq to='juliet@example.com/balcony' type='result' id='roster_2'/>
-        ]]></artwork>
-      </figure>
-      <t>As required by the semantics of the IQ stanza kind as defined in <xref target="XMPP-CORE"/>, each resource that received the roster push MUST reply with an IQ stanza of type "result" (or "error").</t>
-      <figure>
-        <preamble>Example: Resources reply with an IQ result to the server:</preamble>
-        <artwork><![CDATA[
+          ]]></artwork>
+        </figure>
+        <t>As required by the semantics of the IQ stanza kind as defined in <xref target="XMPP-CORE"/>, each resource that received the roster push MUST reply with an IQ stanza of type "result" (or "error").</t>
+        <figure>
+          <artwork><![CDATA[
 <iq from='juliet@example.com/balcony'
-    to='example.com'
     type='result'
     id='a78b4q6ha463'/>
 <iq from='juliet@example.com/chamber'
-    to='example.com'
     type='result'
     id='a78b4q6ha464'/>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Error Cases" anchor="roster-add-errors">
+        <t>If the server cannot successfully process the roster set, it MUST return an error.  The following error cases are defined (naturally, other stanza errors may occur, e.g.,  &lt;internal-server-error/&gt;).</t>
+        <t>The server MUST return a &lt;bad-format/&gt; error to the client if the roster set violates any of the following rules:</t>
+        <t>
+          <list style='numbers'>
+            <t>The &lt;query/&gt; element MUST NOT contain more than one &lt;item/&gt; child element.</t>
+            <t>The &lt;item/&gt; element MAY contain a 'name' attribute, but the value of the 'name' attribute MUST NOT be more than 1023 characters in length.</t>
+            <t>The &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, but the XML character data of each &lt;group/&gt; element MUST specify a distinct group (where duplicates are to be determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>)</t>
+            <t>The XML character data of any given &lt;group/&gt; element MUST NOT be of zero length and MUST NOT be more than 1023 characters in length.</t>
+          </list>
+        </t>
+        <figure>
+          <preamble>Error: Roster set contains more than one item</preamble>
+          <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='roster_3'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='nurse@example.com'
+          name='Nurse'>
+      <group>Servants</group>
+    </item>
+    <item jid='mother@example.com'
+          name='Mom'>
+      <group>Family</group>
+    </item>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='roster_3'>
+  <error type='modify'>
+    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+          ]]></artwork>
+        </figure>
+        <figure>
+          <preamble>Error: Roster set contains item with oversized handle</preamble>
+          <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='roster_4'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='nurse@example.com'
+          name='__some-very-long-handle__'>
+      <group>Servants</group>
+    </item>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='roster_4'>
+  <error type='modify'>
+    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+          ]]></artwork>
+        </figure>
+        <figure>
+          <preamble>Error: Roster set contains duplicate groups</preamble>
+          <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='roster_5'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='nurse@example.com'
+          name='Nurse'>
+      <group>Servants</group>
+      <group>Servants</group>
+    </item>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='roster_5'>
+  <error type='modify'>
+    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+          ]]></artwork>
+        </figure>
+        <figure>
+          <preamble>Error: Roster set contains empty group</preamble>
+          <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='roster_6'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='nurse@example.com'
+          name='Nurse'>
+      <group></group>
+    </item>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='roster_6'>
+  <error type='modify'>
+    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+          ]]></artwork>
+        </figure>
+        <figure>
+          <preamble>Error: Roster set contains oversized group</preamble>
+          <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='roster_7'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='nurse@example.com'
+          name='Nurse'>
+      <group>__some-very-long-group-name__</group>
+    </item>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='roster_7'>
+  <error type='modify'>
+    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>The server MUST return a &lt;not-allowed/&gt; error to the client if the value of the &lt;item/&gt; element's 'jid' attribute matches the bare JID (node@domain) portion of the &lt;iq/&gt; element's 'from' attribute.</t>
+        <figure>
+          <preamble>Error: Roster set contains sender's JID</preamble>
+          <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='roster_6'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'/>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='roster_6'>
+  <error type='cancel'>
+    <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+          ]]></artwork>
+        </figure>
+      </section>
+    </section>
+
+    <section title="Updating a Roster Item" anchor="roster-update">
+      <t>Updating an existing roster item is done in the same way as adding a new roster item, i.e., by sending a roster set to the server.  Because a roster item is atomic, the item shall be updated exactly as provided in the roster set.</t>
+      <t>There are several reasons why a client might update a roster item:</t>
+      <t>
+        <list style='numbers'>
+          <t>Adding a group</t>
+          <t>Deleting a group</t>
+          <t>Changing the handle</t>
+          <t>Deleting the handle</t>
+        </list>
+      </t>
+      <t>Consider a roster item that is defined as follows:</t>
+      <figure>
+        <artwork><![CDATA[
+    <item jid='romeo@example.net'
+          name='Romeo'>
+      <group>Friends</group>
+    </item>
         ]]></artwork>
       </figure>
-    </section>
-    <section title="Updating a Roster Item" anchor="roster-update">
-      <t>Updating an existing roster item (e.g., changing the group) is done in the same way as adding a new roster item, i.e., by sending the roster item in an IQ set to the server.</t>
+      <t>The user who has this item in her roster may want to add the item to another group.</t>
       <figure>
-        <preamble>Example: User updates roster item (add group):</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='roster_3'>
+<iq from='juliet@example.com/chamber' type='set' id='update_1'>
   <query xmlns='jabber:iq:roster'>
     <item jid='romeo@example.net'
           name='Romeo'>
@@ -230,10 +378,10 @@
 </iq>
         ]]></artwork>
       </figure>
+      <t>The user may then want to remove the item from the original group.</t>
       <figure>
-        <preamble>Example: User updates roster item (remove group):</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='roster_4'>
+<iq from='juliet@example.com/chamber' type='set' id='update_2'>
   <query xmlns='jabber:iq:roster'>
     <item jid='romeo@example.net'
           name='Romeo'>
@@ -243,10 +391,10 @@
 </iq>
         ]]></artwork>
       </figure>
+      <t>The user may then want to change the handle for the item.</t>
       <figure>
-        <preamble>Example: User updates roster item (change handle):</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='roster_5'>
+<iq from='juliet@example.com/chamber' type='set' id='update_3'>
   <query xmlns='jabber:iq:roster'>
     <item jid='romeo@example.net'
           name='MyRomeo'>
@@ -256,10 +404,10 @@
 </iq>
         ]]></artwork>
       </figure>
+      <t>The user may then want to remove the handle altogether (note: including an empty 'name' attribute is equivalent to including no 'name' attribute whatsoever).</t>
       <figure>
-        <preamble>Example: User updates roster item (remove handle):</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='roster_6'>
+<iq from='juliet@example.com/chamber' type='set' id='update_4'>
   <query xmlns='jabber:iq:roster'>
     <item jid='romeo@example.net'
           name=''>
@@ -269,26 +417,55 @@
 </iq>
         ]]></artwork>
       </figure>
-      <t>As with adding a roster item, when updating a roster item the server MUST update the roster information in persistent storage, initiate a roster push to all of the user's interested resources, and send an IQ result to the initiating resource.</t>
-    </section>
-    <section title="Deleting a Roster Item" anchor="roster-delete">
-      <t>At any time, a user MAY delete an item from his or her roster by sending an IQ set to the server and setting the value of the 'subscription' attribute to "remove" (a compliant server MUST ignore any other values of the 'subscription' attribute when received from a client).</t>
+      <t>The user may then want to remove the item from all groups.</t>
       <figure>
-        <preamble>Example: Client removes an item:</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_7'>
+<iq from='juliet@example.com/chamber' type='set' id='update_5'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'/>
+  </query>
+</iq>
+        ]]></artwork>
+      </figure>
+      <t>As with adding a roster item, when updating a roster item the server MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources, and send an IQ result to the initiating resource.</t>
+    </section>
+
+    <section title="Deleting a Roster Item" anchor="roster-delete">
+      <t>At any time, a client may delete an item from his or her roster by sending roster set and setting the value of the 'subscription' attribute to "remove" (a compliant server MUST ignore any other values of the 'subscription' attribute when received in a roster set).</t>
+      <figure>
+        <preamble>Example: Client deletes an item</preamble>
+        <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='delete_1'>
   <query xmlns='jabber:iq:roster'>
     <item jid='nurse@example.com' subscription='remove'/>
   </query>
 </iq>
         ]]></artwork>
       </figure>
-      <t>As with adding a roster item, when deleting a roster item the server MUST update the roster information in persistent storage, initiate a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource.</t>
-      <t>This command will result in cancellation of existing presence subscriptions; for details, see <xref target="int-remove">Removing a Roster Item and Cancelling All Subscriptions</xref>.</t>
+      <t>As with adding a roster item, if the server can successfully process the roster set then it MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource.</t>
+      <t>Note: This command will result in cancellation of existing presence subscriptions; for details, see <xref target="int-remove">Removing a Roster Item and Cancelling All Subscriptions</xref>.</t>
+      <t>If the value of the 'jid' attribute specifies an item that is not in the roster, the server MUST return an &lt;item-not-found/&gt; error.</t>
+      <figure>
+        <preamble>Error: Non-existent roster item</preamble>
+        <artwork><![CDATA[
+<iq from='juliet@example.com/balcony' type='set' id='delete_2'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='__no-such-user__@example.com' subscription='remove'/>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/balcony' type='error' id='delete_2'>
+  <error type='modify'>
+    <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></artwork>
+      </figure>
     </section>
+
     <section title="Business Rules" anchor="roster-rules">
-      <t>A server MUST ignore any 'to' address on a roster set and MUST treat any roster set as applying to the sender's bare JID.</t>
-      <t>A client MUST ignore a roster push unless it has no 'from' attribute (i.e., implicitly from the server) or it has a 'from' attribute whose value matches the user's bare JID (of the form &lt;user@domain&gt;) or full JID (of the form &lt;user@domain/resource&gt;).</t>
+      <t>When a server receives a roster set, it MUST ignore any 'to' address specified on the IQ stanza and MUST handle the IQ stanza as if it included no 'to' attribute.</t>
+      <t>When a client receives a roster push, it MUST ignore the stanza unless it has no 'from' attribute (i.e., implicitly from the server) or it has a 'from' attribute whose value matches the user's bare JID (of the form &lt;user@domain&gt;) or full JID (of the form &lt;user@domain/resource&gt;).</t>
     </section>
   </section>
 
@@ -2781,7 +2958,7 @@
         </xs:simpleType>
       </xs:attribute>
       <xs:attribute name='jid' type='xs:string' use='required'/>
-      <xs:attribute name='name' type='xs:string' use='optional'/>
+      <xs:attribute name='name' type='zeroType' use='optional'/>
       <xs:attribute name='subscription' use='optional'>
         <xs:simpleType>
           <xs:restriction base='xs:NCName'>
@@ -2796,7 +2973,21 @@
     </xs:complexType>
   </xs:element>
 
-  <xs:element name='group' type='xs:string'/>
+  <xs:element name='group' type='nonZeroType'/>
+
+  <xs:simpleType name='nonZeroType'>
+    <xs:restriction base='xs:string'>
+      <xs:minLength value='1'/>
+      <xs:maxLength value='1023'/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name='zeroType'>
+    <xs:restriction base='xs:string'>
+      <xs:minLength value='0'/>
+      <xs:maxLength value='1023'/>
+    </xs:restriction>
+  </xs:simpleType>
 
 </xs:schema>
           ]]></artwork>
