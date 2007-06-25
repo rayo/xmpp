@@ -23,7 +23,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="June" day="21"/>
+    <date year="2007" month="June" day="25"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -215,13 +215,18 @@
       </section>
       <section title="Error Cases" anchor="roster-add-errors">
         <t>If the server cannot successfully process the roster set, it MUST return an error.  The following error cases are defined (naturally, other stanza errors may occur, e.g.,  &lt;internal-server-error/&gt;).</t>
-        <t>The server MUST return a &lt;bad-format/&gt; error to the client if the roster set violates any of the following rules:</t>
+        <t>The server SHOULD return a &lt;bad-request/&gt; error to the client if the roster set violates any of the following rules:</t>
         <t>
           <list style='numbers'>
             <t>The &lt;query/&gt; element MUST NOT contain more than one &lt;item/&gt; child element.</t>
-            <t>The &lt;item/&gt; element MAY contain a 'name' attribute, but the value of the 'name' attribute MUST NOT be more than 1023 characters in length.</t>
             <t>The &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, but the XML character data of each &lt;group/&gt; element MUST specify a distinct group (where duplicates are to be determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>)</t>
-            <t>The XML character data of any given &lt;group/&gt; element MUST NOT be of zero length and MUST NOT be more than 1023 characters in length.</t>
+          </list>
+        </t>
+        <t>The server SHOULD return a &lt;not-allowed/&gt; error to the client if the roster set violates any of the following rules:</t>
+        <t>
+          <list style='numbers'>
+            <t>The &lt;item/&gt; element MAY contain a 'name' attribute, but the value of the 'name' attribute SHOULD NOT be more than 1023 characters in length.</t>
+            <t>The XML character data of any given &lt;group/&gt; element MUST NOT be of zero length and SHOULD NOT be more than 1023 characters in length.</t>
           </list>
         </t>
         <figure>
@@ -242,7 +247,7 @@
 
 <iq to='juliet@example.com/balcony' type='error' id='roster_3'>
   <error type='modify'>
-    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
           ]]></artwork>
@@ -261,7 +266,7 @@
 
 <iq to='juliet@example.com/balcony' type='error' id='roster_4'>
   <error type='modify'>
-    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
           ]]></artwork>
@@ -281,7 +286,7 @@
 
 <iq to='juliet@example.com/balcony' type='error' id='roster_5'>
   <error type='modify'>
-    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
           ]]></artwork>
@@ -300,7 +305,7 @@
 
 <iq to='juliet@example.com/balcony' type='error' id='roster_6'>
   <error type='modify'>
-    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
           ]]></artwork>
@@ -319,7 +324,7 @@
 
 <iq to='juliet@example.com/balcony' type='error' id='roster_7'>
   <error type='modify'>
-    <bad-format xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
           ]]></artwork>
@@ -470,72 +475,353 @@
   </section>
 
   <section title="Managing Presence Subscriptions" anchor="sub">
-    <t>In order to protect the privacy of instant messaging users and any other entities, presence and availability information is disclosed only to other entities that the user has approved.  When a user has agreed that another entity may view its presence, the entity is said to have a subscription to the user's presence information.  A subscription lasts across sessions; indeed, it lasts until the subscriber unsubscribes or the subscribee cancels the previously-granted subscription.</t>
-    <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes.  In particular, a SUBSCRIPTION REQUEST is a presence stanza whose 'type' attribute has a value of "subscribe".  If the subscription request is being sent to an instant messaging contact, the JID supplied in the 'to' attribute SHOULD be of the form &lt;contact@domain&gt; rather than &lt;contact@domain/resource&gt;, since the desired result is normally for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.</t>
+
+    <t>In order to protect the privacy of instant messaging users, presence information is disclosed only to other entities that the user has approved.  When a user has agreed that another entity may view its presence, the entity is said to have a SUBSCRIPTION to the user's presence information.  An entity that has a subscription to a user's presence (or to which a user has a presence subscription) is called a CONTACT.  A subscription lasts across sessions; indeed, it lasts until the contact unsubscribes or the user cancels the previously-granted subscription.</t>
+    <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes ("subscribe", "unsubscribe", "subscribed", and "unsubscribed").</t>
+    <t>Note: See <xref target='sub-rules'/> regarding rules that apply to server processing of all inbound subscription-related presence stanzas.</t>
     <t>Note: There are important interactions between subscriptions and rosters; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of presence subscriptions.</t>
+
     <section title="Requesting a Subscription" anchor="sub-request">
-      <t>A request to subscribe to another entity's presence is made by sending a presence stanza of type "subscribe".</t>
-      <figure>
-        <preamble>Example: Sending a subscription request:</preamble>
-        <artwork><![CDATA[
-<presence from='romeo@example.net' 
+
+      <t>A SUBSCRIPTION REQUEST is a presence stanza whose 'type' attribute has a value of "subscribe".  A subscription request is generated by a user's client, processed by the (potential) contact's server, and acted on by the contact via the contact's client.  The workflow is described in the following sections.</t>
+
+      <section title="Client Generation of Outbound Subscription Request" anchor="sub-request-gen">
+        <t>A user's client generates a subscription request by sending a presence stanza of type "subscribe" and specifying a 'to' address of the potential contact's bare JID (&lt;contact@domain&gt;).</t>
+        <figure>
+          <preamble>Example: A subscription request</preamble>
+          <artwork><![CDATA[
+<presence to='juliet@example.com' type='subscribe'/>
+          ]]></artwork>
+        </figure>
+        <t>Note: The JID supplied in the 'to' attribute SHOULD be of the form &lt;contact@domain&gt; rather than &lt;contact@domain/resource&gt;, since the desired result is normally for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.</t>
+        <t>Typically the user's client prompts the user for information about the potential contact ("handle" and desired roster group) and generates a roster set with that information before sending the subscription request, but that behavior is recommended rather than required.</t>
+      </section>
+
+      <section title="Server Handling of Outbound Subscription Request" anchor="sub-request-outbound">
+        <t>In accordance with <xref target='sub-rules'/>, the user's server MUST stamp the outbound subscription request with the bare JID (&lt;user@domain&gt;) of the user.</t>
+        <figure>
+          <preamble>Example: A stamped subscription request</preamble>
+          <artwork><![CDATA[
+<presence from='romeo@example.net'
           to='juliet@example.com' 
           type='subscribe'/>
-        ]]></artwork>
-      </figure>
-      <t>If the user does not exist, the user's server SHOULD automatically return a presence stanza of type "unsubscribed" to the requesting entity.</t>
-      <figure>
-        <preamble>Example: User does not exist</preamble>
-        <artwork><![CDATA[
+          ]]></artwork>
+        </figure>
+        <t>(Stamping with the bare JID instead of the full JID helps to prevent presence leaks; for details, see the security considerations of <xref target='XMPP-CORE'/>.)</t>
+        <t>If the potential contact is hosted on the same server, the server MUST adhere to the rules specified in the next section in processing the subscription request and delivering it to the (local) contact.</t>
+        <t>If the potential contact is hosted on a different server, the user's server then routes the stanza to that foreign domain in accordance with core XMPP stanza handling rules.</t>
+        <t>If the user has not already added the contact to the user's roster, the user's server MUST then send an appropriate roster push to all of the user's interested resources.  The roster push MUST contain the potential contact with a subscription state of "none" and with notation that the subscription is pending (via an 'ask' attribute whose value is "subscribe").</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='romeo@example.net/foo'
+    type='set'
+    id='b89c5r7ib574'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='none'
+          ask='subscribe'/>
+  </query>
+</iq>
+
+<iq to='romeo@example.net/bar'
+    type='set'
+    id='b89c5r7ib575'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='none'
+          ask='subscribe'/>
+    </item>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>Note:  Therefore a client MAY simply wait for the roster push rather than proactively adding the contact to the user's roster before sending the subscription request.</t>
+      </section>
+
+      <section title="Server Handling of Inbound Subscription Request" anchor="sub-request-inbound">
+        <t>The contact's server MUST adhere to the following rules when handling the inbound subscription request:</t>
+        <t>
+          <list style='numbers'>
+            <t>Above all, the contact's server MUST NOT automatically approve subscription requests on the contact's behalf; instead, if a subscription request requires approval then the contact's server MUST deliver that request to the contact's interested resource(s) for approval or denial by the contact.</t>
+            <t>If the contact does not exist, the contact's server MUST automatically return a presence stanza of type "unsubscribed" to the user.
+              <figure>
+                <artwork><![CDATA[
 <presence from='juliet@example.com' 
           to='romeo@example.net' 
           type='unsubscribed'/>
-        ]]></artwork>
-      </figure>
-      <t>A user's server MUST NOT automatically approve subscription requests on the user's behalf.  All subscription requests MUST be delivered to the user's client, specifically to one or more of the user's interested resources.  If the user has no interested resources when the subscription request is received by the user's server, the user's server MUST keep a record of the complete subscription request (including any extended namespaces contained therein) and deliver the request when the user next has an interested resource, until the user either approves or denies the request; however, the server MUST NOT deliver more than one subscription request from any given entity when the user next has an interested resource (e.g., if an entity sends multiple subscription requests to the user while the user is offline, the server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the user next has an interested resource).  If there is more than one interested resource associated with the user when the subscription request is received by the user's server, the user's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.  However, if the user receives a presence stanza of type "subscribe" from a contact to whom the user has already granted permission to see the user's presence information (e.g., in cases when the contact is seeking to resynchronize subscription states), the user's server SHOULD auto-reply on behalf of the user.  In addition, the user's server MAY choose to re-send an unapproved pending subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
-      <t>Note: When a contact generates a subscription request to a user, the contact's server MUST stamp the outgoing presence stanza with the bare JID (&lt;contact@domain&gt;) of the contact, not the full JID (&lt;contact@domain/resource&gt;).  The same is true for presence stanzas of type "subscribed", "unsubscribe", and "unsubscribed".</t>
-      <t>Note: If a user sends a presence subscription request to a contact but has not already added the contact to the user's roster, the user's server MUST send a roster push to all of the user's interested resources.  Thus a client MAY simply wait for the roster push rather than proactively adding to the contact to the user's roster.</t>
-    </section>
-    <section title="Handling a Subscription Request" anchor="sub-handle">
-      <t>When a client receives a subscription request from another entity, it SHOULD either approve the request by sending a presence stanza of type "subscribed" or refuse the request by sending a presence stanza of type "unsubscribed".</t>
-      <figure>
-        <preamble>Example: Approving a subscription request:</preamble>
-        <artwork><![CDATA[
-<presence from='juliet@example.com'
-          to='romeo@example.net' 
+                ]]></artwork>
+              </figure>
+            </t>
+            <t>If the contact exists and the user already has a subscription to the user's presence, the contact's server SHOULD auto-reply on behalf of the user by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.</t>
+            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one interested resource associated with the contact when the subscription request is received by the contact's server, the contact's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.</t>
+            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no interested resources when the subscription request is received by the contact's server, the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended namespaces contained therein, and deliver the request when the contact next has an interested resource, until the contact either approves or denies the request.  (Note: The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an interested resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an interested resource; this helps to prevent "subscription request spam".)</t>
+          </list>
+        </t>
+        <t>Note: If the contact does not approve or deny the subscription request within some configurable amount of time, the user's server MAY choose to re-send the subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
+      </section>
+
+      <section title="Client Handling of Inbound Subscription Request" anchor="sub-request-handle">
+        <t>When the contaact's client receives a subscription request from the user, it MUST present the request to the contact for approval (unless the contact has explicitly configured the client to automatically approve or deny all subscription requests).</t>
+        <t>A subscription request is approved by sending a presence stanza of type "subscribed" or denied by sending a presence stanza of type "unsubscribed".</t>
+        <figure>
+          <preamble>Example: Approving a subscription request</preamble>
+          <artwork><![CDATA[
+<presence to='romeo@example.net' type='subscribed'/>
+          ]]></artwork>
+        </figure>
+        <t>Server handling of presence stanzas of type 'subscribed' is described in the following sections for both the contact's server and the user's server.</t>
+        <figure>
+          <preamble>Example: Denying a presence subscription request</preamble>
+          <artwork><![CDATA[
+<presence to='romeo@example.net' type='unsubscribed'/>
+          ]]></artwork>
+        </figure>
+        <t>Server handling of presence stanzas of type 'unsubscribed' is described under <xref target='sub-cancel'/> for both the contact's server and the user's server.</t>
+      </section>
+
+      <section title="Server Handling of Outbound Subscription Approval" anchor="sub-request-approvalout">
+        <t>When the contact's client sends the subscription approval, the contact's server MUST stamp the outbound stanza with the bare JID (&lt;contact@domain&gt;) of the contact and route or deliver the stanza to the user.</t>
+        <figure>
+          <preamble>Example: A stamped subscription approval</preamble>
+          <artwork><![CDATA[
+<presence from='juliet@example.com' 
+          to='romeo@example.net'
           type='subscribed'/>
-        ]]></artwork>
-      </figure>
-      <figure>
-        <preamble>Example: Refusing a presence subscription request:</preamble>
-        <artwork><![CDATA[
-<presence from='juliet@example.com'
-          to='romeo@example.net' 
-          type='unsubscribed'/>
-        ]]></artwork>
-      </figure>
+          ]]></artwork>
+        </figure>
+        <t>The contact's server then MUST send a roster push to all of the contact's interested resources:</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='juliet@example.com/balcony'
+    type='set'
+    id='a78b4q6ha463'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'
+          subscription='from'/>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/chamber'
+    type='set'
+    id='a78b4q6ha464'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.com'
+          subscription='from'/>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>The contact's server MUST then also send current presence information to the user from each of the contact's available resources:</t>
+        <figure>
+          <artwork><![CDATA[
+<presence from='juliet@example.com/balcony'
+          to='romeo@example.net'/>
+
+<presence from='juliet@example.com/chamber'
+          to='romeo@example.net'/>
+          ]]></artwork>
+        </figure>
+        <t>From the perspective of the contact, there now exists a subscription from the user.  In order to subscribe to the user's presence, the contact would then send a subscription request to the user.  (XMPP clients will often automatically send the subscription request instead of requiring the contact to initiate the subscription request, since it is assumed that the desired end state is a mutual subscription.)</t>
+        <t>Note: Naturally, when the contact sends a subscription request to the user, the <xref target='substates'>subscription states</xref> (as well as the roles of the two JIDs) will be different from those shown in the foregoing examples.</t>
+      </section>
+
+      <section title="Server Handling of Inbound Subscription Approval" anchor="sub-request-approvalin">
+        <t>When the user's server receives the subscription approval, it MUST first check if the contact is in the user's roster with a subscription='none' or subscription='from' and the 'ask' flag set to "subscribe" (i.e., a <xref target='substates'>subscription state</xref> of "None + Pending Out" or "From + Pending Out").  If the contact is not in the user's roster with either of those states, the user's server MUST silently ignore the presence stanza of type "subscribed" (i.e., it MUST NOT route it to the user, modify the user's roster, or generate a roster push to the user's available resources).</t>
+        <t>If the foregoing check is successful, the user's server MUST initiate a roster push to all of the user's interested resources, containing an updated roster item for the contact with the 'subscription' attribute set to a value of "to".</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='romeo@example.net/foo'
+    type='set'
+    id='b89c5r7ib576'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='to'/>
+  </query>
+</iq>
+
+<iq to='romeo@example.net/bar'
+    type='set'
+    id='b89c5r7ib577'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='to'/>
+    </item>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>From the perspective of the user, there now exists a subscription to the contact's presence information.</t>
+        <t>The user's server MUST also deliver the available presence stanza received from each of the contact's available resources to each of the user's available resources:</t>
+        <figure>
+          <artwork><![CDATA[
+<presence from='juliet@example.com/balcony'
+          to='romeo@example.net/foo'/>
+
+<presence from='juliet@example.com/balcony'
+          to='romeo@example.net/bar'/>
+
+<presence from='juliet@example.com/chamber'
+          to='romeo@example.net/foo'/>
+
+<presence from='juliet@example.com/chamber'
+          to='romeo@example.net/bar'/>
+          ]]></artwork>
+        </figure>
+      </section>
     </section>
-    <section title="Cancelling a Subscription from Another Entity" anchor="sub-cancel">
-      <t>If a user would like to cancel a previously-granted subscription request, it sends a presence stanza of type "unsubscribed".</t>
-      <figure>
-        <preamble>Example: Cancelling a previously granted subscription request:</preamble>
-        <artwork><![CDATA[
-<presence from='juliet@example.com'
-          to='romeo@example.net' 
+
+    <section title="Cancelling a Subscription" anchor="sub-cancel">
+
+      <section title="Client Generation of Subscription Cancellation" anchor="sub-cancel-gen">
+        <t>If a contact would like to cancel a subscription that is has previously granted to a user, it sends a presence stanza of type "unsubscribed".</t>
+        <figure>
+          <preamble>Example: Cancelling a previously granted subscription request</preamble>
+          <artwork><![CDATA[
+<presence to='romeo@example.net' type='unsubscribed'/>
+          ]]></artwork>
+        </figure>
+      </section>
+
+      <section title="Server Handling of Outbound Subscription Cancellation" anchor="sub-cancel-outbound">
+        <t>In accordance with <xref target='sub-rules'/>, the contact's server MUST stamp the outbound subscription cancellation with the bare JID (&lt;user@domain&gt;) of the contact.</t>
+        <figure>
+          <preamble>Example: A stamped subscription cancellation</preamble>
+          <artwork><![CDATA[
+<presence from='juliet@example.com' 
+          to='romeo@example.net'
           type='unsubscribed'/>
-        ]]></artwork>
-      </figure>
+          ]]></artwork>
+        </figure>
+        <t>If the user is hosted on the same server, the server MUST adhere to the rules specified in the next section when handling the subscription cancellation.</t>
+        <t>If the user is hosted on a different server, the contact's server then routes the stanza to that foreign domain in accordance with core XMPP stanza handling rules.</t>
+        <t>The contact's server then MUST send a roster push with the updated roster item to all of the contact's interested resources:</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='juliet@example.com/balcony'
+    type='set'
+    id='a78b4q6ha465'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'
+          subscription='none'/>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/chamber'
+    type='set'
+    id='a78b4q6ha466'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.com'
+          subscription='none'/>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+      </section>
+
+      <section title="Server Handling of Inbound Subscription Cancellation" anchor="sub-cancel-inbound">
+        <t>When the user's server receives the inbound subscription cancellation, it MUST modify the subscription state and send a roster push to the user's interested resource(s).</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='romeo@example.net/foo'
+    type='set'
+    id='h37h3u1bv400'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='none'/>
+  </query>
+</iq>
+
+<iq to='romeo@example.net/bar'
+    type='set'
+    id='h37h3u1bv401'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='none'/>
+    </item>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+      </section>
     </section>
-    <section title="Unsubscribing from Another Entity's Presence" anchor="sub-unsub">
-      <t>If a user would like to unsubscribe from the presence of another entity, it sends a presence stanza of type "unsubscribe".</t>
-      <figure>
-        <preamble>Example: Unsubscribing from an entity's presence:</preamble>
-        <artwork><![CDATA[
+
+    <section title="Unsubscribing" anchor="sub-unsub">
+      <section title="Client Generation of Unsubscribe" anchor="sub-unsub-gen">
+        <t>If a contact would like to cancel a subscription that is has previously granted to a user, it sends a presence stanza of type "unsubscribed".</t>
+        <t>If a user would like to unsubscribe from a contact's presence, it sends a presence stanza of type "unsubscribe".</t>
+        <figure>
+          <preamble>Example: Cancelling a previously granted subscription request</preamble>
+          <artwork><![CDATA[
+<presence to='juliet@example.com' type='unsubscribe'/>
+          ]]></artwork>
+        </figure>
+      </section>
+
+      <section title="Server Handling of Outbound Unsubscribe" anchor="sub-unsub-outbound">
+        <t>In accordance with <xref target='sub-rules'/>, the user's server MUST stamp the outbound unsubscribe with the bare JID (&lt;user@domain&gt;) of the user.</t>
+        <figure>
+          <preamble>Example: A stamped unsubscribe</preamble>
+          <artwork><![CDATA[
 <presence from='romeo@example.net'
           to='juliet@example.com' 
-          type='unsubscribe'/>
-        ]]></artwork>
-      </figure>
+          type='unsubscribed'/>
+          ]]></artwork>
+        </figure>
+        <t>If the contact is hosted on the same server, the server MUST adhere to the rules specified in the next section when handling the unsubscribe.</t>
+        <t>If the contact is hosted on a different server, the user's server then routes the stanza to that foreign domain in accordance with core XMPP stanza handling rules.</t>
+        <t>The user's server then MUST send a roster push with the updated roster item to all of the user's interested resources:</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='romeo@example.net/foo'
+    type='set'
+    id='h37h3u1bv402'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='none'/>
+  </query>
+</iq>
+
+<iq to='romeo@example.net/bar'
+    type='set'
+    id='h37h3u1bv403'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='juliet@example.com'
+          subscription='none'/>
+    </item>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+      </section>
+
+      <section title="Server Handling of Inbound Subscription Cancellation" anchor="sub-unsub-inbound">
+        <t>When the contact's server receives the inbound unsubscribe, it MUST modify the subscription state and send a roster push to the contacts's interested resource(s).</t>
+        <figure>
+          <artwork><![CDATA[
+<iq to='juliet@example.com/balcony'
+    type='set'
+    id='a78b4q6ha467'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.net'
+          subscription='none'/>
+  </query>
+</iq>
+
+<iq to='juliet@example.com/chamber'
+    type='set'
+    id='a78b4q6ha468'>
+  <query xmlns='jabber:iq:roster'>
+    <item jid='romeo@example.com'
+          subscription='none'/>
+  </query>
+</iq>
+          ]]></artwork>
+        </figure>
+      </section>
+    </section>
+
+    <section title="Business Rules" anchor="sub-rules">
+      <t>When a user or contact generates a presence stanza of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed" or a server processes or generates such a stanza on behalf of a user or contact, the server MUST stamp the outgoing presence stanza with the bare JID (&lt;node@domain&gt;) of the user or contact, not the full JID (&lt;node@domain/resource&gt;).</t>
     </section>
   </section>
 
@@ -1657,13 +1943,6 @@
     <t>This Appendix provides a detailed description of how roster management and presence subscriptions are integrated in XMPP-based instant messaging and presence applications, mainly for the benefit of server developers (most of the complexity specified here can be safely ignored by client developers).</t>
     <section title="Overview" anchor="int-overview">
       <t>Some level of integration between roster items and presence subscriptions is normally expected by an instant messaging user regarding the user's subscriptions to and from other contacts.  This section describes the level of integration that MUST be supported within XMPP instant messaging applications.</t>
-      <t>There are four primary subscription states:</t>
-      <t><list style='symbols'>
-        <t>None -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
-        <t>To -- the user has a subscription to the contact's presence information, but the contact does not have a subscription to the user's presence information</t>
-        <t>From -- the contact has a subscription to the user's presence information, but the user does not have a subscription to the contact's presence information</t>
-        <t>Both -- both the user and the contact have subscriptions to each other's presence information (i.e., the union of 'from' and 'to')</t>
-      </list></t>
       <t>Each of these states is reflected in the roster of both the user and the contact, thus resulting in durable subscription states.  Narrative explanations of how these subscription states interact with roster items in order to complete certain defined use cases are provided in the following sub-sections.  Full details regarding server and client handling of all subscription states (including pending states between the primary states listed above) is provided in <xref target='substates'>Subscription States</xref>.</t>
       <t>The server MUST NOT send presence subscription requests or roster pushes to unavailable resources, nor to available resources that have not requested the roster.</t>
       <t>The 'from' and 'to' addresses are OPTIONAL in roster pushes; if included, their values SHOULD be the full JID of the resource for that session.  A client MUST acknowledge each roster push with an IQ stanza of type "result" (for the sake of brevity, these stanzas are not shown in the following examples but are required by the IQ semantics defined in <xref target="XMPP-CORE"/>).</t>
@@ -1732,7 +2011,7 @@
             <postamble>Note: If the user's server receives a presence stanza of type "error" from the contact's server, it MUST deliver the error stanza to the user, whose client MAY determine that the error is in response to the outgoing presence stanza of type "subscribe" it sent previously (e.g., by tracking an 'id' attribute) and then choose to resend the "subscribe" request or revert the roster to its previous state by sending a presence stanza of type "unsubscribe" to the contact.</postamble>
           </figure>
         </t>
-        <t>Upon receiving the presence stanza of type "subscribe" addressed to the contact, the contact's server MUST determine if there is at least one available resource from which the contact has requested the roster.  If so, it MUST deliver the subscription request to the contact (if not, the contact's server MUST store the subscription request offline for delivery when this condition is next met; normally this is done by adding a roster item for the contact to the user's roster, with a state of "None + Pending In" as defined under <xref target="substates">Subscription States</xref>, however a server SHOULD NOT push or deliver roster items in that state to the contact).  No matter when the subscription request is delivered, the contact must decide whether or not to approve it (subject to the contact's configured preferences, the contact's client MAY approve or refuse the subscription request without presenting it to the contact).  Here we assume the "happy path" that the contact approves the subscription request (the alternate flow of declining the subscription request is defined in <xref target="int-sub-alt"/>).  In this case, the contact's client (1) SHOULD perform a roster set specifying the desired handle and group for the user (if any); and (2) MUST send a presence stanza of type "subscribed" to the user in order to approve the subscription request.
+        <t>Upon receiving the presence stanza of type "subscribe" addressed to the contact, the contact's server MUST determine if there is at least one available resource from which the contact has requested the roster.  If so, it MUST deliver the subscription request to the contact (if not, the contact's server MUST store the subscription request offline for delivery when this condition is next met; normally this is done by adding a roster item for the contact to the user's roster, with a state of "None + Pending In" as defined under <xref target="substates">Subscription States</xref>, however a server SHOULD NOT push or deliver roster items in that state to the contact).  No matter when the subscription request is delivered, the contact must decide whether or not to approve it (subject to the contact's configured preferences, the contact's client MAY approve or deny the subscription request without presenting it to the contact).  Here we assume the "happy path" that the contact approves the subscription request (the alternate flow of declining the subscription request is defined in <xref target="int-sub-alt"/>).  In this case, the contact's client (1) SHOULD perform a roster set specifying the desired handle and group for the user (if any); and (2) MUST send a presence stanza of type "subscribed" to the user in order to approve the subscription request.
           <figure><artwork><![CDATA[
 <iq type='set' id='set2'>
   <query xmlns='jabber:iq:roster'>
@@ -1800,9 +2079,9 @@
       </list></t>
       <t>From the perspective of the user, there now exists a subscription to the contact's presence information; from the perspective of the contact, there now exists a subscription from the user.</t>
       <section title="Alternate Flow: Contact Declines Subscription Request" anchor="int-sub-alt">
-        <t>The above activity flow represents the "happy path" regarding the user's subscription request to the contact.  The main alternate flow occurs if the contact refuses the user's subscription request, as follows:</t>
+        <t>The above activity flow represents the "happy path" regarding the user's subscription request to the contact.  The main alternate flow occurs if the contact denies the user's subscription request, as follows:</t>
         <t><list style="numbers">
-          <t>If the contact wants to refuse the request, the contact's client MUST send a presence stanza of type "unsubscribed" to the user (instead of the presence stanza of type "subscribed" sent in Step 6 of <xref target="int-sub"/>):
+          <t>If the contact wants to deny the request, the contact's client MUST send a presence stanza of type "unsubscribed" to the user (instead of the presence stanza of type "subscribed" sent in Step 6 of <xref target="int-sub"/>):
             <figure><artwork><![CDATA[
 <presence to='user@example.com' type='unsubscribed'/>
             ]]></artwork></figure>
@@ -1871,7 +2150,7 @@
             <postamble>Note: If the contact's server receives a presence stanza of type "error" from the user's server, it MUST deliver the error stanza to the contact, whose client MAY determine that the error is in response to the outgoing presence stanza of type "subscribe" it sent previously (e.g., by tracking an 'id' attribute) and then choose to resend the "subscribe" request or revert the roster to its previous state by sending a presence stanza of type "unsubscribe" to the user.</postamble>
           </figure>
         </t>
-        <t>Upon receiving the presence stanza of type "subscribe" addressed to the user, the user's server must determine if there is at least one available resource for which the user has requested the roster.  If so, the user's server MUST deliver the subscription request to the user (if not, it MUST store the subscription request offline for delivery when this condition is next met).  No matter when the subscription request is delivered, the user must then decide whether or not to approve it (subject to the user's configured preferences, the user's client MAY approve or refuse the subscription request without presenting it to the user).  Here we assume the "happy path" that the user approves the subscription request (the alternate flow of declining the subscription request is defined in <xref target="int-mutual-alt"/>).  In this case, the user's client MUST send a presence stanza of type "subscribed" to the contact in order to approve the subscription request.
+        <t>Upon receiving the presence stanza of type "subscribe" addressed to the user, the user's server must determine if there is at least one available resource for which the user has requested the roster.  If so, the user's server MUST deliver the subscription request to the user (if not, it MUST store the subscription request offline for delivery when this condition is next met).  No matter when the subscription request is delivered, the user must then decide whether or not to approve it (subject to the user's configured preferences, the user's client MAY approve or deny the subscription request without presenting it to the user).  Here we assume the "happy path" that the user approves the subscription request (the alternate flow of declining the subscription request is defined in <xref target="int-mutual-alt"/>).  In this case, the user's client MUST send a presence stanza of type "subscribed" to the contact in order to approve the subscription request.
           <figure><artwork><![CDATA[
 <presence to='contact@example.org' type='subscribed'/>
           ]]></artwork></figure>
@@ -1927,9 +2206,9 @@
       </list></t>
       <t>The user and the contact now have a mutual subscription to each other's presence -- i.e., the subscription is of type "both".</t>
       <section title="Alternate Flow: User Declines Subscription Request" anchor="int-mutual-alt">
-        <t>The above activity flow represents the "happy path" regarding the contact's subscription request to the user.  The main alternate flow occurs if the user refuses the contact's subscription request, as follows:</t>
+        <t>The above activity flow represents the "happy path" regarding the contact's subscription request to the user.  The main alternate flow occurs if the user denies the contact's subscription request, as follows:</t>
         <t><list style="numbers">
-          <t>If the user wants to refuse the request, the user's client MUST send a presence stanza of type "unsubscribed" to the contact (instead of the presence stanza of type "subscribed" sent in Step 3 of <xref target="int-mutual"/>):
+          <t>If the user wants to deny the request, the user's client MUST send a presence stanza of type "unsubscribed" to the contact (instead of the presence stanza of type "subscribed" sent in Step 3 of <xref target="int-mutual"/>):
             <figure><artwork><![CDATA[
 <presence to='contact@example.org' type='unsubscribed'/>
             ]]></artwork></figure>
@@ -2325,7 +2604,16 @@
   <section title="Subscription States" anchor="substates">
     <t>This section provides detailed information about subscription states and server handling of subscription-related presence stanzas (i.e., presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed").</t>
     <section title="Defined States" anchor="substates-defined">
-      <t>There are nine possible subscription states, which are described here from the user's (not contact's) perspective:</t>
+      <t>There are four primary subscription states:</t>
+      <t>
+        <list style='symbols'>
+        <t>None -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
+        <t>To -- the user has a subscription to the contact's presence information, but the contact does not have a subscription to the user's presence information</t>
+        <t>From -- the contact has a subscription to the user's presence information, but the user does not have a subscription to the contact's presence information</t>
+        <t>Both -- both the user and the contact have subscriptions to each other's presence information (i.e., the union of 'from' and 'to')</t>
+        </list>
+      </t>
+      <t>There are nine possible subscription states:</t>
       <t><list style='numbers'>
         <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the roster by subscription='none'</t>
         <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the roster by subscription='none' and ask='subscribe'</t>
