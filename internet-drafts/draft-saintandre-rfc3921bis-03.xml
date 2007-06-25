@@ -93,8 +93,6 @@
 
   <section title="Managing the Roster" anchor="roster">
     <t>In XMPP, one's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user may access roster information from any resource.</t>
-    <t>Note: There are important interactions between rosters and subscriptions; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of roster management (however, such an understanding is necessary only for developers of XMPP servers, since most of the complexity is shielded from clients).</t>
-
     <section title="Syntax and Semantics" anchor="roster-syntax">
       <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The &lt;query/&gt; element MAY contain one or more &lt;item/&gt; children, each describing a unique roster item or "contact".  The following rules apply:</t>
       <t>
@@ -448,7 +446,7 @@
         ]]></artwork>
       </figure>
       <t>As with adding a roster item, if the server can successfully process the roster set then it MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource.</t>
-      <t>Note: This command will result in cancellation of existing presence subscriptions; for details, see <xref target="int-remove">Removing a Roster Item and Cancelling All Subscriptions</xref>.</t>
+      <t>Note: This command will result in cancellation of existing presence subscriptions.</t>
       <t>If the value of the 'jid' attribute specifies an item that is not in the roster, the server MUST return an &lt;item-not-found/&gt; error.</t>
       <figure>
         <preamble>Error: Non-existent roster item</preamble>
@@ -479,7 +477,6 @@
     <t>In order to protect the privacy of instant messaging users, presence information is disclosed only to other entities that the user has approved.  When a user has agreed that another entity may view its presence, the entity is said to have a SUBSCRIPTION to the user's presence information.  An entity that has a subscription to a user's presence (or to which a user has a presence subscription) is called a CONTACT.  A subscription lasts across sessions; indeed, it lasts until the contact unsubscribes or the user cancels the previously-granted subscription.</t>
     <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes ("subscribe", "unsubscribe", "subscribed", and "unsubscribed").</t>
     <t>Note: See <xref target='sub-rules'/> regarding rules that apply to server processing of all inbound subscription-related presence stanzas.</t>
-    <t>Note: There are important interactions between subscriptions and rosters; these are defined under <xref target="int">Integration of Managing the Roster and Presence Subscriptions</xref>, and the reader must refer to that section for a complete understanding of presence subscriptions.</t>
 
     <section title="Requesting a Subscription" anchor="sub-request">
 
@@ -830,7 +827,7 @@
     <section title="Overview" anchor="presence-overview">
       <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication; the terms "online" and "offline" are also used.  In XMPP, a principal's availability is signalled when a client controlled by the principal generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when a client or entity generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".  In XMPP-based applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, XMPP-based applications are not required to combine messaging and presence functionality, and can provide standalone presence features without messaging (in addition, XMPP servers do not require presence information in order to successfully route message and IQ stanzas).</t>
       <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence information to its server, and its server then broadcasts that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL"/>, an entity that generates presence information is a "presentity" and the entities that receive presence information are "subscribers").  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable".  This type of presence is called BROADCASTED PRESENCE.  (A client MAY also send DIRECTED PRESENCE, i.e., a presence stanza with a 'to' address; this is less common but is sometimes used to send presence to entities that are not subscribed to the principal's presence.)</t>
-      <t>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a "presence session" at its server by sending <xref target='presence-initial'>initial presence</xref>.  Such a presence session is terminated by sending <xref target='presence-unavailable'>unavailable presence.</t>
+      <t>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a "presence session" at its server by sending <xref target='presence-initial'>initial presence</xref>.  Such a presence session is terminated by sending <xref target='presence-unavailable'>unavailable presence</xref>.</t>
     </section>
 
     <section title="Initial Presence" anchor="presence-initial">
@@ -911,18 +908,19 @@
         <t>The absence of a 'type' attribute signals that the relevant entity is available for communication.  A 'type' attribute with a value of "unavailable" signals that the relevant entity is not available for communication.</t>
         <t>The XMPP presence stanza is also used to negotiate and manage subscriptions to the presence of other entities.  These tasks are completed via presence stanzas of type "subscribe", "unsubscribe", "subscribed", and "unsubscribed" as described under <xref target='sub'/>.</t>
         <t>If a user and contact are associated with different XMPP servers, those servers also use a special presence stanza of type "probe" in order to determine the availability of the entity on the peer server.  Clients SHOULD NOT send presence stanzas of type "probe".</t>
-      <t>The values of the 'type' attribute can be summarized as follows:</t>
-      <t>
-        <list style="symbols">
-          <t>error -- An error has occurred regarding processing or delivery of a previously-sent presence stanza; if the presence stanza is of type "error", it MUST include an &lt;error/&gt; child element (see see <xref target="XMPP-CORE"/>).</t>
-          <t>probe -- A request for an entity's current presence; SHOULD be generated only by a server on behalf of a user.</t>
-          <t>subscribe -- The sender wishes to subscribe to the recipient's presence.</t>
-          <t>subscribed -- The sender has allowed the recipient to receive their presence.</t>
-          <t>unsubscribe -- The sender is unsubscribing from another entity's presence.</t>
-          <t>unsubscribed -- The subscription request has been denied or a previously-granted subscription has been cancelled.</t>
-          <t>unavailable -- Signals that the entity is no longer available for communication.</t>
-        </list>
-      </t>
+        <t>The values of the 'type' attribute can be summarized as follows:</t>
+        <t>
+          <list style="symbols">
+            <t>error -- An error has occurred regarding processing or delivery of a previously-sent presence stanza; if the presence stanza is of type "error", it MUST include an &lt;error/&gt; child element (see see <xref target="XMPP-CORE"/>).</t>
+            <t>probe -- A request for an entity's current presence; SHOULD be generated only by a server on behalf of a user.</t>
+            <t>subscribe -- The sender wishes to subscribe to the recipient's presence.</t>
+            <t>subscribed -- The sender has allowed the recipient to receive their presence.</t>
+            <t>unsubscribe -- The sender is unsubscribing from another entity's presence.</t>
+            <t>unsubscribed -- The subscription request has been denied or a previously-granted subscription has been cancelled.</t>
+            <t>unavailable -- Signals that the entity is no longer available for communication.</t>
+          </list>
+        </t>
+      </section>
       <section title="Child Elements" anchor="presence-syntax-children">
         <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are provided only if the presence stanza possesses no 'type' attribute, although exceptions are noted in the text that follows.</t>
         <section title="Show" anchor="presence-show">
@@ -2008,9 +2006,9 @@
 |  "Both"                  |  yes     |  "From"                  |
 +----------------------------------------------------------------+
           ]]></artwork>
+        </figure>
       </section>
       <section title="Subscribed" anchor="substates-out-subscribed">
-        </figure>
         <figure>
           <preamble>Table 3: Recommended handling of outbound "subscribed" stanzas</preamble>
           <artwork><![CDATA[
