@@ -492,7 +492,7 @@
         <t>Typically the user's client prompts the user for information about the potential contact ("handle" and desired roster group) and generates a roster set with that information before sending the subscription request, but that behavior is recommended rather than required.</t>
       </section>
 
-      <section title="Server Handling of Outbound Subscription Request" anchor="sub-request-outbound">
+      <section title="Server Processing of Outbound Subscription Request" anchor="sub-request-outbound">
         <t>In accordance with <xref target='sub-rules'/>, the user's server MUST stamp the outbound subscription request with the bare JID (&lt;user@domain&gt;) of the user.</t>
         <figure>
           <preamble>Example: A stamped subscription request</preamble>
@@ -533,7 +533,7 @@
         <t>Note:  Therefore a client MAY simply wait for the roster push rather than proactively adding the contact to the user's roster before sending the subscription request.</t>
       </section>
 
-      <section title="Server Handling of Inbound Subscription Request" anchor="sub-request-inbound">
+      <section title="Server Processing of Inbound Subscription Request" anchor="sub-request-inbound">
         <t>The contact's server MUST adhere to the following rules when handling the inbound subscription request:</t>
         <t>
           <list style='numbers'>
@@ -548,14 +548,14 @@
               </figure>
             </t>
             <t>If the contact exists and the user already has a subscription to the user's presence, the contact's server SHOULD auto-reply on behalf of the user by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.</t>
-            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one interested resource associated with the contact when the subscription request is received by the contact's server, the contact's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Handling XML Stanzas</xref>.</t>
+            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one interested resource associated with the contact when the subscription request is received by the contact's server, the contact's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Processing XML Stanzas</xref>.</t>
             <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no interested resources when the subscription request is received by the contact's server, the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended namespaces contained therein, and deliver the request when the contact next has an interested resource, until the contact either approves or denies the request.  (Note: The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an interested resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an interested resource; this helps to prevent "subscription request spam".)</t>
           </list>
         </t>
         <t>Note: If the contact does not approve or deny the subscription request within some configurable amount of time, the user's server MAY choose to re-send the subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that may have occurred in relation to the original subscription request.</t>
       </section>
 
-      <section title="Client Handling of Inbound Subscription Request" anchor="sub-request-handle">
+      <section title="Client Processing of Inbound Subscription Request" anchor="sub-request-handle">
         <t>When the contaact's client receives a subscription request from the user, it MUST present the request to the contact for approval (unless the contact has explicitly configured the client to automatically approve or deny all subscription requests).</t>
         <t>A subscription request is approved by sending a presence stanza of type "subscribed" or denied by sending a presence stanza of type "unsubscribed".</t>
         <figure>
@@ -574,7 +574,7 @@
         <t>Server handling of presence stanzas of type 'unsubscribed' is described under <xref target='sub-cancel'/> for both the contact's server and the user's server.</t>
       </section>
 
-      <section title="Server Handling of Outbound Subscription Approval" anchor="sub-request-approvalout">
+      <section title="Server Processing of Outbound Subscription Approval" anchor="sub-request-approvalout">
         <t>When the contact's client sends the subscription approval, the contact's server MUST stamp the outbound stanza with the bare JID (&lt;contact@domain&gt;) of the contact and route or deliver the stanza to the user.</t>
         <figure>
           <preamble>Example: A stamped subscription approval</preamble>
@@ -620,7 +620,7 @@
         <t>Note: Naturally, when the contact sends a subscription request to the user, the <xref target='substates'>subscription states</xref> (as well as the roles of the two JIDs) will be different from those shown in the foregoing examples.</t>
       </section>
 
-      <section title="Server Handling of Inbound Subscription Approval" anchor="sub-request-approvalin">
+      <section title="Server Processing of Inbound Subscription Approval" anchor="sub-request-approvalin">
         <t>When the user's server receives the subscription approval, it MUST first check if the contact is in the user's roster with a subscription='none' or subscription='from' and the 'ask' flag set to "subscribe" (i.e., a <xref target='substates'>subscription state</xref> of "None + Pending Out" or "From + Pending Out").  If the contact is not in the user's roster with either of those states, the user's server MUST silently ignore the presence stanza of type "subscribed" (i.e., it MUST NOT route it to the user, modify the user's roster, or generate a roster push to the user's available resources).</t>
         <t>If the foregoing check is successful, the user's server MUST initiate a roster push to all of the user's interested resources, containing an updated roster item for the contact with the 'subscription' attribute set to a value of "to".</t>
         <figure>
@@ -676,7 +676,7 @@
         </figure>
       </section>
 
-      <section title="Server Handling of Outbound Subscription Cancellation" anchor="sub-cancel-outbound">
+      <section title="Server Processing of Outbound Subscription Cancellation" anchor="sub-cancel-outbound">
         <t>In accordance with <xref target='sub-rules'/>, the contact's server MUST stamp the outbound subscription cancellation with the bare JID (&lt;user@domain&gt;) of the contact.</t>
         <figure>
           <preamble>Example: A stamped subscription cancellation</preamble>
@@ -712,7 +712,7 @@
         </figure>
       </section>
 
-      <section title="Server Handling of Inbound Subscription Cancellation" anchor="sub-cancel-inbound">
+      <section title="Server Processing of Inbound Subscription Cancellation" anchor="sub-cancel-inbound">
         <t>When the user's server receives the inbound subscription cancellation, it MUST modify the subscription state and send a roster push to the user's interested resource(s).</t>
         <figure>
           <artwork><![CDATA[
@@ -751,7 +751,7 @@
         </figure>
       </section>
 
-      <section title="Server Handling of Outbound Unsubscribe" anchor="sub-unsub-outbound">
+      <section title="Server Processing of Outbound Unsubscribe" anchor="sub-unsub-outbound">
         <t>In accordance with <xref target='sub-rules'/>, the user's server MUST stamp the outbound unsubscribe with the bare JID (&lt;user@domain&gt;) of the user.</t>
         <figure>
           <preamble>Example: A stamped unsubscribe</preamble>
@@ -788,7 +788,7 @@
         </figure>
       </section>
 
-      <section title="Server Handling of Inbound Subscription Cancellation" anchor="sub-unsub-inbound">
+      <section title="Server Processing of Inbound Subscription Cancellation" anchor="sub-unsub-inbound">
         <t>When the contact's server receives the inbound unsubscribe, it MUST modify the subscription state and send a roster push to the contacts's interested resource(s).</t>
         <figure>
           <artwork><![CDATA[
@@ -1235,7 +1235,7 @@
             ]]></artwork>
           </figure>
           <t>If no priority is provided, the processing server or client SHOULD consider the priority to be zero.</t>
-          <t>For information regarding the semantics of priority values in stanza routing within instant messaging and presence applications, refer to <xref target="rules">Server Rules for Handling XML Stanzas</xref>.</t>
+          <t>For information regarding the semantics of priority values in stanza routing within instant messaging and presence applications, refer to <xref target="rules">Server Rules for Processing XML Stanzas</xref>.</t>
         </section>
         <section title="Extended Content" anchor="presence-extended">
           <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any properly-namespaced child element; this applies to the presence stanza as well.</t>
@@ -1256,7 +1256,7 @@
   </section>
 
   <section title="Exchanging Messages" anchor="message">
-    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Handling XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus the message stanza is used to "push" information to another entity.</t>
+    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Processing XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus the message stanza is used to "push" information to another entity.</t>
     <section title="Attributes" anchor="message-attributes">
       <section title="To Attribute" anchor="message-attributes-to">
         <t>An instant messaging client SHOULD specify an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.  If the message is being sent in reply to a message previously received from an address of the form &lt;user@domain/resource&gt; (e.g., within the context of a chat session), the value of the 'to' address SHOULD be of the form &lt;user@domain/resource&gt; rather than of the form &lt;user@domain&gt; unless the sender has knowledge (via presence) that the intended recipient's resource is no longer available.  If the message is being sent outside the context of any existing chat session or received message, the value of the 'to' address SHOULD be of the form &lt;user@domain&gt; rather than of the form &lt;user@domain/resource&gt;.</t>
@@ -1649,53 +1649,61 @@
     <t>THE END</t>
   </section>
 
-  <section title="Server Rules for Handling XML Stanzas" anchor="rules">
-    <t>Basic routing and delivery rules for servers are defined in <xref target="XMPP-CORE"/>.  This section defines additional rules for XMPPcompliant instant messaging and presence servers.</t>
+  <section title="Server Rules for Processing XML Stanzas" anchor="rules">
+    <t>Basic routing and delivery rules for servers are defined in <xref target="XMPP-CORE"/>.  This section defines additional rules for XMPP instant messaging and presence servers.</t>
     <section title="Inbound Stanzas" anchor="rules-inbound">
       <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches a hostname of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@example.com&gt; or &lt;user@example.com/resource&gt;, the server MUST follow the rules defined in the following list:</t>
       <t><list style="numbers">
         <t>If the JID is of the form &lt;user@domain/resource&gt; and an available resource exactly matches the full JID, the recipient's server MUST deliver the stanza to that resource.</t>
-        <t>Else if the JID is of the form &lt;user@domain&gt; or &lt;user@domain/resource&gt; and the associated user account does not exist, the recipient's server (a) SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error) if it is a presence stanza, (b) MUST return a &lt;service-unavailable/&gt; stanza error to the sender if it is an IQ stanza, and (c) SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender if it is a message stanza.</t>
+        <t>Else if the JID is of the form &lt;user@domain&gt; or &lt;user@domain/resource&gt; and the associated user account does not exist, the recipient's server (a) SHOULD silently ignore the stanza (i.e., not return an error or presence unsubscribed) if it is a presence stanza, (b) MUST return a &lt;service-unavailable/&gt; stanza error to the sender if it is an IQ stanza, and (c) SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender if it is a message stanza.</t>
         <t>Else if the JID is of the form &lt;user@domain/resource&gt; and no connected or available resource exactly matches the full JID, the recipient's server (a) SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error) if it is a presence stanza, (b) MUST return a &lt;service-unavailable/&gt; stanza error to the sender if it is an IQ stanza, and (c) SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; if it is a message stanza.</t>
         <t>Else if the JID is of the form &lt;user@domain&gt; and there is at least one available resource available for the user, the recipient's server MUST follow these rules:
         <list style="numbers">
           <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.  For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.  However, the server MUST NOT deliver the stanza to an available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources (defined in the text that follows).  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
           <t>For presence stanzas other than those of type "probe", the server MUST deliver the stanza to all available resources; for presence probes, the server SHOULD reply based on the rules defined under <xref target="presence-probe">Presence Probes</xref>.  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide, the server MUST reply to the stanza on behalf of the user; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
         </list></t>
         <t>Else if the JID is of the form &lt;user@domain&gt; and there are no available resources associated with the user, how the stanza shall be handled depends on the stanza type:
         <list style="numbers">
-          <t>For presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed", the server MUST maintain a record of the stanza and deliver the stanza at least once (i.e., when the user next creates an available resource and requests the roster); in addition, the server MUST continue to deliver presence stanzas of type "subscribe" until the user either approves or denies the subscription request (see also <xref target="sub">Managing Presence Subscriptions</xref>).</t>
+          <t>For presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed", the server MUST maintain a record of the stanza and deliver the stanza at least once (i.e., when the user next creates an interested resource); in addition, the server MUST continue to deliver presence stanzas of type "subscribe" until the user either approves or denies the subscription request (see also <xref target="sub">Managing Presence Subscriptions</xref>).</t>
           <t>For all other presence stanzas, the server SHOULD silently ignore the stanza by not storing it for later delivery or replying to it on behalf of the user.</t>
           <t>For message stanzas, the server MAY choose to store the stanza on behalf of the user and deliver it when the user next becomes available, or forward the message to the user via some other means (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled, the server MUST return to the sender a &lt;service-unavailable/&gt; stanza error.  (Note: Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.)</t>
-          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide, the server MUST reply to the stanza on behalf of the user; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
         </list></t>
       </list></t>
     </section>
     <section title="Outbound Stanzas" anchor="rules-outbound">
       <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza matches a hostname of the server itself, the server MUST deliver the stanza to a local entity according the rules for <xref target="rules-inbound">Inbound Stanzas</xref>.</t>
-      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a hostname of the server itself, the server MUST attempt to route the stanza to the foreign domain.  The recommended order of actions is as follows:</t>
+      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a hostname of the server itself, the server MUST attempt to route the stanza to the foreign domain.  If there exists an active stream between the two peers, the server shall route the stanza over that stream for processing by the peer server.  If not, the server MUST do the following.</t>
+      <t>First, resolve the hostname of the foreign domain (or used a cached resolution of the foreign domain to an IP address).  The recommended order of attempted resolutions is as follows:</t>
       <t><list style='numbers'>
-        <t>First attempt to resolve the foreign hostname using an <xref target="SRV"/> Service of "xmpp-server" and Proto of "tcp", resulting in resource records such as "_xmpp-server._tcp.example.com.", as specified in <xref target="XMPP-CORE"/>.</t>
+        <t>Attempt to resolve the foreign hostname using an <xref target="SRV"/> Service of "xmpp-server" and Proto of "tcp", resulting in resource records such as "_xmpp-server._tcp.example.com.", as specified in <xref target="XMPP-CORE"/>.</t>
         <t>If the "xmpp-server" address record resolution fails, attempt to resolve the "_im" or "_pres" <xref target="SRV"/> Service as specified in <xref target="IMP-SRV"/>, using the "_im" Service for &lt;message/&gt; stanzas and the "_pres" Service for &lt;presence/&gt; stanzas (it is up to the implementation how to handle &lt;iq/&gt; stanzas).  This will result in one or more resolutions of the form "_im.&lt;proto&gt;.example.com." or "_pres.&lt;proto&gt;.example.com.", where "&lt;proto&gt;" would be a label registered in the Instant Messaging SRV Protocol Label registry or the Presence SRV Protocol Label registry: either "_xmpp" for an XMPP-aware domain or some other IANA-registered label (e.g., "_simple") for a non-XMPP-aware domain.</t>
         <t>If both SRV address record resolutions fail, attempt to perform a normal IPv4/IPv6 address record resolution to determine the IP address using the "xmpp-server" port of 5269 registered with the IANA, as specified in <xref target="XMPP-CORE"/>.</t>
       </list></t>
-      <t>Administrators of server deployments are strongly encouraged to keep the _im._xmpp, _pres._xmpp, and _xmpp._tcp SRV records properly synchronized, since different implementations might perform the "_im" and "_pres" lookups before the "xmpp-server" lookup.</t>
+      <t>Note: Administrators of server deployments are strongly encouraged to keep the _im._xmpp, _pres._xmpp, and _xmpp._tcp SRV records properly synchronized, since different implementations might perform the "_im" and "_pres" lookups before the "xmpp-server" lookup.  If the foreign domain cannot be resolved, the server SHOULD return a &lt;remote-server-not-found/&gt; stanza error.</t>
+      <t>Second, the server must negotiate XML streams with the foreign domain by following the process defined in <xref target='XMPP-CORE'/>.  If the server cannot establish streams with the foreign domain, it SHOULD return a &lt;remote-server-timeout/&gt; stanza error.</t>
+      <t>Third, route the stanza to the foreign domain for processing by the peer server.</t>
     </section>
   </section>
 
   <section title="IM and Presence Compliance Requirements" anchor="compliance">
     <t>This section summarizes the specific aspects of the Extensible Messaging and Presence Protocol that MUST be supported by instant messaging and presence servers and clients in order to be considered compliant implementations.  All such applications MUST comply with the requirements specified in <xref target="XMPP-CORE"/>.  The text in this section specifies additional compliance requirements for instant messaging and presence servers and clients; note well that the requirements described here supplement but do not supersede the core requirements.  Note also that a server or client MAY support only presence or instant messaging, and is not required to support both if only a presence service or an instant messaging service is desired.</t>
     <section title="Servers" anchor="compliance-server">
-      <t>In addition to core server compliance requirements, an instant messaging and presence server MUST additionally support the following protocols:</t>
-      <t><list style='symbols'>
-        <t>All server-related instant messaging and presence syntax and semantics defined in this document, including presence broadcast on behalf of clients, presence subscriptions, roster storage and manipulation, and IM-specific routing and delivery rules</t>
-      </list></t>
+      <t>In addition to core server compliance requirements, an instant messaging and presence server MUST additionally support all server-related instant messaging and presence syntax and semantics defined in this document, including:</t>
+      <t>
+        <list style='symbols'>
+          <t>Presence broadcast on behalf of clients</t>
+          <t>Presence subscriptions</t>
+          <t>Roster storage and management</t>
+          <t>IM-specific routing and delivery rules</t>
+        </list>
+      </t>
     </section>
     <section title="Clients" anchor="compliance-client">
       <t>In addition to core client compliance requirements, an instant messaging and presence client MUST additionally support the following protocols:</t>
       <t><list style='symbols'>
-        <t>Generation and handling of the IM-specific semantics of XML stanzas as defined by the XML schemas, including the 'type' attribute of message and presence stanzas as well as their child elements</t>
+        <t>Generation and processing of the IM-specific semantics of XML stanzas as defined by the XML schemas, including the 'type' attribute of message and presence stanzas as well as their child elements</t>
         <t>All client-related instant messaging syntax and semantics defined in this document, including presence subscriptions and roster management</t>
         <t>End-to-end object encryption as defined in <xref target="XMPP-E2E"/></t>
       </list></t>
@@ -1715,6 +1723,7 @@
       <t>A user's server MUST NOT leak the user's network availability to entities who are not authorized to know the user's presence, either via an explicit subscription as described herein or via an existing trust relationship (such as presence-enabled user directories within organizations).</t>
       <t>When a server processes an outbound presence stanza with no type or of type "unavailable", it MUST follow the rules defined under <xref target="presence">Exchanging Presence Information</xref> in order to ensure that such presence information is not broadcasted to entities that are not authorized to know such information.</t>
       <t>When a server generates an error stanza in response to receiving a stanza for a user who does not exist, the use of the &lt;service-unavailable/&gt; error condition helps protect against well-known dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.</t>
+      <t>A client MAY ignore the &lt;status/&gt; element when contained in a presence stanza of type "subscribe", "unsubscribe", "subscribed", or "unsubscribed" in order to help prevent "presence subscription spam".</t>
     </list></t>
   </section>
 
@@ -2242,109 +2251,111 @@
         <t>"Both" = user and contact are subscribed to each other (two-way); this is reflected in the roster by subscription='both'</t>
       </list></t>
     </section>
-    <section title="Server Handling of Outbound Presence Subscription Stanzas" anchor="substates-out">
+    <section title="Server Processing of Outbound Presence Subscription Stanzas" anchor="substates-out">
       <t>Outbound presence subscription stanzas enable the user to manage his or her subscription to the contact's presence information (via the "subscribe" and "unsubscribe" types), and to manage the contact's access to the user's presence information (via the "subscribed" and "unsubscribed" types).</t>
       <t>The following rules apply to outbound routing of the stanza as well as changes to the user's roster.</t>
+      <t>Note: In the following tables, "S.N." stand for SHOULD NOT.</t>
       <section title="Subscribe" anchor="substates-out-subscribe">
         <figure>
-          <preamble>Table 1: Recommended handling of outbound "subscribe" stanzas</preamble>
+          <preamble>Table 1: Processing of outbound "subscribe" stanzas</preamble>
           <artwork><![CDATA[
 +----------------------------------------------------------------+
 |  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
 +----------------------------------------------------------------+
-|  "None"                  |  yes     |  "None + Pending Out"    |
-|  "None + Pending Out"    |  yes     |  no state change         |
-|  "None + Pending In"     |  yes     |  "None + Pending Out+In" |
-|  "None + Pending Out+In" |  yes     |  no state change         |
-|  "To"                    |  yes     |  no state change         |
-|  "To + Pending In"       |  yes     |  no state change         |
-|  "From"                  |  yes     |  "From + Pending Out"    |
-|  "From + Pending Out"    |  yes     |  no state change         |
-|  "Both"                  |  yes     |  no state change         |
+|  "None"                  |  MUST    |  "None + Pending Out"    |
+|  "None + Pending Out"    |  MUST    |  no state change         |
+|  "None + Pending In"     |  MUST    |  "None + Pending Out+In" |
+|  "None + Pending Out+In" |  MUST    |  no state change         |
+|  "To"                    |  MUST    |  no state change         |
+|  "To + Pending In"       |  MUST    |  no state change         |
+|  "From"                  |  MUST    |  "From + Pending Out"    |
+|  "From + Pending Out"    |  MUST    |  no state change         |
+|  "Both"                  |  MUST    |  no state change         |
 +----------------------------------------------------------------+
           ]]></artwork>
         </figure>
       </section>
       <section title="Unsubscribe" anchor="substates-out-unsubscribe">
         <figure>
-          <preamble>Table 2: Recommended handling of outbound "unsubscribe" stanzas</preamble>
+          <preamble>Table 2: Processing of outbound "unsubscribe" stanzas</preamble>
           <artwork><![CDATA[
 +----------------------------------------------------------------+
 |  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
 +----------------------------------------------------------------+
-|  "None"                  |  yes     |  no state change         |
-|  "None + Pending Out"    |  yes     |  "None"                  |
-|  "None + Pending In"     |  yes     |  no state change         |
-|  "None + Pending Out+In" |  yes     |  "None + Pending In"     |
-|  "To"                    |  yes     |  "None"                  |
-|  "To + Pending In"       |  yes     |  "Pending In"            |
-|  "From"                  |  yes     |  no state change         |
-|  "From + Pending Out"    |  yes     |  "From"                  |
-|  "Both"                  |  yes     |  "From"                  |
+|  "None"                  |  MUST    |  no state change         |
+|  "None + Pending Out"    |  MUST    |  "None"                  |
+|  "None + Pending In"     |  MUST    |  no state change         |
+|  "None + Pending Out+In" |  MUST    |  "None + Pending In"     |
+|  "To"                    |  MUST    |  "None"                  |
+|  "To + Pending In"       |  MUST    |  "Pending In"            |
+|  "From"                  |  MUST    |  no state change         |
+|  "From + Pending Out"    |  MUST    |  "From"                  |
+|  "Both"                  |  MUST    |  "From"                  |
 +----------------------------------------------------------------+
           ]]></artwork>
         </figure>
       </section>
       <section title="Subscribed" anchor="substates-out-subscribed">
         <figure>
-          <preamble>Table 3: Recommended handling of outbound "subscribed" stanzas</preamble>
+          <preamble>Table 3: Processing of outbound "subscribed" stanzas</preamble>
           <artwork><![CDATA[
 +----------------------------------------------------------------+
 |  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
 +----------------------------------------------------------------+
-|  "None"                  |  no      |  no state change         |
-|  "None + Pending Out"    |  no      |  no state change         |
-|  "None + Pending In"     |  yes     |  "From"                  |
-|  "None + Pending Out+In" |  yes     |  "From + Pending Out"    |
-|  "To"                    |  no      |  no state change         |
-|  "To + Pending In"       |  yes     |  "Both"                  |
-|  "From"                  |  no      |  no state change         |
-|  "From + Pending Out"    |  no      |  no state change         |
-|  "Both"                  |  no      |  no state change         |
+|  "None"                  |  S.N.    |  no state change         |
+|  "None + Pending Out"    |  S.N.    |  no state change         |
+|  "None + Pending In"     |  MUST    |  "From"                  |
+|  "None + Pending Out+In" |  MUST    |  "From + Pending Out"    |
+|  "To"                    |  S.N.    |  no state change         |
+|  "To + Pending In"       |  MUST    |  "Both"                  |
+|  "From"                  |  S.N.    |  no state change         |
+|  "From + Pending Out"    |  S.N.    |  no state change         |
+|  "Both"                  |  S.N.    |  no state change         |
 +----------------------------------------------------------------+
           ]]></artwork>
         </figure>
       </section>
       <section title="Unsubscribed" anchor="substates-out-unsubscribed">
         <figure>
-          <preamble>Table 4: Recommended handling of outbound "unsubscribed" stanzas</preamble>
+          <preamble>Table 4: Processing of outbound "unsubscribed" stanzas</preamble>
           <artwork><![CDATA[
 +----------------------------------------------------------------+
 |  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
 +----------------------------------------------------------------+
-|  "None"                  |  no      |  no state change         |
-|  "None + Pending Out"    |  no      |  no state change         |
-|  "None + Pending In"     |  yes     |  "None"                  |
-|  "None + Pending Out+In" |  yes     |  "None + Pending Out"    |
-|  "To"                    |  no      |  no state change         |
-|  "To + Pending In"       |  yes     |  "To"                    |
-|  "From"                  |  yes     |  "None"                  |
-|  "From + Pending Out"    |  yes     |  "None + Pending Out"    |
-|  "Both"                  |  yes     |  "To"                    |
+|  "None"                  |  S.N.    |  no state change         |
+|  "None + Pending Out"    |  S.N.    |  no state change         |
+|  "None + Pending In"     |  MUST    |  "None"                  |
+|  "None + Pending Out+In" |  MUST    |  "None + Pending Out"    |
+|  "To"                    |  S.N.    |  no state change         |
+|  "To + Pending In"       |  MUST    |  "To"                    |
+|  "From"                  |  MUST    |  "None"                  |
+|  "From + Pending Out"    |  MUST    |  "None + Pending Out"    |
+|  "Both"                  |  MUST    |  "To"                    |
 +----------------------------------------------------------------+
           ]]></artwork>
         </figure>
       </section>
     </section>
-    <section title="Server Handling of Inbound Presence Subscription Stanzas" anchor="substates-in">
+    <section title="Server Processing of Inbound Presence Subscription Stanzas" anchor="substates-in">
       <t>Inbound presence subscription stanzas request a subscription-related action from the user (via the "subscribe" type), inform the user of subscription-related actions taken by the contact (via the "unsubscribe" type), or enable the contact to manage the user's access to the contact's presence information (via the "subscribed" and "unsubscribed" types).</t>
       <t>The following rules apply to delivery of the outbound stanza as well as changes to the contact's roster.</t>
+      <t>Note: In the following tables, "S.N." stand for SHOULD NOT.</t>
       <section title="Subscribe" anchor="substates-in-subscribe">
         <figure>
-          <preamble>Table 5: Recommended handling of inbound "subscribe" stanzas</preamble>
+          <preamble>Table 5: Processing of inbound "subscribe" stanzas</preamble>
           <artwork><![CDATA[
 +------------------------------------------------------------------+
 |  EXISTING STATE          |  DELIVER?  |  NEW STATE               |
 +------------------------------------------------------------------+
-|  "None"                  |  yes       |  "None + Pending In"     |
-|  "None + Pending Out"    |  yes       |  "None + Pending Out+In" |
-|  "None + Pending In"     |  no        |  no state change         |
-|  "None + Pending Out+In" |  no        |  no state change         |
-|  "To"                    |  yes       |  "To + Pending In"       |
-|  "To + Pending In"       |  no        |  no state change         |
-|  "From"                  |  no *      |  no state change         |
-|  "From + Pending Out"    |  no *      |  no state change         |
-|  "Both"                  |  no *      |  no state change         |
+|  "None"                  |  MUST      |  "None + Pending In"     |
+|  "None + Pending Out"    |  MUST      |  "None + Pending Out+In" |
+|  "None + Pending In"     |  S.N.      |  no state change         |
+|  "None + Pending Out+In" |  S.N.      |  no state change         |
+|  "To"                    |  MUST      |  "To + Pending In"       |
+|  "To + Pending In"       |  S.N.      |  no state change         |
+|  "From"                  |  S.N. *    |  no state change         |
+|  "From + Pending Out"    |  S.N. *    |  no state change         |
+|  "Both"                  |  S.N. *    |  no state change         |
 +------------------------------------------------------------------+
           ]]></artwork>
           <postamble>* Server SHOULD auto-reply with "subscribed" stanza</postamble>
@@ -2353,20 +2364,20 @@
       <section title="Unsubscribe" anchor="substates-in-unsubscribe">
         <t>When the user's server receives a presence stanza of type "unsubscribe" for the user from the contact, if the stanza results in a subscription state change from the user's perspective then the user's server SHOULD auto-reply by sending a presence stanza of type "unsubscribed" to the contact on behalf of the user, MUST deliver the "unsubscribe" stanza to the user, and MUST change the state.  If no subscription state change results, the user's server SHOULD NOT deliver the stanza and MUST NOT change the state.  These rules are summarized in the following table.</t>
         <figure>
-          <preamble>Table 6: Recommended handling of inbound "unsubscribe" stanzas</preamble>
+          <preamble>Table 6: Processing of inbound "unsubscribe" stanzas</preamble>
           <artwork><![CDATA[
 +------------------------------------------------------------------+
 |  EXISTING STATE          |  DELIVER?  |  NEW STATE               |
 +------------------------------------------------------------------+
-|  "None"                  |  no        |  no state change         |
-|  "None + Pending Out"    |  no        |  no state change         |
-|  "None + Pending In"     |  no *      |  "None"                  |
-|  "None + Pending Out+In" |  no *      |  "None + Pending Out"    |
-|  "To"                    |  no        |  no state change         |
-|  "To + Pending In"       |  no *      |  "To"                    |
-|  "From"                  |  no *      |  "None"                  |
-|  "From + Pending Out"    |  no *      |  "None + Pending Out     |
-|  "Both"                  |  no *      |  "To"                    |
+|  "None"                  |  S.N.      |  no state change         |
+|  "None + Pending Out"    |  S.N.      |  no state change         |
+|  "None + Pending In"     |  S.N. *    |  "None"                  |
+|  "None + Pending Out+In" |  S.N. *    |  "None + Pending Out"    |
+|  "To"                    |  S.N.      |  no state change         |
+|  "To + Pending In"       |  S.N. *    |  "To"                    |
+|  "From"                  |  S.N. *    |  "None"                  |
+|  "From + Pending Out"    |  S.N. *    |  "None + Pending Out     |
+|  "Both"                  |  S.N. *    |  "To"                    |
 +------------------------------------------------------------------+
           ]]></artwork>
           <postamble>* Server SHOULD auto-reply with "unsubscribed" stanza</postamble>
@@ -2375,20 +2386,20 @@
       <section title="Subscribed" anchor="substates-in-subscribed">
         <t>When the user's server receives a presence stanza of type "subscribed" for the user from the contact, it MUST NOT deliver the stanza to the user and MUST NOT change the subscription state if there is no pending outbound request for access to the contact's presence information.  If there is a pending outbound request for access to the contact's presence information and the inbound presence stanza of type "subscribed" results in a subscription state change, the user's server MUST deliver the stanza to the user and MUST change the subscription state.  If the user already has access to the contact's presence information, the inbound presence stanza of type "subscribed" does not result in a subscription state change; therefore the user's server SHOULD NOT deliver the stanza to the user and MUST NOT change the subscription state.  These rules are summarized in the following table.</t>
         <figure>
-          <preamble>Table 7: Recommended handling of inbound "subscribed" stanzas</preamble>
+          <preamble>Table 7: Processing of inbound "subscribed" stanzas</preamble>
           <artwork><![CDATA[
 +------------------------------------------------------------------+
 |  EXISTING STATE          |  DELIVER?  |  NEW STATE               |
 +------------------------------------------------------------------+
-|  "None"                  |  no        |  no state change         |
-|  "None + Pending Out"    |  no        |  "To"                    |
-|  "None + Pending In"     |  no        |  no state change         |
-|  "None + Pending Out+In" |  no        |  "To + Pending In"       |
-|  "To"                    |  no        |  no state change         |
-|  "To + Pending In"       |  no        |  no state change         |
-|  "From"                  |  no        |  no state change         |
-|  "From + Pending Out"    |  no        |  "Both"                  |
-|  "Both"                  |  no        |  no state change         |
+|  "None"                  |  S.N.      |  no state change         |
+|  "None + Pending Out"    |  S.N.      |  "To"                    |
+|  "None + Pending In"     |  S.N.      |  no state change         |
+|  "None + Pending Out+In" |  S.N.      |  "To + Pending In"       |
+|  "To"                    |  S.N.      |  no state change         |
+|  "To + Pending In"       |  S.N.      |  no state change         |
+|  "From"                  |  S.N.      |  no state change         |
+|  "From + Pending Out"    |  S.N.      |  "Both"                  |
+|  "Both"                  |  S.N.      |  no state change         |
 +------------------------------------------------------------------+
           ]]></artwork>
         </figure>
@@ -2396,20 +2407,20 @@
       <section title="Unsubscribed" anchor="substates-in-unsubscribed">
         <t>When the user's server receives a presence stanza of type "unsubscribed" for the user from the contact, it MUST deliver the stanza to the user and MUST change the subscription state if there is a pending outbound request for access to the contact's presence information or if the user currently has access to the contact's presence information.  Otherwise, the user's server SHOULD NOT deliver the stanza and MUST NOT change the subscription state.  These rules are summarized in the following table.</t>
         <figure>
-          <preamble>Table 8: Recommended handling of inbound "unsubscribed" stanzas</preamble>
+          <preamble>Table 8: Processing of inbound "unsubscribed" stanzas</preamble>
           <artwork><![CDATA[
 +------------------------------------------------------------------+
 |  EXISTING STATE          |  DELIVER?  |  NEW STATE               |
 +------------------------------------------------------------------+
-|  "None"                  |  no        |  no state change         |
-|  "None + Pending Out"    |  no        |  "None"                  |
-|  "None + Pending In"     |  no        |  no state change         |
-|  "None + Pending Out+In" |  no        |  "None + Pending In"     |
-|  "To"                    |  no        |  "None"                  |
-|  "To + Pending In"       |  no        |  "None + Pending In"     |
-|  "From"                  |  no        |  no state change         |
-|  "From + Pending Out"    |  no        |  "From"                  |
-|  "Both"                  |  no        |  "From"                  |
+|  "None"                  |  S.N.      |  no state change         |
+|  "None + Pending Out"    |  S.N.      |  "None"                  |
+|  "None + Pending In"     |  S.N.      |  no state change         |
+|  "None + Pending Out+In" |  S.N.      |  "None + Pending In"     |
+|  "To"                    |  S.N.      |  "None"                  |
+|  "To + Pending In"       |  S.N.      |  "None + Pending In"     |
+|  "From"                  |  S.N.      |  no state change         |
+|  "From + Pending Out"    |  S.N.      |  "From"                  |
+|  "Both"                  |  S.N.      |  "From"                  |
 +------------------------------------------------------------------+
           ]]></artwork>
         </figure>
