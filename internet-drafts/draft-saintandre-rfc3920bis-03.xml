@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="June" day="26"/>
+    <date year="2007" month="July" day="6"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -2800,6 +2800,7 @@ S2: </stream:stream>
   <section title="Server Rules for Processing XML Stanzas" anchor="rules">
     <t>An XMPP server MUST ensure in-order processing of XML stanzas between any two entities.  This includes stanzas sent by a client to its server for direct processing by the server (e.g., in-order processing of a roster get and initial presence as decribed in <xref target='XMPP-IM'/>).</t>
     <t>Beyond the requirement for in-order processing, each server implementation will contain its own logic for processing stanzas it receives.  Such logic determines whether the server needs to ROUTE a given stanza to another domain, DELIVER it to a local entity (typically a client associated with a connected node), or HANDLE it directly within the server itself.  The following rules apply.</t>
+    <t>Note:  Particular XMPP applications MAY specify delivery rules that modify or supplement the following rules; for example, a set of delivery rules for instant messaging and presence applications is defined in <xref target="XMPP-IM"/>.</t>
     <section title="No 'to' Address" anchor="rules-noto">
       <section title="Overview" anchor="rules-noto-overview">
         <t>If the stanza possesses no 'to' attribute, the server SHOULD handle it directly on behalf of the entity that sent it.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a local entity (such as a client) that is connected to the server.</t>
@@ -2819,6 +2820,27 @@ S2: </stream:stream>
           </list>
         </t>
       </section>
+    </section>
+    <section title="Local Domain" anchor="rules-localdomain">
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches one of the configured hostnames of the server itself, the server MUST do one of the following:</t>
+      <t>
+        <list style='numbers'>
+          <t>Handle the stanza itself.</t>
+          <t>Route the stanza to a specialized service that is responsible for that local domain.</t>
+          <t>Return an error to the sender if the service providing the local domain is not available.</t>
+        </list>
+      </t>
+    </section>
+    <section title="Resource at Local Domain" anchor="rules-localresource">
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a configured hostname of the server itself and the JID contained in the 'to' attribute is of the form &lt;domain/resource&gt;, the server (or a defined resource thereof) MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
+    </section>
+    <section title="Node at Local Domain" anchor="rules-localnode">
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a configured hostname of the server itself and the JID contained in the 'to' attribute is a bare JID (&lt;node@domain&gt;) or full JID (&lt;node@domain/resource&gt;), the server SHOULD deliver the stanza to the intended recipient of the stanza as represented by the JID contained in the 'to' attribute.  The following rules apply:</t>
+      <t><list style="numbers">
+        <t>If the JID contains an XMPP resource identifier (i.e., is of the form &lt;node@domain/resource&gt;) and there exists a connected resource that exactly matches the full JID, the recipient's server SHOULD deliver the stanza to that connection.</t>
+        <t>If the JID contains an XMPP resource identifier and there exists no connected resource that exactly matches the full JID, the recipient's server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+        <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, the recipient's server SHOULD deliver the stanza to at least one of the connected resources, according to application-specific rules.</t>
+      </list></t>
     </section>
     <section title="Foreign Domain" anchor="rules-foreign">
       <section title="Overview" anchor="rules-foreign-overview">
@@ -2841,28 +2863,6 @@ S2: </stream:stream>
         <t>If routing to the intended recipient's server is unsuccessful, the sender's server MUST return an error to the sender, which SHOULD be &lt;remote-server-not-found/&gt; if resolution of the foreign domain is unsuccessful and &lt;remote-server-timeout/&gt; if resolution succeeds but streams cannot be negotiated.</t>
         <t>If stream negotiation with the intended recipient's server is successful but the foreign server cannot deliver the stanza to the recipient, the foreign server shall return an error to the sender by way of the sender's server.</t>
       </section>
-    </section>
-    <section title="Local Domain" anchor="rules-localdomain">
-      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches one of the configured hostnames of the server or one of the configured local domains hosted by the server, the server MUST do one of the following:</t>
-      <t>
-        <list style='numbers'>
-          <t>Handle the stanza itself.</t>
-          <t>Route the stanza to a specialized service that is responsible for that local domain.</t>
-          <t>Return an error to the sender if the service providing the local domain is not available.</t>
-        </list>
-      </t>
-    </section>
-    <section title="Mere Domain or Specific Resource" anchor="rules-domain">
-      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a configured hostname of the server itself and the JID contained in the 'to' attribute is of the form &lt;domain&gt; or &lt;domain/resource&gt;, the server (or a defined resource thereof) MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
-    </section>
-    <section title="Node in Same Domain" anchor="rules-node">
-      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute matches a configured hostname of the server itself and the JID contained in the 'to' attribute is a bare JID (&lt;node@domain&gt;) or full JID (&lt;node@domain/resource&gt;), the server SHOULD deliver the stanza to the intended recipient of the stanza as represented by the JID contained in the 'to' attribute.  The following rules apply:</t>
-      <t><list style="numbers">
-        <t>If the JID contains an XMPP resource identifier (i.e., is of the form &lt;node@domain/resource&gt;) and there exists a connected resource that exactly matches the full JID, the recipient's server SHOULD deliver the stanza to that connection.</t>
-        <t>If the JID contains an XMPP resource identifier and there exists no connected resource that exactly matches the full JID, the recipient's server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-        <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, the recipient's server SHOULD deliver the stanza to at least one of the connected resources, according to application-specific rules.</t>
-      </list></t>
-      <t>Particular XMPP applications MAY specify delivery rules that modify or supplement the foregoing rules; for example, a set of delivery rules for instant messaging and presence applications is defined in <xref target="XMPP-IM"/>.</t>
     </section>
   </section>
 
@@ -3087,10 +3087,10 @@ S2: </stream:stream>
       <t>
         <list style='numbers'>
           <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connections that it will accept from a given IP address at any one time.  If an entity attempts to connect but the maximum number of TCP connections has been reached, the receiving server MUST NOT allow the new connection to proceed.</t>
-          <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connection attempts that it will accept from a given IP address in a given time period.  A reasonable level is 120 attempts per IP address per hour.  (While it is possible to limit the number of connections at the TCP layer rather than at the XMPP application layer, care must be taken in doing so since limits at the TCP layer might result in an inability to access non-XMPP services.)  If an entity attempts to connect but the maximum number of connections has been reached, the receiving server MUST NOT allow the new connection to proceed.</t>
+          <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connection attempts that it will accept from a given IP address in a given time period.  (While it is possible to limit the number of connections at the TCP layer rather than at the XMPP application layer, care must be taken in doing so since limits at the TCP layer might result in an inability to access non-XMPP services.)  If an entity attempts to connect but the maximum number of connections has been reached, the receiving server MUST NOT allow the new connection to proceed.</t>
           <t>A server MUST NOT process XML stanzas from clients that have not yet provided appropriate authentication credentials and MUST NOT process XML stanzas from peer servers whose identity it has not either authenticated via SASL.</t>
-          <t>A server implementation MUST enable a server administrator to limit the number of connected resources it will allow an account to bind at any one time.  Deployment experience indicates that it is reasonable to limit the maximum number of connected resources to less than 20.  If a client attempts to bind a resource but it has already reached the configured number of allowable resources, the receiving server MUST return a &lt;not-allowed&gt; stanza error.</t>
-          <t>A server implementation MUST enable a server administrator to limit the size of stanzas it will accept from a connected client or peer server.  A reasonable upper limit on stanza size is 20 kilobytes to 200 kilobytes.  If a connected resource or peer server sends a stanza that violates the upper limit, the receiving server SHOULD NOT process the stanza and instead SHOULD return a &lt;not-allowed&gt; stanza error.  Alternatively (e.g., if the sender has sent an egregiously large stanza), the server MAY instead return a &lt;policy-violation/&gt; stream error.</t>
+          <t>A server implementation MUST enable a server administrator to limit the number of connected resources it will allow an account to bind at any one time.  If a client attempts to bind a resource but it has already reached the configured number of allowable resources, the receiving server MUST return a &lt;not-allowed&gt; stanza error.</t>
+          <t>A server implementation MUST enable a server administrator to limit the size of stanzas it will accept from a connected client or peer server.  If a connected resource or peer server sends a stanza that violates the upper limit, the receiving server SHOULD NOT process the stanza and instead SHOULD return a &lt;not-allowed&gt; stanza error.  Alternatively (e.g., if the sender has sent an egregiously large stanza), the server MAY instead return a &lt;policy-violation/&gt; stream error.</t>
           <t>A server implementation MUST enable a server administrator to limit the amount of bandwidth it will allow a connected client or peer server to use in a given time period.</t>
           <t>A server implementation SHOULD enable a server administrator to limit the types of stanzas (based on the extended content "payload") that it will allow a connected resource or peer server send over an active connection.  Such limits and restrictions are a matter of deployment policy.</t>
         </list>
@@ -4515,12 +4515,12 @@ specifications of each URI scheme.
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='April' day='17' year='2007' />
+<date month='July' day='6' year='2007' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3921bis-02' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3921bis-03' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3921bis-02.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3921bis-03.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
@@ -5062,19 +5062,19 @@ specifications of each URI scheme.
           <t>Corrected the ABNF syntax for JIDs to prevent zero-length node identifiers, domain identifiers, and resource identifiers.</t>
           <t>Corrected the nameprep processing rules to require use of the UseSTD3ASCIIRules flag.</t>
           <t>Encouraged use of the 'from' and 'to' attributes on stream headers.</t>
-          <t>More clearly specified stream closing handshake.</t>
+          <t>More fully specified stream closing handshake.</t>
           <t>Specified recommended stream reconnection algorithm.</t>
           <t>Specified return of &lt;restricted-xml/&gt; stream error in response to receipt of prohibited XML features.</t> 
           <t>Specified that SASL mechanisms must be sent both before and after negotiation of SASL security layers.</t>
           <t>Specified that TLS plus SASL PLAIN is a mandatory-to-implement technology for client-to-server connections, since implementation of SASL EXTERNAL is uncommon in XMPP clients, in part because underlying security features such as X.509 certificates are not yet widely deployed.</t>
           <t>Added the &lt;malformed-request/&gt; SASL error condition to handle an error case discussed in RFC 4422.</t>
-          <t>More clearly specified binding of multiple resources to the same stream.</t>
+          <t>More fully specified binding of multiple resources to the same stream.</t>
           <t>Added the &lt;not-modified/&gt; stanza error condition to enable potential ETags usage.</t>
           <t>Added the &lt;unknown-sender/&gt; stanza error condition to provide appropriate handling of stanzas when multiple resources are bound to the same stream.</t>
           <t>Removed historical documentation for the server dialback protocol from this specification to a separate specification</t>
         </list>
       </t>
-      <t>In addition, numerous changes of an editorial nature were made in order to more clearly specify and explain the protocols.</t>
+      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
     </section>
 
     <section title="Copying Conditions" anchor="copying">

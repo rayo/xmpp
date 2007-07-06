@@ -23,7 +23,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="June" day="26"/>
+    <date year="2007" month="July" day="6"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -87,7 +87,17 @@
     <section title="Conventions" anchor="intro-conventions">
       <t>This document inherits the terminology defined in <xref target="XMPP-CORE"/>.</t>
       <t>The following keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>In examples, lines have been wrapped for improved readability.</t>
+      <t>In examples, lines have been wrapped for improved readability and the following prepended strings are used:</t>
+      <t>
+        <list style='symbols'>
+          <t>C: = client</t>
+          <t>S: = server</t>
+          <t>UC: = user's client</t>
+          <t>US: = user's server</t>
+          <t>CC: = contact's client</t>
+          <t>CS: = contact's server</t>
+        </list>
+      </t>
     </section>
   </section>
 
@@ -121,34 +131,32 @@
       <t>Upon authenticating with a server and binding a resource (thus becoming a connected resource), a client SHOULD request the roster before sending initial presence (however, because receiving the roster may not be desirable for all resources, e.g., a connection with limited bandwidth, the client's request for the roster is recommended and not required).  After a connected resource sends initial presence (see <xref target='presence-initial'/>), it is referred to as an AVAILABLE RESOURCE.  If a connected resource requests the roster but does not send initial presence, the server SHOULD NOT send it presence subscriptions and SHOULD NOT send it associated roster updates.  If an available resource does not request the roster during a session, the server SHOULD NOT send it presence subscriptions and MUST NOT associated roster updates.  For the sake of brevity, the term INTERESTED RESOURCE is used herein to refer to the concept of "an available resource that has requested the roster".</t>
       <t>A client requests the roster by sending a roster get over its stream to the server.</t>
       <figure>
-        <preamble>Example: Client requests roster from server:</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='get' id='roster_1'>
-  <query xmlns='jabber:iq:roster'/>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='get' id='roster_1'>
+    <query xmlns='jabber:iq:roster'/>
+  </iq>
         ]]></artwork>
       </figure>
       <figure>
-        <preamble>Example: Client receives roster from server:</preamble>
         <artwork><![CDATA[
-<iq to='juliet@example.com/balcony' type='result' id='roster_1'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          name='Romeo'
-          subscription='both'>
-      <group>Friends</group>
-    </item>
-    <item jid='mercutio@example.org'
-          name='Mercutio'
-          subscription='from'/>
-    <item jid='nurse@example.com'
-          name='Nurse'
-          subscription='to'/>
-    <item jid='benvolio@example.org'
-          name='Benvolio'
-          subscription='both'/>
-  </query>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='result' id='roster_1'>
+    <query xmlns='jabber:iq:roster'>
+      <item jid='romeo@example.net'
+            name='Romeo'
+            subscription='both'>
+        <group>Friends</group>
+      </item>
+      <item jid='mercutio@example.org'
+            name='Mercutio'
+            subscription='from'/>
+      <item jid='nurse@example.com'
+            name='Nurse'
+            subscription='to'/>
+      <item jid='benvolio@example.org'
+            name='Benvolio'
+            subscription='both'/>
+    </query>
+  </iq>
         ]]></artwork>
       </figure>
       <t>If the server cannot process the roster get, it MUST return an appropriate stanza error as described in <xref target='XMPP-CORE'/> (such as &lt;service-unavailable/&gt; if the roster namespace is not supported or &lt;internal-server-error/&gt; if the server experiences trouble returning the roster).</t>
@@ -159,55 +167,55 @@
         <t>At any time, a client may add an item to the roster by sending an IQ stanza of type "set" containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace, which in turn contains one &lt;item/&gt; element; this is called a ROSTER SET.</t>
         <figure>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_2'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'>
-      <group>Servants</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_2'>
+    <query xmlns='jabber:iq:roster'>
+      <item jid='nurse@example.com'
+            name='Nurse'>
+        <group>Servants</group>
+      </item>
+    </query>
+  </iq>
           ]]></artwork>
         </figure>
         <t>If the server can successfully process the roster set (i.e., if none of the error cases occurs), it MUST create the roster item in persistent storage.  It MUST also send a ROSTER PUSH to all of the user's interested resources, consisting of an IQ stanza of type "set" containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace, which in turn contains one &lt;item/&gt; element that defines the new roster item (this roster push enables all interested resources to remain in sync with the server-based roster information).  Finally, it MUST also return an IQ stanza of type "result" to the connected resource that sent the roster set.</t>
         <figure>
           <artwork><![CDATA[
-<iq to='juliet@example.com/balcony'
-    type='set'
-    id='a78b4q6ha463'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'
-          subscription='none'>
-      <group>Servants</group>
-    </item>
-  </query>
-</iq>
+S: <iq to='juliet@example.com/balcony'
+       type='set'
+       id='a78b4q6ha463'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='Nurse'
+             subscription='none'>
+         <group>Servants</group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/chamber'
-    type='set'
-    id='a78b4q6ha464'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'
-          subscription='none'>
-      <group>Servants</group>
-    </item>
-  </query>
-</iq>
+S: <iq to='juliet@example.com/chamber'
+       type='set'
+       id='a78b4q6ha464'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='Nurse'
+             subscription='none'>
+         <group>Servants</group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='result' id='roster_2'/>
+S: <iq to='juliet@example.com/balcony' type='result' id='roster_2'/>
           ]]></artwork>
         </figure>
         <t>As required by the semantics of the IQ stanza kind as defined in <xref target="XMPP-CORE"/>, each resource that received the roster push MUST reply with an IQ stanza of type "result" (or "error").</t>
         <figure>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony'
-    type='result'
-    id='a78b4q6ha463'/>
-<iq from='juliet@example.com/chamber'
-    type='result'
-    id='a78b4q6ha464'/>
+C: <iq from='juliet@example.com/balcony'
+      type='result'
+      id='a78b4q6ha463'/>
+C: <iq from='juliet@example.com/chamber'
+      type='result'
+      id='a78b4q6ha464'/>
           ]]></artwork>
         </figure>
       </section>
@@ -223,125 +231,125 @@
         <t>The server SHOULD return a &lt;not-allowed/&gt; error to the client if the roster set violates any of the following rules:</t>
         <t>
           <list style='numbers'>
-            <t>The &lt;item/&gt; element MAY contain a 'name' attribute, but the value of the 'name' attribute SHOULD NOT be more than 1023 characters in length.</t>
-            <t>The XML character data of any given &lt;group/&gt; element MUST NOT be of zero length and SHOULD NOT be more than 1023 characters in length.</t>
+            <t>The &lt;item/&gt; element MAY contain a 'name' attribute, but a server MAY limit the length of the 'name' attribute to a configurable limit.</t>
+            <t>The XML character data of any given &lt;group/&gt; element MUST NOT be of zero length and a server MAY limit the length of the character data to a configurable limit.</t>
           </list>
         </t>
         <figure>
           <preamble>Error: Roster set contains more than one item</preamble>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_3'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'>
-      <group>Servants</group>
-    </item>
-    <item jid='mother@example.com'
-          name='Mom'>
-      <group>Family</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_3'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='Nurse'>
+         <group>Servants</group>
+       </item>
+       <item jid='mother@example.com'
+             name='Mom'>
+         <group>Family</group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='roster_3'>
-  <error type='modify'>
-    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='roster_3'>
+    <error type='modify'>
+      <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    </error>
+  </iq>
           ]]></artwork>
         </figure>
         <figure>
           <preamble>Error: Roster set contains item with oversized handle</preamble>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_4'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='__some-very-long-handle__'>
-      <group>Servants</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_4'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='__some-very-long-handle__'>
+         <group>Servants</group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='roster_4'>
-  <error type='modify'>
-    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='roster_4'>
+     <error type='modify'>
+       <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
           ]]></artwork>
         </figure>
         <figure>
           <preamble>Error: Roster set contains duplicate groups</preamble>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_5'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'>
-      <group>Servants</group>
-      <group>Servants</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_5'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='Nurse'>
+         <group>Servants</group>
+         <group>Servants</group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='roster_5'>
-  <error type='modify'>
-    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='roster_5'>
+     <error type='modify'>
+       <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
           ]]></artwork>
         </figure>
         <figure>
           <preamble>Error: Roster set contains empty group</preamble>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_6'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'>
-      <group></group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_6'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='Nurse'>
+         <group></group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='roster_6'>
-  <error type='modify'>
-    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='roster_6'>
+     <error type='modify'>
+       <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
           ]]></artwork>
         </figure>
         <figure>
           <preamble>Error: Roster set contains oversized group</preamble>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_7'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com'
-          name='Nurse'>
-      <group>__some-very-long-group-name__</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_7'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com'
+             name='Nurse'>
+         <group>__some-very-long-group-name__</group>
+       </item>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='roster_7'>
-  <error type='modify'>
-    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='roster_7'>
+     <error type='modify'>
+       <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
           ]]></artwork>
         </figure>
         <t>The server MUST return a &lt;not-allowed/&gt; error to the client if the value of the &lt;item/&gt; element's 'jid' attribute matches the bare JID (node@domain) portion of the &lt;iq/&gt; element's 'from' attribute.</t>
         <figure>
           <preamble>Error: Roster set contains sender's JID</preamble>
           <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='roster_6'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'/>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='roster_6'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='juliet@example.com'/>
+      </query>
+    </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='roster_6'>
-  <error type='cancel'>
-    <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='roster_6'>
+      <error type='cancel'>
+        <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+      </error>
+    </iq>
           ]]></artwork>
         </figure>
       </section>
@@ -370,64 +378,64 @@
       <t>The user who has this item in her roster may want to add the item to another group.</t>
       <figure>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='update_1'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          name='Romeo'>
-      <group>Friends</group>
-      <group>Lovers</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/chamber' type='set' id='update_1'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'
+             name='Romeo'>
+         <group>Friends</group>
+         <group>Lovers</group>
+       </item>
+     </query>
+   </iq>
         ]]></artwork>
       </figure>
       <t>The user may then want to remove the item from the original group.</t>
       <figure>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='update_2'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          name='Romeo'>
-      <group>Lovers</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/chamber' type='set' id='update_2'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'
+             name='Romeo'>
+         <group>Lovers</group>
+       </item>
+     </query>
+   </iq>
         ]]></artwork>
       </figure>
       <t>The user may then want to change the handle for the item.</t>
       <figure>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='update_3'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          name='MyRomeo'>
-      <group>Lovers</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/chamber' type='set' id='update_3'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'
+             name='MyRomeo'>
+         <group>Lovers</group>
+       </item>
+     </query>
+   </iq>
         ]]></artwork>
       </figure>
       <t>The user may then want to remove the handle altogether (note: including an empty 'name' attribute is equivalent to including no 'name' attribute whatsoever).</t>
       <figure>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='update_4'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          name=''>
-      <group>Lovers</group>
-    </item>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/chamber' type='set' id='update_4'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'
+             name=''>
+         <group>Lovers</group>
+       </item>
+     </query>
+   </iq>
         ]]></artwork>
       </figure>
       <t>The user may then want to remove the item from all groups.</t>
       <figure>
         <artwork><![CDATA[
-<iq from='juliet@example.com/chamber' type='set' id='update_5'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'/>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/chamber' type='set' id='update_5'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'/>
+     </query>
+   </iq>
         ]]></artwork>
       </figure>
       <t>As with adding a roster item, when updating a roster item the server MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources, and send an IQ result to the initiating resource.</t>
@@ -438,11 +446,11 @@
       <figure>
         <preamble>Example: Client deletes an item</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='delete_1'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='nurse@example.com' subscription='remove'/>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='delete_1'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='nurse@example.com' subscription='remove'/>
+     </query>
+   </iq>
         ]]></artwork>
       </figure>
       <t>As with adding a roster item, if the server can successfully process the roster set then it MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource.</t>
@@ -451,17 +459,17 @@
       <figure>
         <preamble>Error: Non-existent roster item</preamble>
         <artwork><![CDATA[
-<iq from='juliet@example.com/balcony' type='set' id='delete_2'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='__no-such-user__@example.com' subscription='remove'/>
-  </query>
-</iq>
+C: <iq from='juliet@example.com/balcony' type='set' id='delete_2'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='__no-such-user__@example.com' subscription='remove'/>
+     </query>
+   </iq>
 
-<iq to='juliet@example.com/balcony' type='error' id='delete_2'>
-  <error type='modify'>
-    <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-  </error>
-</iq>
+S: <iq to='juliet@example.com/balcony' type='error' id='delete_2'>
+     <error type='modify'>
+       <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
         ]]></artwork>
       </figure>
     </section>
@@ -485,7 +493,7 @@
         <figure>
           <preamble>Example: A subscription request</preamble>
           <artwork><![CDATA[
-<presence to='juliet@example.com' type='subscribe'/>
+UC: <presence to='juliet@example.com' type='subscribe'/>
           ]]></artwork>
         </figure>
         <t>Note: The JID supplied in the 'to' attribute SHOULD be of the form &lt;contact@domain&gt; rather than &lt;contact@domain/resource&gt;, since the desired result is normally for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.</t>
@@ -497,9 +505,9 @@
         <figure>
           <preamble>Example: A stamped subscription request</preamble>
           <artwork><![CDATA[
-<presence from='romeo@example.net'
-          to='juliet@example.com' 
-          type='subscribe'/>
+US: <presence from='romeo@example.net'
+              to='juliet@example.com' 
+              type='subscribe'/>
           ]]></artwork>
         </figure>
         <t>(Stamping with the bare JID instead of the full JID helps to prevent presence leaks; for details, see the security considerations of <xref target='XMPP-CORE'/>.)</t>
@@ -508,29 +516,29 @@
         <t>If the user has not already added the contact to the user's roster, the user's server MUST then send an appropriate roster push to all of the user's interested resources.  The roster push MUST contain the potential contact with a subscription state of "none" and with notation that the subscription is pending (via an 'ask' attribute whose value is "subscribe").</t>
         <figure>
           <artwork><![CDATA[
-<iq to='romeo@example.net/foo'
-    type='set'
-    id='b89c5r7ib574'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='none'
-          ask='subscribe'/>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/foo'
+        type='set'
+        id='b89c5r7ib574'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='none'
+              ask='subscribe'/>
+      </query>
+    </iq>
 
-<iq to='romeo@example.net/bar'
-    type='set'
-    id='b89c5r7ib575'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='none'
-          ask='subscribe'/>
-    </item>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/bar'
+        type='set'
+        id='b89c5r7ib575'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='none'
+              ask='subscribe'/>
+        </item>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
-        <t>Note:  Therefore a client MAY simply wait for the roster push rather than proactively adding the contact to the user's roster before sending the subscription request.</t>
+        <t>Note:  As a result, a client MAY simply wait for the roster push rather than proactively adding the contact to the user's roster before sending the subscription request.</t>
       </section>
 
       <section title="Server Processing of Inbound Subscription Request" anchor="sub-request-inbound">
@@ -541,9 +549,9 @@
             <t>If the contact does not exist, the contact's server MUST automatically return a presence stanza of type "unsubscribed" to the user.
               <figure>
                 <artwork><![CDATA[
-<presence from='juliet@example.com' 
-          to='romeo@example.net' 
-          type='unsubscribed'/>
+CS: <presence from='juliet@example.com' 
+              to='romeo@example.net' 
+              type='unsubscribed'/>
                 ]]></artwork>
               </figure>
             </t>
@@ -561,14 +569,14 @@
         <figure>
           <preamble>Example: Approving a subscription request</preamble>
           <artwork><![CDATA[
-<presence to='romeo@example.net' type='subscribed'/>
+CC: <presence to='romeo@example.net' type='subscribed'/>
           ]]></artwork>
         </figure>
         <t>Server handling of presence stanzas of type 'subscribed' is described in the following sections for both the contact's server and the user's server.</t>
         <figure>
           <preamble>Example: Denying a presence subscription request</preamble>
           <artwork><![CDATA[
-<presence to='romeo@example.net' type='unsubscribed'/>
+CC: <presence to='romeo@example.net' type='unsubscribed'/>
           ]]></artwork>
         </figure>
         <t>Server handling of presence stanzas of type 'unsubscribed' is described under <xref target='sub-cancel'/> for both the contact's server and the user's server.</t>
@@ -579,41 +587,41 @@
         <figure>
           <preamble>Example: A stamped subscription approval</preamble>
           <artwork><![CDATA[
-<presence from='juliet@example.com' 
-          to='romeo@example.net'
-          type='subscribed'/>
+CS: <presence from='juliet@example.com' 
+              to='romeo@example.net'
+              type='subscribed'/>
           ]]></artwork>
         </figure>
         <t>The contact's server then MUST send a roster push to all of the contact's interested resources:</t>
         <figure>
           <artwork><![CDATA[
-<iq to='juliet@example.com/balcony'
-    type='set'
-    id='a78b4q6ha463'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          subscription='from'/>
-  </query>
-</iq>
+CS: <iq to='juliet@example.com/balcony'
+        type='set'
+        id='a78b4q6ha463'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.net'
+              subscription='from'/>
+      </query>
+    </iq>
 
-<iq to='juliet@example.com/chamber'
-    type='set'
-    id='a78b4q6ha464'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.com'
-          subscription='from'/>
-  </query>
-</iq>
+CS: <iq to='juliet@example.com/chamber'
+        type='set'
+        id='a78b4q6ha464'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.com'
+              subscription='from'/>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
         <t>The contact's server MUST then also send current presence information to the user from each of the contact's available resources:</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony'
-          to='romeo@example.net'/>
+CS: <presence from='juliet@example.com/balcony'
+              to='romeo@example.net'/>
 
-<presence from='juliet@example.com/chamber'
-          to='romeo@example.net'/>
+CS: <presence from='juliet@example.com/chamber'
+              to='romeo@example.net'/>
           ]]></artwork>
         </figure>
         <t>From the perspective of the contact, there now exists a subscription from the user.  In order to subscribe to the user's presence, the contact would then send a subscription request to the user.  (XMPP clients will often automatically send the subscription request instead of requiring the contact to initiate the subscription request, since it is assumed that the desired end state is a mutual subscription.)</t>
@@ -625,41 +633,41 @@
         <t>If the foregoing check is successful, the user's server MUST initiate a roster push to all of the user's interested resources, containing an updated roster item for the contact with the 'subscription' attribute set to a value of "to".</t>
         <figure>
           <artwork><![CDATA[
-<iq to='romeo@example.net/foo'
-    type='set'
-    id='b89c5r7ib576'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='to'/>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/foo'
+        type='set'
+        id='b89c5r7ib576'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='to'/>
+      </query>
+    </iq>
 
-<iq to='romeo@example.net/bar'
-    type='set'
-    id='b89c5r7ib577'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='to'/>
-    </item>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/bar'
+        type='set'
+        id='b89c5r7ib577'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='to'/>
+        </item>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
         <t>From the perspective of the user, there now exists a subscription to the contact's presence information.</t>
         <t>The user's server MUST also deliver the available presence stanza received from each of the contact's available resources to each of the user's available resources:</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony'
-          to='romeo@example.net/foo'/>
+US: <presence from='juliet@example.com/balcony'
+              to='romeo@example.net/foo'/>
 
-<presence from='juliet@example.com/balcony'
-          to='romeo@example.net/bar'/>
+US: <presence from='juliet@example.com/balcony'
+              to='romeo@example.net/bar'/>
 
-<presence from='juliet@example.com/chamber'
-          to='romeo@example.net/foo'/>
+US: <presence from='juliet@example.com/chamber'
+              to='romeo@example.net/foo'/>
 
-<presence from='juliet@example.com/chamber'
-          to='romeo@example.net/bar'/>
+US: <presence from='juliet@example.com/chamber'
+              to='romeo@example.net/bar'/>
           ]]></artwork>
         </figure>
       </section>
@@ -671,7 +679,7 @@
         <figure>
           <preamble>Example: Cancelling a previously granted subscription request</preamble>
           <artwork><![CDATA[
-<presence to='romeo@example.net' type='unsubscribed'/>
+CC: <presence to='romeo@example.net' type='unsubscribed'/>
           ]]></artwork>
         </figure>
       </section>
@@ -681,9 +689,9 @@
         <figure>
           <preamble>Example: A stamped subscription cancellation</preamble>
           <artwork><![CDATA[
-<presence from='juliet@example.com' 
-          to='romeo@example.net'
-          type='unsubscribed'/>
+CS: <presence from='juliet@example.com' 
+              to='romeo@example.net'
+              type='unsubscribed'/>
           ]]></artwork>
         </figure>
         <t>If the user is hosted on the same server, the server MUST adhere to the rules specified in the next section when handling the subscription cancellation.</t>
@@ -691,23 +699,23 @@
         <t>The contact's server then MUST send a roster push with the updated roster item to all of the contact's interested resources:</t>
         <figure>
           <artwork><![CDATA[
-<iq to='juliet@example.com/balcony'
-    type='set'
-    id='a78b4q6ha465'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          subscription='none'/>
-  </query>
-</iq>
+CS: <iq to='juliet@example.com/balcony'
+        type='set'
+        id='a78b4q6ha465'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.net'
+              subscription='none'/>
+      </query>
+    </iq>
 
-<iq to='juliet@example.com/chamber'
-    type='set'
-    id='a78b4q6ha466'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.com'
-          subscription='none'/>
-  </query>
-</iq>
+CS: <iq to='juliet@example.com/chamber'
+        type='set'
+        id='a78b4q6ha466'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.com'
+              subscription='none'/>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
       </section>
@@ -716,24 +724,24 @@
         <t>When the user's server receives the inbound subscription cancellation, it MUST modify the subscription state and send a roster push to the user's interested resource(s).</t>
         <figure>
           <artwork><![CDATA[
-<iq to='romeo@example.net/foo'
-    type='set'
-    id='h37h3u1bv400'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='none'/>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/foo'
+        type='set'
+        id='h37h3u1bv400'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='none'/>
+      </query>
+    </iq>
 
-<iq to='romeo@example.net/bar'
-    type='set'
-    id='h37h3u1bv401'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='none'/>
-    </item>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/bar'
+        type='set'
+        id='h37h3u1bv401'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='none'/>
+        </item>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
       </section>
@@ -744,9 +752,8 @@
         <t>If a contact would like to cancel a subscription that is has previously granted to a user, it sends a presence stanza of type "unsubscribed".</t>
         <t>If a user would like to unsubscribe from a contact's presence, it sends a presence stanza of type "unsubscribe".</t>
         <figure>
-          <preamble>Example: Cancelling a previously granted subscription request</preamble>
           <artwork><![CDATA[
-<presence to='juliet@example.com' type='unsubscribe'/>
+UC: <presence to='juliet@example.com' type='unsubscribe'/>
           ]]></artwork>
         </figure>
       </section>
@@ -756,9 +763,9 @@
         <figure>
           <preamble>Example: A stamped unsubscribe</preamble>
           <artwork><![CDATA[
-<presence from='romeo@example.net'
-          to='juliet@example.com' 
-          type='unsubscribed'/>
+US: <presence from='romeo@example.net'
+              to='juliet@example.com' 
+              type='unsubscribed'/>
           ]]></artwork>
         </figure>
         <t>If the contact is hosted on the same server, the server MUST adhere to the rules specified in the next section when handling the unsubscribe.</t>
@@ -766,24 +773,24 @@
         <t>The user's server then MUST send a roster push with the updated roster item to all of the user's interested resources:</t>
         <figure>
           <artwork><![CDATA[
-<iq to='romeo@example.net/foo'
-    type='set'
-    id='h37h3u1bv402'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='none'/>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/foo'
+        type='set'
+        id='h37h3u1bv402'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='none'/>
+      </query>
+    </iq>
 
-<iq to='romeo@example.net/bar'
-    type='set'
-    id='h37h3u1bv403'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='juliet@example.com'
-          subscription='none'/>
-    </item>
-  </query>
-</iq>
+US: <iq to='romeo@example.net/bar'
+        type='set'
+        id='h37h3u1bv403'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='juliet@example.com'
+              subscription='none'/>
+        </item>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
       </section>
@@ -792,23 +799,23 @@
         <t>When the contact's server receives the inbound unsubscribe, it MUST modify the subscription state and send a roster push to the contacts's interested resource(s).</t>
         <figure>
           <artwork><![CDATA[
-<iq to='juliet@example.com/balcony'
-    type='set'
-    id='a78b4q6ha467'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          subscription='none'/>
-  </query>
-</iq>
+CS: <iq to='juliet@example.com/balcony'
+        type='set'
+        id='a78b4q6ha467'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.net'
+              subscription='none'/>
+      </query>
+    </iq>
 
-<iq to='juliet@example.com/chamber'
-    type='set'
-    id='a78b4q6ha468'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.com'
-          subscription='none'/>
-  </query>
-</iq>
+CS: <iq to='juliet@example.com/chamber'
+        type='set'
+        id='a78b4q6ha468'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.com'
+              subscription='none'/>
+      </query>
+    </iq>
           ]]></artwork>
         </figure>
       </section>
@@ -834,35 +841,36 @@
         <figure>
           <preamble>Example: Initial presence</preamble>
           <artwork><![CDATA[
-<presence/>
+UC: <presence/>
           ]]></artwork>
         </figure>
       </section>
 
       <section title="Server Processing of Outbound Presence" anchor="presence-initial-outbound">
         <t>Upon receiving initial presence from a client, the user's server MUST send the initial presence stanza from the full JID (e.g., &lt;juliet@example.com/balcony&gt;) of the user to all contacts that are subscribed to the user's presence information; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "from" or "both".</t>
+        <t>Note:  In the following examples, the "user" is juliet@example.com and the user has three contacts in her roster with a subscription state of from or both: romeo@example.net, mercutio@example.com, an d benvolio@example.com.</t>
         <figure>
           <preamble>Example: Broadcasted presence</preamble>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='mercutio@example.com'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='mercutio@example.com'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='benvolio@example.com'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='benvolio@example.com'/>
           ]]></artwork>
         </figure>
         <t>The user's server MUST also broadcast initial presence from the user's newly available resource to all of the user's available resources.</t>
         <figure>
           <preamble>Example: Broadcasted presence to self</preamble>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='juliet@example.com/balcony'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='juliet@example.com/balcony'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='juliet@example.com/chamber'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='juliet@example.com/chamber'/>
           ]]></artwork>
         </figure>
         <t>In the absence of presence information about the user's contacts, the user's server SHOULD also send presence probes to the user's contacts on behalf of the user as specified under <xref target='presence-probe'/>.</t>
@@ -873,11 +881,11 @@
         <figure>
           <preamble>Example: Delivery of broadcasted presence</preamble>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net/foo'/>
+CC: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net/foo'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net/bar'/>
+CC: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net/bar'/>
           ]]></artwork>
         </figure>
       </section>
@@ -893,9 +901,9 @@
       <t>A PRESENCE PROBE is a presence stanza whose 'type' attribute has a value of "probe".  The value of the 'from' address SHOULD be the full JID (e.g., &lt;juliet@example.com/balcony&gt;) of the probing user and the value of the 'to' address SHOULD be the bare JID (e.g., &lt;romeo@example.net&gt;) of the contact whose availability the user wants to discover.</t>
       <figure>
         <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net' 
-          type='probe'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net' 
+              type='probe'/>
         ]]></artwork>
       </figure>
       <t>A presence probe SHOULD NOT be sent by a client.  Instead, it is designed to be sent by a user's server on the user's behalf in order to discover the availability of the user's contacts.</t>
@@ -905,17 +913,17 @@
         <t>Typically, the user's server sends a presence probe whenever the user starts a new presence session by sending initial presence; however, the server may already possess presence information about the user's contacts at that point (e.g., because the user has another available resource or because the user briefly logged off and on before the new presence session began.)</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net' 
-          type='probe'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net' 
+              type='probe'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='benvolio@example.com' 
-          type='probe'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='benvolio@example.com' 
+              type='probe'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='nurse@example.com' 
-          type='probe'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='nurse@example.com' 
+              type='probe'/>
           ]]></artwork>
         </figure>
       </section>
@@ -927,9 +935,9 @@
             <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'>Subscription States</xref>), the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe (however, if a server receives a presence probe from a subdomain of the server's hostname or another such trusted service, it MAY provide presence information about the user to that entity).
               <figure>
                 <artwork><![CDATA[
-<presence from='mercutio@example.com' 
-          to='juliet@example.com' 
-          type='unsubscribed'/>
+CS: <presence from='mercutio@example.com' 
+              to='juliet@example.com' 
+              type='unsubscribed'/>
                 ]]></artwork>
               </figure>
             </t>
@@ -937,13 +945,13 @@
             <t>Else, if the contact has at least one available resource, the server MUST reply to the presence probe by sending to the user the full XML of the last presence stanza with no 'to' attribute received by the server from each of the contact's available resources.
               <figure>
                 <artwork><![CDATA[
-<presence from='romeo@example.net/foo'
-          to='juliet@example.com'/>
+CS: <presence from='romeo@example.net/foo'
+              to='juliet@example.com'/>
 
-<presence from='romeo@example.net/bar'
-          to='juliet@example.com'>
-  <show>away</show>
-</presence>
+CS: <presence from='romeo@example.net/bar'
+              to='juliet@example.com'>
+      <show>away</show>
+    </presence>
                 ]]></artwork>
               </figure>
             </t>
@@ -958,9 +966,9 @@
         <figure>
           <preamble>Example: Subsequent presence</preamble>
           <artwork><![CDATA[
-<presence>
-  <show>away</show>
-</presence>
+UC: <presence>
+      <show>away</show>
+    </presence>
           ]]></artwork>
         </figure>
       </section>
@@ -975,35 +983,35 @@
         </t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net'>
-  <show>away</show>
-</presence>
+US: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net'>
+      <show>away</show>
+    </presence>
 
-<presence from='juliet@example.com/balcony' 
-          to='benvolio@example.com'>
-  <show>away</show>
-</presence>
+US: <presence from='juliet@example.com/balcony' 
+              to='benvolio@example.com'>
+      <show>away</show>
+    </presence>
 
-<presence from='juliet@example.com/balcony' 
-          to='mercutio@example.com'>
-  <show>away</show>
-</presence>
+US: <presence from='juliet@example.com/balcony' 
+              to='mercutio@example.com'>
+      <show>away</show>
+    </presence>
           ]]></artwork>
         </figure>
         <t>Note: As an optimization, if the subscription state is "both" then the user's server MAY choose to broadcast subsequent presence only if the server has received available presence from the contact at some point during the user's session; i.e., if the server never received available presence from the contact and the user has a mutual presence subscription with the contact, it MAY decline to send subsequent presence to the contact.</t>
         <t>The user's server MUST also send the presence stanza to all of the user's available resources.</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='juliet@example.com/chamber'>
-  <show>away</show>
-</presence>
+US: <presence from='juliet@example.com/balcony' 
+              to='juliet@example.com/chamber'>
+      <show>away</show>
+    </presence>
 
-<presence from='juliet@example.com/balcony' 
-          to='juliet@example.com/balcony'>
-  <show>away</show>
-</presence>
+US: <presence from='juliet@example.com/balcony' 
+              to='juliet@example.com/balcony'>
+      <show>away</show>
+    </presence>
           ]]></artwork>
         </figure>
       </section>
@@ -1013,15 +1021,15 @@
         <figure>
           <preamble>Example: Delivery of presence</preamble>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net/foo'>
-  <show>away</show>
-</presence>
+CS: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net/foo'>
+      <show>away</show>
+    </presence>
 
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net/bar'>
-  <show>away</show>
-</presence>
+CS: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net/bar'>
+      <show>away</show>
+    </presence>
           ]]></artwork>
         </figure>
       </section>
@@ -1038,15 +1046,15 @@
         <t>Before ending its presence session with a server, the user's client SHOULD gracefully become unavailable by sending UNAVAILABLE PRESENCE, i.e., a presence stanza that possesses no 'to' attribute and that possesses a 'type' attribute whose value is "unavailable".</t>
         <figure>
           <artwork><![CDATA[
-<presence type='unavailable'/>
+UC: <presence type='unavailable'/>
           ]]></artwork>
         </figure>
         <t>Optionally, the final presence stanza MAY contain one or more &lt;status/&gt; elements specifying the reason why the user is no longer available).</t>
         <figure>
           <artwork><![CDATA[
-<presence type='unavailable'>
-  <status>going on vacation</status>
-</presence>
+US: <presence type='unavailable'>
+      <status>going on vacation</status>
+    </presence>
           ]]></artwork>
         </figure>
       </section>
@@ -1063,25 +1071,25 @@
         <t>If the unavailable presence stanza was gracefully received from the client, the server MUST broadcast the full XML of the presence stanza.</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net'
-          type='unavailable'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net'
+              type='unavailable'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='benvolio@example.com'
-          type='unavailable'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='benvolio@example.com'
+              type='unavailable'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='mercutio@example.com'
-          type='unavailable'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='mercutio@example.com'
+              type='unavailable'/>
           ]]></artwork>
         </figure>
         <t>The user's server MUST also send the unavailable presence stanza to all of the user's remaining available resources.</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='juliet@example.com/chamber'
-          type='unavailable'/>
+US: <presence from='juliet@example.com/balcony' 
+              to='juliet@example.com/chamber'
+              type='unavailable'/>
           ]]></artwork>
         </figure>
         <t>Note: Any presence stanza with no 'type' attribute and no 'to' attribute that is sent after sending broadcasted unavailable presence MUST be broadcasted by the server to all subscribers (i.e., MUST be treated as equivalent to "initial presence" for a new presence session).</t>
@@ -1091,13 +1099,13 @@
         <t>Upon receiving unavailable presence from the user, the contact's server MUST deliver the user's presence stanza to the full JIDs (e.g., &lt;romeo@example.net/foo&gt;) associated with all of the contact's available resources.</t>
         <figure>
           <artwork><![CDATA[
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net/foo'
-          type='unavailable'/>
+CS: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net/foo'
+              type='unavailable'/>
 
-<presence from='juliet@example.com/balcony' 
-          to='romeo@example.net/bar'
-          type='unavailable'/>
+CS: <presence from='juliet@example.com/balcony' 
+              to='romeo@example.net/bar'
+              type='unavailable'/>
           ]]></artwork>
         </figure>
       </section>
@@ -1382,160 +1390,160 @@
   <section title="A Sample Session" anchor="session">
     <t>The examples in this section illustrate a possible instant messaging and presence session.  The user is romeo@example.net, he has an available resource whose resource identifier is "orchard", and he has the following individuals in his roster:</t>
     <t><list style="symbols">
-      <t>juliet@example.com (subscription="both" and she has two available resources, one whose resource is "chamber" and another whose resource is "balcony")</t>
+      <t>juliet@example.com (subscription="both" and she has two available resources, one whose resource identifier is "chamber" and another whose resource identifier is "balcony")</t>
       <t>benvolio@example.org (subscription="to")</t>
       <t>mercutio@example.org (subscription="from")</t>
     </list></t>
     <t>First, the user completes the preconditions (stream establishment, TLS and SASL negotiation, and resource binding) described in <xref target='XMPP-CORE'/>; those packet flows are not reproduced here.</t>
     <t>Next, the user requests his roster:</t>
     <figure>
-      <preamble>Example 1: Client requests current roster from server:</preamble>
+      <preamble>Example 1: User requests current roster from server:</preamble>
       <artwork><![CDATA[
-<iq from='romeo@example.net/balcony' type='get' id='ex1'>
-  <query xmlns='jabber:iq:roster'/>
-</iq>
+UC: <iq from='romeo@example.net/balcony' type='get' id='ex1'>
+      <query xmlns='jabber:iq:roster'/>
+    </iq>
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 2: Client receives roster from server:</preamble>
+      <preamble>Example 2: User receives roster from server:</preamble>
       <artwork><![CDATA[
-<iq to='romeo@example.com/balcony' type='result' id='ex1'>
-  <query xmlns='jabber:iq:roster'>
-    <item jid='romeo@example.net'
-          name='Juliet'
-          subscription='both'>
-      <group>Friends</group>
-    </item>
-    <item jid='benvolio@example.org'
-          name='Benvolio'
-          subscription='to'/>
-    <item jid='mercutio@example.org'
-          name='Mercutio'
-          subscription='from'/>
-  </query>
-</iq>
+US: <iq to='romeo@example.com/balcony' type='result' id='ex1'>
+      <query xmlns='jabber:iq:roster'>
+        <item jid='romeo@example.net'
+              name='Juliet'
+              subscription='both'>
+          <group>Friends</group>
+        </item>
+        <item jid='benvolio@example.org'
+              name='Benvolio'
+              subscription='to'/>
+        <item jid='mercutio@example.org'
+              name='Mercutio'
+              subscription='from'/>
+      </query>
+    </iq>
       ]]></artwork>
     </figure>
     <t>Now the user sends initial presence.</t>
     <figure>
       <preamble>Example 3: User sends initial presence:</preamble>
       <artwork><![CDATA[
-<presence from='romeo@example.net/orchard'/>
+UC: <presence from='romeo@example.net/orchard'/>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 4: User's server sends presence probes to contacts with subscription="to" and subscription="both" on behalf of the user's available resource:</preamble>
       <artwork><![CDATA[
-<presence
-    type='probe'
-    from='romeo@example.net/orchard'
-    to='juliet@example.com'/>
+US: <presence
+        type='probe'
+        from='romeo@example.net/orchard'
+        to='juliet@example.com'/>
 
-<presence
-    type='probe'
-    from='romeo@example.net/orchard'
-    to='benvolio@example.org'/>
+US: <presence
+        type='probe'
+        from='romeo@example.net/orchard'
+        to='benvolio@example.org'/>
         ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 5: User's server sends initial presence to contacts with subscription="from" and subscription="both" on behalf of the user's available resource:</preamble>
       <artwork><![CDATA[
-<presence
-    from='romeo@example.net/orchard'
-    to='juliet@example.com'/>
+US: <presence
+        from='romeo@example.net/orchard'
+        to='juliet@example.com'/>
 
-<presence
-    from='romeo@example.net/orchard'
-    to='mercutio@example.org'/>
+US: <presence
+        from='romeo@example.net/orchard'
+        to='mercutio@example.org'/>
         ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 6: Contacts' servers reply to presence probe on behalf of all available resources:</preamble>
       <artwork><![CDATA[
-<presence
-    from='juliet@example.com/balcony'
-    to='romeo@example.net/orchard'
-    xml:lang='en'>
-  <show>away</show>
-  <status>be right back</status>
-  <priority>0</priority>
-</presence>
+CS: <presence
+        from='juliet@example.com/balcony'
+        to='romeo@example.net/orchard'
+        xml:lang='en'>
+      <show>away</show>
+      <status>be right back</status>
+      <priority>0</priority>
+    </presence>
 
-<presence
-    from='juliet@example.com/chamber'
-    to='romeo@example.net/orchard'>
-  <priority>1</priority>
-</presence>
+CS: <presence
+        from='juliet@example.com/chamber'
+        to='romeo@example.net/orchard'>
+      <priority>1</priority>
+    </presence>
 
-<presence
-    from='benvolio@example.org/pda'
-    to='romeo@example.net/orchard'
-    xml:lang='en'>
-  <show>dnd</show>
-  <status>gallivanting</status>
-</presence>
+CS: <presence
+        from='benvolio@example.org/pda'
+        to='romeo@example.net/orchard'
+        xml:lang='en'>
+      <show>dnd</show>
+      <status>gallivanting</status>
+    </presence>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 7: Contacts' servers deliver user's initial presence to all available resources or return unsubscribed to user:</preamble>
       <artwork><![CDATA[
-<presence
-    from='romeo@example.net/orchard'
-    to='juliet@example.com/chamber'/>
+CS: <presence
+        from='romeo@example.net/orchard'
+        to='juliet@example.com/chamber'/>
 
-<presence
-    from='romeo@example.net/orchard'
-    to='juliet@example.com/balcony'/>
+CS: <presence
+        from='romeo@example.net/orchard'
+        to='juliet@example.com/balcony'/>
 
-<presence
-    from='mercutio@example.org'
-    to='romeo@example.net'
-    type='unsubscribed'/>
+CS: <presence
+        from='mercutio@example.org'
+        to='romeo@example.net'
+        type='unsubscribed'/>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 8: User sends directed presence to another user not in his roster:</preamble>
       <artwork><![CDATA[
-<presence
-    from='romeo@example.net/orchard'
-    to='nurse@example.com'
-    xml:lang='en'>
-  <show>dnd</show>
-  <status>courting Juliet</status>
-  <priority>0</priority>
-</presence>
+UC: <presence
+        from='romeo@example.net/orchard'
+        to='nurse@example.com'
+        xml:lang='en'>
+      <show>dnd</show>
+      <status>courting Juliet</status>
+      <priority>0</priority>
+    </presence>
       ]]></artwork>
     </figure>
     <t>Now the user has a threaded conversation (chat session) with one of his contacts.</t>
     <figure>
       <preamble>Example 9: A threaded conversation</preamble>
       <artwork><![CDATA[
-<message
-    from='juliet@example.com/balcony'
-    to='romeo@example.net'
-    type='chat'
-    xml:lang='en'>
-  <body>Art thou not Romeo, and a Montague?</body>
-  <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
-</message>
+CC: <message
+        from='juliet@example.com/balcony'
+        to='romeo@example.net'
+        type='chat'
+        xml:lang='en'>
+      <body>Art thou not Romeo, and a Montague?</body>
+      <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
+    </message>
 
-<message
-    from='romeo@example.net/orchard'
-    to='juliet@example.com/balcony'
-    type='chat'
-    xml:lang='en'>
-  <body>Neither, fair saint, if either thee dislike.</body>
-  <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
-</message>
+UC: <message
+        from='romeo@example.net/orchard'
+        to='juliet@example.com/balcony'
+        type='chat'
+        xml:lang='en'>
+      <body>Neither, fair saint, if either thee dislike.</body>
+      <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
+    </message>
 
-<message
-    from='juliet@example.com/balcony'
-    to='romeo@example.net/orchard'
-    type='chat'
-    xml:lang='en'>
-  <body>How cam'st thou hither, tell me, and wherefore?</body>
-  <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
-</message>
+CC: <message
+        from='juliet@example.com/balcony'
+        to='romeo@example.net/orchard'
+        type='chat'
+        xml:lang='en'>
+      <body>How cam'st thou hither, tell me, and wherefore?</body>
+      <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
+    </message>
       ]]></artwork>
     </figure>
     <t>And so on.</t>
@@ -1543,24 +1551,24 @@
     <figure>
       <preamble>Example 10: User sends updated available presence information for broadcasting:</preamble>
       <artwork><![CDATA[
-<presence xml:lang='en'>
-  <show>away</show>
-  <status>I shall return!</status>
-  <priority>1</priority>
-</presence>
+UC: <presence xml:lang='en'>
+      <show>away</show>
+      <status>I shall return!</status>
+      <priority>1</priority>
+    </presence>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 11: User's server broadcasts updated presence information only to one contact:</preamble>
       <artwork><![CDATA[
-<presence
-    from='romeo@example.net/orchard'
-    to='juliet@example.com'
-    xml:lang='en'>
-  <show>away</show>
-  <status>I shall return!</status>
-  <priority>1</priority>
-</presence>
+US: <presence
+        from='romeo@example.net/orchard'
+        to='juliet@example.com'
+        xml:lang='en'>
+      <show>away</show>
+      <status>I shall return!</status>
+      <priority>1</priority>
+    </presence>
       ]]></artwork>
     </figure>
     <figure>
@@ -1568,112 +1576,150 @@
       <artwork><![CDATA[
 [to "balcony" resource...]
 
-<presence
-    from='romeo@example.net/orchard'
-    to='juliet@example.com'
-    xml:lang='en'>
-  <show>away</show>
-  <status>I shall return!</status>
-  <priority>1</priority>
-</presence>
+CS: <presence
+        from='romeo@example.net/orchard'
+        to='juliet@example.com'
+        xml:lang='en'>
+      <show>away</show>
+      <status>I shall return!</status>
+      <priority>1</priority>
+    </presence>
 
 [to "chamber" resource...]
 
-<presence
-    from='romeo@example.net/orchard'
-    to='juliet@example.com'
-    xml:lang='en'>
-  <show>away</show>
-  <status>I shall return!</status>
-  <priority>1</priority>
-</presence>
+CS: <presence
+        from='romeo@example.net/orchard'
+        to='juliet@example.com'
+        xml:lang='en'>
+      <show>away</show>
+      <status>I shall return!</status>
+      <priority>1</priority>
+    </presence>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 13: One of the contact's resources broadcasts final presence:</preamble>
       <artwork><![CDATA[
-<presence from='juliet@example.com/chamber' type='unavailable'/>
+CC: <presence from='juliet@example.com/chamber' type='unavailable'/>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 14: Contact's server sends unavailable presence information to user:</preamble>
       <artwork><![CDATA[
-<presence
-    type='unavailable'
-    from='juliet@example.com/chamber'
-    to='romeo@example.net'/>
+CS: <presence
+        type='unavailable'
+        from='juliet@example.com/chamber'
+        to='romeo@example.net'/>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 15: User sends unavailable presence:</preamble>
       <artwork><![CDATA[
-<presence from='romeo@example.net/orchard'
-          type='unavailable'
-          xml:lang='en'>
-  <status>gone home</status>
-</presence>
+UC: <presence from='romeo@example.net/orchard'
+              type='unavailable'
+              xml:lang='en'>
+      <status>gone home</status>
+    </presence>
       ]]></artwork>
     </figure>
     <figure>
       <preamble>Example 16: User's server broadcasts unavailable presence information to contact as well as to the person to whom the user sent directed presence:</preamble>
       <artwork><![CDATA[
-<presence
-    type='unavailable'
-    from='romeo@example.net/orchard'
-    to='juliet@example.com'
-    xml:lang='en'>
-  <status>gone home</status>
-</presence>
+US: <presence
+        type='unavailable'
+        from='romeo@example.net/orchard'
+        to='juliet@example.com'
+        xml:lang='en'>
+      <status>gone home</status>
+    </presence>
 
-<presence
-    type='unavailable'
-    from='romeo@example.net/orchard'
-    to='nurse@example.com'
-    xml:lang='en'>
-  <status>gone home</status>
-</presence>
+US: <presence
+        type='unavailable'
+        from='romeo@example.net/orchard'
+        to='nurse@example.com'
+        xml:lang='en'>
+      <status>gone home</status>
+    </presence>
       ]]></artwork>
     </figure>
     <t>Now the user closes his stream:</t>
     <figure>
       <artwork><![CDATA[
-</stream:stream>
+UC: </stream:stream>
       ]]></artwork>
     </figure>
     <t>And the user's server closes its stream as well:</t>
     <figure>
       <artwork><![CDATA[
-</stream:stream>
+US: </stream:stream>
       ]]></artwork>
     </figure>
     <t>THE END</t>
   </section>
 
   <section title="Server Rules for Processing XML Stanzas" anchor="rules">
-    <t>Basic routing and delivery rules for servers are defined in <xref target="XMPP-CORE"/>.  This section defines additional rules for XMPP instant messaging and presence servers.</t>
-    <section title="Inbound Stanzas" anchor="rules-inbound">
-      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches a hostname of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@example.com&gt; or &lt;user@example.com/resource&gt;, the server MUST follow the rules defined in the following list:</t>
-      <t><list style="numbers">
-        <t>If the JID is of the form &lt;user@domain/resource&gt; and an available resource exactly matches the full JID, the recipient's server MUST deliver the stanza to that resource.</t>
-        <t>Else if the JID is of the form &lt;user@domain&gt; or &lt;user@domain/resource&gt; and the associated user account does not exist, the recipient's server (a) SHOULD silently ignore the stanza (i.e., not return an error or presence unsubscribed) if it is a presence stanza, (b) MUST return a &lt;service-unavailable/&gt; stanza error to the sender if it is an IQ stanza, and (c) SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender if it is a message stanza.</t>
-        <t>Else if the JID is of the form &lt;user@domain/resource&gt; and no connected or available resource exactly matches the full JID, the recipient's server (a) SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error) if it is a presence stanza, (b) MUST return a &lt;service-unavailable/&gt; stanza error to the sender if it is an IQ stanza, and (c) SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; if it is a message stanza.</t>
-        <t>Else if the JID is of the form &lt;user@domain&gt; and there is at least one available resource available for the user, the recipient's server MUST follow these rules:
-        <list style="numbers">
-          <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.  For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.  However, the server MUST NOT deliver the stanza to an available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources (defined in the text that follows).  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          <t>For presence stanzas other than those of type "probe", the server MUST deliver the stanza to all available resources; for presence probes, the server SHOULD reply based on the rules defined under <xref target="presence-probe">Presence Probes</xref>.  In addition, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
-        </list></t>
-        <t>Else if the JID is of the form &lt;user@domain&gt; and there are no available resources associated with the user, how the stanza shall be handled depends on the stanza type:
-        <list style="numbers">
-          <t>For presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed", the server MUST maintain a record of the stanza and deliver the stanza at least once (i.e., when the user next creates an interested resource); in addition, the server MUST continue to deliver presence stanzas of type "subscribe" until the user either approves or denies the subscription request (see also <xref target="sub">Managing Presence Subscriptions</xref>).</t>
-          <t>For all other presence stanzas, the server SHOULD silently ignore the stanza by not storing it for later delivery or replying to it on behalf of the user.</t>
-          <t>For message stanzas, the server MAY choose to store the stanza on behalf of the user and deliver it when the user next becomes available, or forward the message to the user via some other means (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled, the server MUST return to the sender a &lt;service-unavailable/&gt; stanza error.  (Note: Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.)</t>
-          <t>For IQ stanzas, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
-        </list></t>
-      </list></t>
+    <t>Basic routing and delivery rules for servers are defined in <xref target="XMPP-CORE"/>.  This section defines supplementary rules for XMPP instant messaging and presence servers; in the absence of a supplementary rule defined below (e.g., for stanzas without a 'to' address), the rule defined in <xref target='XMPP-CORE'/> shall apply.</t>
+    <section title="No Such User" anchor="rules-nosuchuser">
+      <t>If the user account does not exist, how the stanza shall be processed depends on the stanza type.</t>
+      <t>
+        <list style='symbols'>
+          <t>For a message stanza, the server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+          <t>For a presence stanza, the server SHOULD silently ignore the stanza (i.e., not return an error or presence unsubscribed).</t>
+          <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+        </list>
+      </t>
     </section>
-    <section title="Outbound Stanzas" anchor="rules-outbound">
-      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza matches a hostname of the server itself, the server MUST deliver the stanza to a local entity according the rules for <xref target="rules-inbound">Inbound Stanzas</xref>.</t>
+    <section title="Full JID at Local Domain" anchor="rules-fulljid">
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured hostnames of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain/resource&gt;, the server MUST adhere to the following rules.</t>
+      <section title="Available Resource Matches" anchor="rules-fulljid-availmatch">
+        <t>If an available resource exactly matches the full JID, the recipient's server MUST deliver the stanza to that resource.</t>
+      </section>
+      <section title="No Available Resource Matches" anchor="rules-fulljid-availnomatch">
+        <t>If no connected or available resource exactly matches the full JID, how the stanza shall be processed depends on the stanza type.</t>
+        <t>
+          <list style='symbols'>
+            <t>For a message, the server SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; as described in the next section.</t>
+            <t>For a presence stanza, the server SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error).</t>
+            <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+          </list>
+        </t>
+      </section>
+    </section>
+    <section title="Bare JID at Local Domain" anchor="rules-barejid">
+      <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured hostnames of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain&gt;, the server MUST adhere to the following rules.</t>
+      <section title="Available Resources" anchor="rules-barejid-availyes">
+        <t>If there is at least one available resource, how the stanza shall be processed depends on the stanza type.</t>
+        <section title="Message" anchor="rules-barejid-availyes-message">
+          <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.</t>
+          <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.</t>
+          <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources as descrubed under <xref target='rules-barejid-availno'/>.</t>
+          <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+        </section>
+        <section title="Presence" anchor="rules-barejid-availyes-pres">
+          <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
+          <t>For a presence stanza with no type or of type "unavailable", the server MUST deliver the stanza to all available resources.</t>
+          <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed" the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+          <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+        </section>
+        <section title="IQ" anchor="rules-barejid-availyes-iq">
+          <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to any of the user's available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+        </section>
+      </section>
+      <section title="No Available Resources" anchor="rules-barejid-availno">
+        <t>If there are no available resources associated with the user, how the stanza shall be processed depends on the stanza type.</t>
+        <section title="Message" anchor="rules-barejid-availno-message">
+            <t>For a message stanza, the server MAY choose to store the stanza on behalf of the user and deliver it when the user next becomes available, or forward the message to the user via some other means (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled, the server MUST return to the sender a &lt;service-unavailable/&gt; stanza error.  (Note: Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.)</t>
+        </section>
+        <section title="Presence" anchor="rules-barejid-availno-pres">
+          <t>For a presence stanza with no type or of type "unavailable" or "probe", the server SHOULD silently ignore the stanza by not storing it for later delivery or replying to it on behalf of the user.</t>
+          <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+        </section>
+        <section title="IQ" anchor="rules-barejid-availno-iq">
+          <t>For an IQ, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+        </section>
+      </section>
+    </section>
+    <section title="Foreign Domain" anchor="rules-foreign">
       <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a hostname of the server itself, the server MUST attempt to route the stanza to the foreign domain.  If there exists an active stream between the two peers, the server shall route the stanza over that stream for processing by the peer server.  If not, the server MUST do the following.</t>
       <t>First, resolve the hostname of the foreign domain (or used a cached resolution of the foreign domain to an IP address).  The recommended order of attempted resolutions is as follows:</t>
       <t><list style='numbers'>
@@ -1705,9 +1751,9 @@
       <t><list style='symbols'>
         <t>Generation and processing of the IM-specific semantics of XML stanzas as defined by the XML schemas, including the 'type' attribute of message and presence stanzas as well as their child elements</t>
         <t>All client-related instant messaging syntax and semantics defined in this document, including presence subscriptions and roster management</t>
-        <t>End-to-end object encryption as defined in <xref target="XMPP-E2E"/></t>
+        <t>End-to-end object signing and encryption as defined in <xref target="XMPP-E2E"/></t>
       </list></t>
-      <t>A client MUST also handle addresses that are encoded as "im:" URIs as specified in <xref target="CPIM"/>, and MAY do so by removing the "im:" scheme and entrusting address resolution to the server as specified under <xref target="rules-outbound">Outbound Stanzas</xref>.</t>
+      <t>A client MUST also handle addresses that are encoded as "im:" URIs as specified in <xref target="CPIM"/>, and MAY do so by removing the "im:" scheme and entrusting address resolution to the server as specified under <xref target="rules-foreign"/>.</t>
     </section>
   </section>
 
@@ -1728,13 +1774,14 @@
   </section>
 
   <section title="IANA Considerations" anchor="ref">
+    <t>The following sections update the registrations provided in <xref target='RFC3921'/>.</t>
     <t>For a number of related IANA considerations, refer to the relevant section of <xref target="XMPP-CORE"/>.</t>
     <section title="Instant Messaging SRV Protocol Label Registration" anchor="iana-reg-im">
       <t><xref target="IMP-SRV">Address Resolution for Instant Messaging and Presence</xref> defines an Instant Messaging SRV Protocol Label registry for protocols that can provide services that conform to the "_im" SRV Service label.  Because XMPP is one such protocol, the IANA registers the "_xmpp" protocol label in the appropriate registry, as follows:</t>
       <t><list style='hanging'>
         <t hangText='Protocol label:'>_xmpp</t>
-        <t hangText='Specification:'>RFC 3921</t>
-        <t hangText='Description:'>Instant messaging protocol label for the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3921.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>Instant messaging protocol label for the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
       </list></t>
     </section>
@@ -1742,8 +1789,8 @@
       <t><xref target="IMP-SRV">Address Resolution for Instant Messaging and Presence</xref> defines a Presence SRV Protocol Label registry for protocols that can provide services that conform to the "_pres" SRV Service label.  Because XMPP is one such protocol, the IANA registers the "_xmpp" protocol label in the appropriate registry, as follows:</t>
       <t><list style='hanging'>
         <t hangText='Protocol label:'>_xmpp</t>
-        <t hangText='Specification:'>RFC 3921</t>
-        <t hangText='Description:'>Presence protocol label for the Extensible Messaging and Presence Protocol (XMPP) as defined by RFC 3921.</t>
+        <t hangText='Specification:'>&rfc.number;</t>
+        <t hangText='Description:'>Presence protocol label for the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
         <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmppwg@jabber.org&gt;</t>
       </list></t>
     </section>
@@ -2004,12 +2051,12 @@
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='April' day='17' year='2007' />
+<date month='July' day='6' year='2007' />
 <abstract><t>This memo defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two network-aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of presence and availability information, and request-response interactions between any two XMPP entities. This document also specifies the format for XMPP addresses, which are fully internationalizable. This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3920bis-02' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3920bis-03' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3920bis-02.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3920bis-03.txt' />
 </reference>
 
 <reference anchor="XMPP-E2E">
@@ -2089,6 +2136,18 @@
 <t>&lt;p>This document is an update describing the architecture of the current IRC protocol and the role of its different components. Other documents describe in detail the protocol used between the various components defined here. This memo provides information for the Internet community. &lt;/p></t></abstract></front>
 <seriesInfo name='RFC' value='2810' />
 <format type='TXT' octets='19087' target='ftp://ftp.isi.edu/in-notes/rfc2810.txt' />
+</reference>
+
+<reference anchor="RFC3921">
+  <front>
+    <title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
+    <author initials='P.' surname='Saint-Andre' fullname='P.  Saint-Andre'>
+      <organization>XMPP Standards Foundation</organization>
+    </author>
+    <date year='2004' month='October' />
+  </front>
+  <seriesInfo name='RFC' value='3921' />
+  <format type='TXT' octets='217527' target='ftp://ftp.isi.edu/in-notes/rfc3921.txt' />
 </reference>
 
 <reference anchor="SASL">
@@ -2875,7 +2934,7 @@
         </xs:simpleType>
       </xs:attribute>
       <xs:attribute name='jid' type='xs:string' use='required'/>
-      <xs:attribute name='name' type='zeroType' use='optional'/>
+      <xs:attribute name='name' type='xs:string' use='optional'/>
       <xs:attribute name='subscription' use='optional'>
         <xs:simpleType>
           <xs:restriction base='xs:NCName'>
@@ -2895,14 +2954,6 @@
   <xs:simpleType name='nonZeroType'>
     <xs:restriction base='xs:string'>
       <xs:minLength value='1'/>
-      <xs:maxLength value='1023'/>
-    </xs:restriction>
-  </xs:simpleType>
-
-  <xs:simpleType name='zeroType'>
-    <xs:restriction base='xs:string'>
-      <xs:minLength value='0'/>
-      <xs:maxLength value='1023'/>
     </xs:restriction>
   </xs:simpleType>
 
@@ -2921,7 +2972,7 @@
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, error handling related to presence probes and presence notifications was modified to return presence stanzas of type "unsubscribe" or "unsubscribed" rather than error stanzas.</t>
         </list>
       </t>
-      <t>In addition, numerous changes of an editorial nature were made in order to more clearly specify and explain the protocols.</t>
+      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
     </section>
 
     <section title="Copying Conditions" anchor="copying">
