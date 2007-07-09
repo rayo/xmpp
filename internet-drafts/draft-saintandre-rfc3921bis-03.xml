@@ -23,7 +23,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="July" day="6"/>
+    <date year="2007" month="July" day="9"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -110,7 +110,7 @@
           <t>An IQ stanza of type "get" sent from client to server and containing a &lt;query/&gt; element is defined as a ROSTER GET.  The &lt;query/&gt; element in a roster get MUST be empty (i.e., contain no child elements).</t>
           <t>An IQ stanza of type "set" sent from client to server and containing a &lt;query/&gt; element is defined as a ROSTER SET.  The &lt;query/&gt; element in a roster set MUST contain one and only one &lt;item/&gt; element.</t>
           <t>An IQ stanza of type "set" sent from server to client and containing a &lt;query/&gt; element is defined as a ROSTER PUSH.  The &lt;query/&gt; element in a roster get MUST contain one and only one &lt;item/&gt; element.</t>
-          <t>An IQ stanza of type "result" sent from server to client and containing a &lt;query/&gt; element is defined as a ROSTER RESULT.  The &lt;query/&gt; element in a roster result MUST contain at least one &lt;item/&gt; element and MAY contain multiple &lt;item/&gt; elements.</t>
+          <t>An IQ stanza of type "result" sent from server to client and containing a &lt;query/&gt; element is defined as a ROSTER RESULT.  The &lt;query/&gt; element in a roster result contains one &lt;item/&gt; element for each roster item.</t>
         </list>
       </t>
       <t>The "key" or unique identifier for each roster item is a Jabber Identifier or JID, encapsulated in the 'jid' attribute of the &lt;item/&gt; element, which is REQUIRED.  Note: When the item added represents another IM user, the value of the 'jid' attribute MUST be a bare JID (&lt;contact@domain&gt;) rather a full JID (&lt;contact@domain/resource&gt;).</t>
@@ -124,7 +124,7 @@
         </list>
       </t>
       <t>Each &lt;item/&gt; element MAY possess a 'name' attribute, which specifies the "handle" to be associated with the JID, as determined by the user (not the contact).  The value of the 'name' attribute is opaque to the server but may have meaning to a human user.</t>
-      <t>Each &lt;item/&gt; element MAY contain one or more &lt;group/&gt; child elements, for use in collecting roster items into various categories.  The XML character data of the &lt;group/&gt; element is opaque to the server but may have meaning to a human user.</t>
+      <t>Each &lt;item/&gt; element MAY contain one or more &lt;group/&gt; child elements, for use in collecting roster items into various categories.  The XML character data of the &lt;group/&gt; element has no meaning to the server but may have meaning to a human user.</t>
     </section>
 
     <section title="Retrieving the Roster on Login" anchor="roster-login">
@@ -218,6 +218,7 @@ C: <iq from='juliet@example.com/chamber'
       id='a78b4q6ha464'/>
           ]]></artwork>
         </figure>
+        <t>Note: There is no error case for client replies to roster pushes, and if the server receives an IQ of type "error" in response to a roster push then it SHOULD ignore the error.</t>
       </section>
       <section title="Error Cases" anchor="roster-add-errors">
         <t>If the server cannot successfully process the roster set, it MUST return an error.  The following error cases are defined (naturally, other stanza errors may occur, e.g.,  &lt;internal-server-error/&gt;).</t>
@@ -225,14 +226,14 @@ C: <iq from='juliet@example.com/chamber'
         <t>
           <list style='numbers'>
             <t>The &lt;query/&gt; element MUST NOT contain more than one &lt;item/&gt; child element.</t>
-            <t>The &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, but the XML character data of each &lt;group/&gt; element MUST specify a distinct group (where duplicates are to be determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>)</t>
+            <t>The &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, but the XML character data of each &lt;group/&gt; element SHOULD specify a distinct group (where duplicates are to be determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>)</t>
           </list>
         </t>
         <t>The server SHOULD return a &lt;not-allowed/&gt; error to the client if the roster set violates any of the following rules:</t>
         <t>
           <list style='numbers'>
             <t>The &lt;item/&gt; element MAY contain a 'name' attribute, but a server MAY limit the length of the 'name' attribute to a configurable limit.</t>
-            <t>The XML character data of any given &lt;group/&gt; element MUST NOT be of zero length and a server MAY limit the length of the character data to a configurable limit.</t>
+            <t>The XML character data of any given &lt;group/&gt; element SHOULD NOT be of zero length and a server MAY limit the length of the character data to a configurable limit.</t>
           </list>
         </t>
         <figure>
@@ -608,7 +609,7 @@ CS: <iq to='juliet@example.com/chamber'
         type='set'
         id='a78b4q6ha464'>
       <query xmlns='jabber:iq:roster'>
-        <item jid='romeo@example.com'
+        <item jid='romeo@example.net'
               subscription='from'/>
       </query>
     </iq>
@@ -712,7 +713,7 @@ CS: <iq to='juliet@example.com/chamber'
         type='set'
         id='a78b4q6ha466'>
       <query xmlns='jabber:iq:roster'>
-        <item jid='romeo@example.com'
+        <item jid='romeo@example.net'
               subscription='none'/>
       </query>
     </iq>
@@ -765,7 +766,7 @@ UC: <presence to='juliet@example.com' type='unsubscribe'/>
           <artwork><![CDATA[
 US: <presence from='romeo@example.net'
               to='juliet@example.com' 
-              type='unsubscribed'/>
+              type='unsubscribe'/>
           ]]></artwork>
         </figure>
         <t>If the contact is hosted on the same server, the server MUST adhere to the rules specified in the next section when handling the unsubscribe.</t>
@@ -812,7 +813,7 @@ CS: <iq to='juliet@example.com/chamber'
         type='set'
         id='a78b4q6ha468'>
       <query xmlns='jabber:iq:roster'>
-        <item jid='romeo@example.com'
+        <item jid='romeo@example.net'
               subscription='none'/>
       </query>
     </iq>
@@ -910,7 +911,7 @@ US: <presence from='juliet@example.com/balcony'
 
       <section title="Server Generation of Outbound Presence Probe" anchor="presence-probe-outbound">
         <t>When a server needs to discover the availability of a user's contact, it SHOULD send a presence probe from the full JID (e.g., &lt;juliet@example.com/balcony&gt;) of the user to the bare JID (e.g., &lt;romeo@example.net&gt;) of the contact.  The server SHOULD send a probe to a contact only if the contact is in the user's roster with the 'subscription' attribute set to a value of "to" or "both" (i.e., if the user is subscribed to the contact's presence).</t>
-        <t>Typically, the user's server sends a presence probe whenever the user starts a new presence session by sending initial presence; however, the server may already possess presence information about the user's contacts at that point (e.g., because the user has another available resource or because the user briefly logged off and on before the new presence session began.)</t>
+        <t>The user's server SHOULD send a presence probe whenever the user starts a new presence session by sending initial presence; however, the server MAY choose not to send the probe at that point if it has what it deems to be reliable and up-to-date presence information about the user's contacts (e.g., because the user has another available resource or because the user briefly logged off and on before the new presence session began).</t>
         <figure>
           <artwork><![CDATA[
 US: <presence from='juliet@example.com/balcony' 
@@ -1407,9 +1408,9 @@ UC: <iq from='romeo@example.net/balcony' type='get' id='ex1'>
     <figure>
       <preamble>Example 2: User receives roster from server:</preamble>
       <artwork><![CDATA[
-US: <iq to='romeo@example.com/balcony' type='result' id='ex1'>
+US: <iq to='romeo@example.net/balcony' type='result' id='ex1'>
       <query xmlns='jabber:iq:roster'>
-        <item jid='romeo@example.net'
+        <item jid='romeo@example.com'
               name='Juliet'
               subscription='both'>
           <group>Friends</group>
@@ -2421,7 +2422,7 @@ US: </stream:stream>
         </figure>
       </section>
       <section title="Unsubscribe" anchor="substates-in-unsubscribe">
-        <t>When the user's server receives a presence stanza of type "unsubscribe" for the user from the contact, if the stanza results in a subscription state change from the user's perspective then the user's server SHOULD auto-reply by sending a presence stanza of type "unsubscribed" to the contact on behalf of the user, MUST deliver the "unsubscribe" stanza to the user, and MUST change the state.  If no subscription state change results, the user's server SHOULD NOT deliver the stanza and MUST NOT change the state.  These rules are summarized in the following table.</t>
+        <t>When the user's server receives a presence stanza of type "unsubscribe" for the user from the contact, if the stanza results in a subscription state change from the user's perspective then the user's server MUST change the state and SHOULD auto-reply by sending a presence stanza of type "unsubscribed" to the contact on behalf of the user.  Otherwise the user's server MUST NOT change the state and SHOULD NOT deliver the stanza.  These rules are summarized in the following table.</t>
         <figure>
           <preamble>Table 6: Processing of inbound "unsubscribe" stanzas</preamble>
           <artwork><![CDATA[
@@ -2443,7 +2444,7 @@ US: </stream:stream>
         </figure>
       </section>
       <section title="Subscribed" anchor="substates-in-subscribed">
-        <t>When the user's server receives a presence stanza of type "subscribed" for the user from the contact, it MUST NOT deliver the stanza to the user and MUST NOT change the subscription state if there is no pending outbound request for access to the contact's presence information.  If there is a pending outbound request for access to the contact's presence information and the inbound presence stanza of type "subscribed" results in a subscription state change, the user's server MUST deliver the stanza to the user and MUST change the subscription state.  If the user already has access to the contact's presence information, the inbound presence stanza of type "subscribed" does not result in a subscription state change; therefore the user's server SHOULD NOT deliver the stanza to the user and MUST NOT change the subscription state.  These rules are summarized in the following table.</t>
+        <t>When the user's server receives a presence stanza of type "subscribed" for the user from the contact, if there is no pending outbound request for access to the contact's presence information, then it MUST NOT change the subscription state and SHOULD NOT deliver the stanza to the user.  If there is a pending outbound request for access to the contact's presence information and the inbound presence stanza of type "subscribed" results in a subscription state change, then the user's server MUST change the subscription state but SHOULD NOT deliver the stanza to the user.  If the user already has access to the contact's presence information, the inbound presence stanza of type "subscribed" does not result in a subscription state change; therefore the user's server MUST NOT change the subscription state and SHOULD NOT deliver the stanza to the user.  These rules are summarized in the following table.</t>
         <figure>
           <preamble>Table 7: Processing of inbound "subscribed" stanzas</preamble>
           <artwork><![CDATA[
@@ -2464,7 +2465,7 @@ US: </stream:stream>
         </figure>
       </section>
       <section title="Unsubscribed" anchor="substates-in-unsubscribed">
-        <t>When the user's server receives a presence stanza of type "unsubscribed" for the user from the contact, it MUST deliver the stanza to the user and MUST change the subscription state if there is a pending outbound request for access to the contact's presence information or if the user currently has access to the contact's presence information.  Otherwise, the user's server SHOULD NOT deliver the stanza and MUST NOT change the subscription state.  These rules are summarized in the following table.</t>
+        <t>When the user's server receives a presence stanza of type "unsubscribed" for the user from the contact, if there is a pending outbound request for access to the contact's presence information or if the user currently has access to the contact's presence information, then the user's server MUST change the subscription state but SHOULD NOT deliver the stanza to the user.  Otherwise, the user's server MUST NOT change the subscription state and SHOULD NOT deliver the stanza.  These rules are summarized in the following table.</t>
         <figure>
           <preamble>Table 8: Processing of inbound "unsubscribed" stanzas</preamble>
           <artwork><![CDATA[
@@ -2949,13 +2950,7 @@ US: </stream:stream>
     </xs:complexType>
   </xs:element>
 
-  <xs:element name='group' type='nonZeroType'/>
-
-  <xs:simpleType name='nonZeroType'>
-    <xs:restriction base='xs:string'>
-      <xs:minLength value='1'/>
-    </xs:restriction>
-  </xs:simpleType>
+  <xs:element name='group' type='xs:string'/>
 
 </xs:schema>
           ]]></artwork>
