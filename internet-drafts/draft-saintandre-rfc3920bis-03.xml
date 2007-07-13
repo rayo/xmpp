@@ -1286,44 +1286,155 @@ S: <stream:error>
     </section>
   </section>
 
-  <section title="TLS Negotiation" anchor="tls">
+  <section title="STARTTLS Negotiation" anchor="tls">
     <section title="Overview" anchor="tls-overview">
-      <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the Transport Layer Security protocol (see <xref target="TLS"/>), along with a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
-      <t>Support for TLS is REQUIRED in XMPP client and server implementations.  An administrator of a given deployment may require the use of TLS for client-to-server communication, server-to-server communication, or both.  Clients SHOULD use TLS to secure the streams prior to attempting the completion of <xref target='sasl'>SASL negotiation</xref>, and servers SHOULD use TLS between two domains for the purpose of securing server-to-server communication.</t>
-      <t>Examples of TLS negotiation are provided under <xref target="examples"/>.</t>
+      <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the Transport Layer Security protocol (see <xref target="TLS"/>), specifically a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The XML namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
+      <t>Support for STARTTLS is REQUIRED in XMPP client and server implementations.  An administrator of a given deployment may require the use of TLS for client-to-server communication, server-to-server communication, or both.  A deployed client should use TLS to secure its stream with a server prior to attempting the completion of <xref target='sasl'>SASL negotiation</xref>, and deployed servers should use TLS between two domains for the purpose of securing server-to-server communication.</t>
     </section>
-    <section title="Rules" anchor="tls-rules">
-      <t>The following rules apply to TLS negotiation in XMPP:</t>
-      <t><list style='numbers'>
-        <t>If the initiating entity is capable of TLS negotiation, then it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
-        <t>If the receiving entity is capable of TLS negotiation, it MUST respond to the initial stream header with a response stream header and then send stream features to the initiating entity; the stream features SHOULD include a &lt;starttls/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to indicate that the receiving entity supports TLS negotiation.</t>
-        <t>If the receiving entity requires the use of TLS, it SHOULD include an empty &lt;required/&gt; element as a child of the &lt;starttls/&gt; element.</t>
-        <t>If the initiating entity chooses to use TLS, TLS negotiation MUST be completed before proceeding to SASL negotiation; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
-        <t>During TLS negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the TLS examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
-        <t>The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
-        <t>The initiating entity MUST validate the certificate presented by the receiving entity; see <xref target="security-validation"/> regarding certificate validation procedures.</t>
-        <t>Certificates MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".</t>
-        <t>If the TLS negotiation results in failure, the receiving entity MUST terminate both the XML stream and the underlying TCP connection.</t>
-        <t>If the TLS negotiation is successful, the receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS took effect.</t>
-        <t>If the TLS negotiation is successful, the initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS took effect.</t>
-        <t>If the TLS negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity.</t>
-        <t>After the receiving entity receives the new stream header from the initiating entity, it MUST respond with a stream header and offer stream features, which MUST NOT include the STARTTLS feature but which SHOULD include the SASL stream feature.</t>
-        <t>If the initiating entity receives the SASL stream feature from the receiving entity, it MUST then continue with SASL negotiation.</t>
-        <t>See <xref target="security-mandatory"/> regarding mechanisms that MUST be supported.</t>
-      </list></t>
-    </section>
-    <section title="Narrative" anchor="tls-narr">
-      <t>When an initiating entity secures a stream with a receiving entity using TLS, the steps involved are:</t>
-      <t><list style='numbers'>
-        <t>The initiating entity opens a TCP connection and initiates the stream by sending the opening XML stream header to the receiving entity (including the 'version' attribute set to a value of at least "1.0").</t>
-        <t>The receiving entity responds by sending an XML stream header to the initiating entity (including the 'version' attribute set to a value of at least "1.0") over the TCP connection opened by the initiating entity (for client-to-server streams) or over a new TCP connection (for server-to-server streams).</t>
-        <t>The receiving entity offers the STARTTLS extension to the initiating entity by including it with the list of supported stream features (if successful TLS negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;starttls/&gt; element).</t>
-        <t>The initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a TLS negotiation to secure the stream.</t>
-        <t>The receiving entity MUST reply with either a &lt;proceed/&gt; element or a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.  If the failure case occurs, the receiving entity MUST terminate both the XML stream and the underlying TCP connection (failure cases include when the initiating entity sends a malformed STARTTLS command, when the receiving entity does not offer TLS negotiation either temporarily or permanently, and when the receiving entity cannot complete TLS negotiation because of an internal error).  If the proceed case occurs, the entities MUST attempt to complete the TLS negotiation over the TCP connection and MUST NOT send any further XML data until the TLS negotiation is complete.</t>
-        <t>The initiating entity and receiving entity attempt to complete a TLS negotiation in accordance with <xref target="TLS"/>.</t>
-        <t>If the TLS negotiation is unsuccessful, the receiving entity MUST terminate the TCP connection.  If the TLS negotiation is successful, the initiating entity MUST initiate a new stream by sending an opening XML stream header to the receiving entity (it is not necessary to send a closing &lt;/stream&gt; tag first, since the receiving entity and initiating entity MUST consider the original stream to be closed upon successful TLS negotiation).</t>
-        <t>Upon receiving the new stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity along with the available features (but not including the STARTTLS feature).</t>
-      </list></t>
+    <section title="Process" anchor="tls-process">
+      <t>The process for STARTTLS negotiation is as follows.</t>
+      <section title="Exchange of Stream Headers and Stream Features" anchor="tls-process-stream">
+        <t>The initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity; if the initiating entity is capable of STARTTLS negotiation, then it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header it sends to the receiving entity.</t>
+        <figure>
+          <preamble>Initial stream header</preamble>
+          <artwork><![CDATA[
+I: <stream:stream
+     from='juliet@example.com'
+     to='example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'>
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity sends a response stream header to the initiating entity over the TCP connection opened by the initiating entity (for client-to-server streams) or over a new TCP connection (for server-to-server streams); if the receiving entity is capable of STARTTLS negotiation, it MUST respond to the initial stream header with a response stream header.</t>
+        <figure>
+          <preamble>Response stream header</preamble>
+          <artwork><![CDATA[
+R: <stream:stream
+     from='example.com'
+     id='t7AMCin9zjMNwQKDnplntZPIDEI='
+     to='juliet@example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity then MUST send stream features to the initiating entity, which SHOULD include a &lt;starttls/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to indicate that the receiving entity supports STARTTLS negotiation.</t>
+        <figure>
+          <preamble>Stream features</preamble>
+          <artwork><![CDATA[
+R: <stream:features>
+     <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+   </stream:features>
+          ]]></artwork>
+        </figure>
+        <t>If the receiving entity requires the use of STARTTLS, it SHOULD include an empty &lt;required/&gt; element as a child of the &lt;starttls/&gt; element.</t>
+        <figure>
+          <preamble>Stream features with STARTTLS required</preamble>
+          <artwork><![CDATA[
+R: <stream:features>
+     <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
+       <required/>
+     </starttls>
+   </stream:features>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Initiation of STARTTLS Negotiation" anchor="tls-process-initiate">
+        <t>The initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a STARTTLS negotiation to secure the stream.</t>
+        <t>Note: If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
+        <t>Note: During STARTTLS negotiation, the entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the STARTTLS examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
+        <figure>
+          <preamble>STARTTLS command</preamble>
+          <artwork><![CDATA[
+I: <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity MUST reply with either a &lt;proceed/&gt; element (proceed case) or a &lt;failure/&gt; element (failure case) qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
+        <t>If the failure case occurs, the receiving entity MUST return a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace, terminate the XML stream, and terminate the underlying TCP connection.  Causes for the failure case include but are not limited to:</t>
+        <t>
+          <list style='numbers'>
+            <t>The initiating entity has sent a malformed STARTTLS command.</t>
+            <t>The receiving entity does not offer STARTTLS negotiation either temporarily or permanently.</t>
+            <t>The receiving entity cannot complete STARTTLS negotiation because of an internal error.</t>
+          </list>
+        </t>
+        <figure>
+          <preamble>STARTTLS negotiation failure</preamble>
+          <artwork><![CDATA[
+S: <failure xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+
+S: </stream:stream>
+          ]]></artwork>
+        </figure>
+        <t>If the proceed case occurs, the receiving entity MUST return a &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
+        <figure>
+          <preamble>STARTTLS negotiation may proceed</preamble>
+          <artwork><![CDATA[
+S: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+          ]]></artwork>
+        </figure>
+        <t>Note: The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
+      </section>
+      <section title="TLS Negotiation" anchor="tls-process-neg">
+        <t>The entities MUST now attempt to complete TLS negotiation over the TCP connection by following the process defined in <xref target='TLS'/>.</t>
+        <t>Note: The entities MUST NOT send any further XML data until the TLS negotiation has either failed or succeeded.</t>
+        <t>If the receiving entity presents a certificate during TLS negotiation, the initiating entity MUST validate the certificate in order to determine if the TLS negotiation shall succeed (see <xref target="security-validation"/> regarding certificate validation procedures).  Specifically, the certificate MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  See <xref target='tls-rep'/> for information about the representation of XMPP addresses in certificates.</t>
+        <t>Note: See <xref target="security-mandatory"/> regarding ciphers that MUST be supported for TLS.</t>
+      </section>
+      <section title="TLS Negotiation Failure" anchor="tls-process-neg-failure">
+        <t>If the TLS negotiation results in failure, the receiving entity MUST terminate the TCP connection.</t>
+        <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be closed upon failure of the TLS negotiation.</t>
+      </section>
+      <section title="TLS Negotiation Success" anchor="tls-process-neg-success">
+        <t>If the TLS negotiation is successful, then the entities MUST proceed as follows.</t>
+        <t>The receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS took effect.</t>
+        <t>The initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS took effect.</t>
+        <t>The initiating entity MUST send a new stream header to the receiving entity over the secured TCP connection.</t>
+        <figure>
+          <preamble>Initial stream header</preamble>
+          <artwork><![CDATA[
+I: <stream:stream
+     from='juliet@example.com'
+     to='example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'>
+          ]]></artwork>
+        </figure>
+        <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon success of the TLS negotiation.</t>
+        <t>The receiving entity MUST respond with a response stream header.</t>
+        <figure>
+          <preamble>Response stream header</preamble>
+          <artwork><![CDATA[
+R: <stream:stream
+     from='example.com'
+     id='vgKi/bkYME8OAj4rlXMkpucAqe4='
+     to='juliet@example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity also MUST send stream features to the initiating entity, which MUST NOT include the STARTTLS feature but which SHOULD include the SASL stream feature as described under <xref target='sasl'/>.</t>
+        <figure>
+          <preamble>Stream features</preamble>
+          <artwork><![CDATA[
+R: <stream:features>
+     <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+       <mechanism>EXTERNAL</mechanism>
+       <mechanism>DIGEST-MD5</mechanism>
+       <mechanism>PLAIN</mechanism>
+       <required/>
+     </mechanisms>
+   </stream:features>
+          ]]></artwork>
+        </figure>
+      </section>
     </section>
     <section title="Representation of JIDs in Certificates" anchor="tls-rep">
       <t>TLS negotiation is commonly based on a digital certificate presented by the receiving entity (or in the case of mutual authentication both the receiving entity and the initiating entity).</t>
