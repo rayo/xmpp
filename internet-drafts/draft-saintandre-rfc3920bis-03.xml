@@ -1294,9 +1294,8 @@ S: <stream:error>
     <section title="Process" anchor="tls-process">
       <t>The process for STARTTLS negotiation is as follows.</t>
       <section title="Exchange of Stream Headers and Stream Features" anchor="tls-process-stream">
-        <t>The initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity; if the initiating entity is capable of STARTTLS negotiation, then it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header it sends to the receiving entity.</t>
+        <t>The initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity; if the initiating entity is capable of STARTTLS negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
         <figure>
-          <preamble>Initial stream header</preamble>
           <artwork><![CDATA[
 I: <stream:stream
      from='juliet@example.com'
@@ -1307,9 +1306,8 @@ I: <stream:stream
      xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>The receiving entity sends a response stream header to the initiating entity over the TCP connection opened by the initiating entity (for client-to-server streams) or over a new TCP connection (for server-to-server streams); if the receiving entity is capable of STARTTLS negotiation, it MUST respond to the initial stream header with a response stream header.</t>
+        <t>The receiving entity MUST send a response stream header to the initiating entity over the TCP connection opened by the initiating entity (for client-to-server streams) or over a new TCP connection (for server-to-server streams); if the receiving entity is capable of STARTTLS negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the response stream header.</t>
         <figure>
-          <preamble>Response stream header</preamble>
           <artwork><![CDATA[
 R: <stream:stream
      from='example.com'
@@ -1323,7 +1321,6 @@ R: <stream:stream
         </figure>
         <t>The receiving entity then MUST send stream features to the initiating entity, which SHOULD include a &lt;starttls/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to indicate that the receiving entity supports STARTTLS negotiation.</t>
         <figure>
-          <preamble>Stream features</preamble>
           <artwork><![CDATA[
 R: <stream:features>
      <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
@@ -1332,7 +1329,6 @@ R: <stream:features>
         </figure>
         <t>If the receiving entity requires the use of STARTTLS, it SHOULD include an empty &lt;required/&gt; element as a child of the &lt;starttls/&gt; element.</t>
         <figure>
-          <preamble>Stream features with STARTTLS required</preamble>
           <artwork><![CDATA[
 R: <stream:features>
      <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
@@ -1343,11 +1339,10 @@ R: <stream:features>
         </figure>
       </section>
       <section title="Initiation of STARTTLS Negotiation" anchor="tls-process-initiate">
-        <t>The initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a STARTTLS negotiation to secure the stream.</t>
-        <t>Note: If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
         <t>Note: During STARTTLS negotiation, the entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the STARTTLS examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
+        <t>In order to begin the STARTTLS negotiation, the initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a STARTTLS negotiation to secure the stream.</t>
+        <t>Note: If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
         <figure>
-          <preamble>STARTTLS command</preamble>
           <artwork><![CDATA[
 I: <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
           ]]></artwork>
@@ -1362,18 +1357,16 @@ I: <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
           </list>
         </t>
         <figure>
-          <preamble>STARTTLS negotiation failure</preamble>
           <artwork><![CDATA[
-S: <failure xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
 
-S: </stream:stream>
+R: </stream:stream>
           ]]></artwork>
         </figure>
         <t>If the proceed case occurs, the receiving entity MUST return a &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
         <figure>
-          <preamble>STARTTLS negotiation may proceed</preamble>
           <artwork><![CDATA[
-S: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+R: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
           ]]></artwork>
         </figure>
         <t>Note: The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
@@ -1384,17 +1377,16 @@ S: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
         <t>If the receiving entity presents a certificate during TLS negotiation, the initiating entity MUST validate the certificate in order to determine if the TLS negotiation shall succeed (see <xref target="security-validation"/> regarding certificate validation procedures).  Specifically, the certificate MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  See <xref target='tls-rep'/> for information about the representation of XMPP addresses in certificates.</t>
         <t>Note: See <xref target="security-mandatory"/> regarding ciphers that MUST be supported for TLS.</t>
       </section>
-      <section title="TLS Negotiation Failure" anchor="tls-process-neg-failure">
+      <section title="Failure" anchor="tls-process-neg-failure">
         <t>If the TLS negotiation results in failure, the receiving entity MUST terminate the TCP connection.</t>
         <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be closed upon failure of the TLS negotiation.</t>
       </section>
-      <section title="TLS Negotiation Success" anchor="tls-process-neg-success">
+      <section title="Success" anchor="tls-process-neg-success">
         <t>If the TLS negotiation is successful, then the entities MUST proceed as follows.</t>
         <t>The receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS took effect.</t>
         <t>The initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS took effect.</t>
         <t>The initiating entity MUST send a new stream header to the receiving entity over the secured TCP connection.</t>
         <figure>
-          <preamble>Initial stream header</preamble>
           <artwork><![CDATA[
 I: <stream:stream
      from='juliet@example.com'
@@ -1408,7 +1400,6 @@ I: <stream:stream
         <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon success of the TLS negotiation.</t>
         <t>The receiving entity MUST respond with a response stream header.</t>
         <figure>
-          <preamble>Response stream header</preamble>
           <artwork><![CDATA[
 R: <stream:stream
      from='example.com'
@@ -1422,7 +1413,6 @@ R: <stream:stream
         </figure>
         <t>The receiving entity also MUST send stream features to the initiating entity, which MUST NOT include the STARTTLS feature but which SHOULD include the SASL stream feature as described under <xref target='sasl'/>.</t>
         <figure>
-          <preamble>Stream features</preamble>
           <artwork><![CDATA[
 R: <stream:features>
      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
@@ -1468,42 +1458,225 @@ XmppAddr ::= UTF8String
   <section title="SASL Negotiation" anchor="sasl">
     <section title="Overview" anchor="sasl-overview">
       <t>XMPP includes a method for authenticating a stream by means of an XMPP-specific profile of the Simple Authentication and Security Layer protocol (see <xref target="SASL"/>).  SASL provides a generalized method for adding authentication support to connection-based protocols, and XMPP uses an XML namespace profile of SASL that conforms to the profiling requirements of <xref target="SASL"/>.</t>
-      <t>Examples of SASL negotiation are provided under <xref target="examples"/>.</t>
+      <t>Support for SASL is REQUIRED in XMPP client and server implementations.</t>
     </section>
     <section title="Rules" anchor="sasl-rules">
-      <t>The following rules apply to SASL negotiation in XMPP:</t>
-      <t>
-        <list style='numbers'>
-          <t>If the initiating entity is capable of SASL negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
-          <t>If the receiving entity is capable of SASL negotiation, it MUST respond to the initial stream header with a response stream header and then send stream features to the initiating entity; the stream features SHOULD include a &lt;mechanisms/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace) that contains one &lt;mechanism/&gt; child element for each authentication mechanism the receiving entity offers to the initiating entity.</t>
-          <t>During SASL negotiation, an entity MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the SASL examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
-          <t>Any XML character data contained within the XML elements used during SASL negotiation MUST be encoded using base64, where the encoding adheres to the definition in Section 4 of <xref target="BASE64"/> and where the padding bits are set to zero.</t>
-          <t>If the receiving entity does not include a 'realm' value, the initiating entity MUST default it to the domain identifier portion of the receiving entity's JID.</t>
-          <t>If provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms), during authentication the initiating entity SHOULD provide as the simple username its sending domain (IP address or fully qualified domain name as contained in an XMPP domain identifier) in the case of server-to-server communication or its registered account name (user or node name as contained in an XMPP node identifier) in the case of client-to-server communication.  In either case, the initiating entity MUST ensure that the username adheres to the <xref target="NAMEPREP"/> or <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> (as appropriate) before sending it to the receiving entity.</t>
-          <t>If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be of the form &lt;domain&gt; (i.e., an XMPP domain identifier only) for servers and of the form &lt;node@domain&gt; (i.e., node identifier and domain identifier) for clients.</t>
-          <t>If the SASL negotiation is successful, the initiating entity MUST send a new stream header to the receiving entity, to which the receiving entity MUST repond with a response stream header and stream features.</t>
-          <t>Upon successful SASL negotiation that involves negotiation of a security layer, the receiving entity MUST discard any knowledge obtained from the initiating entity which was not obtained from the SASL negotiation itself; the receiving entity SHOULD also send new stream features (including an updated list of SASL mechanisms) so that the initiating entity can detect any changes to the list of mechanisms supported by the receiving entity.</t>
-          <t>Upon successful SASL negotiation that involves negotiation of a security layer, the initiating entity MUST discard any knowledge obtained from the receiving entity which was not obtained from the SASL negotiation itself.</t>
-          <t>See <xref target="security-mandatory"/> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well (best practices for the use of several SASL mechanisms in the context of XMPP are described in <xref target='XEP-0175'/> and <xref target='XEP-0178'/>).</t>
-        </list>
-      </t>
+      <section title="Data Formatting" anchor="sasl-process-neg-data">
+        <t>The following formatting rules apply to the data sent during SASL negotiation:</t>
+        <t>
+          <list style='numbers'>
+            <t>The entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the SASL examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
+            <t>Any XML character data contained within the XML elements MUST be encoded using base64, where the encoding adheres to the definition in Section 4 of <xref target="BASE64"/> and where the padding bits are set to zero.</t>
+          </list>
+        </t>
+      </section>
+      <section title="Security Layers" anchor="sasl-process-neg-layers">
+        <t>Upon successful SASL negotiation that involves negotiation of a security layer, the initiating entity MUST discard any knowledge obtained from the receiving entity which was not obtained from the SASL negotiation itself.</t>
+        <t>Upon successful SASL negotiation that involves negotiation of a security layer, the receiving entity MUST discard any knowledge obtained from the initiating entity which was not obtained from the SASL negotiation itself.  The receiving entity SHOULD also include an updated list of SASL mechanisms with the stream features so that the initiating entity is able to detect any changes to the list of mechanisms supported by the receiving entity.</t>
+      </section>
+      <section title="Simple Usernames" anchor="sasl-process-neg-username">
+        <t>If provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms), during authentication the initiating entity SHOULD provide as the simple username its sending domain (IP address or fully qualified domain name as contained in an XMPP domain identifier) in the case of server-to-server communication or its registered account name (user or node name as contained in an XMPP node identifier) in the case of client-to-server communication.  In either case, the initiating entity MUST ensure that the username adheres to the <xref target="NAMEPREP"/> or <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> (as appropriate) before sending it to the receiving entity.</t>
+      </section>
+      <section title="Authorization Identities" anchor="sasl-process-neg-authzid">
+        <t>If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be of the form &lt;domain&gt; (i.e., an XMPP domain identifier only) for servers and of the form &lt;node@domain&gt; (i.e., node identifier and domain identifier) for clients.</t>
+      </section>
     </section>
-    <section title="Narrative" anchor="sasl-narr">
-      <t>When an initiating entity authenticates with a receiving entity using SASL, the steps involved are:</t>
-      <t><list style="numbers">
-        <t>The initiating entity requests SASL authentication by including the 'version' attribute in the opening XML stream header sent to the receiving entity, with the value set to at least "1.0".</t>
-        <t>After sending an XML stream header in reply, the receiving entity advertises a list of available SASL authentication mechanisms as stream features; each of these is a &lt;mechanism/&gt; element included as a child within a &lt;mechanisms/&gt; container element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace, which in turn is a child of a &lt;features/&gt; element qualified by the streams namespace.  If <xref target='tls'>TLS negotiation</xref> needs to be completed before a particular authentication mechanism may be used, the receiving entity MUST NOT provide that mechanism in the list of available SASL authentication mechanisms prior to TLS negotiation.  If the initiating entity presents a valid certificate during prior TLS negotiation, the receiving entity SHOULD offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>), although the EXTERNAL mechanism MAY be offered under other circumstances as well.  If successful SASL negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;mechanisms/&gt; element.  The receiving entity MAY include an application-specific child element inside the &lt;mechanisms/&gt; element in order to provide information that may be needed by the initiating in order to complete successful SASL negotiation using one or more of the offered mechanisms; the syntax and semantics of such an element are out of scope for this specification.</t>
-        <t>The initiating entity selects a mechanism by sending an &lt;auth/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace to the receiving entity and including an appropriate value for the 'mechanism' attribute.  This element MAY contain XML character data (in SASL terminology, the INITIAL RESPONSE) if the mechanism supports or requires it; if the initiating entity needs to send a zero-length initial response, it MUST transmit the response as a single equals sign ("="), which indicates that the response is present but contains no data.</t>
-        <t>If necessary, the receiving entity challenges the initiating entity by sending to the initiating entity a &lt;challenge/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be generated in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
-        <t>The initiating entity responds to the challenge by sending to the receiving entity a &lt;response/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be generated in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
+    <section title="Process" anchor="sasl-process">
+      <t>The process for SASL negotiation is as follows.</t>
+      <section title="Exchange of Stream Headers and Stream Features" anchor="sasl-process-stream">
+        <t>If SASL negotiation follows successful <xref target='tls'>STARTTLS negotation</xref>, then the SASL negotiation occurs over the existing stream.  If not, the initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity; if the initiating entity is capable of STARTTLS negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <stream:stream
+     from='juliet@example.com'
+     to='example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'>
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity MUST send a response stream header to the initiating entity; if the receiving entity is capable of SASL negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the response stream header.</t>
+        <figure>
+          <artwork><![CDATA[
+R: <stream:stream
+     from='example.com'
+     id='vgKi/bkYME8OAj4rlXMkpucAqe4='
+     to='juliet@example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity also MUST send stream features to the initiating entity, which SHOULD include the SASL stream feature, i.e., a &lt;mechanisms/&gt; element (qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace) that contains one &lt;mechanism/&gt; child element for each authentication mechanism the receiving entity offers to the initiating entity.</t>
+        <figure>
+          <artwork><![CDATA[
+R: <stream:features>
+     <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+       <mechanism>EXTERNAL</mechanism>
+       <mechanism>DIGEST-MD5</mechanism>
+       <mechanism>PLAIN</mechanism>
+     </mechanisms>
+   </stream:features>
+          ]]></artwork>
+        </figure>
+        <t>Note: If the initiating entity presents a valid certificate during prior TLS negotiation, the receiving entity SHOULD offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>), although the EXTERNAL mechanism MAY be offered under other circumstances as well.</t>
+        <t>Note: If <xref target='tls'>TLS negotiation</xref> needs to be completed before a particular authentication mechanism may be used, the receiving entity MUST NOT provide that mechanism in the list of available SASL authentication mechanisms prior to TLS negotiation.</t>
+        <t>Note: See <xref target="security-mandatory"/> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well (best practices for the use of several SASL mechanisms in the context of XMPP are described in <xref target='XEP-0175'/> and <xref target='XEP-0178'/>).</t>
+        <t>If successful SASL negotiation is required for interaction with the receiving entity, it SHOULD signal that fact by including a &lt;required/&gt; element as a child of the &lt;mechanisms/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+R: <stream:features>
+     <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+       <mechanism>EXTERNAL</mechanism>
+       <mechanism>DIGEST-MD5</mechanism>
+       <mechanism>PLAIN</mechanism>
+       <required/>
+     </mechanisms>
+   </stream:features>
+          ]]></artwork>
+        </figure>
+        <t>Note: The receiving entity MAY include an application-specific child element inside the &lt;mechanisms/&gt; element in order to provide information that may be needed by the initiating in order to complete successful SASL negotiation using one or more of the offered mechanisms; however, the syntax and semantics of any such element are out of scope for this specification.</t>
+      </section>
+      <section title="Initiation" anchor="sasl-process-neg-initiate">
+        <t>In order to begin the SASL negotiation, the initiating entity sends an &lt;auth/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace and includes an appropriate value for the 'mechanism' attribute.  This element MAY contain XML character data (in SASL terminology, the INITIAL RESPONSE) if the mechanism supports or requires it; if the initiating entity needs to send a zero-length initial response, it MUST transmit the response as a single equals sign ("="), which indicates that the response is present but contains no data.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
+         mechanism='DIGEST-MD5'>=</auth>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Challenge-Response Sequence" anchor="sasl-process-neg-challengeresponse">
+        <t>If necessary, the receiving entity challenges the initiating entity by sending a &lt;challenge/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be generated in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
+        <figure>
+          <artwork><![CDATA[
+R: <challenge xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+   cmVhbG09ImV4YW1wbGUuY29tIixub25jZT0iT0E2TUc5dEVRR20yaGgiLHFvcD0i
+   YXV0aCIsY2hhcnNldD11dGYtOCxhbGdvcml0aG09bWQ1LXNlc3MK
+   </challenge>
+          ]]></artwork>
+        </figure>
+        <t>The decoded challenge is:</t>
+        <figure>
+          <artwork><![CDATA[
+realm="example.com",nonce="OA6MG9tEQGm2hh",
+qop="auth",charset=utf-8,algorithm=md5-sess
+          ]]></artwork>
+        </figure>
+        <t>Note: If the receiving entity does not specify a 'realm' value, the initiating entity MUST default it to the domain identifier portion of the receiving entity's JID.</t>
+        <t>The initiating entity responds to the challenge by sending a &lt;response/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be generated in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
+        <figure>
+          <artwork><![CDATA[
+I: <response xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+   dXNlcm5hbWU9Imp1bGlldCIscmVhbG09ImV4YW1wbGUuY29tIixub25jZT0iT0E2
+   TUc5dEVRR20yaGgiLGNub25jZT0iT0E2TUhYaDZWcVRyUmsiLG5jPTAwMDAwMDAx
+   LHFvcD1hdXRoLGRpZ2VzdC11cmk9InhtcHAvZXhhbXBsZS5jb20iLHJlc3BvbnNl
+   PWQzODhkYWQ5MGQ0YmJkNzYwYTE1MjMyMWYyMTQzYWY3LGNoYXJzZXQ9dXRmLTgK
+   </response>
+          ]]></artwork>
+        </figure>
+        <t>The decoded response is:</t>
+        <figure>
+          <artwork><![CDATA[
+username="juliet",realm="example.com",
+nonce="OA6MG9tEQGm2hh",cnonce="OA6MHXh6VqTrRk",
+nc=00000001,qop=auth,digest-uri="xmpp/example.com",
+response=d388dad90d4bbd760a152321f2143af7,charset=utf-8
+          ]]></artwork>
+        </figure>
         <t>If necessary, the receiving entity sends more challenges and the initiating entity sends more responses.</t>
-      </list></t>
-      <t>This series of challenge/response pairs continues until one of three things happens:</t>
-      <t><list style="numbers">
-        <t>The initiating entity aborts the handshake by sending an &lt;abort/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace.  Upon receiving an &lt;abort/&gt; element, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5), after which it MUST terminate the TCP connection; this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
-        <t>The receiving entity reports failure of the handshake by sending a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace (the particular cause of failure SHOULD be communicated in an appropriate child element of the &lt;failure/&gt; element as defined under <xref target="sasl-errors"/>).  If the failure case occurs, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5), after which it MUST terminate the TCP connection; this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
-        <t>The receiving entity reports success of the handshake by sending a &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (in SASL terminology, "additional data with success") if required by the chosen SASL mechanism; if the receiving entity needs to send additional data of zero length, it MUST transmit the data as a single equals sign ("=").  Upon receiving the &lt;success/&gt; element, the initiating entity MUST initiate a new stream by sending an opening XML stream header to the receiving entity (it is not necessary to send a closing &lt;/stream&gt; tag first, since the receiving entity and initiating entity MUST consider the original stream to be closed upon sending or receiving the &lt;success/&gt; element).  Upon receiving the new stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity, along with any available features or an empty &lt;features/&gt; element (to signify that no additional features are available); any such additional features not defined herein MUST be defined by the relevant extension to XMPP.  As noted, if SASL negotiation involved establishment of a security layer, the receiving entity SHOULD send an updated list of SASL mechanisms so that the initiating entity can detect any changes to the list of mechanisms supported by the receiving entity.</t>
-      </list></t>
+        <t>This series of challenge/response pairs continues until one of three things happens:</t>
+        <t>
+          <list style="symbols">
+            <t>The initiating entity aborts the handshake.</t>
+            <t>The receiving entity reports failure of the handshake.</t>
+            <t>The receiving entity reports success of the handshake.</t>
+          </list>
+        </t>
+        <t>These scenarios are described in the following sections.</t>
+      </section>
+      <section title="Abort" anchor="sasl-process-neg-abort">
+        <t>The initiating entity aborts the handshake by sending an &lt;abort/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <abort xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+          ]]></artwork>
+        </figure>
+        <t>Upon receiving an &lt;abort/&gt; element, the receiving entity MUST return an &lt;aborted/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace.</t>
+        <figure>
+          <artwork><![CDATA[
+R: <aborted xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
+        <t>If the initiating entity exceeds the number of retries, the receiving entity MUST terminate the TCP connection.</t>
+      </section>
+      <section title="Failure" anchor="sasl-process-neg-failure">
+        <t>The receiving entity reports failure of the handshake by sending a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace (the particular cause of failure SHOULD be communicated in an appropriate child element of the &lt;failure/&gt; element as defined under <xref target="sasl-errors"/>).</t>
+        <figure>
+          <artwork><![CDATA[
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <not-authorized/>
+   </failure>
+          ]]></artwork>
+        </figure>
+        <t>If the failure case occurs, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
+        <t>If the initiating entity exceeds the number of retries, the receiving entity MUST terminate the TCP connection.</t>
+      </section>
+      <section title="Success" anchor="sasl-process-neg-success">
+        <t>The receiving entity reports success of the handshake by sending a &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (in SASL terminology, "additional data with success") if required by the chosen SASL mechanism; if the receiving entity needs to send additional data of zero length, it MUST transmit the data as a single equals sign ("=").</t>
+        <figure>
+          <artwork><![CDATA[
+R: <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+   cnNwYXV0aD1lYTQwZjYwMzM1YzQyN2I1NTI3Yjg0ZGJhYmNkZmZmZAo=
+   </success>
+          ]]></artwork>
+        </figure>
+        <t>The decoded value for subsequent authentication is:</t>
+        <figure>
+          <artwork><![CDATA[
+rspauth=ea40f60335c427b5527b84dbabcdfffd
+          ]]></artwork>
+        </figure>
+        <t>Upon receiving the &lt;success/&gt; element, the initiating entity MUST initiate a new stream over the existing TCP connection by sending an initial stream header to the receiving entity.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <stream:stream
+     from='juliet@example.com'
+     to='example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'
+          ]]></artwork>
+        </figure>
+        <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon sending or receiving the &lt;success/&gt; element.</t>
+        <t>Upon receiving the initial stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity.</t>
+        <figure>
+          <artwork><![CDATA[
+R: <stream:stream
+     from='example.com'
+     id='gPybzaOzBmaADgxKXu9UClbprp0='
+     to='juliet@example.com'
+     version='1.0'
+     xml:lang='en'
+     xmlns='jabber:client'
+     xmlns:stream='http://etherx.jabber.org/streams'>
+          ]]></artwork>
+        </figure>
+        <t>The receiving entity MUST also send stream features, containing any further available features or containing no features (via an empty &lt;features/&gt; element); any such additional features not defined herein MUST be defined by the relevant extension to XMPP.</t>
+        <figure>
+          <artwork><![CDATA[
+R: <stream:features>
+     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
+       <required/>
+     </bind>
+   </stream:features>
+          ]]></artwork>
+        </figure>
+      </section>
     </section>
     <section title="SASL Definition" anchor="sasl-def">
       <t>The profiling requirements of <xref target="SASL"/> require that the following information be supplied by a protocol definition:</t>
@@ -1631,6 +1804,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
     <section title="Overview" anchor="bind-overview">
       <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing"/>), i.e., there MUST be an XMPP resource identifier associated with the bare JID (&lt;node@domain&gt;) of the client with the result that the address for use over that stream is a full JID of the form &lt;node@domain/resource&gt;.  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client (see <xref target="rules"/>).  After binding a resource to the stream, the client is referred to as a connected resource.</t>
       <t>If, before completing the resource binding step, the client attempts to send an outbound XML stanza (i.e., a stanza not directed to the server itself or to the client's own account), the server MUST NOT process the stanza and SHOULD return a &lt;not-authorized/&gt; stream error to the client.</t>
+      <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
     </section>
     <section title="Advertising Support" anchor="bind-feature">
       <t>Upon receiving a success indication within the SASL negotiation, the client MUST send a new stream header to the server, to which the server MUST respond with a stream header as well as a list of available stream features.  Specifically, for client-to-server streams the server MUST include a &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace in the stream features it presents to the client; this &lt;bind/&gt; element SHOULD include an empty &lt;required/&gt; element to explicitly indicate that resource binding must be completed at this stage of the stream negotiation process.  (Note: The server SHOULD NOT include the &lt;bind/&gt; stream feature until after successful SASL negotiation.) </t>
@@ -1862,6 +2036,7 @@ S: <message from='romeo@example.net'
   <section title="XML Stanzas" anchor="stanzas">
     <t>After a client has connected to a server or two servers have connected to each other, either party can send XML stanzas over the negotiated stream.  Three kinds of XML stanza are defined for the 'jabber:client' and 'jabber:server' namespaces: &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;.  In addition, there are five common attributes for these stanza types.  These common attributes, as well as the basic semantics of the three stanza types, are defined herein; more detailed information regarding the syntax of XML stanzas for instant messaging and presence applications is provided in <xref target="XMPP-IM"/>, and for other applications in the relevant XMPP extension specifications.</t>
     <t>An XML stanza is the basic unit of meaning in XMPP.  A server MUST NOT process a partial stanza and a server MUST NOT attach meaning to the transmission timing of any child element within a stanza.</t>
+    <t>Support for the XML stanza syntax and semantics defined herein is REQUIRED in XMPP client and server implementations.</t>
 
     <section title="Common Attributes" anchor="stanzas-attributes">
       <t>The following five attributes are common to message, presence, and IQ stanzas.</t>
@@ -2845,10 +3020,8 @@ rspauth=ea40f60335c427b5527b84dbabcdfffd
           <preamble>Step 12 (alt): Server returns error to client:</preamble>
           <artwork><![CDATA[
 S: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-     <temporary-auth-failure/>
+     <not-authorized/>
    </failure>
-
-S: </stream:stream>
           ]]></artwork>
         </figure>
         <figure>
