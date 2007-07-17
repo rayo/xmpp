@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="July" day="12"/>
+    <date year="2007" month="July" day="17"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -1291,8 +1291,15 @@ S: <stream:error>
       <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the Transport Layer Security protocol (see <xref target="TLS"/>), specifically a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The XML namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
       <t>Support for STARTTLS is REQUIRED in XMPP client and server implementations.  An administrator of a given deployment may require the use of TLS for client-to-server communication, server-to-server communication, or both.  A deployed client should use TLS to secure its stream with a server prior to attempting the completion of <xref target='sasl'>SASL negotiation</xref>, and deployed servers should use TLS between two domains for the purpose of securing server-to-server communication.</t>
     </section>
+    <section title="Rules" anchor="tls-rules">
+      <section title="Data Formatting" anchor="tls-rules-data">
+        <t>The entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the STARTTLS examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
+      </section>
+      <section title="Order of Negotiation" anchor="tls-rules-order">
+        <t>If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
+      </section>
+    </section>
     <section title="Process" anchor="tls-process">
-      <t>The process for STARTTLS negotiation is as follows.</t>
       <section title="Exchange of Stream Headers and Stream Features" anchor="tls-process-stream">
         <t>The initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity; if the initiating entity is capable of STARTTLS negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the initial stream header.</t>
         <figure>
@@ -1339,9 +1346,7 @@ R: <stream:features>
         </figure>
       </section>
       <section title="Initiation of STARTTLS Negotiation" anchor="tls-process-initiate">
-        <t>Note: During STARTTLS negotiation, the entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the STARTTLS examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
         <t>In order to begin the STARTTLS negotiation, the initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a STARTTLS negotiation to secure the stream.</t>
-        <t>Note: If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
         <figure>
           <artwork><![CDATA[
 I: <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
@@ -1461,7 +1466,7 @@ XmppAddr ::= UTF8String
       <t>Support for SASL is REQUIRED in XMPP client and server implementations.</t>
     </section>
     <section title="Rules" anchor="sasl-rules">
-      <section title="Data Formatting" anchor="sasl-process-neg-data">
+      <section title="Data Formatting" anchor="sasl-rules-data">
         <t>The following formatting rules apply to the data sent during SASL negotiation:</t>
         <t>
           <list style='numbers'>
@@ -1470,14 +1475,14 @@ XmppAddr ::= UTF8String
           </list>
         </t>
       </section>
-      <section title="Security Layers" anchor="sasl-process-neg-layers">
+      <section title="Security Layers" anchor="sasl-rules-layers">
         <t>Upon successful SASL negotiation that involves negotiation of a security layer, the initiating entity MUST discard any knowledge obtained from the receiving entity which was not obtained from the SASL negotiation itself.</t>
         <t>Upon successful SASL negotiation that involves negotiation of a security layer, the receiving entity MUST discard any knowledge obtained from the initiating entity which was not obtained from the SASL negotiation itself.  The receiving entity SHOULD also include an updated list of SASL mechanisms with the stream features so that the initiating entity is able to detect any changes to the list of mechanisms supported by the receiving entity.</t>
       </section>
-      <section title="Simple Usernames" anchor="sasl-process-neg-username">
+      <section title="Simple Usernames" anchor="sasl-rules-username">
         <t>If provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms), during authentication the initiating entity SHOULD provide as the simple username its sending domain (IP address or fully qualified domain name as contained in an XMPP domain identifier) in the case of server-to-server communication or its registered account name (user or node name as contained in an XMPP node identifier) in the case of client-to-server communication.  In either case, the initiating entity MUST ensure that the username adheres to the <xref target="NAMEPREP"/> or <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> (as appropriate) before sending it to the receiving entity.</t>
       </section>
-      <section title="Authorization Identities" anchor="sasl-process-neg-authzid">
+      <section title="Authorization Identities" anchor="sasl-rules-authzid">
         <t>If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be of the form &lt;domain&gt; (i.e., an XMPP domain identifier only) for servers and of the form &lt;node@domain&gt; (i.e., node identifier and domain identifier) for clients.</t>
       </section>
     </section>
