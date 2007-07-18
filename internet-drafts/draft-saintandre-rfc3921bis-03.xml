@@ -23,7 +23,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="July" day="16"/>
+    <date year="2007" month="July" day="17"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -39,7 +39,7 @@
     <keyword>Extensible Markup Language</keyword>
     <abstract>
       <t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779.</t>
-      <t>This document obseletes RFC 3921.</t>
+      <t>This document obsoletes RFC 3921.</t>
     </abstract>
   </front>
 
@@ -1296,28 +1296,52 @@ CS: <presence from='juliet@example.com/balcony'
   </section>
 
   <section title="Exchanging Messages" anchor="message">
-    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Processing XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus the message stanza is used to "push" information to another entity.</t>
+    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Processing XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus a message stanza is used to "push" information to another entity.</t>
     <section title="Attributes" anchor="message-attributes">
       <section title="To Attribute" anchor="message-attributes-to">
-        <t>An instant messaging client SHOULD specify an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.  If the message is being sent in reply to a message previously received from an address of the form &lt;user@domain/resource&gt; (e.g., within the context of a chat session), the value of the 'to' address SHOULD be of the form &lt;user@domain/resource&gt; rather than of the form &lt;user@domain&gt; unless the sender has knowledge (via presence) that the intended recipient's resource is no longer available.  If the message is being sent outside the context of any existing chat session or received message, the value of the 'to' address SHOULD be of the form &lt;user@domain&gt; rather than of the form &lt;user@domain/resource&gt;.</t>
+        <t>An instant messaging client SHOULD specify an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.</t>
+        <t>If the message is being sent outside the context of any existing chat session or received message, the value of the 'to' address SHOULD be of the form &lt;user@domain&gt; rather than of the form &lt;user@domain/resource&gt;.</t>
+        <figure>
+          <artwork><![CDATA[
+<message
+    from='juliet@example.com/balcony'
+    to='romeo@example.net'
+    type='chat'
+    xml:lang='en'>
+  <body>Art thou not Romeo, and a Montague?</body>
+</message>
+          ]]></artwork>
+        </figure>
+        <t>If the message is being sent in reply to a message previously received from an address of the form &lt;user@domain/resource&gt; (e.g., within the context of a chat session), the value of the 'to' address SHOULD be of the form &lt;user@domain/resource&gt; rather than of the form &lt;user@domain&gt; unless the sender has knowledge (via presence) that the intended recipient's resource is no longer available.</t>
+        <figure>
+          <artwork><![CDATA[
+<message
+    from='romeo@example.net/orchard'
+    to='juliet@example.com/balcony'
+    type='chat'
+    xml:lang='en'>
+  <body>Neither, fair saint, if either thee dislike.</body>
+</message>
+          ]]></artwork>
+        </figure>
       </section>
       <section title="Type Attribute" anchor="message-attributes-type">
       <t>Common uses of the message stanza in instant messaging applications include single messages, messages sent in the context of a chat conversation, messages sent in the context of a multi-user chat room, headlines and other alerts, and errors.  These uses are differentiated via the 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
       <t>
         <list style="symbols">
           <t>chat -- The message is sent in the context of a one-to-one chat conversation.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.</t>
-          <t>error -- An error has occurred related to a previous message sent by the sender (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A receiving client SHOULD present an appropriate interface informing the sender of the nature of the error.  If the message stanza is of type "error", it MUST include an &lt;error/&gt; child; for details, see <xref target="XMPP-CORE"/>.</t>
-          <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A receiving client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details see <xref target="XEP-0045"/>).</t>
-          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, etc.).  No reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).</t>
+          <t>error -- The message is generated by by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, see <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
+          <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A receiving client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details, see <xref target="XEP-0045"/>).</t>
+          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, alerts, etc.) or the sender wishes the message to be delivered as if it were.  No reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources.</t>
           <t>normal -- The message is a single message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  A receiving client SHOULD present the message in an interface enabling the recipient to reply, but without a conversation history.  This is the default value of the 'type' attribute.</t>
         </list>
       </t>
-      <t>An IM application SHOULD support all of the foregoing message types; if an application receives a message with no 'type' attribute or the application does not understand the value of the 'type' attribute provided, it MUST consider the message to be of type "normal" (i.e., "normal" is the default).  The "error" type MUST be generated only by an entity that expereicnes an error in processing a message received from another entity.</t>
+      <t>An IM application SHOULD support all of the foregoing message types.  If an application receives a message with no 'type' attribute or the application does not understand the value of the 'type' attribute provided, it MUST consider the message to be of type "normal" (i.e., "normal" is the default).</t>
       <t>Although the 'type' attribute is OPTIONAL, it is considered polite to mirror the type in any replies to a message; furthermore, some specialized applications (e.g., a multi-user chat service) MAY at their discretion enforce the use of a particular message type (e.g., type='groupchat').</t>
       </section>
     </section>
     <section title="Child Elements" anchor="message-elements">
-      <t>An XMPP message stanza MAY contain any allowable child elements qualified by the 'jabber:client' (or 'jabber:server') namespace, as well as any other properly-namespaced child element.  These payloads are described in the following sections.</t>
+      <t>An XMPP message stanza MAY contain any allowable child elements qualified by the 'jabber:client' (or 'jabber:server') namespace, as well as any other properly-namespaced child element that consists of extended content.  The defined payloads are described in the following sections and extended content payloads are described in the appropriate XMPP extension specifications (not herein).</t>
       <section title="Body" anchor="message-elements-body">
         <t>The &lt;body/&gt; element contains human-readable XML character data that specifies the textual contents of the message; this child element is normally included but is OPTIONAL.</t>
         <figure>
@@ -1411,7 +1435,7 @@ CS: <presence from='juliet@example.com/balcony'
   </section>
 
   <section title="Exchanging IQ Stanzas" anchor="iq">
-    <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is required) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all cases by the extended namespace that qualifies the direct child element of an IQ stanza of type "get" or "set".  The 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the common &lt;error/&gt;.  This document defines one such extended namespace, for <xref target="roster">Managing the Roster</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
+    <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is required) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all cases by the extended namespace that qualifies the direct child element of an IQ stanza of type "get" or "set".  The 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the &lt;error/&gt; common to all stanza types.  This document defines one such extended namespace, for <xref target="roster">Managing the Roster</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
   </section>
 
   <section title="A Sample Session" anchor="session">
@@ -1451,7 +1475,7 @@ US: <iq to='romeo@example.net/balcony' type='result' id='ex1'>
     </iq>
       ]]></artwork>
     </figure>
-    <t>Now the user sends initial presence.</t>
+    <t>Now the user begins a presence session.</t>
     <figure>
       <preamble>Example 3: User sends initial presence:</preamble>
       <artwork><![CDATA[
@@ -1516,11 +1540,11 @@ CS: <presence
       <artwork><![CDATA[
 CS: <presence
         from='romeo@example.net/orchard'
-        to='juliet@example.com/chamber'/>
+        to='juliet@example.com'/>
 
 CS: <presence
         from='romeo@example.net/orchard'
-        to='juliet@example.com/balcony'/>
+        to='juliet@example.com'/>
 
 CS: <presence
         from='mercutio@example.org'
@@ -1687,7 +1711,8 @@ US: </stream:stream>
       <t>
         <list style='symbols'>
           <t>For a message stanza, the server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-          <t>For a presence stanza, the server SHOULD silently ignore the stanza (i.e., not return an error or presence unsubscribed).</t>
+          <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server SHOULD silently ignore the stanza (i.e., not return an error or a presence stanza of type "unsubscribed".</t>
+          <t>For a presence stanza with of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST follow the guidelines provided under <xref target='sub'/>.</t>
           <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
         </list>
       </t>
@@ -1702,7 +1727,7 @@ US: </stream:stream>
         <t>
           <list style='symbols'>
             <t>For a message, the server SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; as described in the next section.</t>
-            <t>For a presence stanza, the server SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error).</t>
+            <t>For a presence stanza, the server SHOULD silently ignore the stanza (i.e., neither deliver it nor return an error or a presence stanza of type "unsubscribe" or "unsubscribed").</t>
             <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
           </list>
         </t>
@@ -1714,14 +1739,14 @@ US: </stream:stream>
         <t>If there is at least one available resource, how the stanza shall be processed depends on the stanza type.</t>
         <section title="Message" anchor="rules-barejid-availyes-message">
           <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.</t>
-          <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource (if the resource did not provide a value for the &lt;priority/&gt; element, the server SHOULD consider it to have provided a value of zero).  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.</t>
-          <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources as descrubed under <xref target='rules-barejid-availno'/>.</t>
+          <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource.  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.</t>
+          <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources as described under <xref target='rules-barejid-availno'/>.</t>
           <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
         </section>
         <section title="Presence" anchor="rules-barejid-availyes-pres">
           <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
           <t>For a presence stanza with no type or of type "unavailable", the server MUST deliver the stanza to all available resources.</t>
-          <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed" the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+          <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
           <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
         </section>
         <section title="IQ" anchor="rules-barejid-availyes-iq">
@@ -1738,44 +1763,47 @@ US: </stream:stream>
           <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
         </section>
         <section title="IQ" anchor="rules-barejid-availno-iq">
-          <t>For an IQ, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+          <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to the available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
         </section>
       </section>
     </section>
     <section title="Foreign Domain" anchor="rules-foreign">
-      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a hostname of the server itself, the server MUST attempt to route the stanza to the foreign domain.  If there exists an active stream between the two peers, the server shall route the stanza over that stream for processing by the peer server.  If not, the server MUST do the following.</t>
+      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a configured hostname of the server itself, the server MUST attempt to route the stanza to the foreign domain.  If there exists an active stream between the two peers, the server shall route the stanza over that stream for processing by the peer server.  If not, the server MUST do the following.</t>
       <t>First, resolve the hostname of the foreign domain (or used a cached resolution of the foreign domain to an IP address).  The recommended order of attempted resolutions is as follows:</t>
       <t><list style='numbers'>
-        <t>Attempt to resolve the foreign hostname using an <xref target="SRV"/> Service of "xmpp-server" and Proto of "tcp", resulting in resource records such as "_xmpp-server._tcp.example.com.", as specified in <xref target="XMPP-CORE"/>.</t>
+        <t>Attempt to resolve the foreign hostname using a DNS <xref target="SRV"/> Service of "xmpp-server" and Proto of "tcp", resulting in resource records such as "_xmpp-server._tcp.example.com.", as specified in <xref target="XMPP-CORE"/>.</t>
         <t>If the "xmpp-server" address record resolution fails, attempt to resolve the "_im" or "_pres" <xref target="SRV"/> Service as specified in <xref target="IMP-SRV"/>, using the "_im" Service for &lt;message/&gt; stanzas and the "_pres" Service for &lt;presence/&gt; stanzas (it is up to the implementation how to handle &lt;iq/&gt; stanzas).  This will result in one or more resolutions of the form "_im.&lt;proto&gt;.example.com." or "_pres.&lt;proto&gt;.example.com.", where "&lt;proto&gt;" would be a label registered in the Instant Messaging SRV Protocol Label registry or the Presence SRV Protocol Label registry: either "_xmpp" for an XMPP-aware domain or some other IANA-registered label (e.g., "_simple") for a non-XMPP-aware domain.</t>
         <t>If both SRV address record resolutions fail, attempt to perform a normal IPv4/IPv6 address record resolution to determine the IP address using the "xmpp-server" port of 5269 registered with the IANA, as specified in <xref target="XMPP-CORE"/>.</t>
       </list></t>
       <t>Note: Administrators of server deployments are strongly encouraged to keep the _im._xmpp, _pres._xmpp, and _xmpp._tcp SRV records properly synchronized, since different implementations might perform the "_im" and "_pres" lookups before the "xmpp-server" lookup.  If the foreign domain cannot be resolved, the server SHOULD return a &lt;remote-server-not-found/&gt; stanza error.</t>
-      <t>Second, the server must negotiate XML streams with the foreign domain by following the process defined in <xref target='XMPP-CORE'/>.  If the server cannot establish streams with the foreign domain, it SHOULD return a &lt;remote-server-timeout/&gt; stanza error.</t>
+      <t>Second, negotiate XML streams with the foreign domain by following the process defined in <xref target='XMPP-CORE'/>.  If the server cannot establish streams with the foreign domain, it SHOULD return a &lt;remote-server-timeout/&gt; stanza error.</t>
       <t>Third, route the stanza to the foreign domain for processing by the peer server.</t>
     </section>
   </section>
 
   <section title="IM and Presence Compliance Requirements" anchor="compliance">
-    <t>This section summarizes the specific aspects of the Extensible Messaging and Presence Protocol that MUST be supported by instant messaging and presence servers and clients in order to be considered compliant implementations.  All such applications MUST comply with the requirements specified in <xref target="XMPP-CORE"/>.  The text in this section specifies additional compliance requirements for instant messaging and presence servers and clients; note well that the requirements described here supplement but do not supersede the core requirements.  Note also that a server or client MAY support only presence or instant messaging, and is not required to support both if only a presence service or an instant messaging service is desired.</t>
+    <t>This section summarizes the specific aspects of the Extensible Messaging and Presence Protocol that MUST be supported by instant messaging and presence servers and clients in order to be considered compliant implementations.  All such applications MUST comply with the requirements specified in <xref target="XMPP-CORE"/>.  The text in this section specifies additional compliance requirements for instant messaging and presence servers and clients (the requirements described here supplement but do not supersede the core requirements).</t>
+    <t>Note:  A server or client MAY support only presence or instant messaging, and is not required to support both if only a presence service or an instant messaging service is desired.</t>
     <section title="Servers" anchor="compliance-server">
       <t>In addition to core server compliance requirements, an instant messaging and presence server MUST additionally support all server-related instant messaging and presence syntax and semantics defined in this document, including:</t>
       <t>
         <list style='symbols'>
-          <t>Presence broadcast on behalf of clients</t>
-          <t>Presence subscriptions</t>
-          <t>Roster storage and management</t>
-          <t>IM-specific routing and delivery rules</t>
+          <t>Presence broadcast on behalf of clients as specified under <xref target='presence'/></t>
+          <t>Presence subscriptions as specified under <xref target='sub'/></t>
+          <t>Roster storage and management as specified under <xref target='roster'/></t>
+          <t>IM-specific routing and delivery rules as specified under <xref target='rules'/></t>
         </list>
       </t>
     </section>
     <section title="Clients" anchor="compliance-client">
       <t>In addition to core client compliance requirements, an instant messaging and presence client MUST additionally support the following protocols:</t>
-      <t><list style='symbols'>
-        <t>Generation and processing of the IM-specific semantics of XML stanzas as defined by the XML schemas, including the 'type' attribute of message and presence stanzas as well as their child elements</t>
-        <t>All client-related instant messaging syntax and semantics defined in this document, including presence subscriptions and roster management</t>
-        <t>End-to-end object signing and encryption as defined in <xref target="XMPP-E2E"/></t>
-      </list></t>
+      <t>
+        <list style='symbols'>
+          <t>Generation and processing of the IM-specific semantics of XML stanzas as defined by the XML schemas, including the 'type' attribute of message and presence stanzas as well as their child elements (see <xref target='message'/> and <xref target='presence'/>)</t>
+          <t>All client-related instant messaging syntax and semantics defined in this document, including presence subscriptions and roster management (see <xref target='sub'/> and <xref target='roster'/>)</t>
+          <t>End-to-end object signing and encryption as defined in <xref target="XMPP-E2E"/></t>
+        </list>
+      </t>
       <t>A client MUST also handle addresses that are encoded as "im:" URIs as specified in <xref target="CPIM"/>, and MAY do so by removing the "im:" scheme and entrusting address resolution to the server as specified under <xref target="rules-foreign"/>.</t>
     </section>
   </section>
@@ -2250,6 +2278,28 @@ US: </stream:stream>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0054.html"/>
 </reference>
 
+<reference anchor='XML-SCHEMA'
+           target='http://www.w3.org/TR/2004/REC-xmlschema-1-20041028'>
+<front>
+<title>XML Schema Part 1: Structures Second Edition</title>
+<author initials='H.' surname='Thompson' fullname='Henry S. Thompson'>
+    <organization />
+</author>
+<author initials='M.' surname='Maloney' fullname='Murray Maloney'>
+    <organization />
+</author>
+<author initials='N.' surname='Mendelsohn' fullname='Noah Mendelsohn'>
+    <organization />
+</author>
+<author initials='D.' surname='Beech' fullname='David Beech'>
+    <organization />
+</author>
+<date month='October' day='28' year='2004' />
+</front>
+<seriesInfo name='World Wide Web Consortium Recommendation' value='REC-xmlschema-1-20041028' />
+<format type='HTML' target='http://www.w3.org/TR/2004/REC-xmlschema-1-20041028' />
+</reference>
+
 <reference anchor="VCARD">
 <front>
 <title>vCard MIME Directory Profile</title>
@@ -2420,7 +2470,7 @@ US: </stream:stream>
     </section>
     <section title="Server Processing of Inbound Presence Subscription Stanzas" anchor="substates-in">
       <t>Inbound presence subscription stanzas request a subscription-related action from the user (via the "subscribe" type), inform the user of subscription-related actions taken by the contact (via the "unsubscribe" type), or enable the contact to manage the user's access to the contact's presence information (via the "subscribed" and "unsubscribed" types).</t>
-      <t>The following rules apply to delivery of the outbound stanza as well as changes to the contact's roster.</t>
+      <t>The following rules apply to delivery of the inbound stanza as well as changes to the contact's roster.</t>
       <t>Note: In the following tables, "S.N." stand for SHOULD NOT.</t>
       <section title="Subscribe" anchor="substates-in-subscribe">
         <figure>
@@ -2519,7 +2569,8 @@ US: </stream:stream>
     </section>
 
     <section title="XML Schemas" anchor="def">
-      <t>The following XML schemas are descriptive, not normative.  For schemas defining stream-related features of XMPP, refer to <xref target="XMPP-CORE"/>.</t>
+      <t>Because validation of XML streams and stanzas is optional, the following XML schemas are provided for descriptive purposes only.  These schemas are not normative.</t>
+      <t>The following schemas formally define various XML namespaces used in the core XMPP protocols, in conformance with <xref target='XML-SCHEMA'/>.  For schemas defining namespaces for XML streams and other core aspects of XMPP, refer to <xref target="XMPP-CORE"/>.</t>
       <section title="jabber:client" anchor="def-client">
         <figure>
           <artwork><![CDATA[
@@ -2984,7 +3035,7 @@ US: </stream:stream>
       <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3921.</t>
       <t>
         <list style='symbols'>
-          <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, server implementations may still want to advertise support for the feature in order to ensure backward-compatibility, even though it is a "no-op".</t>
+          <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, server implementations may still want to advertise support for the feature in order to ensure backward-compatibility, even though session establishment is a "no-op".</t>
           <t>The protocol for communications blocking specified in Section 10 of RFC 3921 has been moved to <xref target='XEP-0016'/>.</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, error handling related to presence probes and presence notifications was modified to return presence stanzas of type "unsubscribe" or "unsubscribed" rather than error stanzas.</t>
         </list>
