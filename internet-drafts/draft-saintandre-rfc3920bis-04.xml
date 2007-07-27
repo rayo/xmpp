@@ -16,7 +16,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="July" day="17"/>
+    <date year="2007" month="July" day="27"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -210,22 +210,29 @@ romeo@example.net               juliet@example.com
   </section>
 
   <section title="TCP Binding" anchor="tcp">
-    <t>As XMPP is defined herein, an initiating entity (client or server) MUST open a TCP connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  However, prior to opening the TCP connection, the initiating entity first MUST resolve the Domain Name System (DNS) hostname associated with the receiving entity and determine the appropriate TCP port for communication with the receiving entity.  The process is:</t>
-    <t>
-      <list style='numbers'>
-        <t>Attempt to resolve the hostname using a <xref target="DNS-SRV"/> Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections) and Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.com." or "_xmpp-server._tcp.example.com.".  The result of the SRV lookup will be one or more combinations of a port and hostname; the initiating entity MUST resolve one of the hostnames in order to determine an IP address at which to connect.</t>
-         <t>If the SRV lookup fails, the fallback SHOULD be a normal IPv4 or <xref target='IPv6'/> address record resolution to determine the IP address, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.</t>
-         <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
-      </list>
-    </t>
-    <t>TCP connections are handled differently in client-to-server communication and server-to-server ommunication.  Specifically:</t>
-    <t>
-      <list style='symbols'>
-        <t>Because a client is subordinate to a server and therefore a client authenticates to the server but the server does not authenticate to the client, it is necessary to have only one TCP connection between client and server.  Thus the server MUST allow the client to share a single TCP connection for XML stanzas sent from client to server and from server to client (i.e., the inital stream and response stream as specified under <xref target='streams'/>).</t>
-        <t>Because two servers are peers and therefore each peer must authenticate with the other, the servers MUST use two TCP connections: one for XML stanzas sent from the first server to the second server and another (initiated by the second server) for stanzas from the second server to the first server.</t>
-      </list>
-    </t>
-    <t>Note: There is no necessary coupling of an XML stream to a <xref target="TCP"/> connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines a binding of XMPP to TCP only.</t>
+    <section title="Scope" anchor="tcp-scope">
+      <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a TCP connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  The rules specified in the following sections apply to the TCP binding.</t>
+    </section>
+    <section title="Hostname Resolution" anchor="tcp-resolution">
+      <t>Before opening the TCP connection, the initiating entity first MUST resolve the Domain Name System (DNS) hostname associated with the receiving entity and determine the appropriate TCP port for communication with the receiving entity.  The process is:</t>
+      <t>
+        <list style='numbers'>
+          <t>Attempt to resolve the hostname using a <xref target="DNS-SRV"/> Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections) and Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.com." or "_xmpp-server._tcp.example.com.".  The result of the SRV lookup will be one or more combinations of a port and hostname; the initiating entity MUST resolve one of the hostnames in order to determine an IP address at which to connect.</t>
+           <t>If the SRV lookup fails, the fallback SHOULD be a normal IPv4 or <xref target='IPv6'/> address record resolution to determine the IP address, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.</t>
+           <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
+        </list>
+      </t>
+    </section>
+    <section title="Client-to-Server Communications" anchor="tcp-c2s">
+      <t>Because a client is subordinate to a server and therefore a client authenticates to the server but the server does not authenticate to the client, it is necessary to have only one TCP connection between client and server.  Thus the server MUST allow the client to share a single TCP connection for XML stanzas sent from client to server and from server to client (i.e., the inital stream and response stream as specified under <xref target='streams'/>).</t>
+    </section>
+    <section title="Server-to-Server Communications" anchor="tcp-s2s">
+      <t>Because two servers are peers and therefore each peer must authenticate with the other, the servers MUST use two TCP connections: one for XML stanzas sent from the first server to the second server and another (initiated by the second server) for XML stanzas from the second server to the first server.</t>
+      <t>This rule applies only to <xref target='stanzas'>XML stanzas</xref>.  Therefore during <xref target='tls'>STARTTLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref> the servers would use one TCP connection, but after stream setup that TCP connection would be used only for the initiating server to send XML stanzas to the receiving server.  In order for the receiving server to send XML stanzas to the initiating server, the receiving server would need to reverse the roles and negotiate an XML stream from the receiving server to the initiating server.</t>
+    </section>
+    <section title="Other Bindings" anchor="tcp-other">
+      <t>There is no necessary coupling of an XML stream to a <xref target="TCP"/> connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines a binding of XMPP to TCP only.</t>
+    </section>
   </section>
 
   <section title="XML Streams" anchor="streams">
@@ -5521,6 +5528,7 @@ specifications of each URI scheme.
       <xs:element ref='item-not-found'/>
       <xs:element ref='jid-malformed'/>
       <xs:element ref='not-acceptable'/>
+      <xs:element ref='not-authorized'/>
       <xs:element ref='not-allowed'/>
       <xs:element ref='not-modified'/>
       <xs:element ref='payment-required'/>
