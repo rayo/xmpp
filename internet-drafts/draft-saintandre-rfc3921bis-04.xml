@@ -23,7 +23,7 @@
         <uri>xmpp:stpeter@jabber.org</uri>
       </address>
     </author>
-    <date year="2007" month="August" day="17"/>
+    <date year="2007" month="September" day="7"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -1763,7 +1763,7 @@ US: </stream:stream>
         <t>If there is at least one available resource, how the stanza shall be processed depends on the stanza type.</t>
         <section title="Message" anchor="rules-barejid-availyes-message">
           <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.</t>
-          <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource.  If two or more available resources have the same priority, the server MAY use some other rule (e.g., most recent connect time, most recent activity time, or highest availability as determined by some hierarchy of &lt;show/&gt; values) to choose between them or MAY deliver the message to all such resources.</t>
+          <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server SHOULD deliver the stanza to the highest-priority available resource. If there is not one highest-priority available resource but instead the highest priority is asserted by two or more available resources, these resources are said to form a "delivery tie".  In the case of a delivery tie, a server SHOULD deliver the message to all of the tied resources.  However, before delivering the message, a server MAY remove one or more resources from the tie.  Methods for doing so are outside the scope of this specification, but could include factors such as the resource's time of connection, time of last network or application activity, availability as determined by some hierarchy of &lt;show/&gt; values, or user-configured rules.  Nevertheless, a server MUST NOT remove all resources from the tie, and MUST deliver the message to at least one of the highest-priority resources.</t>
           <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources as described under <xref target='rules-barejid-availno'/>.</t>
           <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
         </section>
@@ -1780,7 +1780,9 @@ US: </stream:stream>
       <section title="No Available Resources" anchor="rules-barejid-availno">
         <t>If there are no available resources associated with the user, how the stanza shall be processed depends on the stanza type.</t>
         <section title="Message" anchor="rules-barejid-availno-message">
-            <t>For a message stanza, the server MAY choose to store the stanza on behalf of the user and deliver it when the user next becomes available, or forward the message to the user via some other means (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled, the server MUST return to the sender a &lt;service-unavailable/&gt; stanza error.  (Note: Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.)</t>
+          <t>For a message stanza of type "headline", the server SHOULD NOT store the stanza on behalf of the user and deliver it when the user next becomes available, but instead SHOULD either forward the stanza to the user via a non-XMPP messaging system (e.g., to the user's email account) or return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+          <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server MAY choose to store the stanza on behalf of the user and deliver it when the user next becomes available, or forward the message to the user via a non-XMPP messaging system (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+          <t>(Note: Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.)</t>
         </section>
         <section title="Presence" anchor="rules-barejid-availno-pres">
           <t>For a presence stanza with no type or of type "unavailable" or "probe", the server SHOULD silently ignore the stanza by not storing it for later delivery or replying to it on behalf of the user.</t>
@@ -2779,9 +2781,6 @@ US: </stream:stream>
         <xs:element ref='err:text'
                     minOccurs='0'/>
       </xs:sequence>
-      <xs:attribute name='code' 
-                    type='xs:unsignedShort' 
-                    use='optional'/>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
           <xs:restriction base='xs:NCName'>
@@ -2984,9 +2983,6 @@ US: </stream:stream>
         <xs:element ref='err:text'
                     minOccurs='0'/>
       </xs:sequence>
-      <xs:attribute name='code' 
-                    type='xs:unsignedShort' 
-                    use='optional'/>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
           <xs:restriction base='xs:NCName'>
