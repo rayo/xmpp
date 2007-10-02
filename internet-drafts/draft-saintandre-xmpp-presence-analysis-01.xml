@@ -5,12 +5,12 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc ipr="full3978" docName="draft-saintandre-xmpp-presence-analysis-00">
+<rfc category='info' docName='draft-saintandre-xmpp-presence-analysis-01' ipr='full3978'>
 
   <front>
     <title abbrev="XMPP Presence Analysis">Interdomain Presence Scaling Analysis for the Extensible Messaging and Presence Protocol (XMPP)</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization abbrev="XSF">XMPP Standards Foundation</organization>
+      <organization>XMPP Standards Foundation</organization>
       <address>
         <postal>
           <street>P.O. Box 1641</street>
@@ -20,17 +20,18 @@
           <country>USA</country>
         </postal>
         <email>stpeter@jabber.org</email>
-        <uri>xmpp:stpeter@jabber.org</uri>
+        <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="April" day="11"/>
+    <date year="2007" month="October" day="2"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
     <keyword>Jabber</keyword>
-    <keyword>Presence</keyword>
+    <keyword>presence</keyword>
+    <keyword>scalability</keyword>
     <abstract>
-      <t>This document analyzes the traffic that is generated as a result of presence subscriptions between users of federated domains that support the Extensible Messaging and Presence Protocol (XMPP).  This analysis is provided as a source of comparison with a similar analysis being performed regarding domains that support federated presence using Session Initiation Protocol (SIP) for Instant Messaging and Presence Leveraging Extensions (SIMPLE).</t>
+      <t>This document analyzes the scalability of presence sharing between domains that federate using the Extensible Messaging and Presence Protocol (XMPP).  This analysis is provided as a source of comparison with a similar analysis being performed regarding the presence extensions to the Session Initiation Protocol (SIP).</t>
     </abstract>
   </front>
 
@@ -38,23 +39,24 @@
 
     <section title="Introduction" anchor="intro">
       <t>Presence is information about the network availability of an individual (or, more precisely, of a presence address of the kind that is often but not necessarily associated with an individual).  As typically designed and deployed, presence is shared only with authorized entities, where the authorization takes the form of a subscription.  (In this document, we employ the term "user" to signify an account that generates presence information and the term "contact" to signify an annount that is subscribed to the user's presence.)</t>
-      <t>The sharing of presence information can result in a large volume of traffic as users log on or off throughout the life of a presence session, especially for users with large numbers of contacts (e.g., the author of this document has approximately 1,500 contacts in his list of presence subscribers).  The volume is increased by communication of information beyond boolean network availability, such as availability substates (e.g., "away" and "do not disturb").  The volume is further increased if the presence "transport" is used to communicate information such as geolocation, mood, activity, even the music to which an individual is listening.  While such traffic may not be a concern in a standalone presence domain, interdomain communications may introduce a more significant impact on the functioning of the Internet as a whole.</t>
-      <t>There are several standardized technologies for sharing presence information.  One is a set of extensions to the Session Initiation Protocol (SIP), where the base protocol is defined in <xref target='SIP'/> and the extensions are defined in <xref target='SIP-EVENT'/> and <xref target='SIP-PRES'/>.  Another is the Extensible Messaging and Presence Protocol (XMPP) as defined in <xref target='XMPP-CORE'/> and <xref target='XMPP-IM'/>.</t>
-      <t><xref target='PROBLEM'/> analyzes several factors regarding the scalability of interdomain communication of presence information using SIP/SIMPLE technologies.  For the sake of comparison, this document aims to provide a similar analysis regarding XMPP technologies; in its first iteration, it discusses traffic load exclusively since bandwidth usage has the greatest potential impact on the Internet (whereas issues such as state management and server processing of presence information are implementation-specific).</t>
+      <t>The sharing of presence information can result in a large volume of traffic as users log on or off throughout the life of a presence session, especially for users with large numbers of contacts (e.g., the author of this document has over 1,500 contacts in his list of presence subscribers).  The volume is increased by communication of information beyond basic on-off network availability, such as availability substates (e.g., "away" and "do not disturb").  The volume is further increased if the presence "transport" is used to communicate information such as geolocation, mood, activity, even the music to which an individual is listening.  Such traffic may be a concern even in a standalone presence domain.  However, when presence is shared across domain boundaries then such traffic may introduce a more significant impact on the functioning of the Internet as a whole.  Therefore it is important to analyze the traffic generated during interdomain communication of presence information.</t>
+      <t>There are several standardized technologies for sharing presence information.  One is a set of extensions (commonly called "SIMPLE") to the Session Initiation Protocol (SIP), where the base protocol is defined in <xref target='SIP'/> and the extensions are defined in <xref target='SIP-EVENT'/> and <xref target='SIP-PRES'/>.  Another is the Extensible Messaging and Presence Protocol (XMPP) as defined in <xref target='XMPP-CORE'/> and <xref target='XMPP-IM'/>.</t>
+      <t><xref target='PROBLEM'/> analyzes several factors regarding the scalability of interdomain communication of presence information using SIP/SIMPLE technologies.  For the sake of comparison, this document aims to provide a similar analysis regarding XMPP technologies.  In particular, this document focuses on traffic load exclusively since bandwidth usage has the greatest potential impact on the Internet.  By contrast, issues such as state management and server processing of presence information are implementation-specific.  This document also briefly mentions existing methods for improving the scalability of XMPP presence (and presence-like) communications.</t>
     </section>
 
-    <section title="Traffic Load" anchor="load">
-      <section title="Assumptions" anchor="assumptions">
-        <t>The model for XMPP presence subscriptions is different from that of SIP.  In particular, XMPP presence subscriptions are long-lived, and once established last until cancelled.  Thus XMPP does not have subscription timeouts and refresh periods as SIP presence does.  In addition, this document does not include presence subscriptions in its protocol flows since in XMPP they are preconditions for the exchange of presence notifications (in any case, the number of XML stanzas exchanged in the process of establishing a presence subscription is negligible compared to the volume of presence notifications).</t>
-        <t>XMPP presence subscriptions are typically bidirectional (i.e., the contact has a subscription to the user's presence and the user has a subscription to the contact's presence).  However, because <xref target='PROBLEM'/> assumes that subscriptions are uni-directional (i.e., the contact has a subscription to the user's presence but not vice-versa), the same assumption is made herein.</t>
-        <t>Although an XMPP user or contact may have multiple connected "resources" (e.g., client or device) at any one time, for the sake of simplification this document assumes that each entity has only one simultaneous resource.</t>
-        <t>Note that, unlike in SIP, XMPP packets are not typically acknowledged with the equivalent of a 200/OK message.</t>
-        <t><xref target='PROBLEM'/> assumes that presence notification packets will typically be on the order of 4 kilobytes in size (not including TCP or UDP overhead).  XMPP presence notification packets tend to be much smaller than SIP presence notification packets; in this document we assume (based on deployment experience) that they are typically 200 bytes in size.</t>
-      </section>
-      <section title="Protocol Flows" anchor="flows">
-        <t>When a contact (in these examples romeo@example.net) becomes available, the contact's server sends an XMPP presence stanza of type "probe" to the user (in these examples juliet@example.com) on behalf of the contact, as shown in the following example (this can be seen as similar to the initial SUBSCRIBE in SIP presence):</t>
+    <section title="Assumptions" anchor="assumptions">
+      <t>The model for XMPP presence subscriptions is different from that of SIP.  In particular, XMPP presence subscriptions are long-lived, and once established last until cancelled.  Thus XMPP does not have subscription timeouts and refresh periods as SIP presence does.  In addition, this document does not include presence subscriptions in its protocol flows since in XMPP they are preconditions for the exchange of presence notifications (in any case, the number of XML stanzas exchanged in the process of establishing a presence subscription is negligible compared to the volume of presence notifications).</t>
+      <t>XMPP presence subscriptions are typically bidirectional (i.e., the contact has a subscription to the user's presence and the user has a subscription to the contact's presence).  However, because <xref target='PROBLEM'/> assumes that subscriptions are uni-directional (i.e., the contact has a subscription to the user's presence but not vice-versa), the same assumption is made herein.</t>
+      <t>Although an XMPP user or contact may have multiple connected "resources" (e.g., client or device) at any one time, for the sake of simplification this document assumes that each entity has only one simultaneous resource.</t>
+      <t>Note that, unlike in SIP, XMPP packets are not typically acknowledged with the equivalent of a 200/OK message.</t>
+      <t><xref target='PROBLEM'/> assumes that presence notification packets will typically be on the order of 3.5 kilobytes in size (not including TCP or UDP overhead).  XMPP presence notification packets tend to be much smaller than SIP presence notification packets; in this document we assume (based on deployment experience) that they are typically 200 bytes in size for basic on-off presence.  However, some XMPP applications may include additional information in a presence notification packet, such as entity capabilities as described in <xref target='XEP-0115'/>.</t>
+      <t>Both <xref target='XMPP-CORE'/> and <xref target='XMPP-IM'/> strongly recommend that XMPP presence notifications should include only information that is relevant to a user's willingness or ability to communicate using real-time methods such as instant messaging.  However, some XMPP applications include information that is not communications-relevant, such as the hash of a user's avatar icon (see <xref target='XEP-0153'/> and even metadata about the music to which a user is listening (see <xref target='XEP-0118'/>).  Although it is recommended to communicate such information using the XMPP publish-subscribe extension (see <xref target='XEP-0060'/>) and appropriate profiles thereof (e.g., <xref target='XEP-0163'/>), some existing XMPP clients send non-communications-relevant information using presence notifications instead of dedicated publish-subscribe nodes.  Such behavior marginally increases notification size but can drastically increase the number of notifications sent (e.g., one notification every 3 or 4 minutes when the user begins listening to a new music track).  This document does not discuss such usage, since it is actively discouraged and borders on abusive.</t>
+      <t>This document does not discuss various optimizations for SIMPLE (for which see <xref target='PROBLEM'/>) or XMPP.  The primary deployed optimization for XMPP is stream compression, implemented either at the TLS level via native TLS compression or at the XMPP level where TLS compression is not available (see <xref target='XEP-0138'/>).  Because XMPP communications occur over long-lived TCP connections and associated long-lived XML streams, such compression has been found to yield significant bandwidth savings, up to 90% or even 95%.  Stream compression is therefore the recommended method for reducing bandwidth consumption in XMPP systems.</t>
+    </section>
+    <section title="Protocol Flows" anchor="flows">
+      <t>When a contact (in these examples romeo@example.net) becomes available, the contact's server sends an XMPP presence stanza of type "probe" to the user (in these examples juliet@example.com) on behalf of the contact, as shown in the following example (this can be seen as similar to the initial SUBSCRIBE in SIP presence):</t>
         <figure>
-          <preamble>Contact's server sends presence probe to user:</preamble>
+          <preamble>Contact's server sends presence probe to user (82 bytes):</preamble>
           <artwork><![CDATA[
 <presence
     from='romeo@example.net/orchard'
@@ -62,9 +64,9 @@
     type='probe'/>
           ]]></artwork>
         </figure>
-        <t>If the user's server determines that the contact is authorized to see the user's presence, the user's server return's the user's current presence state to the contact (this is equivalent to the "Initial NOTIFY" in SIP presence).</t>
+      <t>If the user's server determines that the contact is authorized to see the user's presence, the user's server return's the user's current presence state to the contact (this is equivalent to the "Initial NOTIFY" in SIP presence).</t>
         <figure>
-          <preamble>User's server sends presence to contact:</preamble>
+          <preamble>User's server sends presence to contact (170 bytes):</preamble>
           <artwork><![CDATA[
 <presence
     from='juliet@example.com/balcony'
@@ -76,168 +78,451 @@
 </presence>
           ]]></artwork>
         </figure>
-        <t>If the user subsequently changes her presence, the user's server sends an updated presence notification to the contact.</t>
+      <t>If the user subsequently changes her presence, the user's server sends an updated presence notification to the contact.</t>
         <figure>
-          <preamble>User's server sends updated presence to contact:</preamble>
+          <preamble>User's server sends updated presence to contact (160 bytes):</preamble>
           <artwork><![CDATA[
 <presence
     from='juliet@example.com/balcony'
     to='romeo@example.net/orchard'
     xml:lang='en'>
+  <show>xa</show>
+  <status>bbiab</status>
   <priority>0</priority>
 </presence>
           ]]></artwork>
         </figure>
-        <t>A presence session can include any number of presence changes.</t>
-        <t>When the user goes offline, the user's server sends a presence stanza of type "unavailable" to the contact.</t>
+      <t>A presence session can include any number of presence changes.</t>
+      <t>When the user goes offline, the user's server sends a presence stanza of type "unavailable" to the contact.</t>
         <figure>
-          <preamble>User's server sends unavailable presence to contact:</preamble>
+          <preamble>User's server sends unavailable presence to contact (96 bytes):</preamble>
           <artwork><![CDATA[
 <presence
     from='juliet@example.com/balcony'
     to='romeo@example.net/orchard'
-    type='unavailable'
-    xml:lang='en'/>
+    type='unavailable'/>
           ]]></artwork>
         </figure>
-        <t>Naturally, similar protocol flows are generated by the contact during the life of his presence session.</t>
-      </section>
-      <section title="Analysis" anchor="analysis">
-        <t>To enable valid comparison between SIMPLE and XMPP with regard to interdomain presence scaling, this document adheres as closely as possible to the analysis presented in <xref target='PROBLEM'/>, witih appropriate modifications given differences between the two technologies.  In particular, traffic calculations are based on the following inputs and formulae, where the numbering follows that in <xref target='PROBLEM'/> and the terminology is adjusted to conform to XMPP:</t>
+      <t>Naturally, similar protocol flows are generated by the contact during the life of his presence session.</t>
+    </section>
+    <section title="Analysis" anchor="analysis">
+      <t>To enable valid comparison between SIMPLE and XMPP with regard to interdomain presence scaling, this document adheres as closely as possible to the analysis presented in <xref target='PROBLEM'/>, with appropriate modifications given differences between the two technologies.  In particular, traffic calculations are based on the following inputs and formulae, where the numbering follows that in <xref target='PROBLEM'/> and the terminology is adjusted to conform to XMPP.</t>
+      <section title="Constants" anchor="analysis-constants">
         <t>
           <list style='symbols'>
-            <t>(A01) Presence session lifetime in hours -- assumed to be 8 hours.</t>
-            <t>(A02) Presence state changes per hour -- assumed to be 3 times per hour.</t>
-            <t>(A03) Subscription refresh interval per hour -- does not apply to XMPP.</t>
-            <t>(A04) Total federated contacts per user -- varies based on the scenario under discussion.</t>
-            <t>(A05) Number of dialogs to maintain per watcher -- does not apply to XMPP.</t>
-            <t>(A06) Number of contacts in a federated presence domain -- varies based on the scenario under discussion.</t>
-            <t>(A07) Initial presence subscription exchange -- deemed out of scope here since XMPP presence subscriptions are long-lived.</t>
-            <t>(A08) Initial presence notification -- on the model of SIP NOTIFY plus 200, this is XMPP presence probe plus initial notification, thus 2 per contact.</t>
-            <t>(A09) Total initial messages -- (A08*A06).</t>
-            <t>(A10) Presence notifications per user = (A02*A01*A04).</t>
-            <t>(A11) Subscription refreshes -- does not apply to XMPP.</t>
-            <t>(A12) NOTIFY/200 due to subscribe refresh -- does not apply to XMPP.</t>
-            <t>(A13) Number of steady state messages = (A10*A06).</t>
-            <t>(A14) SUBSCRIBE termination -- does not apply to XMPP.</t>
-            <t>(A15) Unavailable presence -- sent when user goes offline (equivalent to NOTIFY terminated), 1 per contact.</t>
-            <t>(A16) Number of sign-out messages = (A15*A06).</t>
-            <t>(A17) Total number of messages between domains = ((A09+A13+A16)*2).</t>
-            <t>(A18) Total number of messages per second = (A17/A01/3600).</t>
-            <t>(A19) Total number of kilobytes per second = (A18*.2).</t>
+            <t>(C01) Presence session lifetime in hours -- assumed to be 8 hours.</t>
+            <t>(C02) Presence state changes per hour -- assumed to be 3 times per hour.</t>
+            <t>(C03) Subscription refresh interval per hour -- does not apply since XMPP presence subscriptions are long-lived.</t>
+            <t>(C04) Total federated contacts per user -- varies based on the scenario under discussion.</t>
+            <t>(C05) Number of dialogs to maintain per watcher -- does not apply to XMPP since XMPP presence subscriptions are long-lived, for purposes of calculation treated as equal to C04.</t>
+            <t>(C06) Number of federated users -- varies based on the scenario under discussion.</t>
+            <t>(C07) Subscription request size in bytes -- 100 bytes.</t>
+            <t>(C08) Subscription approval size in bytes -- 100 bytes.</t>
+            <t>(C09) Presence notification size in bytes -- 200 bytes.</t>
+            <t>(C10) Presence notification ack size in bytes -- does not apply since XMPP presence notifications are not acked.</t>
+            <t>(C11) Presence document size in bytes -- does not apply since XMPP presence notifications  do not include presence documents.</t>
           </list>
         </t>
       </section>
-      <section title="Scenarios" anchor="scenarios">
-        <section title="Basic" anchor="scenarios-basic">
-          <t>This scenario assumes two domains, each with 20,000 users, where each user has 4 contacts in the other domain and changes presence 3 times per hour.  The calculations are as follows:</t>
-          <t>
-            <list style='symbols'>
-              <t>(A01) = 8.</t>
-              <t>(A02) = 3.</t>
-              <t>(A03) N/A.</t>
-              <t>(A04) = 4.</t>
-              <t>(A05) N/A.</t>
-              <t>(A06) = 20,000.</t>
-              <t>(A07) N/A.</t>
-              <t>(A08) = 8.</t>
-              <t>(A09) = (A08*A06) = 160,000.</t>
-              <t>(A10) = (A02*A01*A04) = 96.</t>
-              <t>(A11) N/A.</t>
-              <t>(A12) N/A.</t>
-              <t>(A13) = (A10*A06) = 1,920,000.</t>
-              <t>(A14) N/A.</t>
-              <t>(A15) = 4.</t>
-              <t>(A16) = (A15*A06) = 80,000.</t>
-              <t>(A17) = ((A09+A13+A16)*2) = 4,320,000 total messages.</t>
-              <t>(A18) = (A17/A01/3600) = 150 messages per second.</t>
-              <t>(A19) = (A18*.2) = 30 kilobytes per second.</t>
-            </list>
-          </t>
-          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 14,080,000 total messages, 489 messages per second, and 830 kilobytes per second.</t>
-        </section>
-        <section title="Widely Distributed Inter-Domain Presence" anchor="scenarios-widely">
-          <t>This scenario assumes two domains, each with 20,000 users, where each user has 20 contacts in the other domain and changes presence 3 times per hour.  The calculations are as follows:</t>
-          <t>
-            <list style='symbols'>
-              <t>(A01) = 8.</t>
-              <t>(A02) = 3.</t>
-              <t>(A03) N/A.</t>
-              <t>(A04) = 20.</t>
-              <t>(A05) N/A.</t>
-              <t>(A06) = 20,000.</t>
-              <t>(A07) N/A.</t>
-              <t>(A08) = 40.</t>
-              <t>(A09) = (A08*A06) = 800,000.</t>
-              <t>(A10) = (A02*A01*A04) = 480.</t>
-              <t>(A11) N/A.</t>
-              <t>(A12) N/A.</t>
-              <t>(A13) = (A10*A06) = 9,600,000.</t>
-              <t>(A14) N/A.</t>
-              <t>(A15) = 20.</t>
-              <t>(A16) = (A15*A06) = 400,000.</t>
-              <t>(A17) = ((A09+A13+A16)*2) = 21,600,000 total messages.</t>
-              <t>(A18) = (A17/A01/3600) = 750 messages per second.</t>
-              <t>(A19) = (A18*.2) = 150 kilobytes per second.</t>
-            </list>
-          </t>
-          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 70,400,000 total messages, 2,444 messages per second, and 1,968 kilobytes per second.</t>
-        </section>
-        <section title="Very Large Network Peering" anchor="scenarios-large">
-          <t>This scenario assumes two domains, each with 10,000,000 users, where each user has 10 contacts in the other domain and changes presence 6 times per hour.  The calculations are as follows:</t>
-          <t>
-            <list style='symbols'>
-              <t>(A01) = 8.</t>
-              <t>(A02) = 6.</t>
-              <t>(A03) N/A.</t>
-              <t>(A04) = 10.</t>
-              <t>(A05) N/A.</t>
-              <t>(A06) = 10,000,000.</t>
-              <t>(A07) N/A.</t>
-              <t>(A08) = 20.</t>
-              <t>(A09) = (A08*A06) = 200,000,000.</t>
-              <t>(A10) = (A02*A01*A04) = 480.</t>
-              <t>(A11) N/A.</t>
-              <t>(A12) N/A.</t>
-              <t>(A13) = (A10*A06) = 4,800,000,000.</t>
-              <t>(A14) N/A.</t>
-              <t>(A15) = 10.</t>
-              <t>(A16) = (A15*A06) = 100,000,000.</t>
-              <t>(A17) = ((A09+A13+A16)*2) = 10,200,000,000 total messages.</t>
-              <t>(A18) = (A17/A01/3600) = 354,166 messages per second.</t>
-              <t>(A19) = (A18*.2) = 70,833 kilobytes per second.</t>
-            </list>
-          </t>
-          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 27,200,000,000 total messages, 944,444 messages per second, and 880,555 kilobytes per second.</t>
-        </section>
-        <section title="Intra-Domain Peering" anchor="scenarios-intra">
-          <t>This scenario assumes two domains, each with 60,000 users, where each user has 10 contacts in the other domain and changes presence 3 times per hour.  The calculations are as follows:</t>
-          <t>
-            <list style='symbols'>
-              <t>(A01) = 8.</t>
-              <t>(A02) = 3.</t>
-              <t>(A03) N/A.</t>
-              <t>(A04) = 10.</t>
-              <t>(A05) N/A.</t>
-              <t>(A06) = 60,000.</t>
-              <t>(A07) N/A.</t>
-              <t>(A08) = 20.</t>
-              <t>(A09) = (A08*A06) = 1,200,000.</t>
-              <t>(A10) = (A02*A01*A04) = 240.</t>
-              <t>(A11) N/A.</t>
-              <t>(A12) N/A.</t>
-              <t>(A13) = (A10*A06) = 14,400,000.</t>
-              <t>(A14) N/A.</t>
-              <t>(A15) = 10.</t>
-              <t>(A16) = (A15*A06) = 600,000.</t>
-              <t>(A17) = ((A09+A13+A16)*2) = 32,400,000 total messages.</t>
-              <t>(A18) = (A17/A01/3600) = 1125 messages per second.</t>
-              <t>(A19) = (A18*.2) = 225 kilobytes per second.</t>
-            </list>
-          </t>
-          <t>For the last three factors, the comparable numbers for SIMPLE (from <xref target='PROBLEM'/>) are 105,600,000 total messages, 3,667 messages per second, and 3,683 kilobytes per second.</t>
-        </section>
+      <section title="Initial Messages" anchor="analysis-initial">
+        <t>
+          <list style='symbols'>
+            <t>(I01) Number of initial subscribe requests per presence session -- the XMPP equivalent is a presence probe, of which there is 1 per contact ( = C04 ), equal in size to a presence subscription request or approval (100 bytes).</t>
+            <t>(I02) Number of initial subscription approvals per presence session -- does not apply since XMPP presence probes are not acked.</t>
+            <t>(I03) Number of initial presence notifications -- 1 per contact ( = C04 ).</t>
+            <t>(I04) Number of initial presence acks -- does not apply since XMPP presence notifications are not acked.</t>
+            <t>(I05) Total number and bytes of initial subscribe messages -- Number = (I01*C06) and Bytes = (I01*C06*C07).</t>
+            <t>(I06) Total number and bytes of initial subscribe acks -- Number = (I02*C06) and Bytes = (I02*C06*C07), both equal to zero since I02 equals zero for XMPP.</t>
+            <t>(I07) Total number and bytes of initial notifications -- Number = (I03*C06) and Bytes = (I03*C06*C09), note that this formula does not take into account optimizations of the kind discussed in <xref target='PROBLEM'/>.</t>
+            <t>(I08) Total number and bytes of initial notification acks -- Number = (I04*C10) and Bytes = (I04*C06*C10), both equal to zero since I02 equals zero for XMPP.</t>
+            <t>(I09) Total number and bytes of initial messages per presence session -- Number = (numbers in I05+I06+I07+I08) and Bytes = (bytes in I05+I06+I07+I08).</t>
+          </list>
+        </t>
       </section>
+      <section title="Steady State Messages" anchor="analysis-steadystate">
+        <t>
+          <list style='symbols'>
+            <t>(S01) Presence notifications caused by state changes -- (C02*(C01 - 2)).</t>
+            <t>(S02) Notification acks for state change notifications -- zero since XMPP presence notifications are not acked.</t>
+            <t>(S03) Number and size of presence notifications caused by state changes -- Number = (S01*C06*C04), Bytes = (S01*C06*C04)*(C09+C10+C11).</t>
+            <t>(S04) Subscription refreshes -- zero since XMPP presence subscriptions are long-lived.</t>
+            <t>(S05) Acks for subscription refreshes -- zero since there are no subscription refreshes in XMPP.</t>
+            <t>(S06) Notify messages caused by subscription refreshes -- zero since there are no subscription refreshes in XMPP.</t>
+            <t>(S07) Acks for notify messages caused by subscription refreshes -- zero since there are no subscription refreshes in XMPP.</t>
+            <t>(S08) Number and size of messages caused by subscription refreshes -- zero since there are no subscription refreshes in XMPP.</t>
+            <t>(S09) Total number and bytes of steady-state messages per session -- Number = (numbers in S03+S08), Bytes = (bytes in S03+S08).</t>
+          </list>
+        </t>
+      </section>
+      <section title="Termination Messages" anchor="analysis-termination">
+        <t>
+          <list style='symbols'>
+            <t>(T01) Number of terminating subscribe messages -- zero since XMPP presence subscriptions are long-lived.</t>
+            <t>(T02) Number of acks for terminating subscribe messages -- zero since there are no terminating subscribe messages in XMPP.</t>
+            <t>(T03) Number of terminating notifications -- in XMPP this is unavailable presence sent when user goes offline = C05.</t>
+            <t>(T04) Number of acks for terminating notifications -- zero since XMPP presence notifications are not acked.</t>
+            <t>(T05) Total number and size of terminating subscribe messages -- zero since there are no terminating subscribe messages in XMPP.</t>
+            <t>(T06) Total number and size of acks for terminating subscribe messages -- zero since there are no terminating subscribe messages in XMPP.</t>
+            <t>(T07) Total number and size of terminating notifications -- Number = (numbers in T03*C06), Bytes = (T03*C06*(C09+C11)).</t>
+            <t>(T08) Total number and size of acks for terminating notifications -- zero since XMPP presence notifications are not acked.</t>
+            <t>(T09) Total number and size of terminating messages per session -- Number = (numbers in T05+T06+T07+T08), Bytes = (bytes in T05+T06+T07+T08).</t>
+          </list>
+        </t>
+      </section>
+      <section title="Bottom Line" anchor="analysis-bottomline">
+        <t>
+          <list style='symbols'>
+            <t>(B01) Total number and bytes per presence session = (I09+S09+T09).</t>
+            <t>(B02) Total number and bytes per second = (B01/(C01*3600)).</t>
+          </list>
+        </t>
+      </section>
+    </section>
+    <section title="Scenarios" anchor="scenarios">
+      <section title="Basic" anchor="scenarios-basic">
+        <t>This scenario assumes two domains, each with 20,000 users, where each user has 4 contacts in the other domain and changes presence 3 times per hour during an 8-hour presence session.  The calculations are as follows.</t>
+        <figure>
+          <artwork><![CDATA[
+CONSTANTS
+(C01) Presence session lifetime (hours) ....................... 8
+(C02) Presence state changes per hour ......................... 3
+(C03) Subscription refresh interval per hour ................ N/A 
+(C04) Total federated contacts per user ....................... 4
+(C05) Number of dialogs to maintain per watcher ............... 4
+(C06) Number of federated users .......................... 40,000
+(C07) Subscription request size in bytes .................... 100
+(C08) Subscription approval size in bytes ................... 100
+(C09) Presence notification size in bytes ................... 200
+(C10) Presence notification ack size in bytes ............... N/A
+(C11) Presence document size in bytes ....................... N/A
+
+INITIAL MESSAGES
+(I01) Initial subscribe requests per presence session ......... 4
+(I02) Initial subscription approvals per presence session ..... 0
+(I03) Number of initial presence notifications ................ 4
+(I04) Number of initial presence acks ......................... 0
+(I05) Total number and bytes of initial subscribe messages
+            Number ...................................... 160,000
+            Bytes  ................................... 16,000,000
+(I06) Total number and bytes of initial subscribe acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I07) Total number and bytes of initial notifications
+            Number ...................................... 160,000
+            Bytes  ................................... 32,000,000
+(I08) Total number and bytes of initial notification acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I09) Total number and bytes of initial messages
+            Number ...................................... 320,000
+            Bytes  ................................... 48,000,000
+
+STEADY STATE MESSAGES
+(S01) Presence notifications caused by state changes ......... 18
+(S02) Notification acks for state change notifications ........ 0
+(S03) Number and size of steady-state presence notifications
+            Number .................................... 2,880,000
+            Bytes ................................... 576,000,000 
+(S04) Subscription refreshes .................................. 0
+(S05) Acks for subscription refreshes ......................... 0
+(S06) Notify messages caused by refreshes ..................... 0
+(S07) Acks for notify messages caused by refreshes ............ 0
+(S08) Number and size of messages caused by refreshes ......... 0
+(S09) Total number and bytes of steady-state messages
+            Number .................................... 2,880,000
+            Bytes ................................... 576,000,000 
+
+TERMINATION MESSAGES
+(T01) Number of terminating subscribe messages ................ 0
+(T02) Number of acks for terminating subscribe messages ....... 0
+(T03) Number of terminating notifications ..................... 4
+(T04) Number of acks for terminating notifications ............ 0
+(T05) Total number and size of terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T06) Total number and size of acks for terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T07) Total number and size of terminating notifications
+            Number ...................................... 160,000 
+            Bytes  ................................... 16,000,000
+(T08) Total number and size of acks for terminating notifications
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T09) Total number and size of terminating messages per session
+            Number ...................................... 160,000 
+            Bytes  ................................... 16,000,000
+
+BOTTOM LINE
+(B01) Total number and bytes per presence session
+            Number .................................... 3,360,000
+            Bytes  .................................. 640,000,000
+(B02) Total number and bytes per second
+            Number .......................................... 116
+            Bytes  ....................................... 22,222
+          ]]></artwork>
+        </figure>
+        <t>For the bottom-line figures, the comparable numbers for SIMPLE in a non-optimized state (see <xref target='PROBLEM'/>) are 12,800,000 total messages, 49,756,800,000 bytes, 444 messages per second, and 1,727,667 bytes per second; thus for this scenario XMPP uses 26% of the messages and 1.3% of the bytes used by SIMPLE.</t>
+      </section>
+      <section title="Widely Distributed Inter-Domain Presence" anchor="scenarios-widely">
+        <t>This scenario assumes two domains, each with 20,000 users, where each user has 20 contacts in the other domain and changes presence 3 times per hour during an 8-hour presence session.  The calculations are as follows.</t>
+        <figure>
+          <artwork><![CDATA[
+CONSTANTS
+(C01) Presence session lifetime (hours) ....................... 8
+(C02) Presence state changes per hour ......................... 3
+(C03) Subscription refresh interval per hour ................ N/A 
+(C04) Total federated contacts per user ...................... 20
+(C05) Number of dialogs to maintain per watcher .............. 20
+(C06) Number of federated users .......................... 40,000
+(C07) Subscription request size in bytes .................... 100
+(C08) Subscription approval size in bytes ................... 100
+(C09) Presence notification size in bytes ................... 200
+(C09) Presence notification ack size in bytes ............... N/A
+(C11) Presence document size in bytes ....................... N/A
+
+INITIAL MESSAGES
+(I01) Initial subscribe requests per presence session ........ 20
+(I02) Initial subscription approvals per presence session ..... 0
+(I03) Number of initial presence notifications ............... 20
+(I04) Number of initial presence acks ......................... 0
+(I05) Total number and bytes of initial subscribe messages
+            Number ...................................... 800,000
+            Bytes  ................................... 80,000,000
+(I06) Total number and bytes of initial subscribe acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I07) Total number and bytes of initial notifications
+            Number ...................................... 800,000
+            Bytes  .................................. 160,000,000
+(I08) Total number and bytes of initial notification acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I09) Total number and bytes of initial messages
+            Number .................................... 1,600,000
+            Bytes  .................................. 240,000,000
+
+STEADY STATE MESSAGES
+(S01) Presence notifications caused by state changes ......... 18
+(S02) Notification acks for state change notifications ........ 0
+(S03) Number and size of steady-state presence notifications
+            Number ................................... 14,400,000
+            Bytes ................................. 2,880,000,000 
+(S04) Subscription refreshes .................................. 0
+(S05) Acks for subscription refreshes ......................... 0
+(S06) Notify messages caused by refreshes ..................... 0
+(S07) Acks for notify messages caused by refreshes ............ 0
+(S08) Number and size of messages caused by refreshes ......... 0
+(S09) Total number and bytes of steady-state messages
+            Number ................................... 14,400,000
+            Bytes ................................. 2,880,000,000 
+
+TERMINATION MESSAGES
+(T01) Number of terminating subscribe messages ................ 0
+(T02) Number of acks for terminating subscribe messages ....... 0
+(T03) Number of terminating notifications .................... 20
+(T04) Number of acks for terminating notifications ............ 0
+(T05) Total number and size of terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T06) Total number and size of acks for terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T07) Total number and size of terminating notifications
+            Number ...................................... 800,000 
+            Bytes  .................................. 160,000,000
+(T08) Total number and size of acks for terminating notifications
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T09) Total number and size of terminating messages per session
+            Number ...................................... 800,000 
+            Bytes  .................................. 160,000,000
+
+BOTTOM LINE
+(B01) Total number and bytes per presence session
+            Number ................................... 16,800,000
+            Bytes  ................................ 3,280,000,000
+(B02) Total number and bytes per second
+            Number .......................................... 583
+            Bytes  ...................................... 113,889
+          ]]></artwork>
+        </figure>
+        <t>For the bottom-line figures, the comparable numbers for SIMPLE in a non-optimized state (see <xref target='PROBLEM'/>) are 65,000,000 total messages, 248,784,000,000 bytes, 2,222 messages per second, and 8,638,333 bytes per second; thus for this scenario XMPP uses 26% of the messages and 1.3% of the bytes used by SIMPLE.</t>
+      </section>
+      <section title="Very Large Network Peering" anchor="scenarios-large">
+        <t>This scenario assumes two domains, each with 10,000,000 users, where each user has 10 contacts in the other domain and changes presence 6 times per hour during an 8-hour presence session.  The calculations are as follows.</t>
+        <figure>
+          <artwork><![CDATA[
+CONSTANTS
+(C01) Presence session lifetime (hours) ....................... 8
+(C02) Presence state changes per hour ......................... 3
+(C03) Subscription refresh interval per hour ................ N/A 
+(C04) Total federated contacts per user ...................... 10
+(C05) Number of dialogs to maintain per watcher .............. 10
+(C06) Number of federated users ...................... 20,000,000
+(C07) Subscription request size in bytes .................... 100
+(C08) Subscription approval size in bytes ................... 100
+(C09) Presence notification size in bytes ................... 200
+(C09) Presence notification ack size in bytes ............... N/A
+(C11) Presence document size in bytes ....................... N/A
+
+INITIAL MESSAGES
+(I01) Initial subscribe requests per presence session ........ 10
+(I02) Initial subscription approvals per presence session ..... 0
+(I03) Number of initial presence notifications ............... 10
+(I04) Number of initial presence acks ......................... 0
+(I05) Total number and bytes of initial subscribe messages
+            Number .................................. 200,000,000
+            Bytes  ............................... 20,000,000,000
+(I06) Total number and bytes of initial subscribe acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I07) Total number and bytes of initial notifications
+            Number .................................. 200,000,000
+            Bytes  ............................... 40,000,000,000
+(I08) Total number and bytes of initial notification acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I09) Total number and bytes of initial messages
+            Number .................................. 400,000,000
+            Bytes  ............................... 60,000,000,000
+
+STEADY STATE MESSAGES
+(S01) Presence notifications caused by state changes ......... 18
+(S02) Notification acks for state change notifications ........ 0
+(S03) Number and size of steady-state presence notifications
+            Number ................................ 3,600,000,000
+            Bytes ............................... 720,000,000,000
+(S04) Subscription refreshes .................................. 0
+(S05) Acks for subscription refreshes ......................... 0
+(S06) Notify messages caused by refreshes ..................... 0
+(S07) Acks for notify messages caused by refreshes ............ 0
+(S08) Number and size of messages caused by refreshes ......... 0
+(S09) Total number and bytes of steady-state messages
+            Number ................................ 3,600,000,000
+            Bytes ............................... 720,000,000,000
+
+TERMINATION MESSAGES
+(T01) Number of terminating subscribe messages ................ 0
+(T02) Number of acks for terminating subscribe messages ....... 0
+(T03) Number of terminating notifications .................... 10
+(T04) Number of acks for terminating notifications ............ 0
+(T05) Total number and size of terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T06) Total number and size of acks for terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T07) Total number and size of terminating notifications
+            Number .................................. 200,000,000
+            Bytes  ............................... 20,000,000,000
+(T08) Total number and size of acks for terminating notifications
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T09) Total number and size of terminating messages per session
+            Number .................................. 200,000,000
+            Bytes  ............................... 20,000,000,000
+
+BOTTOM LINE
+(B01) Total number and bytes per presence session
+            Number ................................ 4,200,000,000
+            Bytes ............................... 800,000,000,000
+(B02) Total number and bytes per second
+            Number ...................................... 145,833
+            Bytes  ................................... 27,777,777
+          ]]></artwork>
+        </figure>
+        <t>For the bottom-line figures, the comparable numbers for SIMPLE in a non-optimized state (see <xref target='PROBLEM'/>) are 25,600,000,000 total messages, 99,348,000,000,000 bytes, 888,889 messages per second, and 3,449,583,333 bytes per second; thus for this scenario XMPP uses 16% of the messages and 0.8% of the bytes used by SIMPLE.</t>
+      </section>
+      <section title="Intra-Domain Peering" anchor="scenarios-intra">
+        <t>This scenario assumes two domains, each with 60,000 users, where each user has 10 contacts in the other domain and changes presence 3 times per hour during an 8-hour presence session.  The calculations are as follows.</t>
+        <figure>
+          <artwork><![CDATA[
+CONSTANTS
+(C01) Presence session lifetime (hours) ....................... 8
+(C02) Presence state changes per hour ......................... 3
+(C03) Subscription refresh interval per hour ................ N/A 
+(C04) Total federated contacts per user ...................... 10
+(C05) Number of dialogs to maintain per watcher .............. 10
+(C06) Number of federated users ......................... 120,000
+(C07) Subscription request size in bytes .................... 100
+(C08) Subscription approval size in bytes ................... 100
+(C09) Presence notification size in bytes ................... 200
+(C09) Presence notification ack size in bytes ............... N/A
+(C11) Presence document size in bytes ....................... N/A
+
+INITIAL MESSAGES
+(I01) Initial subscribe requests per presence session ........ 10
+(I02) Initial subscription approvals per presence session ..... 0
+(I03) Number of initial presence notifications ............... 10
+(I04) Number of initial presence acks ......................... 0
+(I05) Total number and bytes of initial subscribe messages
+            Number .................................... 1,200,000
+            Bytes  .................................. 120,000,000
+(I06) Total number and bytes of initial subscribe acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I07) Total number and bytes of initial notifications
+            Number .................................... 1,200,000
+            Bytes  .................................. 240,000,000
+(I08) Total number and bytes of initial notification acks
+            Number ............................................ 0
+            Bytes ............................................. 0
+(I09) Total number and bytes of initial messages
+            Number .................................... 2,400,000
+            Bytes  .................................. 360,000,000
+
+STEADY STATE MESSAGES
+(S01) Presence notifications caused by state changes ......... 18
+(S02) Notification acks for state change notifications ........ 0
+(S03) Number and size of steady-state presence notifications
+            Number ................................... 21,600,000
+            Bytes ................................. 4,320,000,000 
+(S04) Subscription refreshes .................................. 0
+(S05) Acks for subscription refreshes ......................... 0
+(S06) Notify messages caused by refreshes ..................... 0
+(S07) Acks for notify messages caused by refreshes ............ 0
+(S08) Number and size of messages caused by refreshes ......... 0
+(S09) Total number and bytes of steady-state messages
+            Number ................................... 21,600,000
+            Bytes ................................. 4,320,000,000 
+
+TERMINATION MESSAGES
+(T01) Number of terminating subscribe messages ................ 0
+(T02) Number of acks for terminating subscribe messages ....... 0
+(T03) Number of terminating notifications .................... 10
+(T04) Number of acks for terminating notifications ............ 0
+(T05) Total number and size of terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T06) Total number and size of acks for terminates 
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T07) Total number and size of terminating notifications
+            Number .................................... 1,200,000
+            Bytes  .................................. 240,000,000
+(T08) Total number and size of acks for terminating notifications
+            Number ............................................ 0
+            Bytes ............................................. 0
+(T09) Total number and size of terminating messages per session
+            Number .................................... 1,200,000
+            Bytes  .................................. 240,000,000
+
+BOTTOM LINE
+(B01) Total number and bytes per presence session
+            Number ................................... 25,200,000
+            Bytes ................................. 4,920,000,000 
+(B02) Total number and bytes per second
+            Number .......................................... 875
+            Bytes  ...................................... 170,833
+          ]]></artwork>
+        </figure>
+        <t>For the bottom-line figures, the comparable numbers for SIMPLE in a non-optimized state (see <xref target='PROBLEM'/>) are 96,000,000 total messages, 373,176,000,000 bytes, 3,333 messages per second, and 12,957,500 bytes per second; thus for this scenario XMPP uses 26% of the messages and 1.3% of the bytes used by SIMPLE.</t>
+      </section>
+    </section>
+
+    <section title="Conclusion" anchor="conclusion">
+      <t>With respect to presence scaling, the differences between XMPP systems and SIP-based systems are startling.  In particular, this analysis indicates that XMPP requires only about 1.5% of the bandwidth required by SIMPLE.  There are two primary causes for this disparity: (1) XMPP requires only about 25% of the packets required by SIMPLE and (2) XMPP packets are about 5% of the size of SIMPLE packets for presence notifications and 20% of the size for subscribe packets.  Together, these two factors appear to result in a significant disparity with respect to the scalability of presence technologies.  Naturally, real-world studies of deployed systems will be necessary to determine if these theorized differences occur in reality.</t>
     </section>
 
     <section title="Security Considerations" anchor="security">
@@ -252,16 +537,16 @@
 
 <reference anchor='PROBLEM'>
 <front>
-<title>Problem Statement for SIP/SIMPLE</title>
+<title>Presence Interdomain Scaling Analysis for SIP/SIMPLE</title>
 <author initials='A' surname='Houri' fullname='Avshalom Houri'>
     <organization />
 </author>
-<date month='February' day='27' year='2007' />
-<abstract><t>The document analyses the traffic that is generated due to presence subscriptions between domains. It is shown that the amount of traffic can be extremely big. In addition to the very large traffic the document also analyses the affects of a large presence system on the memory footprint and the CPU load. Several suggested optimization to the SIMPLE protocol are analysed with the possible impact on the load.</t></abstract>
+<date month='July' day='5' year='2007' />
+<abstract><t>The document analyses the traffic that is generated due to presence subscriptions between domains. It is shown that the amount of traffic can be extremely big. In addition to the very large traffic the document also analyses the affects of a large presence system on the memory footprint and the CPU load. Current approved and in work optimizations to the SIMPLE protocol are analysed with the possible impact on the load. Separate documents contain the requirements for optimizations and suggestions for new optimizations.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-simple-interdomain-scaling-analysis-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-simple-interdomain-scaling-analysis-01' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-simple-interdomain-scaling-analysis-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-simple-interdomain-scaling-analysis-01.txt' />
 </reference>
 
 <reference anchor='SIP'>
@@ -312,6 +597,132 @@
 <t>This document describes the usage of the Session Initiation Protocol (SIP) for subscriptions and notifications of presence. Presence is defined as the willingness and ability of a user to communicate with other users on the network. Historically, presence has been limited to "on-line" and "off-line" indicators; the notion of presence here is broader. Subscriptions and notifications of presence are supported by defining an event package within the general SIP event notification framework. This protocol is also compliant with the Common Presence Profile (CPP) framework. [STANDARDS TRACK] </t></abstract></front>
 <seriesInfo name='RFC' value='3856' />
 <format type='TXT' octets='62956' target='ftp://ftp.isi.edu/in-notes/rfc3856.txt' />
+</reference>
+
+<reference anchor="XEP-0060">
+  <front>
+    <title>Publish-Subscribe</title>
+    <author initials="P." surname="Millard" fullname="Peter Millard">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="R." surname="Meijer" fullname="Ralph Meijer">
+      <organization/>
+      <address>
+        <email>ralphm@ik.nu</email>
+      </address>
+    </author>
+    <date day="26" month="September" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0060"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0060.html"/>
+</reference>
+
+<reference anchor="XEP-0115">
+  <front>
+    <title>Entity Capabilities</title>
+    <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+      <organization/>
+      <address>
+        <email>jhildebrand@jabber.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <author initials="R." surname="Tron&#xE7;on" fullname="Remko Tron&#xE7;on">
+      <organization/>
+      <address>
+        <email>public@el-tramo.be</email>
+      </address>
+    </author>
+    <date day="13" month="August" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0115"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0115.html"/>
+</reference>
+
+<reference anchor="XEP-0118">
+  <front>
+    <title>User Tune</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="04" month="June" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0118"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0118.html"/>
+</reference>
+
+<reference anchor="XEP-0138">
+  <front>
+    <title>Stream Compression</title>
+    <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+      <organization/>
+      <address>
+        <email>jhildebrand@jabber.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="26" month="September" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0138"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0138.html"/>
+</reference>
+
+<reference anchor="XEP-0153">
+  <front>
+    <title>vCard-Based Avatars</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="16" month="August" year="2006"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0153"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0153.html"/>
+</reference>
+
+<reference anchor="XEP-0163">
+  <front>
+    <title>Personal Eventing via Pubsub</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="K." surname="Smith" fullname="Kevin Smith">
+      <organization/>
+      <address>
+        <email>kevin@kismith.co.uk</email>
+      </address>
+    </author>
+    <date day="26" month="September" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0163"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0163.html"/>
 </reference>
 
 <reference anchor="XMPP-CORE">
