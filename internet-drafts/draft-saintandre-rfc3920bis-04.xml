@@ -15,7 +15,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="September" day="14"/>
+    <date year="2007" month="September" day="18"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -27,7 +27,7 @@
     <keyword>XML</keyword>
     <keyword>Extensible Markup Language</keyword>
     <abstract>
-      <t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities.  This document also specifies the format for XMPP addresses, which are fully internationalizable.</t>
+      <t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities.  This document also specifies the format for XMPP addresses, which are fully internationalizable.</t>
       <t>This document obsoletes RFC 3920.</t>
     </abstract>
   </front>
@@ -36,14 +36,14 @@
 
   <section title="Introduction" anchor="intro">
     <section title="Overview" anchor="intro-overview">
-      <t>The Extensible Messaging and Presence Protocol (XMPP) is an Extensible Markup Language <xref target="XML"/> technology for near-real-time messaging, presence, and request-response services.  The basic syntax and semantics were developed originally within the Jabber open-source community, mainly in 1999.  In late 2002, the XMPP Working Group was chartered with developing an adaptation of the core Jabber protocol that would be suitable as an IETF instant messaging (IM) and presence technology.  As a result of work by the XMPP WG, <xref target='RFC3920'/> was published in October 2004.</t>
-      <t>As a result of extensive implementation and deployment experience with XMPP since that time, as well as more formal interoperability testing, this document reflects consensus from the XMPP developer community regarding XMPP's core XML streaming technology.  In particular, this document incorporates the following backward-compatible changes from RFC 3920:</t>
+      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language <xref target="XML"/> for streaming XML data in close to real time between any two (or more) network-aware entities.  XMPP is typically used to exchange messages, share presence information, and engage in structured request-response interactions.  The basic syntax and semantics of XMPP were developed originally within the Jabber open-source community, mainly in 1999.  In late 2002, the XMPP Working Group was chartered with developing an adaptation of the core Jabber protocol that would be suitable as an IETF instant messaging (IM) and presence technology.  As a result of work by the XMPP WG, <xref target='RFC3920'/> and <xref target='RFC3921'/> were  published in October 2004, representing the most complete definition of XMPP at that time.</t>
+      <t>As a result of extensive implementation and deployment experience with XMPP since 2004, as well as more formal interoperability testing carried out under the auspices of the XMPP Standards Foundation (XSF), this document reflects consensus from the XMPP developer community regarding XMPP's core XML streaming technology.  In particular, this document incorporates the following backward-compatible changes from RFC 3920:</t>
       <t>
         <list style='symbols'>
           <t>Corrections and errata</t>
           <t>Additional examples throughout</t>
           <t>Clarifications and more complete specification of matters that were underspecified</t>
-          <t>Modifications to reflect updated technologies for which XMPP is a using protocol (e.g., Transport Layer Security and the Simple Authentication and Security Layer)</t>
+          <t>Modifications to reflect updated technologies for which XMPP is a using protocol, e.g., Transport Layer Security (TLS) and the Simple Authentication and Security Layer (SASL)</t>
           <t>Definition of several additional error conditions</t>
           <t>Addition of TLS plus SASL PLAIN as a mandatory-to-implement technology</t>
           <t>Definition of optional support for multiple resources over the same connection</t>
@@ -69,7 +69,7 @@
           <t>Close the TCP connection</t>
         </list>
       </t>
-      <t>In the sections following discussion of XMPP architecture and XMPP addresses, this document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, definition of such semantics is provided by XMPP extensions (e.g., <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality, and various specifications produced in the XMPP Standards Foundation's XEP series define extensions for a wide range of more advanced functionality).</t>
+      <t>In the sections following discussion of XMPP architecture and XMPP addresses, this document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, definition of such semantics is provided by XMPP extensionsl.  For example, <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality.  In addition, various specifications produced in the XSF's XEP series <xref target='XEP-0001'/> define extensions for a wide range of more advanced functionality.</t>
       <t>Within the client-server architecture used by XMPP, one server may optionally connect to another server to enable inter-domain or inter-server communication.  For this to happen, the two servers must negotiate a connection between themselves and then exchange XML stanzas; the process for doing so is:</t>
       <t>
         <list style='numbers'>
@@ -100,6 +100,9 @@
           <t>S2: = server2</t>
         </list>
       </t>
+    </section>
+    <section title="Discussion Venue" anchor="intro-discuss">
+      <t>The editor welcomes discussion and comments related to the topics presented in this document.  The preferred forum is the &lt;standards@xmpp.org&gt; mailing list, for which archives and subscription information are available at &lt;http://mail.jabber.org/mailman/listinfo/standards&gt;.</t>
     </section>
   </section>
 
@@ -145,7 +148,7 @@ romeo@example.net               juliet@example.com
     </section>
 
     <section title="Client" anchor="arch-client">
-      <t>A CLIENT is an entity that establiishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas via the server to the client.  A client then uses XMPP to communicate with its server, other clients, and any other accessible entities on a network.  Multiple clients may connect simultaneously to a server on behalf of a local account, with each client differentiated by the resource identifier portion of an XMPP address (e.g., &lt;node@domain/home&gt; vs. &lt;node@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.  The RECOMMENDED port for TCP connections between a client and a server is 5222, as registered with the IANA (see <xref target="iana-ports"/>).</t>
+      <t>A CLIENT is an entity that establiishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas via the server to the client.  A client then uses XMPP to communicate with its server, other clients, and any other accessible entities on a network.  Multiple clients may connect simultaneously to a server on behalf of a local account, where each client is differentiated by the resource identifier portion of an XMPP address (e.g., &lt;node@domain/home&gt; vs. &lt;node@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.  The RECOMMENDED port for TCP connections between a client and a server is 5222, as registered with the IANA (see <xref target="iana-ports"/>).</t>
     </section>
 
     <section title="Network" anchor="arch-network">
@@ -184,7 +187,7 @@ romeo@example.net               juliet@example.com
     </section>
 
     <section title="Domain Identifier" anchor="addressing-domain">
-      <t><iref item='Domain Identifier'/>The DOMAIN IDENTIFIER portion of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  Typically a domain identifier identifies the "home" server to which clients connect for XML routing and data management functionality.  (Note: A single server may host multiple domain identifiers, i.e., multiple local domains.)  However, it is not necessary for an XMPP domain identifier to identify an entity that provides core XMPP server functionality (e.g., a domain identifier may identity an entity such as a multi-user conference service, a publish-subscribe service, or a user directory).</t>
+      <t><iref item='Domain Identifier'/>The DOMAIN IDENTIFIER portion of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  Typically a domain identifier identifies the "home" server to which clients connect for XML routing and data management functionality.  (Note: A single server may service multiple domain identifiers, i.e., multiple local domains.)  However, it is not necessary for an XMPP domain identifier to identify an entity that provides core XMPP server functionality (e.g., a domain identifier may identity an entity such as a multi-user conference service, a publish-subscribe service, or a user directory).</t>
       <t>The domain identifier for every server or service that will communicate over a network SHOULD be a fully qualified domain name (see <xref target='DNS'/>) but MAY be either an IPv4 or IPv6 address or a text label (commonly called an "unqualified hostname") that is resolvable on a local network.  If the domain identifier includes a final character considered to be a label separator (dot) by <xref target='IDNA'/> or <xref target='STD13'/>, this character MUST be stripped from the domain identifier before the JID of which it is a part is used for the purpose of routing an XML stanza, comparing against another JID, or constructing an <xref target='XMPP-URI'/>; in particular, the character should be stripped before any other canonicalization steps are taken (such as application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> or completion of the ToASCII operation as described in <xref target='IDNA'/>).</t>
       <t>A domain identifier MUST be an "internationalized domain name" as defined in <xref target='IDNA'/>, that is, "a domain name in which every label is an internationalized label".  When preparing a text label (consisting of a sequence of Unicode code points) for representation as an internationalized label in the process of constructing an XMPP domain identifier or comparing two XMPP domain identifiers, an application MUST ensure that for each text label it is possible to apply without failing the ToASCII operation specified in <xref target='IDNA'/> with the UseSTD3ASCIIRules flag set (thus forbidding ASCII code points other than letters, digits, and hyphens).  If the ToASCII operation can be applied without failing, then the label is an internationalized label.  An internationalized domain name (and therefore an XMPP domain identifier) is constructed from its constituent internationalized labels by following the rules specified in <xref target='IDNA'/>.  (Note: The ToASCII operation includes application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> and encoding using the algorithm specified in <xref target='PUNYCODE'/>; for details, see <xref target='IDNA'/>.)</t>
     </section>
@@ -195,14 +198,14 @@ romeo@example.net               juliet@example.com
     </section>
 
     <section title="Resource Identifier" anchor="addressing-resource">
-      <t><iref item='Resource Identifier'/>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier may modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resource identifier uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP node identifier at a local domain.  A resource identifier has no semantic meaning and is opaque to both servers and clients.  <iref item='Connected Resource'/><iref item='Full JID'/>A resource identifier is negotiated between a client and a server during <xref target='bind'>resource binding</xref>, after which the entity is referred to as a CONNECTED RESOURCE and its address (of the form &lt;node@domain/resource&gt;) is referred to as a FULL JID.  An entity MAY maintain multiple connected resources simultaneously, with each connected resource differentiated by a distinct resource identifier.</t>
+      <t><iref item='Resource Identifier'/>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier may modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resource identifier uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP node identifier at a local domain.  XMPP entities SHOULD consider resource identifiers to be opaque strings and SHOULD NOT impute meaning to any given resource identifier.  <iref item='Connected Resource'/><iref item='Full JID'/>A resource identifier is negotiated between a client and a server during <xref target='bind'>resource binding</xref>, after which the entity is referred to as a CONNECTED RESOURCE and its address (of the form &lt;node@domain/resource&gt;) is referred to as a FULL JID.  An entity MAY maintain multiple connected resources simultaneously, with each connected resource differentiated by a distinct resource identifier.</t>
       <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, an application MUST first apply the Resourceprep profile to each identifier.</t>
     </section>
 
     <section title="Determination of Addresses" anchor="addressing-determination">
       <t>After <xref target='sasl'>SASL negotiation</xref> and, if appropriate, <xref target="bind">resource binding</xref>, the receiving entity for a stream MUST determine the initiating entity's JID.</t>
-      <t>For server-to-server communication, the initiating entity's JID SHOULD be the authorization identity, derived from the authentication identity (as defined by <xref target="SASL"/>), if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.</t>
-      <t>For client-to-server communication, the bare JID (&lt;node@domain&gt;) SHOULD be the authorization identity, derived from the authentication identity (as defined by <xref target="SASL"/>), if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>; the resource identifier portion of the full JID (&lt;node@domain/resource&gt;) SHOULD be the resource identifier negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
+      <t>For server-to-server communication, the initiating entity's JID SHOULD be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating entity during <xref target='sasl'>SASL negotiation</xref> or (2) as derived from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.</t>
+      <t>For client-to-server communication, the client's bare JID (&lt;node@domain&gt;) SHOULD be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating entity during <xref target='sasl'>SASL negotiation</xref> or (2) as derived from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resource identifier portion of the full JID (&lt;node@domain/resource&gt;) SHOULD be the resource identifier negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
       <t>The receiving entity MUST ensure that the resulting JID (including node identifier, domain identifier, resource identifier, and separator characters) conforms to the rules and formats defined earlier in this section; to meet this restriction, the receiving entity may need to replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
     </section>
 
@@ -210,7 +213,7 @@ romeo@example.net               juliet@example.com
 
   <section title="TCP Binding" anchor="tcp">
     <section title="Scope" anchor="tcp-scope">
-      <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a TCP connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  The rules specified in the following sections apply to the TCP binding.</t>
+      <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a Transmission Control Protocol <xref target='TCP'/> connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  The rules specified in the following sections apply to the TCP binding.</t>
     </section>
     <section title="Hostname Resolution" anchor="tcp-resolution">
       <t>Before opening the TCP connection, the initiating entity first MUST resolve the Domain Name System (DNS) hostname associated with the receiving entity and determine the appropriate TCP port for communication with the receiving entity.  The process is:</t>
@@ -230,7 +233,7 @@ romeo@example.net               juliet@example.com
       <t>This rule applies only to <xref target='stanzas'>XML stanzas</xref>.  Therefore during <xref target='tls'>STARTTLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref> the servers would use one TCP connection, but after stream setup that TCP connection would be used only for the initiating server to send XML stanzas to the receiving server.  In order for the receiving server to send XML stanzas to the initiating server, the receiving server would need to reverse the roles and negotiate an XML stream from the receiving server to the initiating server.</t>
     </section>
     <section title="Other Bindings" anchor="tcp-other">
-      <t>There is no necessary coupling of an XML stream to a <xref target="TCP"/> connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines a binding of XMPP to TCP only.</t>
+      <t>There is no necessary coupling of an XML stream to a TCP connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines a binding of XMPP to TCP only.</t>
     </section>
   </section>
 
@@ -240,11 +243,11 @@ romeo@example.net               juliet@example.com
       <t>Two fundamental concepts make possible the rapid, asynchronous exchange of relatively small payloads of structured information between presence-aware entities: XML streams and XML stanzas.  These terms are defined as follows.</t>
       <t>
         <list style="hanging">
-          <t hangText="Definition of XML Stream:"><iref item='XML Stream'/>An XML STREAM is a container for the exchange of XML elements between any two entities over a network.  The start of an XML stream is denoted unambiguously by an opening XML &lt;stream&gt; tag (with appropriate attributes and namespace declarations), while the end of the XML stream is denoted unambiguously by a closing XML &lt;/stream&gt; tag.  During the life of the stream, the entity that initiated it can send an unbounded number of XML elements over the stream, either elements used to negotiate the stream (e.g., to complete <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref>) or XML stanzas.  <iref item='Initial Stream'/>The INITIAL STREAM is negotiated from the initiating entity (typically a client or server) to the receiving entity (typically a server), and can be seen as corresponding to the initiating entity's "connection" or "session" with the receiving entity.  <iref item='Response Stream'/>The initial stream enables unidirectional communication from the initiating entity to the receiving entity; in order to enable information exchange from the receiving entity to the initiating entity, the receiving entity MUST negotiate a stream in the opposite direction (the RESPONSE STREAM).</t>
-          <t hangText="Definition of XML Stanza:"><iref item='XML Stanza'/>An XML STANZA is a discrete semantic unit of structured information that is sent from one entity to another over an XML stream, and is the basic unit of meaning in XMPP.  An XML stanza exists at the direct child level of the root &lt;stream/&gt; element and is said to be well-balanced if it matches the production [43] content of <xref target="XML"/>.  The start of any XML stanza is denoted unambiguously by the element start tag at depth=1 of the XML stream (e.g., &lt;presence&gt;), and the end of any XML stanza is denoted unambiguously by the corresponding close tag at depth=1 (e.g., &lt;/presence&gt;); a server MUST NOT process a partial stanza and MUST NOT attach meaning to the transmission timing of any part of a stanza (before receipt of the close tag).  The only XML stanzas defined herein are the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; elements qualified by the default namespace for the stream, as described under <xref target="stanzas"/>; an XML element sent for the purpose of <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref> is not considered to be an XML stanza.  An XML stanza MAY contain child elements (with accompanying attributes, elements, and XML character data) as necessary in order to convey the desired information, which MAY be qualified by any XML namespace (see <xref target='XML-NAMES'/> as well as <xref target='stanzas-extended'/> herein).</t>
+          <t hangText="Definition of XML Stream:"><iref item='XML Stream'/>An XML STREAM is a container for the exchange of XML elements between any two entities over a network.  The start of an XML stream is denoted unambiguously by an opening STREAM HEADER (i.e., an XML &lt;stream&gt; tag with appropriate attributes and namespace declarations), while the end of the XML stream is denoted unambiguously by a closing XML &lt;/stream&gt; tag.  During the life of the stream, the entity that initiated it can send an unbounded number of XML elements over the stream, either elements used to negotiate the stream (e.g., to complete <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref>) or XML stanzas.  <iref item='Initial Stream'/>The INITIAL STREAM is negotiated from the initiating entity (typically a client or server) to the receiving entity (typically a server), and can be seen as corresponding to the initiating entity's "connection" or "session" with the receiving entity.  <iref item='Response Stream'/>The initial stream enables unidirectional communication from the initiating entity to the receiving entity; in order to enable information exchange from the receiving entity to the initiating entity, the receiving entity MUST negotiate a stream in the opposite direction (the RESPONSE STREAM).</t>
+          <t hangText="Definition of XML Stanza:"><iref item='XML Stanza'/>An XML STANZA is a discrete semantic unit of structured information that is sent from one entity to another over an XML stream.  An XML stanza is the basic unit of meaning in XMPP.  An XML stanza exists at the direct child level of the root &lt;stream/&gt; element and is said to be well-balanced if it matches the production [43] content of <xref target="XML"/>.  The start of any XML stanza is denoted unambiguously by the element start tag at depth=1 of the XML stream (e.g., &lt;presence&gt;), and the end of any XML stanza is denoted unambiguously by the corresponding close tag at depth=1 (e.g., &lt;/presence&gt;); a server MUST NOT process a partial stanza and MUST NOT attach meaning to the transmission timing of any part of a stanza (before receipt of the close tag).  The only XML stanzas defined herein are the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; elements qualified by the default namespace for the stream, as described under <xref target="stanzas"/>; an XML element sent for the purpose of <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref> is not considered to be an XML stanza.  An XML stanza MAY contain child elements (with accompanying attributes, elements, and XML character data) as necessary in order to convey the desired information, which MAY be qualified by any XML namespace (see <xref target='XML-NAMES'/> as well as <xref target='stanzas-extended'/> herein).</t>
         </list>
       </t>
-      <t>Consider the example of a client's connection to a server.  In order to connect to a server, a client MUST initiate an XML stream by sending an opening &lt;stream&gt; tag to the server, optionally preceded by a text declaration specifying the XML version and the character encoding supported (see <xref target="xml-declaration"/> and <xref target="xml-encoding"/>).  Subject to local policies and service provisioning, the server SHOULD then reply with a second XML stream back to the client, again optionally preceded by a text declaration.  Once the client has completed <xref target='sasl'>SASL negotiation</xref> and <xref target='bind'>resource binding</xref>, the client MAY send an unbounded number of XML stanzas over the stream to any.  When the client desires to close the stream, it simply sends a closing &lt;/stream&gt; tag to the server (see <xref target='streams-close'/>).</t>
+      <t>Consider the example of a client's connection to a server.  In order to connect to a server, a client MUST initiate an XML stream by sending a stream header to the server, optionally preceded by a text declaration specifying the XML version and the character encoding supported (see <xref target="xml-declaration"/> and <xref target="xml-encoding"/>).  Subject to local policies and service provisioning, the server SHOULD then reply with a second XML stream back to the client, again optionally preceded by a text declaration.  Once the client has completed <xref target='sasl'>SASL negotiation</xref> and <xref target='bind'>resource binding</xref>, the client MAY send an unbounded number of XML stanzas over the stream.  When the client desires to close the stream, it simply sends a closing &lt;/stream&gt; tag to the server (see <xref target='streams-close'/>).</t>
       <t>In essence, then, an XML stream acts as an envelope for all the XML stanzas sent during a connection.  We can represent this in a simplistic fashion as follows.</t>
       <figure>
         <artwork><![CDATA[
@@ -260,6 +263,10 @@ romeo@example.net               juliet@example.com
 | </message>         |
 |--------------------|
 | <iq to='bar'>      |
+|   <query/>         |
+| </iq>              |
+|--------------------|
+| <iq from='bar'>    |
 |   <query/>         |
 | </iq>              |
 |--------------------|
@@ -281,7 +288,7 @@ romeo@example.net               juliet@example.com
     <section title="Stream Attributes" anchor="streams-attr">
       <t>The attributes of the root &lt;stream/&gt; element are as follows.</t>
       <section title='from' anchor='streams-attr-from'>
-        <t>In client-to-server communication, the 'from' attribute SHOULD be included in the XML stream header sent from the initiating entity to the receiving entity and (if included) MUST be set to the account name (i.e., bare JID = &lt;node@domain&gt;) of the entity controlling the client.</t>
+        <t>In client-to-server communication, the 'from' attribute SHOULD be included in the initial stream header and (if included) MUST be set to the account name (i.e., bare JID = &lt;node@domain&gt;) of the entity controlling the client.</t>
         <figure>
           <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -294,7 +301,7 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In server-to-server communication, the 'from' attribute SHOULD be included in the XML stream header sent from the initiating entity to the receiving entity and (if included) MUST be set to a hostname serviced by the initiating entity.</t>
+        <t>In server-to-server communication, the 'from' attribute SHOULD be included in the initial stream header and (if included) MUST be set to a hostname serviced by the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
 P: <?xml version='1.0'?>
@@ -307,7 +314,7 @@ P: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In both client-to-server and server-to-server communications, the 'from' attribute MUST be included in the XML stream header by which the receiving entity responds to the initiating entity and MUST be set to a hostname serviced by the receiving entity that is granting access to the initiating entity.</t>
+        <t>In both client-to-server and server-to-server communications, the 'from' attribute MUST be included in the response stream header and MUST be set to a hostname serviced by the receiving entity that is granting access to the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -324,7 +331,7 @@ S: <?xml version='1.0'?>
         <t>Note: Each entity MUST verify the identity of the other entity before exchanging XML stanzas with it (see <xref target='security-client'/> and <xref target='security-server'/>).</t>
       </section>
       <section title='to' anchor='streams-attr-to'>
-        <t>In both client-to-server and server-to-server communications, the 'to' attribute SHOULD be included in the XML stream header sent from the initiating entity to the receiving entity and (if included) MUST be set to a hostname serviced by the receiving entity.</t>
+        <t>In both client-to-server and server-to-server communications, the 'to' attribute SHOULD be included in the initial stream header and (if included) MUST be set to a hostname serviced by the receiving entity.</t>
         <figure>
           <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -337,7 +344,7 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In client-to-server communication, if the client included a 'from' address in the initial stream header then the server SHOULD include a 'to' attribute in the XML stream header by which it replies to the client and (if included) MUST set the 'to' attribute to the bare JID specified in the 'from' attribute of the XML stream header sent from the initiating entity to the receiving entity.</t>
+        <t>In client-to-server communication, if the client included a 'from' address in the initial stream header then the server SHOULD include a 'to' attribute in the response stream header and (if included) MUST set the 'to' attribute to the bare JID specified in the 'from' attribute of the initial stream header.</t>
         <figure>
           <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -351,7 +358,7 @@ S: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In server-to-server communication, if the initiating entity included a 'from' address in the initial stream header then the receiving entity SHOULD include a 'to' attribute in the XML stream header by which it replies to the initiating entity and (if included) MUST set the 'to' attribute to the hostname specified in the 'from' attribute of the XML stream header sent from the initiating entity to the receiving entity.</t>
+        <t>In server-to-server communication, if the initiating entity included a 'from' address in the initial stream header then the receiving entity SHOULD include a 'to' attribute in the response stream header and (if included) MUST set the 'to' attribute to the hostname specified in the 'from' attribute of the initial stream header.</t>
         <figure>
           <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -368,7 +375,7 @@ S: <?xml version='1.0'?>
         <t>Note: Each entity MUST verify the identity of the other entity before exchanging XML stanzas with it (see <xref target='security-client'/> and <xref target='security-server'/>).</t>
       </section>
       <section title='id' anchor='streams-attr-id'>
-        <t>There SHOULD NOT be an 'id' attribute on the XML stream header sent from the initiating entity to the receiving entity; however, if an 'id' attribute is included, it SHOULD be silently ignored by the receiving entity.</t>
+        <t>There SHOULD NOT be an 'id' attribute in the initial stream header; however, if an 'id' attribute is included, it SHOULD be silently ignored by the receiving entity.</t>
         <figure>
           <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -381,7 +388,7 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>The 'id' attribute SHOULD be used only in the XML stream header from the receiving entity to the initiating entity.  This attribute is a unique identifier created by the receiving entity to function as a identifier for the initiating entity's two streams with the receiving entity, and MUST be unique within the receiving application (normally a server).</t>
+        <t>The 'id' attribute MUST be included in the response XML stream header.  This attribute is a unique identifier created by the receiving entity to function as a identifier for the initiating entity's two streams with the receiving entity, and MUST be unique within the receiving application (normally a server).</t>
         <figure>
           <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -398,7 +405,7 @@ S: <?xml version='1.0'?>
         <t>Note: The stream ID may be security-critical and therefore MUST be both unpredictable and nonrepeating (see <xref target="RANDOM"/> for recommendations regarding randomness for security purposes).</t>
       </section>
       <section title='xml:lang' anchor='streams-attr-xmllang'>
-        <t>An 'xml:lang' attribute (as defined in Section 2.12 of <xref target='XML'/>) SHOULD be included by the initiating entity on the header for the initial stream to specify the default language of any human-readable XML character data it sends over that stream.</t>
+        <t>An 'xml:lang' attribute (as defined in Section 2.12 of <xref target='XML'/>) SHOULD be included in the initial stream header to specify the default language of any human-readable XML character data it sends over that stream.</t>
         <figure>
           <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -411,7 +418,7 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>If the attribute is included, the receiving entity SHOULD remember that value as the default for both the initial stream and the response stream; if the attribute is not included, the receiving entity SHOULD use a configurable default value for both streams, which it MUST communicate in the header for the response stream.</t>
+        <t>If the attribute is included, the receiving entity SHOULD remember that value as the default for both the initial stream and the response stream; if the attribute is not included, the receiving entity SHOULD use a configurable default value for both streams, which it MUST communicate in the response stream header.</t>
         <figure>
           <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -429,17 +436,17 @@ S: <?xml version='1.0'?>
       </section>
       <section title='version' anchor='streams-attr-version'>
         <t>The presence of the version attribute set to a value of at least "1.0" signals support for the stream-related protocols (including stream features) defined in this specification.</t>
-        <t>The version of XMPP specified herein is "1.0"; in particular, this encapsulates the stream-related protocols (<xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="streams-error">stream errors</xref>), as well as the semantics of the three defined XML stanza types (&lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;).</t>
+        <t>The version of XMPP specified herein is "1.0"; in particular, XMPP 1.0 encapsulates the stream-related protocols (<xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="streams-error">stream errors</xref>), as well as the basic semantics of the three defined XML stanza types (&lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;).</t>
         <t>The numbering scheme for XMPP versions is "&lt;major&gt;.&lt;minor&gt;".  The major and minor numbers MUST be treated as separate integers and each number MAY be incremented higher than a single digit.  Thus, "XMPP 2.4" would be a lower version than "XMPP 2.13", which in turn would be lower than "XMPP 12.3".  Leading zeros (e.g., "XMPP 6.01") MUST be ignored by recipients and MUST NOT be sent.</t>
         <t>The major version number should be incremented only if the stream and stanza formats or required actions have changed so dramatically that an older version entity would not be able to interoperate with a newer version entity if it simply ignored the elements and attributes it did not understand and took the actions specified in the older specification.</t>
-        <t>The minor version number should be incremented only if significant new capabilities have been added to the core protocol (e.g., a newly defined value of the 'type' attribute for message, presence, or IQ stanzas).  The minor version number MUST be ignored by an entity with a smaller minor version number, but used for informational purposes by the entity with the larger minor version number (e.g., the entity with the larger minor version number would simply note that its correspondent would not be able to understand that value of the 'type' attribute and therefore would not send it).</t>
+        <t>The minor version number should be incremented only if significant new capabilities have been added to the core protocol (e.g., a newly defined value of the 'type' attribute for message, presence, or IQ stanzas).  The minor version number MUST be ignored by an entity with a smaller minor version number, but MAY be used for informational purposes by the entity with the larger minor version number (e.g., the entity with the larger minor version number would simply note that its correspondent would not be able to understand that value of the 'type' attribute and therefore would not send it).</t>
         <t>The following rules apply to the generation and handling of the 'version' attribute within stream headers:</t>
         <t>
           <list style='numbers'>
-            <t>The initiating entity MUST set the value of the 'version' attribute on the initial stream header to the highest version number it supports (e.g., if the highest version number it supports is that defined in this specification, it MUST set the value to "1.0").</t>
-            <t>The receiving entity MUST set the value of the 'version' attribute on the response stream header to either the value supplied by the initiating entity or the highest version number supported by the receiving entity, whichever is lower.  The receiving entity MUST perform a numeric comparison on the major and minor version numbers, not a string match on "&lt;major&gt;.&lt;minor&gt;".</t>
+            <t>The initiating entity MUST set the value of the 'version' attribute in the initial stream header to the highest version number it supports (e.g., if the highest version number it supports is that defined in this specification, it MUST set the value to "1.0").</t>
+            <t>The receiving entity MUST set the value of the 'version' attribute in the response stream header to either the value supplied by the initiating entity or the highest version number supported by the receiving entity, whichever is lower.  The receiving entity MUST perform a numeric comparison on the major and minor version numbers, not a string match on "&lt;major&gt;.&lt;minor&gt;".</t>
             <t>If the version number included in the response stream header is at least one major version lower than the version number included in the initial stream header and newer version entities cannot interoperate with older version entities as described, the initiating entity SHOULD generate an &lt;unsupported-version/&gt; stream error and terminate the XML stream and underlying TCP connection.</t>
-            <t>If either entity receives a stream header with no 'version' attribute, the entity MUST consider the version supported by the other entity to be "0.9" and SHOULD NOT include a 'version' attribute in the stream header it sends in reply.</t>
+            <t>If either entity receives a stream header with no 'version' attribute, the entity MUST consider the version supported by the other entity to be "0.9" and SHOULD NOT include a 'version' attribute in the response stream header.</t>
           </list>
         </t>
       </section>
@@ -454,7 +461,7 @@ S: <?xml version='1.0'?>
 | from     | JID of initiator         | JID of receiver         |
 | id       | silently ignored         | stream identifier       |
 | xml:lang | default language         | default language        |
-| version  | XMPP 1.0 supported       | XMPP 1.0 supported      |
+| version  | XMPP 1.0+ supported      | XMPP 1.0+ supported     |
 +----------+--------------------------+-------------------------+
           ]]></artwork>
         </figure>
@@ -467,7 +474,7 @@ S: <?xml version='1.0'?>
     </section>
 
     <section title="Stream Features" anchor="streams-features">
-      <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the header for the response stream the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the streams namespace prefix) to the initiating entity in order to announce any stream-level features that can be negotiated (or capabilities that otherwise need to be advertised).</t>
+      <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the streams namespace prefix) to the initiating entity in order to announce any stream-level features that can be negotiated (or capabilities that otherwise need to be advertised).</t>
       <figure>
         <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -486,10 +493,10 @@ S: <stream:features>
    </stream:features>
         ]]></artwork>
       </figure>
-      <t>Stream features are used mainly to advertise <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="bind">resource binding</xref>; however, stream features also can be used to advertise features associated with various XMPP extensions.  If an entity does not understand or support a feature, it SHOULD silently ignore that feature.</t>
+      <t>Stream features are used mainly to advertise <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="bind">resource binding</xref>; however, stream features also can be used to advertise features associated with various XMPP extensions.  If an entity does not understand or support a feature, it SHOULD silently ignore the associated feature.</t>
       <t>If one or more security features (e.g., TLS and SASL) need to be successfully negotiated before a non-security-related feature (e.g., resource binding) can be offered, the non-security-related feature SHOULD NOT be included in the stream features that are advertised before the relevant security features have been negotiated.</t>
       <t>If a feature must be negotiated before the initiating entity may proceed, that feature SHOULD include a &lt;required/&gt; child element.</t>
-      <t>If there are no features to be advertised (e.g., in the stream reset initiated after successful SASL negotiation for a server-to-server connection, or after resource binding for a client-to-server stream) then the receiving entity MUST include an empty &lt;stream:features/&gt; element after sending a stream header to the initiating entity.</t>
+      <t>If there are no features to be advertised (e.g., in the stream reset initiated after successful SASL negotiation for a server-to-server connection, or after resource binding for a client-to-server stream) then the receiving entity MUST include an empty &lt;stream:features/&gt; element after sending a response stream header.</t>
       <figure>
         <artwork><![CDATA[
 S: <?xml version='1.0'?>
@@ -507,7 +514,7 @@ S: <stream:features/>
     </section>
 
     <section title="Closing Streams" anchor="streams-close">
-      <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other entity (even in the absence of a stream error) by sending a closing stream tag:</t>
+      <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other entity in the absence of a stream error by sending a closing stream tag:</t>
       <figure>
         <artwork><![CDATA[
 C: </stream:stream>
@@ -521,12 +528,12 @@ S: </stream:stream>
       </figure>
       <t>However, the entity that sends the first closing stream tag MAY consider both streams to be void if the other entity does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is left up to the implementation or deployment).</t>
       <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
-      <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other entity, it MUST terminate the underlying TCP connection.</t>
-      <t>Note: There is one TCP connection for client-to-server streams, but there are two TCP connections for server-to-server streams.</t>
+      <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other entity, it MUST terminate the underlying TCP connection or connections.</t>
+      <t>Note: Closing of XML streams is handled differently in the case of a stream error; see <xref target='streams-error-rules-unrecoverable'/>.</t>
     </section>
 
     <section title="Reconnection" anchor="streams-reconnect">
-      <t>It can happen that an XMPP server goes offline while servicing connections from clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  The following guidelines are RECOMMENDED:</t>
+      <t>It can happen that an XMPP server goes offline while servicing connections from local clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  The following guidelines are RECOMMENDED:</t>
       <t>
         <list style='symbols'>
           <t>The time to live (TTL) specified in Domain Name System records SHOULD be honored, even if DNS results are cached; if the TTL has not expired, an entity that seeks to reconnect SHOULD NOT re-resolve the server hostname before reconnecting.</t>
@@ -537,11 +544,11 @@ S: </stream:stream>
     </section>
 
     <section title="Stream Errors" anchor="streams-error">
-      <t>The root stream element MAY contain an &lt;error/&gt; child element that is prefixed by the streams namespace prefix.  The error child shall be sent by a compliant entity (typically a server rather than a client) if it perceives that a stream-level error has occurred.</t>
+      <t>The root stream element MAY contain an &lt;error/&gt; child element that is prefixed by the streams namespace prefix.  The error child shall be sent by a compliant entity if it perceives that a stream-level error has occurred.</t>
       <section title="Rules" anchor="streams-error-rules">
         <t>The following rules apply to stream-level errors.</t>
         <section title="Stream Errors Are Unrecoverable" anchor="streams-error-rules-unrecoverable">
-          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send a stream error to the other entity, send a closing &lt;/stream&gt; tag, and terminate the underlying TCP connection.</t>
+          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send a stream error to the other entity, send a closing &lt;/stream&gt; tag, and immediately terminate the underlying TCP connection.</t>
           <figure>
             <artwork><![CDATA[
 C: <message><body></message>
@@ -555,7 +562,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="Stream Errors Can Occur During Setup" anchor="streams-error-rules-setup">
-          <t>If the error occurs while the stream is being set up, the receiving entity MUST still send the opening &lt;stream&gt; tag, include the &lt;error/&gt; element as a child of the stream element, send the closing &lt;/stream&gt; tag, and terminate the underlying TCP connection.</t>
+          <t>If the error occurs while the stream is being set up, the receiving entity MUST still send the opening &lt;stream&gt; tag, include the &lt;error/&gt; element as a child of the stream element, send the closing &lt;/stream&gt; tag, and immediately terminate the underlying TCP connection.</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -565,7 +572,7 @@ C: <?xml version='1.0'?>
        version='1.0'
        xml:lang='en'
        xmlns='jabber:client'
-       xmlns:stream='http://wrong.ns.example.org/'>
+       xmlns:stream='http://wrong.namespace.example.org/'>
 
 S: <?xml version='1.0'?>
    <stream:stream
@@ -594,7 +601,7 @@ C: <?xml version='1.0'?>
        version='1.0'
        xml:lang='en'
        xmlns='jabber:client'
-       xmlns:stream='http://wrong.ns.example.org/'>
+       xmlns:stream='http://wrong.namespace.example.org/'>
 
 S: <?xml version='1.0'?>
    <stream:stream
@@ -622,7 +629,7 @@ S: <?xml version='1.0'?>
   <defined-condition xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
   [<text xmlns='urn:ietf:params:xml:ns:xmpp-streams'
         xml:lang='langcode'>
-    descriptive text
+    [ ... descriptive text ... ]
   </text>]
   [application-specific condition element]
 </stream:error>
@@ -634,7 +641,7 @@ S: <?xml version='1.0'?>
           <t>MAY contain a &lt;text/&gt; child element containing XML character data that describes the error in more detail; this element MUST be qualified by the 'urn:ietf:params:xml:ns:xmpp-streams' namespace and SHOULD possess an 'xml:lang' attribute specifying the natural language of the XML character data.</t>
           <t>MAY contain a child element for an application-specific error condition; this element MUST be qualified by an application-defined namespace, and its structure is defined by that namespace (see <xref target='streams-error-app'/>).</t>
         </list></t>
-        <t>The &lt;text/&gt; element is OPTIONAL.  If included, it SHOULD be used only to provide descriptive or diagnostic information that supplements the meaning of a defined condition or application-specific condition.  It SHOULD NOT be interpreted programmatically by an application.  It SHOULD NOT be used as the error message presented to a human user, but MAY be shown in addition to the error message associated with the included condition element (or elements).</t>
+        <t>The &lt;text/&gt; element is OPTIONAL.  If included, it SHOULD be used only to provide descriptive or diagnostic information that supplements the meaning of a defined condition or application-specific condition.  It SHOULD NOT be interpreted programmatically by an application.  It SHOULD NOT be used as the error message presented to a human user, but MAY be shown in addition to the error message associated with the included condition element or elements.</t>
       </section>
       <section title="Defined Stream Error Conditions" anchor="streams-error-conditions">
         <t>The following stream-level error conditions are defined.</t>
@@ -853,7 +860,7 @@ C: <?xml version='1.0'?>
        to='example.com'
        version='1.0'
        xmlns='jabber:client'
-       xmlns:stream='http://wrong.ns.example.org/'>
+       xmlns:stream='http://wrong.namespace.example.org/'>
 
 S: <?xml version='1.0'?>
    <stream:stream
@@ -3576,7 +3583,7 @@ S2: </stream:stream>
       <t>The rationale for this order is that <xref target="TCP"/> is the base connection layer used by all of the protocols stacked on top of TCP, <xref target="TLS"/> is often provided at the operating system layer, <xref target="SASL"/> is often provided at the application layer, and XMPP is the application itself.</t>
     </section>
     <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
-      <t>The SASL framework does not provide a mechanism to bind SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  This lack of a "channel binding" prevents SASL from being able to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating.  If the end points are not identical, the lower layer's security cannot be trusted to protect data transmitted between the SASL authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower layer security.</t>
+      <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Some SASL mechanisms provide such a binding.  However, if a SASL mechanism does not provide such a binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
     </section>
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
       <t>At a minimum, all implementations MUST support the following mechanisms:</t>
@@ -4582,15 +4589,63 @@ S2: </stream:stream>
 </reference>
 
 <reference anchor='RFC3920'>
-  <front>
-    <title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
-    <author initials='P.' surname='Saint-Andre' fullname='P.  Saint-Andre'>
-      <organization>XMPP Standards Foundation</organization>
-    </author>
-    <date year='2004' month='October' />
-  </front>
-  <seriesInfo name='RFC' value='3920' />
-  <format type='TXT' octets='194313' target='ftp://ftp.isi.edu/in-notes/rfc3920.txt' />
+<front>
+<title abbrev='XMPP Core'>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre' role='editor'>
+<organization>Jabber Software Foundation</organization>
+<address>
+<email>stpeter@jabber.org</email></address></author>
+<date year='2004' month='October' />
+<area>Applications</area>
+<workgroup>XMPP Working Group</workgroup>
+<keyword>RFC</keyword>
+<keyword>Request for Comments</keyword>
+<keyword>I-D</keyword>
+<keyword>Internet-Draft</keyword>
+<keyword>XMPP</keyword>
+<keyword>Extensible Messaging and Presence Protocol</keyword>
+<keyword>Jabber</keyword>
+<keyword>IM</keyword>
+<keyword>Instant Messaging</keyword>
+<keyword>Presence</keyword>
+<keyword>XML</keyword>
+<keyword>Extensible Markup Language</keyword>
+<abstract>
+<t>This memo defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a protocol for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two network endpoints.  While XMPP provides a generalized, extensible framework for exchanging XML data, it is used mainly for the purpose of building instant messaging and presence applications that meet the requirements of RFC 2779.</t></abstract></front>
+<seriesInfo name='RFC' value='3920' />
+<format type='TXT' octets='194313' target='ftp://ftp.isi.edu/in-notes/rfc3920.txt' />
+<format type='HTML' octets='279912' target='http://xml.resource.org/public/rfc/html/rfc3920.html' />
+<format type='XML' octets='234610' target='http://xml.resource.org/public/rfc/xml/rfc3920.xml' />
+</reference>
+
+<reference anchor='RFC3921'>
+<front>
+<title abbrev='XMPP IM'>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
+<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre' role='editor'>
+<organization>Jabber Software Foundation</organization>
+<address>
+<email>stpeter@jabber.org</email></address></author>
+<date year='2004' month='October' />
+<area>Applications</area>
+<workgroup>XMPP Working Group</workgroup>
+<keyword>RFC</keyword>
+<keyword>Request for Comments</keyword>
+<keyword>I-D</keyword>
+<keyword>Internet-Draft</keyword>
+<keyword>XMPP</keyword>
+<keyword>Extensible Messaging and Presence Protocol</keyword>
+<keyword>Jabber</keyword>
+<keyword>IM</keyword>
+<keyword>Instant Messaging</keyword>
+<keyword>Presence</keyword>
+<keyword>XML</keyword>
+<keyword>Extensible Markup Language</keyword>
+<abstract>
+<t>This memo describes extensions to and applications of the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide the basic instant messaging (IM) and presence functionality defined in RFC 2779.</t></abstract></front>
+<seriesInfo name='RFC' value='3921' />
+<format type='TXT' octets='217527' target='ftp://ftp.isi.edu/in-notes/rfc3921.txt' />
+<format type='HTML' octets='274538' target='http://xml.resource.org/public/rfc/html/rfc3921.html' />
+<format type='XML' octets='234468' target='http://xml.resource.org/public/rfc/xml/rfc3921.xml' />
 </reference>
 
 <reference anchor='SMTP'>
@@ -4721,6 +4776,21 @@ specifications of each URI scheme.
 <date month='June' year='1999' /></front>
 <seriesInfo name='RFC' value='2595' />
 <format type='TXT' octets='32440' target='ftp://ftp.isi.edu/in-notes/rfc2595.txt' />
+</reference>
+
+<reference anchor="XEP-0001">
+  <front>
+    <title>XMPP Extension Protocols</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="07" month="December" year="2006"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0001"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0001.html"/>
 </reference>
 
 <reference anchor="XEP-0045">
