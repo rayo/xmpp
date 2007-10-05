@@ -12,6 +12,7 @@
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre" role="editor">
       <organization>XMPP Standards Foundation</organization>
       <address>
+        <email>stpeter@jabber.org</email>
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
@@ -647,9 +648,12 @@ S: <?xml version='1.0'?>
         <t>The following stream-level error conditions are defined.</t>
         <section title="bad-format" anchor="streams-error-conditions-bad-format">
           <t>The entity has sent XML that cannot be processed.</t>
+          <t>(In the following example, the client sends an XMPP message that is not well-formed XML.)</t>
           <figure>
             <artwork><![CDATA[
-C: <message><body></message>
+C: <message>
+     <body>No closing body tag!
+   </message>
 
 S: <stream:error>
      <bad-format 
@@ -662,6 +666,7 @@ S: <stream:error>
         </section>
         <section title="bad-namespace-prefix" anchor="streams-error-conditions-bad-namespace-prefix">
           <t>The entity has sent a namespace prefix that is unsupported, or has sent no namespace prefix on an element that requires such a prefix (see <xref target="xml-ns"/>).</t>
+          <t>(In the following example, the client specifies a namespace prefix of "foobar" for the XML streams namespace.)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -690,7 +695,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="conflict" anchor="streams-error-conditions-conflict">
-          <t>The server is either (1) closing the existing stream for this entity because a new stream has been initiated that conflicts with the existing stream (2) is refusing a new stream for this entity because allowing the new stream would conflict with an existing stream (e.g., because the server allows only a certain number of connections for the same IP address).</t>
+          <t>The server is either (1) closing the existing stream for this entity because a new stream has been initiated that conflicts with the existing stream, or (2) is refusing a new stream for this entity because allowing the new stream would conflict with an existing stream (e.g., because the server allows only a certain number of connections from the same IP address).</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -722,7 +727,7 @@ S: <?xml version='1.0'?>
           <t>The entity has not generated any traffic over the stream for some period of time (configurable according to a local service policy) and therefore the connection is being dropped.</t>
           <figure>
             <artwork><![CDATA[
-S: <stream:error>
+P: <stream:error>
      <connection-timeout 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
@@ -731,13 +736,14 @@ S: <stream:error>
           </figure>
         </section>
         <section title="host-gone" anchor="streams-error-conditions-host-gone">
-          <t>The value of the 'to' attribute provided by the initiating entity in the stream header corresponds to a hostname that is no longer hosted by the server.</t>
+          <t>The value of the 'to' attribute provided in the initial stream header corresponds to a hostname that is no longer hosted by the receiving entity.</t>
+          <t>(In the following example, the peer specifies a 'to' address of "foo.example.com" when connecting to the "example.com" server, but the server no longer hosts a service at that address.)</t>
           <figure>
             <artwork><![CDATA[
 P: <?xml version='1.0'?>
    <stream:stream
        from='example.net'
-       to='foo.example.org'
+       to='foo.example.com'
        version='1.0'
        xmlns='jabber:server'
        xmlns:stream='http://etherx.jabber.org/streams'>
@@ -760,7 +766,8 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="host-unknown" anchor="streams-error-conditions-host-unknown">
-          <t>The value of the 'to' attribute provided by the initiating entity in the stream header does not correspond to a hostname that is hosted by the server.</t>
+          <t>The value of the 'to' attribute provided by in the initial stream header does not correspond to a hostname that is hosted by the receiving entity.</t>
+          <t>(In the following example, the peer specifies a 'to' address of "example.org" when connecting to the "example.com" server, but the server knows nothing of that address.)</t>
           <figure>
             <artwork><![CDATA[
 P: <?xml version='1.0'?>
@@ -790,6 +797,7 @@ S: <?xml version='1.0'?>
         </section>
         <section title="improper-addressing" anchor="streams-error-conditions-improper-addressing">
           <t>A stanza sent between two servers lacks a 'to' or 'from' attribute (or the attribute has no value).</t>
+          <t>(In the following example, the peer sends a stanza without a 'to' address.)</t>
           <figure>
             <artwork><![CDATA[
 P: <message from='juliet@example.com'>
@@ -818,6 +826,7 @@ S: <stream:error>
         </section>
         <section title="invalid-from" anchor="streams-error-conditions-invalid-from">
           <t>The JID or hostname provided in a 'from' address does not match an authorized JID or validated domain negotiated between servers via SASL, or between a client and a server via authentication and resource binding.</t>
+          <t>(In the following example, a peer that has authenticated only as "example.net" attempts to send a stanza from an address at "example.org".)</t> 
           <figure>
             <artwork><![CDATA[
 P: <message from='romeo@example.org' to='juliet@example.com'>
@@ -833,7 +842,8 @@ S: <stream:error>
           </figure>
         </section>
         <section title="invalid-id" anchor="streams-error-conditions-invalid-id">
-          <t>The stream ID or server dialback ID is invalid or does not match an ID previously provided (the following example is from server dialback; see <xref target='XEP-0220'/>).</t>
+          <t>The stream ID or server dialback ID is invalid or does not match an ID previously provided.</t>
+          <t>(In the following example, the server dialback ID is invalid; see <xref target='XEP-0220'/>.)</t>
           <figure>
             <artwork><![CDATA[
 P: <db:verify
@@ -852,6 +862,7 @@ S: <stream:error>
         </section>
         <section title="invalid-namespace" anchor="streams-error-conditions-invalid-namespace">
           <t>The streams namespace name is something other than "http://etherx.jabber.org/streams" (see <xref target="xml-ns"/>).</t>
+          <t>(In the following example, the client specifies a streams namespace of 'http://wrong.namespace.example.org/' instead of the correct namespace of "http://etherx.jabber.org/streams".)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -880,7 +891,8 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="invalid-xml" anchor="streams-error-conditions-invalid-xml">
-          <t>The entity has sent invalid XML over the stream to a server that performs validation (see <xref target="xml-validation"/>).  (In the following example, a peer attempts to send an IQ stanza of type "subscribe" but there is no such value for the 'type' attribute.)</t>
+          <t>The entity has sent invalid XML over the stream to a server that performs validation (see <xref target="xml-validation"/>).</t>
+          <t>(In the following example, the peer attempts to send an IQ stanza of type "subscribe" but there is no such value for the 'type' attribute.)</t>
           <figure>
             <artwork><![CDATA[
 P: <iq from='example.net' 
@@ -899,7 +911,8 @@ S: <stream:error>
           </figure>
         </section>
         <section title="not-authorized" anchor="streams-error-conditions-not-authorized">
-          <t>The entity has attempted to send XML stanzas before the stream has been authenticated, or otherwise is not authorized to perform an action related to stream negotiation; the receiving entity MUST NOT process the offending stanza before sending the stream error.  (In the following example, a client attempts to send XML stanzas before authenticating with the server.)</t>
+          <t>The entity has attempted to send XML stanzas before the stream has been authenticated, or otherwise is not authorized to perform an action related to stream negotiation; the receiving entity MUST NOT process the offending stanza before sending the stream error.</t>
+          <t>(In the following example, the client attempts to send XML stanzas before authenticating with the server.)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -934,6 +947,7 @@ S: <stream:error>
         </section>
         <section title="policy-violation" anchor="streams-error-conditions-policy-violation">
           <t>The entity has violated some local service policy (e.g., the stanza exceeds a configured size limit); the server MAY choose to specify the policy in the &lt;text/&gt; element or an application-specific condition element.</t>
+          <t>(In the following example, the client sends an XMPP message that is too large according to the server's local service policy.)</t>
           <figure>
             <artwork><![CDATA[
 C: <message to='juliet@example.com' id='foo'>
@@ -1009,10 +1023,12 @@ S: <?xml version='1.0'?>
         </section>
         <section title="restricted-xml" anchor="streams-error-conditions-restricted-xml">
           <t>The entity has attempted to send restricted XML features such as a comment, processing instruction, DTD, entity reference, or unescaped character (see <xref target="xml-restrictions"/>).</t>
+          <t>(In the following example, the client sends an XMPP message containing an XML comment.)</t>
           <figure>
             <artwork><![CDATA[
 C: <message to='juliet@example.com'>
-     <body><!--just a comment!--></body>
+     <!--<subject/>-->
+     <body>This message has no subject.</body>
    </message>
 
 S: <stream:error>
@@ -1024,7 +1040,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="see-other-host" anchor="streams-error-conditions-see-other-host">
-          <t>The server will not provide service to the initiating entity but is redirecting traffic to another host; the XML character data of the &lt;see-other-host/&gt; element returned by the server SHOULD specify the alternate hostname or IP address at which to connect, which SHOULD be a valid domain identifier but may also include a port number; if no port is specified, the initiating entity SHOULD perform a <xref target="DNS-SRV"/> lookup on the provided domain identifier but MAY assume that it can connect to that domain identifier at the standard XMPP ports (5222 for client-to-server connections and 5269 for server-to-server connections).</t>
+          <t>The server will not provide service to the initiating entity but is redirecting traffic to another host; the XML character data of the &lt;see-other-host/&gt; element returned by the server SHOULD specify the alternate hostname or IP address at which to connect, which SHOULD be a valid domain identifier but may also include a port number; if no port is specified, the initiating entity SHOULD perform a <xref target="DNS-SRV"/> lookup on the provided domain identifier but MAY assume that it can connect to that domain identifier at the standard XMPP ports (i.e., 5222 for client-to-server connections and 5269 for server-to-server connections).</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -1081,6 +1097,7 @@ S: <stream:error>
         </section>
         <section title="unsupported-encoding" anchor="streams-error-conditions-unsupported-encoding">
           <t>The initiating entity has encoded the stream in an encoding that is not supported by the server (see <xref target="xml-encoding"/>).</t>
+          <t>(In the following example, the client attempts to encode data using UTF-16 instead of UTF-8.)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0' encoding='UTF-16'?>
@@ -1109,7 +1126,8 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="unsupported-stanza-type" anchor="streams-error-conditions-unsupported-stanza-type">
-          <t>The initiating entity has sent a first-level child of the stream that is not supported by the server.</t>
+          <t>The initiating entity has sent a first-level child of the stream that is not supported by the server or consistent with the default namespace.</t>
+          <t>(In the following example, the client attempts to send an XML stanza of &lt;pubsub/&gt; when the default namespace is "jabber:client".)</t>
           <figure>
             <artwork><![CDATA[
 C: <pubsub>
@@ -1144,6 +1162,7 @@ S: <stream:error>
         </section>
         <section title="unsupported-version" anchor="streams-error-conditions-unsupported-version">
           <t>The value of the 'version' attribute provided by the initiating entity in the stream header specifies a version of XMPP that is not supported by the server; the server MAY specify the version(s) it supports in the &lt;text/&gt; element.</t>
+          <t>(In the following example, the client specifies an XMPP version of "11.0" but the server supports only version "1.0" and "1.1".)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -1166,16 +1185,22 @@ S: <?xml version='1.0'?>
    <stream:error>
      <unsupported-version 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
+     <text xmlns='urn:ietf:params:xml:ns:xmpp-streams'>
+       1.0, 1.1
+     </text>
    </stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
         </section>
         <section title="xml-not-well-formed" anchor="streams-error-conditions-xml-not-well-formed">
-          <t>&lt;xml-not-well-formed/&gt; -- the initiating entity has sent XML that is not well-formed as defined by <xref target="XML"/>.</t>
+          <t>The initiating entity has sent XML that is not well-formed as defined by <xref target="XML"/>.</t>
+          <t>(In the following example, the client sends an XMPP message that is not well-formed XML.)</t>
           <figure>
             <artwork><![CDATA[
-C: <message><body></message>
+C: <message>
+     <body>No closing body tag!
+   </message>
 
 S: <stream:error>
      <xml-not-well-formed 
@@ -1215,7 +1240,7 @@ S: <stream:error>
     </section>
 
     <section title="Simplified Stream Examples" anchor="streams-example">
-      <t>This section contains two simplified examples of a stream-based connection of a client on a server (where the "C" lines are sent from the client to the server, and the "S" lines are sent from the server to the client); these examples are included for the purpose of illustrating the concepts introduced thus far.</t>
+      <t>This section contains two simplified examples of a stream-based connection of a client on a server; these examples are included for the purpose of illustrating the concepts introduced thus far.</t>
       <figure>
         <preamble>A basic connection:</preamble>
         <artwork><![CDATA[
@@ -1238,7 +1263,11 @@ S: <?xml version='1.0'?>
        xmlns='jabber:client'
        xmlns:stream='http://etherx.jabber.org/streams'>
 
-[ ...  encryption, authentication, and resource binding ... ]
+[ ... channel encryption ... ]
+
+[ ... authentication ... ]
+
+[ ... resource binding ... ]
 
 C:   <message from='juliet@example.com/balcony'
               to='romeo@example.net'
@@ -1279,12 +1308,17 @@ S: <?xml version='1.0'?>
        xmlns='jabber:client'
        xmlns:stream='http://etherx.jabber.org/streams'>
 
-[ ...  encryption, authentication, and resource binding ... ]
+[ ... channel encryption ... ]
+
+[ ... authentication ... ]
+
+[ ... resource binding ... ]
+
 
 C:   <message from='juliet@example.com/balcony'
               to='romeo@example.net'
               xml:lang='en'>
-       <body>Bad XML, no closing body tag!
+       <body>No closing body tag!
      </message>
 
 S: <stream:error>
@@ -1397,7 +1431,7 @@ R: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
       </section>
       <section title="Failure" anchor="tls-process-neg-failure">
         <t>If the TLS negotiation results in failure, the receiving entity MUST terminate the TCP connection.</t>
-        <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be closed upon failure of the TLS negotiation.</t>
+        <t>Note: The receiving entity MUST NOT send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be closed upon failure of the TLS negotiation.</t>
       </section>
       <section title="Success" anchor="tls-process-neg-success">
         <t>If the TLS negotiation is successful, then the entities MUST proceed as follows.</t>
@@ -1415,7 +1449,7 @@ I: <stream:stream
      xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon success of the TLS negotiation.</t>
+        <t>Note: The initiating entity MUST NOT send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon success of the TLS negotiation.</t>
         <t>The receiving entity MUST respond with a response stream header.</t>
         <figure>
           <artwork><![CDATA[
@@ -1670,7 +1704,7 @@ I: <stream:stream
      xmlns:stream='http://etherx.jabber.org/streams'
           ]]></artwork>
         </figure>
-        <t>Note: It is not necessary to send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon sending or receiving the &lt;success/&gt; element.</t>
+        <t>Note: It initiating entity MUST NOT send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon sending or receiving the &lt;success/&gt; element.</t>
         <t>Upon receiving the initial stream header from the initiating entity, the receiving entity MUST respond by sending a new XML stream header to the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
@@ -2004,7 +2038,7 @@ S: <stream:stream>
         </section>
         <section title="Error Cases" anchor="bind-multi-unbind-error">
           <section title="Unbind Not Supported" anchor="bind-multi-unbind-badrequest">
-            <t>If the server does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which SHOULD be &lt;bad-request/&gt;.</t>
+            <t>If the server does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which SHOULD be &lt;bad-request/&gt; or &lt;feature-not-implemented/&gt;.</t>
             <figure>
               <artwork><![CDATA[
 S: <iq id='unbind_1' type='error'>
