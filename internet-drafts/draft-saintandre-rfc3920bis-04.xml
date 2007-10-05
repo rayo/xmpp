@@ -1335,12 +1335,12 @@ S: <stream:error>
 
   <section title="STARTTLS Negotiation" anchor="tls">
     <section title="Overview" anchor="tls-overview">
-      <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the Transport Layer Security protocol (see <xref target="TLS"/>), specifically a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The XML namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
+      <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the Transport Layer Security <xref target="TLS"/> protocol, specifically a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The XML namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
       <t>Support for STARTTLS is REQUIRED in XMPP client and server implementations.  An administrator of a given deployment may require the use of TLS for client-to-server communication, server-to-server communication, or both.  A deployed client should use TLS to secure its stream with a server prior to attempting the completion of <xref target='sasl'>SASL negotiation</xref>, and deployed servers should use TLS between two domains for the purpose of securing server-to-server communication.</t>
     </section>
     <section title="Rules" anchor="tls-rules">
       <section title="Data Formatting" anchor="tls-rules-data">
-        <t>The entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the STARTTLS examples provided in this document are included for the sake of readability only); this prohibition helps to ensure proper security layer byte precision.</t>
+        <t>The entities MUST NOT send any white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between elements (any white space characters shown in the STARTTLS examples provided in this document are included only for the sake of readability); this prohibition helps to ensure proper security layer byte precision.</t>
       </section>
       <section title="Order of Negotiation" anchor="tls-rules-order">
         <t>If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is required to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
@@ -1360,7 +1360,7 @@ I: <stream:stream
      xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>The receiving entity MUST send a response stream header to the initiating entity over the TCP connection opened by the initiating entity (for client-to-server streams) or over a new TCP connection (for server-to-server streams); if the receiving entity is capable of STARTTLS negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the response stream header.</t>
+        <t>The receiving entity MUST send a response stream header to the initiating entity over the TCP connection opened by the initiating entity; if the receiving entity is capable of STARTTLS negotiation, it MUST include the 'version' attribute set to a value of at least "1.0" in the response stream header.</t>
         <figure>
           <artwork><![CDATA[
 R: <stream:stream
@@ -1393,53 +1393,69 @@ R: <stream:features>
         </figure>
       </section>
       <section title="Initiation of STARTTLS Negotiation" anchor="tls-process-initiate">
-        <t>In order to begin the STARTTLS negotiation, the initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a STARTTLS negotiation to secure the stream.</t>
-        <figure>
-          <artwork><![CDATA[
+        <section title="STARTTLS Command" anchor="tls-process-initiate-command">
+          <t>In order to begin the STARTTLS negotiation, the initiating entity issues the STARTTLS command (i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace) to instruct the receiving entity that it wishes to begin a STARTTLS negotiation to secure the stream.</t>
+          <figure>
+            <artwork><![CDATA[
 I: <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
-          ]]></artwork>
-        </figure>
-        <t>The receiving entity MUST reply with either a &lt;proceed/&gt; element (proceed case) or a &lt;failure/&gt; element (failure case) qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
-        <t>If the failure case occurs, the receiving entity MUST return a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace, terminate the XML stream, and terminate the underlying TCP connection.  Causes for the failure case include but are not limited to:</t>
-        <t>
-          <list style='numbers'>
-            <t>The initiating entity has sent a malformed STARTTLS command.</t>
-            <t>The receiving entity does not offer STARTTLS negotiation either temporarily or permanently.</t>
-            <t>The receiving entity cannot complete STARTTLS negotiation because of an internal error.</t>
-          </list>
-        </t>
-        <figure>
-          <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+          <t>The receiving entity MUST reply with either a &lt;proceed/&gt; element (proceed case) or a &lt;failure/&gt; element (failure case) qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
+        </section>
+        <section title="Failure Case" anchor="tls-process-initiate-failure">
+          <t>If the failure case occurs, the receiving entity MUST return a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace, terminate the XML stream, and terminate the underlying TCP connection.  Causes for the failure case include but are not limited to:</t>
+          <t>
+            <list style='numbers'>
+              <t>The initiating entity has sent a malformed STARTTLS command.</t>
+              <t>The receiving entity does not offer STARTTLS negotiation either temporarily or permanently.</t>
+              <t>The receiving entity cannot complete STARTTLS negotiation because of an internal error.</t>
+            </list>
+          </t>
+          <figure>
+            <artwork><![CDATA[
 R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
 
 R: </stream:stream>
-          ]]></artwork>
-        </figure>
-        <t>If the proceed case occurs, the receiving entity MUST return a &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
-        <figure>
-          <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+          <t>If the failure case occurs, the initiating entity MAY attempt to reconnect as explained under <xref target='streams-reconnect'/>.</t>
+        </section>
+        <section title="Proceed Case" anchor="tls-process-initiate-proceed">
+          <t>If the proceed case occurs, the receiving entity MUST return a &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
+          <figure>
+            <artwork><![CDATA[
 R: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
-          ]]></artwork>
-        </figure>
-        <t>Note: The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
+            ]]></artwork>
+          </figure>
+          <t>The receiving entity MUST consider the TLS negotiation to have begun immediately after sending the closing '&gt;' character of the &lt;proceed/&gt; element to the initiating entity.  The initiating entity MUST consider the TLS negotiation to have begun immediately after receiving the closing '&gt;' character of the &lt;proceed/&gt; element from the receiving entity.</t>
+          <t>The entities now proceed to TLS negotiation as explained in the next section.</t>
+        </section>
       </section>
       <section title="TLS Negotiation" anchor="tls-process-neg">
-        <t>The entities MUST now attempt to complete TLS negotiation over the TCP connection by following the process defined in <xref target='TLS'/>.</t>
-        <t>Note: The entities MUST NOT send any further XML data until the TLS negotiation has either failed or succeeded.</t>
-        <t>If the receiving entity presents a certificate during TLS negotiation, the initiating entity MUST validate the certificate in order to determine if the TLS negotiation shall succeed (see <xref target="security-validation"/> regarding certificate validation procedures).  Specifically, the certificate MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  See <xref target='tls-rep'/> for information about the representation of XMPP addresses in certificates.</t>
-        <t>Note: See <xref target="security-mandatory"/> regarding ciphers that MUST be supported for TLS; naturally, other ciphers MAY be supported as well.</t>
-      </section>
-      <section title="Failure" anchor="tls-process-neg-failure">
-        <t>If the TLS negotiation results in failure, the receiving entity MUST terminate the TCP connection.</t>
-        <t>Note: The receiving entity MUST NOT send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be closed upon failure of the TLS negotiation.</t>
-      </section>
-      <section title="Success" anchor="tls-process-neg-success">
-        <t>If the TLS negotiation is successful, then the entities MUST proceed as follows.</t>
-        <t>The receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS took effect.</t>
-        <t>The initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS took effect.</t>
-        <t>The initiating entity MUST send a new stream header to the receiving entity over the secured TCP connection.</t>
-        <figure>
-          <artwork><![CDATA[
+        <section title="Rules" anchor="tls-process-neg-rules">
+          <t>In order to complete TLS negotiation over the TCP connection, the entities MUST follow the process defined in <xref target='TLS'/>.</t>
+          <t>The following rules apply:</t>
+          <t>
+            <list style='numbers'>
+              <t>The entities MUST NOT send any further XML data until the TLS negotiation has either failed or succeeded.</t>
+              <t>If the receiving entity presents a certificate during TLS negotiation, the initiating entity MUST validate the certificate in order to determine if the TLS negotiation shall succeed (see <xref target="security-validation"/> regarding certificate validation procedures).  Specifically, the certificate MUST be checked against the hostname as provided by the initiating entity (e.g., a user), not the hostname as resolved via the Domain Name System; e.g., if the user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  See <xref target='tls-rep'/> for information about the representation of XMPP addresses in certificates.</t>
+            </list>
+          </t>
+          <t>Note: See <xref target="security-mandatory"/> regarding ciphers that MUST be supported for TLS; naturally, other ciphers MAY be supported as well.</t>
+        </section>
+        <section title="TLS Failure" anchor="tls-process-neg-failure">
+          <t>If the TLS negotiation results in failure, the receiving entity MUST terminate the TCP connection.</t>
+          <t>The receiving entity MUST NOT send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be closed upon failure of the TLS negotiation.</t>
+        </section>
+        <section title="TLS Success" anchor="tls-process-neg-success">
+          <t>If the TLS negotiation is successful, then the entities MUST proceed as follows.</t>
+          <t>
+            <list style='numbers'>
+              <t>The receiving entity MUST discard any knowledge obtained in an insecure manner from the initiating entity before TLS took effect.</t>
+              <t>The initiating entity MUST discard any knowledge obtained in an insecure manner from the receiving entity before TLS took effect.</t>
+              <t>The initiating entity MUST send a new initial stream header to the receiving entity over the secured TCP connection.
+                <figure>
+                  <artwork><![CDATA[
 I: <stream:stream
      from='juliet@example.com'
      to='example.com'
@@ -1447,12 +1463,13 @@ I: <stream:stream
      xml:lang='en'
      xmlns='jabber:client'
      xmlns:stream='http://etherx.jabber.org/streams'>
-          ]]></artwork>
-        </figure>
-        <t>Note: The initiating entity MUST NOT send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon success of the TLS negotiation.</t>
-        <t>The receiving entity MUST respond with a response stream header.</t>
-        <figure>
-          <artwork><![CDATA[
+                  ]]></artwork>
+                  <postamble>Note: The initiating entity MUST NOT send a closing &lt;/stream&gt; tag before sending the initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be closed upon success of the TLS negotiation.</postamble>
+                </figure>
+              </t>
+              <t>The receiving entity MUST respond with a response stream header.
+                <figure>
+                  <artwork><![CDATA[
 R: <stream:stream
      from='example.com'
      id='vgKi/bkYME8OAj4rlXMkpucAqe4='
@@ -1461,11 +1478,12 @@ R: <stream:stream
      xml:lang='en'
      xmlns='jabber:client'
      xmlns:stream='http://etherx.jabber.org/streams'
-          ]]></artwork>
-        </figure>
-        <t>The receiving entity also MUST send stream features to the initiating entity, which MUST NOT include the STARTTLS feature but which SHOULD include the SASL stream feature as described under <xref target='sasl'/>.</t>
-        <figure>
-          <artwork><![CDATA[
+                  ]]></artwork>
+                </figure>
+              </t>
+              <t>The receiving entity also MUST send stream features to the initiating entity, which MUST NOT include the STARTTLS feature but which SHOULD include the SASL stream feature as described under <xref target='sasl'/>.
+                <figure>
+                  <artwork><![CDATA[
 R: <stream:features>
      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
        <mechanism>EXTERNAL</mechanism>
@@ -1474,17 +1492,32 @@ R: <stream:features>
        <required/>
      </mechanisms>
    </stream:features>
-          ]]></artwork>
-        </figure>
+                  ]]></artwork>
+                </figure>
+              </t>
+            </list>
+          </t>
+        </section>
       </section>
     </section>
     <section title="Representation of JIDs in Certificates" anchor="tls-rep">
-      <t>TLS negotiation is commonly based on a digital certificate presented by the receiving entity (or in the case of mutual authentication both the receiving entity and the initiating entity).</t>
-      <t>If a JID for an XMPP user account is represented in a certificate, it MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in this section.</t>
-      <t>If a JID for an XMPP server is represented in a certificate, it SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified in this section.  However, in addition to or instead of the "id-on-xmppAddr" representation, it MAY be represented as a subjectAltName extension of type dNSName; this dNSName MAY contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.net matches im1.example.net and im2.example.net but not chat.example.net).</t>
-      <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" is defined as follows.</t>
-      <figure>
-        <artwork><![CDATA[
+      <t>TLS negotiation is commonly based on a digital certificate presented by the receiving entity (or, in the case of mutual authentication, both the receiving entity and the initiating entity).</t>
+      <section title="Client Certificates" anchor="tls-rep-client">
+        <t>In a certificate to be presented by an XMPP client, it is RECOMMENDED for the certificate to include one or more JIDs associated with an XMPP user.  If included, a JID MUST be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='tls-rep-oid'/>.</t>
+      </section>
+      <section title="Server Certificates" anchor="tls-rep-server">
+        <t>In a certificate to be presented by an XMPP server, it is RECOMMENDED for the certificate to include one or more JIDs associated with domains serviced at the server.  If included, the following representation is RECOMMENDED:</t>
+        <t>
+          <list style='numbers'>
+            <t>A JID MUST be represented as a subjectAltName extension of type dNSName.  This dNSName MAY contain the wildcard character '*', which applies only to the left-most domain name component or component fragment and is considered to match any single component or component fragment (e.g., *.example.com matches foo.example.com but not bar.foo.example.com, and im*.example.net matches im1.example.net and im2.example.net but not chat.example.net).</t>
+            <t>A JID SHOULD be represented as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='tls-rep-oid'/>.</t>
+          </list>
+        </t>
+      </section>
+      <section title="ASN.1 Object Identifier" anchor="tls-rep-oid">
+        <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" is defined as follows.</t>
+        <figure>
+          <artwork><![CDATA[
 id-pkix OBJECT IDENTIFIER ::= { iso(1) identified-organization(3)
         dod(6) internet(1) security(5) mechanisms(5) pkix(7) }
 
@@ -1493,17 +1526,18 @@ id-on  OBJECT IDENTIFIER ::= { id-pkix 8 }  -- other name forms
 id-on-xmppAddr  OBJECT IDENTIFIER ::= { id-on 5 }
 
 XmppAddr ::= UTF8String
-        ]]></artwork>
-      </figure>
-      <t>This Object Identifier MAY be represented in dotted display format (i.e., "1.3.6.1.5.5.7.8.5") or in the Uniform Resource Name notation specified in <xref target='URN-OID'/> (i.e., "urn:oid:1.3.6.1.5.5.7.8.5").</t>
-      <t>Thus for example the JID "juliet@example.com" as included in a certificate could be formatted in any of the following three ways:</t>
-      <t>
-        <list style='symbols'>
-          <t>subjectAltName=otherName:id-on-xmppAddr;UTF8:juliet@example.com</t>
-          <t>subjectAltName=otherName:1.3.6.1.5.5.7.8.5;UTF8:juliet@example.com</t>
-          <t>subjectAltName=otherName:urn:oid:1.3.6.1.5.5.7.8.5;UTF8:juliet@example.com</t>
-        </list>
-      </t>
+          ]]></artwork>
+        </figure>
+        <t>As an alternative to the "id-on-xmppAddr" notation, this Object Identifier MAY be represented in dotted display format (i.e., "1.3.6.1.5.5.7.8.5") or in the Uniform Resource Name notation specified in <xref target='URN-OID'/> (i.e., "urn:oid:1.3.6.1.5.5.7.8.5").</t>
+        <t>Thus for example the JID "juliet@example.com" as included in a certificate could be formatted in any of the following three ways:</t>
+        <t>
+          <list style='hanging'>
+            <t hangText="id-on-xmppAddr:">subjectAltName=otherName:id-on-xmppAddr;UTF8:juliet@example.com</t>
+            <t hangText="dotted display format:">subjectAltName=otherName:1.3.6.1.5.5.7.8.5;UTF8:juliet@example.com</t>
+            <t hangText="URN notation:">subjectAltName=otherName:urn:oid:1.3.6.1.5.5.7.8.5;UTF8:juliet@example.com</t>
+          </list>
+        </t>
+      </section>
     </section>
   </section>
 
