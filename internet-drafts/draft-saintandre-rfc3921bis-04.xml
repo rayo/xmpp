@@ -12,10 +12,11 @@
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre" role="editor">
       <organization>XMPP Standards Foundation</organization>
       <address>
+        <email>stpeter@jabber.org</email>
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="September" day="14"/>
+    <date year="2007" month="October" day="16"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -30,7 +31,7 @@
     <keyword>XML</keyword>
     <keyword>Extensible Markup Language</keyword>
     <abstract>
-      <t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779.</t>
+      <t>This document describes extensions to core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779.</t>
       <t>This document obsoletes RFC 3921.</t>
     </abstract>
   </front>
@@ -39,7 +40,7 @@
 
   <section title="Introduction" anchor="intro">
     <section title="Overview" anchor="intro-overview">
-      <t>The Extensible Messaging and Presence Protocol (XMPP) is a technology for streaming <xref target="XML">Extensible Markup Language</xref> elements in order to exchange messages, presence information, and other structured data in close to real time.  The core features of XMPP are defined in <xref target="XMPP-CORE"/>.  These features -- mainly XML streams, use of Transport Layer Security (<xref target='TLS'/>) and Simple Authentication and Security Layer (<xref target='SASL'/>), and the &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; children of the stream root -- provide the building blocks for many types of near-real-time applications, which may be layered on top of the core by sending application-specific data qualified by particular XML namespaces (see <xref target="XML-NAMES"/>).  This document describes extensions to the core features of XMPP that provide the basic functionality expected of an instant messaging (IM) and presence application as defined in <xref target="IMP-REQS"/>.</t>
+      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language <xref target="XML"/> for streaming XML data in close to real time between any two (or more) network-aware entities.  XMPP is typically used to exchange messages, share presence information, and engage in structured request-response interactions.  The core features of XMPP defined in <xref target="XMPP-CORE"/> provide the building blocks for many types of near-real-time applications, which may be layered on top of the core by sending application-specific data qualified by particular XML namespaces (see <xref target="XML-NAMES"/>).  This document describes XMPP extensions that provide the basic functionality expected of an instant messaging (IM) and presence application as defined in <xref target="IMP-REQS"/>.</t>
       <t>This document obsoletes RFC 3921.</t>
     </section>
     <section title="Requirements" anchor="intro-requirements">
@@ -54,23 +55,23 @@
       </t>
       <t>Thus at a high level this document assumes that a user must be able to complete the following use cases:</t>
       <t><list style="symbols">
-        <t>Manage items in a contact list</t>
+        <t>Manage items in one's contact list</t>
         <t>Exchange messages with one's contacts</t>
         <t>Exchange presence information with one's contacts</t>
         <t>Manage presence subscriptions to and from one's contacts</t>
       </list></t>
-      <t>Detailed definitions of these functionality areas are contained in <xref target="IMP-REQS"/>, and the interested reader should refer to that document regarding the requirements addressed herein.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of <xref target="IMP-REQS"/>, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Although XMPP protocol extensions addressing many other functionality areas have been defined in the XMPP Standards Foundation's XEP series (e.g., multi-user text chat as specified in <xref target='XEP-0045'/>), such extensions are not included in this document because they are not required by <xref target="IMP-REQS"/>.</t>
-      <t>Note:  <xref target="IMP-REQS"/> stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return &lt;service-unavailable/&gt; errors if clients attempt to send &lt;message/&gt; stanzas.)</t>
+      <t>Detailed definitions of these functionality areas are contained in RFC 2779 <xref target="IMP-REQS"/>, and the interested reader is referred to that document regarding the requirements addressed herein.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of RFC 2779, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Although XMPP protocol extensions addressing many other functionality areas have been defined in the XMPP Standards Foundation's XEP series (e.g., multi-user text chat as specified in <xref target='XEP-0045'/>), such extensions are not specified in this document because they are not required by RFC 2779.</t>
+      <t>Note:  RFC 2779 stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return a &lt;service-unavailable/&gt; error if a client attempt to send a &lt;message/&gt; stanzas.)</t>
     </section>
-    <section title="Typical Session Flow" anchor="intro-session">
-      <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions (including XML stream establishment, authentication, and binding of a resource to the stream) that must be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  The reader is referred to <xref target="XMPP-CORE"/> for details, and knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
-      <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a long-lived XML stream with an XMPP server, which enables the user to send and receive a potentially unlimited number of XML stanzas over the stream.  Such a stream can be used as the basis for the exchange of instant messaging, presence, and other information in close to real time.  The typical flow for an instant messaging and presence session is as follows:</t>
+    <section title="Functional Summary" anchor="intro-summary">
+      <t>This non-normative section provides a developer-friendly, functional summary of XMPP-based instant messaging and presence features; refer to the sections that follow for a normative definition of these features.</t>
+      <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions that must be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  These preconditions comprise negotiation of the XML stream and include XML stream establishment, optional channel encryption via Transport Layer Security <xref target='TLS'/>, mandatory authentication via Simple Authentication and Security Layer <xref target='SASL'/>, and binding of a resource to the stream for client addressing.  The reader is referred to <xref target="XMPP-CORE"/> for details regarding these preconditions, and knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
+      <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a long-lived XML stream with an XMPP server, which enables the user to send and receive a potentially unlimited number of XML stanzas over the stream.  Such a stream can be used to exchange messages, share presence information, and engage in structured request-response interactions in close to real time.  After negotiation of the XML stream, the typical flow for an instant messaging and presence session is as follows:</t>
       <t>
         <list style='numbers'>
-          <t>Negotiate an XML stream with one's server.  (See <xref target='XMPP-CORE'/>.)</t>
           <t>Retrieve one's roster.  (See <xref target='roster-login'/>.)</t>
           <t>Send initial presence to the server for broadcasting to all subscribed contacts, thus "going online" from the perspective of XMPP communications.  (See <xref target='presence-initial'/>.)</t>
-          <t>Exchange messages, manage presence subscriptions, perform roster updates, and in general process and generate other XML stanzas with particular semantics throughout the life of the session.  (See <xref target='message'/> and <xref target='iq'/>.)</t>
+          <t>Exchange messages, manage presence subscriptions, perform roster updates, and in general process and generate other XML stanzas with particular semantics throughout the life of the session.  (See <xref target='message'/>, <xref target='sub'/>, <xref target='roster'/>, and <xref target='iq'/>.)</t>
           <t>Terminate the session when desired by sending unavailable presence and closing the underlying XML stream. (See <xref target='presence-unavailable'/>.)</t>
         </list>
       </t>
@@ -90,6 +91,9 @@
           <t>US: = user's server</t>
         </list>
       </t>
+    </section>
+    <section title="Discussion Venue" anchor="intro-discuss">
+      <t>The editor welcomes discussion and comments related to the topics presented in this document.  The preferred forum is the &lt;standards@xmpp.org&gt; mailing list, for which archives and subscription information are available at &lt;<eref target='http://mail.jabber.org/mailman/listinfo/standards'/>&gt;.</t>
     </section>
   </section>
 
@@ -1215,6 +1219,7 @@ CS: <presence from='juliet@example.com/balcony'
             <t>unavailable -- Signals that the entity is no longer available for communication.</t>
           </list>
         </t>
+        <t>If the value of the 'type' attribute is not one of the foregoing values, the recipient or an intermediate router SHOULD return a stanza error of &lt;bad-request/&gt;.</t>
       </section>
       <section title="Child Elements" anchor="presence-syntax-children">
         <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are provided only if the presence stanza possesses no 'type' attribute, although exceptions are noted in the text that follows.</t>
@@ -1727,7 +1732,7 @@ US: </stream:stream>
       <t>
         <list style='symbols'>
           <t>For a message stanza, the server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-          <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server SHOULD silently ignore the stanza (i.e., not return an error or a presence stanza of type "unsubscribed".</t>
+          <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server SHOULD silently ignore the stanza (i.e., not return an error or a presence stanza of type "unsubscribed").</t>
           <t>For a presence stanza with of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST follow the guidelines provided under <xref target='sub'/>.</t>
           <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
         </list>
