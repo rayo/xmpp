@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc category="std" docName="draft-saintandre-rfc3920bis-04" ipr="full3978" obsoletes="3920">
+<rfc category="std" docName="draft-saintandre-rfc3920bis-05" ipr="full3978" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="October" day="5"/>
+    <date year="2007" month="October" day="17"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -2078,12 +2078,13 @@ S: </stream:stream>
         </section>
         <section title="Error Cases" anchor="bind-multi-unbind-error">
           <section title="Unbind Not Supported" anchor="bind-multi-unbind-badrequest">
-            <t>If the server does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which SHOULD be &lt;bad-request/&gt; or &lt;feature-not-implemented/&gt;.</t>
+            <t>If the server understands the 'urn:ietf:params:xml:ns:xmpp-bind' namespace but does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which MUST be &lt;feature-not-implemented/&gt;.</t>
             <figure>
               <artwork><![CDATA[
 S: <iq id='unbind_1' type='error'>
      <error type='modify'>
-       <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <feature-not-implemented
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
    </iq>
               ]]></artwork>
@@ -2347,7 +2348,7 @@ Requesting                  Responding
       <section title="Defined Conditions" anchor="stanzas-error-conditions">
         <t>The following conditions are defined for use in stanza errors.</t>
         <section title="bad-request" anchor="stanzas-error-conditions-bad-request">
-          <t>The sender has sent a stanza containing XML that does not conform to the appropriate schema or that cannot be processed (e.g., an IQ stanza that includes an unrecognized value of the 'type' attribute); the associated error type SHOULD be "modify".</t>
+          <t>The sender has sent a stanza containing XML that does not conform to the appropriate schema or that cannot be processed (e.g., an IQ stanza that includes an unrecognized value of the 'type' attribute, or an element that is qualified by a recognized namespace but that violates the defined syntax for the element); the associated error type SHOULD be "modify".</t>
           <figure>
             <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
@@ -2387,7 +2388,7 @@ S: <iq id='bind_2' type='error'>
           </figure>
         </section>
         <section title="feature-not-implemented" anchor="stanzas-error-conditions-feature-not-implemented">
-          <t>The feature represented in the XML stanza is not implemented by the intended recipient or an intermediate server and therefore the stanza cannot be processed; the associated error type SHOULD be "cancel" or "modify".</t>
+          <t>The feature represented in the XML stanza is not implemented by the intended recipient or an intermediate server and therefore the stanza cannot be processed (e.g., the entity understands the namespace but does not recognize the element name); the associated error type SHOULD be "cancel" or "modify".</t>
           <figure>
             <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
