@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="October" day="22"/>
+    <date year="2007" month="October" day="23"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -1178,6 +1178,7 @@ US: <presence type='unavailable'>
             <t>The last presence stanza received from the contact during the user's presence session was not of type "error" or "unsubscribe".</t>
           </list>
         </t>
+        <t>See <xref target='presence-directed'/> regarding rules that supplement the foregoing.</t>
         <t>If the unavailable presence stanza was gracefully received from the client, the server MUST broadcast the full XML of the presence stanza.</t>
         <figure>
           <artwork><![CDATA[
@@ -1222,6 +1223,7 @@ CS: <presence from='juliet@example.com/balcony'
               type='unavailable'/>
           ]]></artwork>
         </figure>
+        <t>If the server is optimizing subsequent presence delivery as described under <xref target='presence-broadcast'/>, it SHOULD also note that the user is unavailable and appropriately update its internal representation of which users are online.</t>
       </section>
 
       <section title="Client Processing of Inbound Unavailable Presence" anchor="presence-unavailable-client">
@@ -1235,13 +1237,14 @@ CS: <presence from='juliet@example.com/balcony'
       <t>This section supplements and in some respects modifies the rules defined above, but only for the special case of directed presence.</t>
       <section title="Client Generation of Directed Presence" anchor="presence-directed-gen">
         <t>As noted, directed presence is a presence stanza with a 'to' attribute whose value is the bare JID or full JID of the other entity and with either no 'type' attribute or a 'type' attribute whose value is "unavailable".</t>
+        <t>If a user exchanges messages or IQ stanzas with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity, subject to user approval (either explicitly for this entity or implicitly via a configuration setting).  If a client supports this feature, it MUST allow the user to disable the feature in order to prevent presence sharing with unknown entities.</t>
       </section>
       <section title="Server Processing of Outbound Directed Presence" anchor="presence-directed-outbound">
         <t>When the user's server receives the directed presence stanza, it SHOULD process it according to the following rules.</t>
         <t>
           <list style="numbers">
-            <t>If the user sends directed available or unavailable presence to a contact that is in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending broadcasted unavailable presence, the user's server MUST route or deliver the full XML of that presence stanza but SHOULD NOT otherwise modify the contact's status regarding broadcasted presence (i.e., it SHOULD include the contact's JID in any subsequent presence broadcasts initiated by the user).</t>
-            <t>If the user sends directed presence to an entity that is not in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending broadcasted unavailable presence, the user's server MUST route or deliver the full XML of that presence stanza to the entity but MUST NOT modify the contact's status regarding available presence broadcast (i.e., it MUST NOT include the entity's JID in any subsequent broadcasts of available presence initiated by the user); however, if the available resource from which the user sent the directed presence become unavailable, the user's server MUST route that unavailable presence to the entity (if the user has not yet sent directed unavailable presence to that entity).</t>
+            <t>If the user sends directed available or unavailable presence to a contact that is in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending broadcasted unavailable presence (i.e., during the user's presence session), the user's server MUST route or deliver the full XML of that presence stanza but SHOULD NOT otherwise modify the contact's status regarding broadcasted presence (i.e., it SHOULD include the contact's JID in any subsequent presence broadcasts initiated by the user).</t>
+            <t>If the user sends directed presence to an entity that is not in the user's roster with a subscription type of "from" or "both" after having sent initial presence and before sending broadcasted unavailable presence (i.e., during the user's presence session), the user's server MUST route or deliver the full XML of that presence stanza to the entity but MUST NOT modify the contact's status regarding available presence broadcast (i.e., it MUST NOT include the entity's JID in any subsequent broadcasts of available presence initiated by the user); however, if the available resource from which the user sent the directed presence become unavailable, the user's server MUST route that unavailable presence to the entity (if the user has not yet sent directed unavailable presence to that entity).</t>
             <t>If the user sends directed presence without first sending initial presence or after having sent unavailable presence broadcast (i.e., the resource is connected but not available), the user's server MUST treat the entities to which the user sends directed presence in the same way that it treats the entities listed in case #2 above.</t>
           </list>
         </t>
@@ -1276,12 +1279,13 @@ CS: <presence from='juliet@example.com/balcony'
           </list>
         </t>
         <t>If the value of the 'type' attribute is not one of the foregoing values, the recipient or an intermediate router SHOULD return a stanza error of &lt;bad-request/&gt;.</t>
+        <t>Note:  There is no default value for the 'type' attribute of the &lt;presence/&gt; element.  Therefore if the intended recipient or intermediate router receives a &lt;presence/&gt; element whose 'type' value is undefined, it SHOULD return a stanza error of &lt;bad-request/&gt;.</t>
       </section>
       <section title="Child Elements" anchor="presence-syntax-children">
         <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are provided only if the presence stanza possesses no 'type' attribute, although exceptions are noted in the text that follows.</t>
       </section>
       <section title="Show Element" anchor="presence-show">
-        <t>The OPTIONAL &lt;show/&gt; element specifies the particular availability sub-state of an entity or a specific resource thereof.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  The &lt;show/&gt; element MUST NOT possess any attributes.  The XML character data of the &lt;show/&gt; element is not human-readable.  The data MUST be one of the following (additional availability types could be defined through a properly-namespaced child element of the presence stanza):</t>
+        <t>The OPTIONAL &lt;show/&gt; element specifies the particular availability sub-state of an entity or a specific resource thereof.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  The &lt;show/&gt; element MUST NOT possess any attributes.  The XML character data of the &lt;show/&gt; element is not human-readable.  The XML character data MUST be one of the following (additional availability states could be defined through a properly-namespaced child element of the presence stanza):</t>
         <t>
           <list style="symbols">
             <t>away -- The entity or resource is temporarily away.</t>
@@ -1291,16 +1295,10 @@ CS: <presence from='juliet@example.com/balcony'
           </list>
         </t>
         <t>If no &lt;show/&gt; element is provided, the entity is assumed to be online and available.</t>
-        <figure>
-          <artwork><![CDATA[
-<presence>
-  <show>dnd</show>
-</presence>
-          ]]></artwork>
-        </figure>
+        <t>Any specialized processing of availability states by recipients and intermediate routers is up to the implementation (e.g., incorporation of availability states into server routing and delivery logic).</t>
       </section>
       <section title="Status Element" anchor="presence-status">
-        <t>The OPTIONAL &lt;status/&gt; element contains XML character data specifying a natural-language description of an entity's availability.  It is normally used in conjunction with the show element to provide a detailed description of an availability state (e.g., "In a meeting") when the presence stanza has no 'type' attribute.</t>
+        <t>The OPTIONAL &lt;status/&gt; element contains human-readable XML character data specifying a natural-language description of an entity's availability.  It is normally used in conjunction with the show element to provide a detailed description of an availability state (e.g., "In a meeting") when the presence stanza has no 'type' attribute.</t>
         <figure>
           <artwork><![CDATA[
 <presence from='romeo@example.net/orchard'
@@ -1358,6 +1356,7 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
       <section title="Extended Content" anchor="presence-extended">
         <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any properly-namespaced child element; this applies to the presence stanza as well.</t>
+        <t>(In the following example, the presence stanza includes entity capabilities information as defined in <xref target='XEP-0115'/>).)</t>
         <figure>
           <artwork><![CDATA[
 <presence from='romeo@example.net'>
@@ -1373,7 +1372,9 @@ CS: <presence from='juliet@example.com/balcony'
   </section>
 
   <section title="Exchanging Messages" anchor="message">
-    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One type of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and is brought about when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Processing XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus a message stanza is used to "push" information to another entity.</t>
+    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client (if, that is, messaging functionality is enabled and the server is not a presence-only service).  One kind of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and occurs when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules">Server Rules for Processing XML Stanzas</xref>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus a message stanza is used to "push" information to another entity.</t>
+    <t>As noted under <xref target='presence-directed'/>, if a user exchanges messages with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity.</t>
+    <t>The following sections describe the syntax of the &lt;message/&gt; stanza.</t>
     <section title="Attributes" anchor="message-attributes">
       <section title="To Attribute" anchor="message-attributes-to">
         <t>An instant messaging client SHOULD specify an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.</t>
@@ -1406,11 +1407,11 @@ CS: <presence from='juliet@example.com/balcony'
       <t>Common uses of the message stanza in instant messaging applications include single messages, messages sent in the context of a chat conversation, messages sent in the context of a multi-user chat room, headlines and other alerts, and errors.  These uses are differentiated via the 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
       <t>
         <list style="symbols">
-          <t>chat -- The message is sent in the context of a one-to-one chat conversation.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.</t>
-          <t>error -- The message is generated by by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, see <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
+          <t>chat -- The message is sent in the context of a one-to-one chat conversation.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.  (For detailed recommendations regarding chat sessions, refer to <xref target='XEP-0201'/>.)</t>
+          <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, see <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
           <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A receiving client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details, see <xref target="XEP-0045"/>).</t>
-          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, alerts, etc.) or the sender wishes the message to be delivered as if it were.  No reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources.</t>
-          <t>normal -- The message is a single message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  A receiving client SHOULD present the message in an interface enabling the recipient to reply, but without a conversation history.  This is the default value of the 'type' attribute.</t>
+          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, alerts, etc.), or the sender wishes the message to be delivered as if it were so generated.  No reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources.</t>
+          <t>normal -- The message is a standalone message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  A receiving client SHOULD present the message in an interface enabling the recipient to reply, but without a conversation history.  This is the default value of the 'type' attribute.</t>
         </list>
       </t>
       <t>An IM application SHOULD support all of the foregoing message types.  If an application receives a message with no 'type' attribute or the application does not understand the value of the 'type' attribute provided, it MUST consider the message to be of type "normal" (i.e., "normal" is the default).</t>
@@ -1441,7 +1442,9 @@ CS: <presence from='juliet@example.com/balcony'
     type='chat'
     xml:lang='en'>
   <body>Wherefore art thou, Romeo?</body>
-  <body xml:lang='cs'>Pro&#x010D;e&#x017D; jsi ty, Romeo?</body>
+  <body xml:lang='cs'>
+     Pro&#x010D;e&#x017D; jsi ty, Romeo?
+   </body>
 </message>
           ]]></artwork>
         </figure>
@@ -1475,7 +1478,9 @@ CS: <presence from='juliet@example.com/balcony'
     &#x00DA;p&#x011B;nliv&#x011B; pros&#x00EDm!
   </subject>
   <body>Wherefore art thou, Romeo?</body>
-  <body xml:lang='cs'>Pro&#x010D;e&#x017E; jsi ty, Romeo?</body>
+  <body xml:lang='cs'>
+     Pro&#x010D;e&#x017E; jsi ty, Romeo?
+   </body>
 </message>
           ]]></artwork>
         </figure>
@@ -1485,12 +1490,14 @@ CS: <presence from='juliet@example.com/balcony'
       <section title="Thread" anchor="message-elements-thread">
         <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element may also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It may also be used for &lt;message/&gt; stanzas not related to a conversation, such as a game session or between plugins.</t>
         <t>The value of the &lt;thread/&gt; element MUST be a universally unique identifier (UUID) as described in <xref target='UUID'/>.</t>
-        <t>The use of the &lt;thread/&gt; element is OPTIONAL.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations.  A message stanza MUST NOT contain more than one &lt;thread/&gt; element.  The &lt;thread/&gt; element MUST NOT possess any attributes.  The value of the &lt;thread/&gt; element MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
+        <t>The use of the &lt;thread/&gt; element is OPTIONAL.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations.  A message stanza MUST NOT contain more than one &lt;thread/&gt; element.  The &lt;thread/&gt; element MUST NOT possess any attributes.  The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
+        <t>For detailed recommendations regarding use of the &lt;thread/&gt; element, refer to <xref target='XEP-0201'/>.</t>
       </section>
     </section>
 
     <section title="Extended Content" anchor="message-elements-extended">
       <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any properly-namespaced child element; this applies to the message stanza as well.</t>
+      <t>(In the following example, the message stanza includes an XHTML-formatted version of the message as defined in <xref target='XEP-0071'/>).)</t>
       <figure>
         <artwork><![CDATA[
 <message
@@ -1513,6 +1520,7 @@ CS: <presence from='juliet@example.com/balcony'
 
   <section title="Exchanging IQ Stanzas" anchor="iq">
     <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is required) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all cases by the extended namespace that qualifies the direct child element of an IQ stanza of type "get" or "set".  The 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the &lt;error/&gt; common to all stanza types.  This document defines one such extended namespace, for <xref target="roster">Managing the Roster</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
+    <t>As noted under <xref target='presence-directed'/>, if a user exchanges IQ stanzas with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity.</t>
   </section>
 
   <section title="A Sample Session" anchor="session">
@@ -1522,8 +1530,8 @@ CS: <presence from='juliet@example.com/balcony'
       <t>benvolio@example.org (subscription="to")</t>
       <t>mercutio@example.org (subscription="from")</t>
     </list></t>
-    <t>First, the user completes the preconditions (stream establishment, TLS and SASL negotiation, and resource binding) described in <xref target='XMPP-CORE'/>; those packet flows are not reproduced here.</t>
-    <t>Next, the user requests his roster:</t>
+    <t>First, the user completes the preconditions (stream establishment, TLS and SASL negotiation, and resource binding) described in <xref target='XMPP-CORE'/>; those protocol flows are not reproduced here.</t>
+    <t>Next, the user requests his roster.</t>
     <figure>
       <preamble>Example 1: User requests current roster from server:</preamble>
       <artwork><![CDATA[
@@ -1722,7 +1730,7 @@ CS: <presence
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 13: One of the contact's resources broadcasts final presence:</preamble>
+      <preamble>Example 13: One of the contact's resources broadcasts unavailable presence:</preamble>
       <artwork><![CDATA[
 CC: <presence from='juliet@example.com/chamber' type='unavailable'/>
       ]]></artwork>
@@ -1736,6 +1744,7 @@ CS: <presence
         to='romeo@example.net'/>
       ]]></artwork>
     </figure>
+    <t>Now the user ends his presence session.</t>
     <figure>
       <preamble>Example 15: User sends unavailable presence:</preamble>
       <artwork><![CDATA[
@@ -1766,14 +1775,15 @@ US: <presence
     </presence>
       ]]></artwork>
     </figure>
-    <t>Now the user closes his stream:</t>
+    <t>Finally the user closes his stream and the server responds in kind.</t>
     <figure>
+      <preamble>Example 17: User closes stream:</preamble>
       <artwork><![CDATA[
 UC: </stream:stream>
       ]]></artwork>
     </figure>
-    <t>And the user's server closes its stream as well:</t>
     <figure>
+      <preamble>Example 18: User's server closes stream:</preamble>
       <artwork><![CDATA[
 US: </stream:stream>
       ]]></artwork>
@@ -2355,6 +2365,75 @@ US: </stream:stream>
   </front>
   <seriesInfo name="XSF XEP" value="0054"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0054.html"/>
+</reference>
+
+<reference anchor="XEP-0071">
+  <front>
+    <title>XHTML-IM</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="29" month="August" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0071"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0071.html"/>
+</reference>
+
+<reference anchor="XEP-0115">
+  <front>
+    <title>Entity Capabilities</title>
+    <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+      <organization/>
+      <address>
+        <email>jhildebrand@jabber.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <author initials="R." surname="Tron&#xE7;on" fullname="Remko Tron&#xE7;on">
+      <organization/>
+      <address>
+        <email>public@el-tramo.be</email>
+      </address>
+    </author>
+    <date day="13" month="August" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0115"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0115.html"/>
+</reference>
+
+<reference anchor="XEP-0201">
+  <front>
+    <title>Best Practices for Message Threads</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <author initials="I." surname="Paterson" fullname="Ian Paterson">
+      <organization/>
+      <address>
+        <email>ian.paterson@clientside.co.uk</email>
+      </address>
+    </author>
+    <author initials="K." surname="Smith" fullname="Kevin Smith">
+      <organization/>
+      <address>
+        <email>kevin@kismith.co.uk</email>
+      </address>
+    </author>
+    <date day="30" month="August" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0201"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0201.html"/>
 </reference>
 
 <reference anchor='XML-SCHEMA'
