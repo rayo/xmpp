@@ -1836,10 +1836,11 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
       </section>
       <section title="malformed-request" anchor="sasl-errors-malformed-request">
         <t>The request is malformed (e.g., the &lt;auth/&gt; element includes an initial response but the mechanism does not allow that, or the data sent violates the syntax for the specified SASL mechanism); sent in reply to an &lt;abort/&gt;, &lt;auth/&gt;, &lt;challenge/&gt;, or &lt;response/&gt; element.</t>
+        <t>(In the following example, the XML character data of the &lt;auth/&gt; element contains more than 255 UTF-8-encoded Unicode characters and therefore violates the "token" production for the SASL ANONYMOUS mechanism as specified in <xref target='ANONYMOUS'/>.)</t>
         <figure>
           <artwork><![CDATA[
 I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
-         mechanism='ANONYMOUS'>[ ... extremely-long-token ... ]</auth>
+         mechanism='ANONYMOUS'>[ ... some-long-token ... ]</auth>
 
 R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
      <malformed-request/>
@@ -3407,20 +3408,21 @@ S2: </stream:stream>
     <t>Note:  Particular XMPP applications MAY specify delivery rules that modify or supplement the following rules; for example, a set of delivery rules for instant messaging and presence applications is defined in <xref target="XMPP-IM"/>.</t>
     <section title="No 'to' Address" anchor="rules-noto">
       <section title="Overview" anchor="rules-noto-overview">
-        <t>If the stanza possesses no 'to' attribute, the server SHOULD handle it directly on behalf of the entity that sent it.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a local entity (such as a client) that is connected to the server.</t>
+        <t>If the stanza possesses no 'to' attribute, the server SHOULD handle it directly on behalf of the entity that sent it, where the meaning of "handle it directly" depends on whether the stanza is message, presence, or IQ.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a local entity (such as a client) that is connected to the server.</t>
       </section>
       <section title="Message" anchor="rules-noto-message">
-        <t>If the server receives a message stanza with no 'to' attribute, it SHOULD handle it directly, which may include returning an error to the sending entity.</t>
+        <t>If the server receives a message stanza with no 'to' attribute, it SHOULD treat the message as if the 'to' address were the bare JID &lt;node@domain&gt; of the sending entity.</t>
       </section>
       <section title="Presence" anchor="rules-noto-presence">
         <t>If the server receives a presence stanza with no 'to' attribute, it SHOULD broadcast it to the entities that are subscribed to the sending entity's presence, if applicable (the semantics of presence broadcast for presence applications are defined in <xref target="XMPP-IM"/>).</t>
       </section>
       <section title="IQ" anchor="rules-noto-IQ">
-        <t>If the server receives an IQ stanza of type "get" or "set" with no 'to' attribute, it MUST do the following:</t>
+        <t>If the server receives an IQ stanza with no 'to' attribute, it MUST treat the stanza as if the 'to' address were the bare JID &lt;node@domain&lt; of the sending entity, as follows:</t>
         <t>
           <list style='numbers'>
-            <t>If it understands the namespace that qualifies the content of the stanza, it MUST either handle the stanza directly on behalf of sending entity (where the meaning of "handle" is determined by the semantics of the qualifying namespace) or return an appropriate error to the sending entity.</t>
-            <t>If it does not understand the namespace that qualifies the content of the stanza, it MUST return an error to the sending entity, which SHOULD be &lt;service-unavailable/&gt;.</t>
+            <t>If the IQ stanza is of type "get" or "set" and the server understands the namespace that qualifies the payload, the server MUST handle the stanza on behalf of the sending entity or return an appropriate error to the sending entity.  While the meaning of "handle" is determined by the semantics of the qualifying namespace, in general the server shall respond to the IQ stanza of type "get" or "set" by returning an appropriate IQ stanza of type "result" or "error", responding as if the server were the bare JID of the sending entity.  As an example, if the sending entity sends an IQ stanza of type "get" where the payload is qualified by the 'jabber:iq:roster' namespace (as described in <xref target='XMPP-IM'/>), then the server shall return the roster associated with the sending entity's bare JID to the particular resource of the sending entity that requested the roster.</t>
+            <t>If the IQ stanza is of type "get" or "set" and the server does not understand the namespace that qualifies the payload, the server MUST return an error to the sending entity, which MUST be &lt;service-unavailable/&gt;.</t>
+            <t>If the IQ stanza is of type "error" or "result", the server MUST handle the error or result as appropriate for the request-response interaction.</t>
           </list>
         </t>
       </section>
@@ -4306,6 +4308,18 @@ S2: </stream:stream>
 <t>The Application Configuration Access Protocol (ACAP) is designed to support remote storage and access of program option, configuration and preference information.  The data store model is designed to allow a client relatively simple access to interesting data, to allow new information to be easily added without server re-configuration, and to promote the use of both standardized data and custom or proprietary data.  Key features include "inheritance" which can be used to manage default values for configuration settings and access control lists which allow interesting personal information to be shared and group information to be restricted.</t></abstract></front>
 <seriesInfo name='RFC' value='2244' />
 <format type='TXT' octets='154610' target='ftp://ftp.isi.edu/in-notes/rfc2244.txt' />
+</reference>
+
+<reference anchor='ANONYMOUS'>
+<front>
+<title>Anonymous Simple Authentication and Security Layer (SASL) Mechanism</title>
+<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>On the Internet, it is common practice to permit anonymous access to various services. Traditionally, this has been done with a plain-text password mechanism using "anonymous" as the user name and using optional trace information, such as an email address, as the password. As plain-text login commands are not permitted in new IETF protocols, a new way to provide anonymous login is needed within the context of the Simple Authentication and Security Layer (SASL) framework. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4505' />
+<format type='TXT' octets='16599' target='ftp://ftp.isi.edu/in-notes/rfc4505.txt' />
 </reference>
 
 <reference anchor="ASN.1">
