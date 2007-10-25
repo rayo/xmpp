@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="October" day="24"/>
+    <date year="2007" month="October" day="25"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -49,7 +49,7 @@
         <list style='numbers'>
           <t><iref item='Roster'/>The central point of focus is a list of one's contacts or "buddies" (in XMPP this list is called a ROSTER).</t>
           <t>The purpose of using such an application is to exchange relatively brief text messages with each of one's contacts in close to real time -- often relatively large numbers of such messages in rapid succession, in the form of one-to-one "chat sessions".</t>
-          <t><iref item='Presence'/>The catalyst for exchanging messages is PRESENCE -- i.e., knowledge about the network availability of each of one's contacts (thus knowing who is online and available for a chat session).</t>
+          <t><iref item='Presence'/>The catalyst for exchanging messages is PRESENCE -- i.e., information about the network availability of each of one's contacts (thus knowing who is online and available for a chat session).</t>
           <t>Presence information is provided only to contacts that a user has authorized via a presence subscription.</t>
         </list>
       </t>
@@ -200,10 +200,10 @@ S: <iq to='juliet@example.com/chamber'
         <t>The state of the presence subscription in relation to a roster item is captured in the 'subscription' attribute of the &lt;item/&gt; element.  Allowable subscription-related values for this attribute are:</t>
         <t>
           <list style="symbols">
-            <t>"none" -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
-            <t>"to" -- the user has a subscription to the contact's presence information, but the contact does not have a subscription to the user's presence information</t>
-            <t>"from" -- the contact has a subscription to the user's presence information, but the user does not have a subscription to the contact's presence information</t>
-            <t>"both" -- both the user and the contact have subscriptions to each other's presence information (also called a "mutual subscription")</t>
+            <t>"none" -- the user does not have a subscription to the contact's presence, and the contact does not have a subscription to the user's presence</t>
+            <t>"to" -- the user has a subscription to the contact's presence, but the contact does not have a subscription to the user's presence</t>
+            <t>"from" -- the contact has a subscription to the user's presence, but the user does not have a subscription to the contact's presence</t>
+            <t>"both" -- both the user and the contact have subscriptions to each other's presence (also called a "mutual subscription")</t>
           </list>
         </t>
         <t>In a roster result, a receiving client MUST ignore values of the 'subscription' attribute other than "none", "to", "from", or "both".</t>
@@ -592,7 +592,7 @@ S: <iq to='juliet@example.com/balcony' type='error' id='delete_2'>
 
   <section title="Managing Presence Subscriptions" anchor="sub">
 
-    <t><iref item='Presence Subscription'/>In order to protect the privacy of instant messaging users, presence information is disclosed only to other entities that the user has approved.  When a user has agreed that another entity may view its presence, the entity is said to have a SUBSCRIPTION to the user's presence information.  <iref item='Contact'/>An entity that has a subscription to a user's presence or to which a user has a presence subscription is called a CONTACT (in this document the term "contact" is also used in less strict sense to refer to a potential contact or an item in a user's roster).</t>
+    <t><iref item='Presence Subscription'/>In order to protect the privacy of instant messaging users, presence information is disclosed only to other entities that the user has approved.  When a user has agreed that another entity may view its presence, the entity is said to have a SUBSCRIPTION to the user's presence.  <iref item='Contact'/>An entity that has a subscription to a user's presence or to which a user has a presence subscription is called a CONTACT (in this document the term "contact" is also used in less strict sense to refer to a potential contact or an item in a user's roster).</t>
     <t>In XMPP, a subscription lasts across sessions; indeed, it lasts until the contact unsubscribes or the user cancels the previously-granted subscription.</t>
     <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes ("subscribe", "unsubscribe", "subscribed", and "unsubscribed").</t>
     <t>Note:  When a server processes or generates an outbound presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST stamp the outgoing presence stanza with the bare JID &lt;node@domain&gt; of the sending entity, not the full JID &lt;node@domain/resource&gt;.  This rule helps to prevent presence leaks; for details, see the security considerations of <xref target='XMPP-CORE'/>.</t>
@@ -663,7 +663,7 @@ CS: <presence from='juliet@example.com'
                 ]]></artwork>
               </figure>
             </t>
-            <t>If the contact exists and the user already has a subscription to the user's presence, the contact's server SHOULD auto-reply on behalf of the user by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.</t>
+            <t>If the contact exists and the user already has a subscription to the user's presence, then the contact's server SHOULD auto-reply on behalf of the contact by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.  If the contact previously sent a presence stanza of type "subscribed" and the contact's server treated that as indicating "pre-approval" for the user's presence subscription (see <xref target='substates'/>), then the contact's server MAY also auto-reply on behalf of the contact.</t>
             <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one interested resource associated with the contact when the subscription request is received by the contact's server, the contact's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Processing XML Stanzas</xref>.</t>
             <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no interested resources when the subscription request is received by the contact's server, the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an interested resource, until the contact either approves or denies the request.  (Note: The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an interested resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an interested resource; this helps to prevent "subscription request spam".)</t>
           </list>
@@ -719,7 +719,7 @@ CS: <iq to='juliet@example.com/chamber'
     </iq>
           ]]></artwork>
         </figure>
-        <t>The contact's server MUST then also send current presence information to the user from each of the contact's available resources.</t>
+        <t>The contact's server MUST then also send current presence to the user from each of the contact's available resources.</t>
         <figure>
           <artwork><![CDATA[
 CS: <presence from='juliet@example.com/balcony'
@@ -758,7 +758,7 @@ US: <iq to='romeo@example.net/bar'
     </iq>
           ]]></artwork>
         </figure>
-        <t>From the perspective of the user, there now exists a subscription to the contact's presence information.</t>
+        <t>From the perspective of the user, there now exists a subscription to the contact's presence.</t>
         <t>The user's server MUST also deliver the available presence stanza received from each of the contact's available resources to each of the user's available resources.</t>
         <figure>
           <artwork><![CDATA[
@@ -934,8 +934,8 @@ CS: <iq to='juliet@example.com/chamber'
   <section title="Exchanging Presence Information" anchor="presence">
 
     <section title="Overview" anchor="presence-overview">
-      <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication (the terms "online" and "offline" are also used).  In XMPP, a principal's availability is signalled when a client controlled by the principal generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when a client generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".  In XMPP-based applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, XMPP-based applications are not required to combine messaging and presence functionality, and can provide standalone presence features without messaging (in addition, XMPP servers do not require presence information in order to successfully route message and IQ stanzas).</t>
-      <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence information to its server, and its server then broadcasts that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL"/>, an entity that generates presence information is a "presentity" and the entities that receive presence information are "subscribers").  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable". <iref item='Broadcasted Presence'/> This kind of presence is called BROADCASTED PRESENCE. <iref item='Directed Presence'/> (A client MAY also send DIRECTED PRESENCE, i.e., a presence stanza with a 'to' address; this is less common but is sometimes used to send presence to entities that are not subscribed to the principal's presence; see <xref target='presence-directed'/>.)</t>
+      <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication (the terms "online" and "offline" are also used).  In XMPP, a principal's availability is signalled when a client controlled by the principal generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when a client generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".  In XMPP-based applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, XMPP-based applications are not required to combine messaging and presence functionality, and can provide standalone presence features without messaging (in addition, XMPP servers do not require information about network availability in order to successfully route message and IQ stanzas).</t>
+      <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence to its server, and its server then broadcasts that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL"/>, an entity that generates presence is a "presentity" and the entities that receive presence are "subscribers").  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable". <iref item='Broadcasted Presence'/> This kind of presence is called BROADCASTED PRESENCE. <iref item='Directed Presence'/> (A client MAY also send DIRECTED PRESENCE, i.e., a presence stanza with a 'to' address; this is less common but is sometimes used to send presence to entities that are not subscribed to the principal's presence; see <xref target='presence-directed'/>.)</t>
       <t><iref item='Presence Session'/>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a PRESENCE SESSION at its server by sending <xref target='presence-initial'>initial presence</xref>.  Such a presence session is terminated by sending <xref target='presence-unavailable'>unavailable presence</xref>.</t>
     </section>
 
@@ -950,7 +950,7 @@ UC: <presence/>
       </section>
 
       <section title="Server Processing of Outbound Presence" anchor="presence-initial-outbound">
-        <t>Upon receiving initial presence from a client, the user's server MUST send the initial presence stanza from the full JID &lt;user@domain/resource&gt; of the user to all contacts that are subscribed to the user's presence information; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "from" or "both".</t>
+        <t>Upon receiving initial presence from a client, the user's server MUST send the initial presence stanza from the full JID &lt;user@domain/resource&gt; of the user to all contacts that are subscribed to the user's presence; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "from" or "both".</t>
         <t>Note:  In the following examples, the "user" is juliet@example.com and the user has three contacts in her roster with a subscription state of "from" or "both": romeo@example.net, mercutio@example.com, and benvolio@example.com.</t>
         <figure>
           <artwork><![CDATA[
@@ -1683,7 +1683,7 @@ CC: <message
     <t>And so on.</t>
     <t>The user can also send subsequent broadcasted presence.</t>
     <figure>
-      <preamble>Example 10: User sends updated available presence information for broadcasting:</preamble>
+      <preamble>Example 10: User sends updated available presence for broadcasting:</preamble>
       <artwork><![CDATA[
 UC: <presence xml:lang='en'>
       <show>away</show>
@@ -1693,7 +1693,7 @@ UC: <presence xml:lang='en'>
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 11: User's server broadcasts updated presence information only to one contact:</preamble>
+      <preamble>Example 11: User's server broadcasts updated presence only to one contact:</preamble>
       <artwork><![CDATA[
 US: <presence
         from='romeo@example.net/orchard'
@@ -1706,7 +1706,7 @@ US: <presence
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 12: Contact's server delivers updated presence information to all of the contact's available resources ("balcony" and "chamber"):</preamble>
+      <preamble>Example 12: Contact's server delivers updated presence to all of the contact's available resources ("balcony" and "chamber"):</preamble>
       <artwork><![CDATA[
 CS: <presence
         from='romeo@example.net/orchard'
@@ -1734,7 +1734,7 @@ CC: <presence from='juliet@example.com/chamber' type='unavailable'/>
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 14: Contact's server sends unavailable presence information to user:</preamble>
+      <preamble>Example 14: Contact's server sends unavailable presence to user:</preamble>
       <artwork><![CDATA[
 CS: <presence
         type='unavailable'
@@ -1754,7 +1754,7 @@ UC: <presence from='romeo@example.net/orchard'
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 16: User's server broadcasts unavailable presence information to contact as well as to the person to whom the user sent directed presence:</preamble>
+      <preamble>Example 16: User's server broadcasts unavailable presence to contact as well as to the person to whom the user sent directed presence:</preamble>
       <artwork><![CDATA[
 US: <presence
         type='unavailable'
@@ -1845,7 +1845,7 @@ US: </stream:stream>
         <section title="Message" anchor="rules-barejid-availno-message">
           <t>For a message stanza of type "headline", the server SHOULD NOT store the stanza on behalf of the user and deliver it when the user next becomes available, but instead SHOULD either forward the stanza to the user via a non-XMPP messaging system (e.g., to the user's email account) or return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
           <t>For a message stanza of type "chat", "error", "groupchat", or "normal", the server MAY choose to store the stanza on behalf of the user and deliver it when the user next becomes available, or forward the message to the user via a non-XMPP messaging system (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-          <t>Note: Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.  However, for recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
+          <t>Note:  Offline message storage and message forwarding are not defined in XMPP, since they are strictly a matter of implementation and service provisioning.  However, for recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
         </section>
         <section title="Presence" anchor="rules-barejid-availno-pres">
           <t>For a presence stanza with no type or of type "unavailable" or "probe", the server SHOULD silently ignore the stanza by not storing it for later delivery and not replying to it on behalf of the user.</t>
@@ -1906,7 +1906,7 @@ US: </stream:stream>
     <t>Core security considerations for XMPP are defined in the relevant section of <xref target="XMPP-CORE"/>.</t>
     <t>Additional considerations that apply only to instant messaging and presence applications of XMPP are defined in several places within this document; specifically:</t>
     <t><list style="symbols">
-      <t>When a server processes an inbound presence stanza of type "probe" whose intended recipient is a user associated with one of the server's hostnames, the server MUST NOT reveal the user's presence information if the sender is an entity that is not authorized to receive that information as determined by presence subscriptions (see <xref target="presence">Exchanging Presence Information</xref>).</t>
+      <t>When a server processes an inbound presence stanza of type "probe" whose intended recipient is a user associated with one of the server's hostnames, the server MUST NOT reveal the user's presence if the sender is an entity that is not authorized to receive that information as determined by presence subscriptions (see <xref target="presence">Exchanging Presence Information</xref>).</t>
       <t>A user's server MUST NOT leak the user's network availability to entities who are not authorized to know the user's presence, either via an explicit subscription as described herein or via an existing trust relationship (such as presence-enabled user directories within organizations).</t>
       <t>When a server processes an outbound presence stanza with no type or of type "unavailable", it MUST follow the rules defined under <xref target="presence">Exchanging Presence Information</xref> in order to ensure that such presence information is not broadcasted to entities that are not authorized to know such information.</t>
       <t>When a server generates an error stanza in response to receiving a stanza for a user who does not exist, the use of the &lt;service-unavailable/&gt; error condition helps protect against well-known dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.</t>
@@ -2547,69 +2547,71 @@ US: </stream:stream>
   <section title="Subscription States" anchor="substates">
     <t>This section provides detailed information about subscription states and server processing of subscription-related presence stanzas (i.e., presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed").</t>
     <section title="Defined States" anchor="substates-defined">
-      <t>There are four primary subscription states:</t>
+      <t>There are four primary subscription states (note: these states are described from the perspective of the user, not the contact):</t>
       <t>
         <list style='symbols'>
-        <t>None -- the user does not have a subscription to the contact's presence information, and the contact does not have a subscription to the user's presence information</t>
-        <t>To -- the user has a subscription to the contact's presence information, but the contact does not have a subscription to the user's presence information</t>
-        <t>From -- the contact has a subscription to the user's presence information, but the user does not have a subscription to the contact's presence information</t>
-        <t>Both -- both the user and the contact have subscriptions to each other's presence information (i.e., the union of 'from' and 'to')</t>
+        <t>None -- the user does not have a subscription to the contact's presence, and the contact does not have a subscription to the user's presence</t>
+        <t>To -- the user has a subscription to the contact's presence, but the contact does not have a subscription to the user's presence</t>
+        <t>From -- the contact has a subscription to the user's presence, but the user does not have a subscription to the contact's presence</t>
+        <t>Both -- both the user and the contact have subscriptions to each other's presence (i.e., the union of 'from' and 'to')</t>
         </list>
       </t>
       <t>These states are supplemented by various pending sub-states to yield nine possible subscription states:</t>
       <t><list style='numbers'>
-        <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the roster by subscription='none'</t>
-        <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the roster by subscription='none' and ask='subscribe'</t>
-        <t>"None + Pending In" = contact and user are not subscribed to each other, and contact has sent user a subscription request but user has not replied yet (note: contact's server SHOULD NOT push or deliver roster items in this state, but instead SHOULD wait until user has approved subscription request from contact); this is reflected in the roster by subscription='none'</t>
-        <t>"None + Pending Out+In" = contact and user are not subscribed to each other, contact has sent user a subscription request but user has not replied yet, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the roster by subscription='none' and ask='subscribe'</t>
-        <t>"To" = user is subscribed to contact (one-way); this is reflected in the roster by subscription='to'</t>
-        <t>"To + Pending In" = user is subscribed to contact, and contact has sent user a subscription request but user has not replied yet; this is reflected in the roster by subscription='to'</t>
-        <t>"From" = contact is subscribed to user (one-way); this is reflected in the roster by subscription='from'</t>
-        <t>"From + Pending Out" = contact is subscribed to user, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the roster by subscription='none' and ask='subscribe'</t>
-        <t>"Both" = user and contact are subscribed to each other (two-way); this is reflected in the roster by subscription='both'</t>
+        <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the user's roster by subscription='none'</t>
+        <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
+        <t>"None + Pending In" = contact and user are not subscribed to each other, and contact has sent user a subscription request but user has not replied yet (note: contact's server SHOULD NOT push or deliver roster items in this state, but instead SHOULD wait until user has approved subscription request from contact); this is reflected in the user's roster by subscription='none'</t>
+        <t>"None + Pending Out+In" = contact and user are not subscribed to each other, contact has sent user a subscription request but user has not replied yet, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
+        <t>"To" = user is subscribed to contact (one-way); this is reflected in the user's roster by subscription='to'</t>
+        <t>"To + Pending In" = user is subscribed to contact, and contact has sent user a subscription request but user has not replied yet; this is reflected in the user's roster by subscription='to'</t>
+        <t>"From" = contact is subscribed to user (one-way); this is reflected in the user's roster by subscription='from'</t>
+        <t>"From + Pending Out" = contact is subscribed to user, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
+        <t>"Both" = user and contact are subscribed to each other (two-way); this is reflected in the user's roster by subscription='both'</t>
       </list></t>
     </section>
     <section title="Server Processing of Outbound Presence Subscription Stanzas" anchor="substates-out">
-      <t>Outbound presence subscription stanzas enable the user to manage his or her subscription to the contact's presence information (via the "subscribe" and "unsubscribe" types), and to manage the contact's access to the user's presence information (via the "subscribed" and "unsubscribed" types).</t>
+      <t>Outbound presence subscription stanzas enable the user to manage his or her subscription to the contact's presence (via the "subscribe" and "unsubscribe" types), and to manage the contact's access to the user's presence (via the "subscribed" and "unsubscribed" types).</t>
       <t>The following rules apply to outbound routing of the stanza as well as changes to the user's roster.</t>
+      <t>Note:  The rules for server processing of outbound presence subscription stanzas are described from the perspective of the user, not the contact.</t>
       <t>Note:  In the following tables, "S.N." stand for SHOULD NOT.</t>
       <section title="Subscribe" anchor="substates-out-subscribe">
         <figure>
           <preamble>Table 1: Processing of outbound "subscribe" stanzas</preamble>
           <artwork><![CDATA[
-+----------------------------------------------------------------+
-|  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
-+----------------------------------------------------------------+
-|  "None"                  |  MUST    |  "None + Pending Out"    |
-|  "None + Pending Out"    |  MUST    |  no state change         |
-|  "None + Pending In"     |  MUST    |  "None + Pending Out+In" |
-|  "None + Pending Out+In" |  MUST    |  no state change         |
-|  "To"                    |  MUST    |  no state change         |
-|  "To + Pending In"       |  MUST    |  no state change         |
-|  "From"                  |  MUST    |  "From + Pending Out"    |
-|  "From + Pending Out"    |  MUST    |  no state change         |
-|  "Both"                  |  MUST    |  no state change         |
-+----------------------------------------------------------------+
++-----------------------------------------------------------------+
+|  EXISTING STATE          |  ROUTE?  |  NEW STATE                |
++-----------------------------------------------------------------+
+|  "None"                  |  MUST    |  "None + Pending Out" [1] |
+|  "None + Pending Out"    |  MUST    |  no state change          |
+|  "None + Pending In"     |  MUST    |  "None + Pending Out+In"  |
+|  "None + Pending Out+In" |  MUST    |  no state change          |
+|  "To"                    |  MUST    |  no state change          |
+|  "To + Pending In"       |  MUST    |  no state change          |
+|  "From"                  |  MUST    |  "From + Pending Out" [1] |
+|  "From + Pending Out"    |  MUST    |  no state change          |
+|  "Both"                  |  MUST    |  no state change          |
++-----------------------------------------------------------------+
           ]]></artwork>
         </figure>
+        <t>[1] A state change to "pending out" includes setting the 'ask' flag to a value of "subscribe" in the user's roster.</t>
       </section>
       <section title="Unsubscribe" anchor="substates-out-unsubscribe">
         <figure>
           <preamble>Table 2: Processing of outbound "unsubscribe" stanzas</preamble>
           <artwork><![CDATA[
-+----------------------------------------------------------------+
-|  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
-+----------------------------------------------------------------+
-|  "None"                  |  MUST    |  no state change         |
-|  "None + Pending Out"    |  MUST    |  "None"                  |
-|  "None + Pending In"     |  MUST    |  no state change         |
-|  "None + Pending Out+In" |  MUST    |  "None + Pending In"     |
-|  "To"                    |  MUST    |  "None"                  |
-|  "To + Pending In"       |  MUST    |  "Pending In"            |
-|  "From"                  |  MUST    |  no state change         |
-|  "From + Pending Out"    |  MUST    |  "From"                  |
-|  "Both"                  |  MUST    |  "From"                  |
-+----------------------------------------------------------------+
++-----------------------------------------------------------------+
+|  EXISTING STATE          |  ROUTE?  |  NEW STATE                |
++-----------------------------------------------------------------+
+|  "None"                  |  MUST    |  no state change          |
+|  "None + Pending Out"    |  MUST    |  "None"                   |
+|  "None + Pending In"     |  MUST    |  no state change          |
+|  "None + Pending Out+In" |  MUST    |  "None + Pending In"      |
+|  "To"                    |  MUST    |  "None"                   |
+|  "To + Pending In"       |  MUST    |  "Pending In"             |
+|  "From"                  |  MUST    |  no state change          |
+|  "From + Pending Out"    |  MUST    |  "From"                   |
+|  "Both"                  |  MUST    |  "From"                   |
++-----------------------------------------------------------------+
           ]]></artwork>
         </figure>
       </section>
@@ -2617,46 +2619,48 @@ US: </stream:stream>
         <figure>
           <preamble>Table 3: Processing of outbound "subscribed" stanzas</preamble>
           <artwork><![CDATA[
-+----------------------------------------------------------------+
-|  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
-+----------------------------------------------------------------+
-|  "None"                  |  S.N.    |  no state change         |
-|  "None + Pending Out"    |  S.N.    |  no state change         |
-|  "None + Pending In"     |  MUST    |  "From"                  |
-|  "None + Pending Out+In" |  MUST    |  "From + Pending Out"    |
-|  "To"                    |  S.N.    |  no state change         |
-|  "To + Pending In"       |  MUST    |  "Both"                  |
-|  "From"                  |  S.N.    |  no state change         |
-|  "From + Pending Out"    |  S.N.    |  no state change         |
-|  "Both"                  |  S.N.    |  no state change         |
-+----------------------------------------------------------------+
++-----------------------------------------------------------------+
+|  EXISTING STATE          |  ROUTE?  |  NEW STATE                |
++-----------------------------------------------------------------+
+|  "None"                  |  S.N.    |  no state change [1]      |
+|  "None + Pending Out"    |  S.N.    |  no state change          |
+|  "None + Pending In"     |  MUST    |  "From"                   |
+|  "None + Pending Out+In" |  MUST    |  "From + Pending Out"     |
+|  "To"                    |  S.N.    |  no state change          |
+|  "To + Pending In"       |  MUST    |  "Both"                   |
+|  "From"                  |  S.N.    |  no state change          |
+|  "From + Pending Out"    |  S.N.    |  no state change          |
+|  "Both"                  |  S.N.    |  no state change          |
++-----------------------------------------------------------------+
           ]]></artwork>
         </figure>
+        <t>[1] A server MAY note the fact that the user wishes to allow the contact to be subscribed to the user's presence and automatically approve any subscription request received from the contact; if it does so, upon the receiving presence stanza of type "subscribed" from the user's client it MUST add a roster item for the contact to the user's roster and set the 'ask' flag to a value of "subscribed".  However, the user's server still SHOULD NOT route the presence stanza of type "subscribed" to the contact.  This optional functionality applies only if the contact is not already in the user's roster or if the contact is in the user's roster with a state of "None" (not including a state of "None + Pending Out").</t>
       </section>
       <section title="Unsubscribed" anchor="substates-out-unsubscribed">
         <figure>
           <preamble>Table 4: Processing of outbound "unsubscribed" stanzas</preamble>
           <artwork><![CDATA[
-+----------------------------------------------------------------+
-|  EXISTING STATE          |  ROUTE?  |  NEW STATE               |
-+----------------------------------------------------------------+
-|  "None"                  |  S.N.    |  no state change         |
-|  "None + Pending Out"    |  S.N.    |  no state change         |
-|  "None + Pending In"     |  MUST    |  "None"                  |
-|  "None + Pending Out+In" |  MUST    |  "None + Pending Out"    |
-|  "To"                    |  S.N.    |  no state change         |
-|  "To + Pending In"       |  MUST    |  "To"                    |
-|  "From"                  |  MUST    |  "None"                  |
-|  "From + Pending Out"    |  MUST    |  "None + Pending Out"    |
-|  "Both"                  |  MUST    |  "To"                    |
-+----------------------------------------------------------------+
++-----------------------------------------------------------------+
+|  EXISTING STATE          |  ROUTE?  |  NEW STATE                |
++-----------------------------------------------------------------+
+|  "None"                  |  S.N.    |  no state change          |
+|  "None + Pending Out"    |  S.N.    |  no state change          |
+|  "None + Pending In"     |  MUST    |  "None"                   |
+|  "None + Pending Out+In" |  MUST    |  "None + Pending Out"     |
+|  "To"                    |  S.N.    |  no state change          |
+|  "To + Pending In"       |  MUST    |  "To"                     |
+|  "From"                  |  MUST    |  "None"                   |
+|  "From + Pending Out"    |  MUST    |  "None + Pending Out"     |
+|  "Both"                  |  MUST    |  "To"                     |
++-----------------------------------------------------------------+
           ]]></artwork>
         </figure>
       </section>
     </section>
     <section title="Server Processing of Inbound Presence Subscription Stanzas" anchor="substates-in">
-      <t>Inbound presence subscription stanzas request a subscription-related action from the user (via the "subscribe" type), inform the user of subscription-related actions taken by the contact (via the "unsubscribe" type), or enable the contact to manage the user's access to the contact's presence information (via the "subscribed" and "unsubscribed" types).</t>
-      <t>The following rules apply to delivery of the inbound stanza as well as changes to the contact's roster.</t>
+      <t>Inbound presence subscription stanzas request a subscription-related action from the user (via the "subscribe" type), inform the user of subscription-related actions taken by the contact (via the "unsubscribe" type), or enable the user to manage the contact's access to the user's presence information (via the "subscribed" and "unsubscribed" types).</t>
+      <t>The following rules apply to delivery of the inbound stanza as well as changes to the user's roster.</t>
+      <t>Note:  The rules for server processing of inbound presence subscription stanzas are described from the perspective of the user, not the contact.</t>
       <t>Note:  In the following tables, "S.N." stand for SHOULD NOT.</t>
       <section title="Subscribe" anchor="substates-in-subscribe">
         <figure>
@@ -2665,19 +2669,20 @@ US: </stream:stream>
 +------------------------------------------------------------------+
 |  EXISTING STATE          |  DELIVER?  |  NEW STATE               |
 +------------------------------------------------------------------+
-|  "None"                  |  MUST      |  "None + Pending In"     |
+|  "None"                  |  MUST [1]  |  "None + Pending In"     |
 |  "None + Pending Out"    |  MUST      |  "None + Pending Out+In" |
 |  "None + Pending In"     |  S.N.      |  no state change         |
 |  "None + Pending Out+In" |  S.N.      |  no state change         |
 |  "To"                    |  MUST      |  "To + Pending In"       |
 |  "To + Pending In"       |  S.N.      |  no state change         |
-|  "From"                  |  S.N. *    |  no state change         |
-|  "From + Pending Out"    |  S.N. *    |  no state change         |
-|  "Both"                  |  S.N. *    |  no state change         |
+|  "From"                  |  S.N. [2]  |  no state change         |
+|  "From + Pending Out"    |  S.N. [2]  |  no state change         |
+|  "Both"                  |  S.N. [2]  |  no state change         |
 +------------------------------------------------------------------+
           ]]></artwork>
-          <postamble>* Server SHOULD auto-reply with "subscribed" stanza</postamble>
         </figure>
+        <t>[1] If the user previously sent presence of type "subscribed" as described under <xref target='substates-out-subscribed'/>, then the server MAY auto-reply with "subscribed".</t>
+        <t>[2] Server SHOULD auto-reply with "subscribed".</t>
       </section>
       <section title="Unsubscribe" anchor="substates-in-unsubscribe">
         <t>When the user's server receives a presence stanza of type "unsubscribe" for the user from the contact, if the stanza results in a subscription state change from the user's perspective then the user's server MUST change the state and SHOULD auto-reply by sending a presence stanza of type "unsubscribed" to the contact on behalf of the user.  Otherwise the user's server MUST NOT change the state and SHOULD NOT deliver the stanza.  These rules are summarized in the following table.</t>
@@ -2689,17 +2694,17 @@ US: </stream:stream>
 +------------------------------------------------------------------+
 |  "None"                  |  S.N.      |  no state change         |
 |  "None + Pending Out"    |  S.N.      |  no state change         |
-|  "None + Pending In"     |  S.N. *    |  "None"                  |
-|  "None + Pending Out+In" |  S.N. *    |  "None + Pending Out"    |
+|  "None + Pending In"     |  S.N. [1]  |  "None"                  |
+|  "None + Pending Out+In" |  S.N. [1]  |  "None + Pending Out"    |
 |  "To"                    |  S.N.      |  no state change         |
-|  "To + Pending In"       |  S.N. *    |  "To"                    |
-|  "From"                  |  S.N. *    |  "None"                  |
-|  "From + Pending Out"    |  S.N. *    |  "None + Pending Out     |
-|  "Both"                  |  S.N. *    |  "To"                    |
+|  "To + Pending In"       |  S.N. [1]  |  "To"                    |
+|  "From"                  |  S.N. [1]  |  "None"                  |
+|  "From + Pending Out"    |  S.N. [1]  |  "None + Pending Out     |
+|  "Both"                  |  S.N. [1]  |  "To"                    |
 +------------------------------------------------------------------+
           ]]></artwork>
-          <postamble>* Server SHOULD auto-reply with "unsubscribed" stanza</postamble>
         </figure>
+        <t>[1] Server SHOULD auto-reply with "unsubscribed".</t>
       </section>
       <section title="Subscribed" anchor="substates-in-subscribed">
         <t>When the user's server receives a presence stanza of type "subscribed" for the user from the contact, if there is no pending outbound request for access to the contact's presence information, then it MUST NOT change the subscription state and SHOULD NOT deliver the stanza to the user.  If there is a pending outbound request for access to the contact's presence information and the inbound presence stanza of type "subscribed" results in a subscription state change, then the user's server MUST change the subscription state but SHOULD NOT deliver the stanza to the user.  If the user already has access to the contact's presence information, the inbound presence stanza of type "subscribed" does not result in a subscription state change; therefore the user's server MUST NOT change the subscription state and SHOULD NOT deliver the stanza to the user.  These rules are summarized in the following table.</t>
@@ -3194,6 +3199,7 @@ US: </stream:stream>
         <xs:simpleType>
           <xs:restriction base='xs:NCName'>
             <xs:enumeration value='subscribe'/>
+            <xs:enumeration value='subscribed'/>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
@@ -3228,6 +3234,7 @@ US: </stream:stream>
           <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, server implementations may still want to advertise support for the feature in order to ensure backward-compatibility, even though session establishment is a "no-op".</t>
           <t>The protocol for communications blocking specified in Section 10 of RFC 3921 has been moved to <xref target='XEP-0016'/>.</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, error handling related to presence probes and presence notifications was modified to return presence stanzas of type "unsubscribe" or "unsubscribed" rather than error stanzas.</t>
+          <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed" and the optional "subscribed" value for the 'ask' flag.</t>
         </list>
       </t>
       <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
