@@ -233,6 +233,16 @@ romeo@example.net               juliet@example.com
       <t>Because two servers are peers and therefore each peer must authenticate with the other, the servers MUST use two TCP connections: one for XML stanzas sent from the first server to the second server and another (initiated by the second server) for XML stanzas from the second server to the first server.</t>
       <t>This rule applies only to <xref target='stanzas'>XML stanzas</xref>.  Therefore during <xref target='tls'>STARTTLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref> the servers would use one TCP connection, but after stream setup that TCP connection would be used only for the initiating server to send XML stanzas to the receiving server.  In order for the receiving server to send XML stanzas to the initiating server, the receiving server would need to reverse the roles and negotiate an XML stream from the receiving server to the initiating server.</t>
     </section>
+    <section title="Reconnection" anchor="streams-reconnect">
+      <t>It can happen that an XMPP server goes offline while servicing TCP connections from local clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  The following guidelines are RECOMMENDED:</t>
+      <t>
+        <list style='symbols'>
+          <t>The time to live (TTL) specified in Domain Name System records SHOULD be honored, even if DNS results are cached; if the TTL has not expired, an entity that seeks to reconnect SHOULD NOT re-resolve the server hostname before reconnecting.</t>
+          <t>The time that expires before an entity first seeks to reconnect SHOULD be randomized (e.g., so that all clients do not attempt to reconnect 30 seconds after being disconnected).</t>
+          <t>If the first reconnection attempt does not succeed, an entity SHOULD back off exponentially on the time between subsequent reconnection attempts.</t>
+        </list>
+      </t>
+    </section>
     <section title="Other Bindings" anchor="tcp-other">
       <t>There is no necessary coupling of an XML stream to a TCP connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines a binding of XMPP to TCP only.</t>
     </section>
@@ -515,33 +525,22 @@ S: <stream:features/>
     </section>
 
     <section title="Closing Streams" anchor="streams-close">
-      <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other entity in the absence of a stream error by sending a closing stream tag:</t>
+      <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other party in the absence of a stream error by sending a closing stream tag:</t>
       <figure>
         <artwork><![CDATA[
-C: </stream:stream>
+P: </stream:stream>
         ]]></artwork>
       </figure>
-      <t>The entity that sends the closing stream tag SHOULD wait for the other entity to also close its stream:</t>
+      <t>The entity that sends the closing stream tag SHOULD wait for the other party to also close its stream:</t>
       <figure>
         <artwork><![CDATA[
 S: </stream:stream>
         ]]></artwork>
       </figure>
-      <t>However, the entity that sends the first closing stream tag MAY consider both streams to be void if the other entity does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is left up to the implementation or deployment).</t>
+      <t>However, the entity that sends the first closing stream tag MAY consider both streams to be void if the other party does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is left up to the implementation or deployment).</t>
       <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
-      <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other entity, it MUST terminate the underlying TCP connection or connections.</t>
+      <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other partyi (or if it considers the stream to be void after a reasonable amount of time), it MUST terminate the underlying TCP connection or connections.</t>
       <t>Note: Closing of XML streams is handled differently in the case of a stream error; see <xref target='streams-error-rules-unrecoverable'/>.</t>
-    </section>
-
-    <section title="Reconnection" anchor="streams-reconnect">
-      <t>It can happen that an XMPP server goes offline while servicing connections from local clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  The following guidelines are RECOMMENDED:</t>
-      <t>
-        <list style='symbols'>
-          <t>The time to live (TTL) specified in Domain Name System records SHOULD be honored, even if DNS results are cached; if the TTL has not expired, an entity that seeks to reconnect SHOULD NOT re-resolve the server hostname before reconnecting.</t>
-          <t>The time that expires before an entity first seeks to reconnect SHOULD be randomized (e.g., so that all clients do not attempt to reconnect 30 seconds after being disconnected).</t>
-          <t>If the first reconnection attempt does not succeed, an entity SHOULD back off exponentially on the time between subsequent reconnection attempts.</t>
-        </list>
-      </t>
     </section>
 
     <section title="Stream Errors" anchor="streams-error">
@@ -1696,10 +1695,12 @@ response=d388dad90d4bbd760a152321f2143af7,charset=utf-8
 I: <abort xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
           ]]></artwork>
         </figure>
-        <t>Upon receiving an &lt;abort/&gt; element, the receiving entity MUST return an &lt;aborted/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace.</t>
+        <t>Upon receiving an &lt;abort/&gt; element, the receiving entity MUST return a &lt;failure/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace and containing an &lt;aborted/&gt; child element.</t>
         <figure>
           <artwork><![CDATA[
-R: <aborted xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+     <aborted/>
+   </failure>
           ]]></artwork>
         </figure>
         <t>The receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
