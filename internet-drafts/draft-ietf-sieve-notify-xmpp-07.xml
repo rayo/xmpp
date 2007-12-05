@@ -83,7 +83,7 @@
           <t>The value of the XMPP 'to' attribute MUST be the XMPP address specified in the XMPP URI contained in the "method" notify parameter.</t>
           <t>The value of the XMPP 'type' attribute MUST be 'headline' or 'normal'.</t>
           <t>The XMPP &lt;message/&gt; stanza MUST include a &lt;body/&gt; child element.  If the ":message" tag is included in the Sieve script, that string MUST be used as the XML character data of the &lt;body/&gt; element.  If not and if the XMPP URI contained in the "method" notify parameter specified a "body" parameter in the query component, that value SHOULD be used.  Otherwise the XML character data SHOULD be some configurable text indicating that the message is a Sieve notification.</t>
-          <t>The XMPP &lt;message/&gt; stanza MAY include a &lt;subject/&gt; child element.  If the XMPP URI contained in the "method" notify parameter specified a "subject" parameter in the query component, that value SHOULD be used as the XML character data of the &lt;subject/&gt; element; otherwise the XML character data SHOULD be some configurable text indicating that the message is a Sieve notification.</t>
+          <t>The XMPP &lt;message/&gt; stanza MAY include a &lt;subject/&gt; child element.  If the XMPP URI contained in the "method" notify parameter specified a "subject" parameter in the query component, that value SHOULD be used as the XML character data of the &lt;subject/&gt; element.  Otherwise the XML character data SHOULD be some configurable text indicating that the message is a Sieve notification.</t>
           <t>The XMPP &lt;message/&gt; stanza SHOULD include a URI for the recipient to use as a hint in locating the message, encapsulated as the XML character data of a &lt;url/&gt; child element of an &lt;x/&gt; element qualified by the 'jabber:x:oob' namespace as specified in <xref target='OOB'/>.  If included, the URI SHOULD be an Internet Message Access Protocol <xref target='IMAP'/> URL that specifies the location of the message as defined in <xref target='IMAP-URL'/>, but MAY be another URI type that can specify or hint at the location of an email message, such as a URI for an HTTP resource <xref target='HTTP'/> or a POP3 mailbox <xref target='POP-URL'/> at which the message can be accessed.  It is not expected that an XMPP user agent shall directly handle such a URI, but instead that it shall invoke an appropriate helper application to handle the URI.</t>
           <t>The XMPP &lt;message/&gt; stanza MAY include an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Reply-To", which encapsulates the value of the ":from" tag.</t>
           <t>The XMPP &lt;message/&gt; stanza MAY include an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Resent-From", which encapsulates the value of the envelope recipient address of the original email message that triggered the notification.</t>
@@ -109,6 +109,7 @@
           <artwork><![CDATA[
   <message from='notify.example.com' 
            to='romeo@im.example.com' 
+           type='headline'
            xml:lang='en'>
     <subject>SIEVE</subject>
     <body>&lt;juliet@example.com&gt; You got mail.</body>
@@ -136,6 +137,7 @@
           <artwork><![CDATA[
   <message from='notify.example.com' 
            to='romeo@im.example.com' 
+           type='headline'
            xml:lang='en'>
     <subject>SIEVE</subject>
     <body>Wherefore art thou?</body>
@@ -148,10 +150,10 @@
           ]]></artwork>
         </figure>
       </section>
-      <section title='Action with message, importance, body, and subject' anchor='examples-message'>
+      <section title='Action with body, importance, message, and subject' anchor='examples-message'>
         <t>The following action specifies an ":importance" tag and a ":message" tag in the Sieve script, as well as a "body" parameter and a "subject" parameter in the query component of the XMPP URI.  As a result, the ":message" tag from the Sieve script overrides the "body" parameter from the XMPP URI when generating the XML character data of the XMPP &lt;body/&gt; element.  In addition, the Sieve engine includes a URI pointing to the message.</t>
         <figure>
-          <preamble>Action with message, importance, body, and subject (Sieve syntax)</preamble>
+          <preamble>Action with body, importance, message, and subject (Sieve syntax)</preamble>
           <artwork><![CDATA[
   notify :importance "1"
          :message "Contact Juliet immediately!"
@@ -162,10 +164,11 @@
         </figure>
         <t>The resulting XMPP &lt;message/&gt; stanza might be as follows.</t>
         <figure>
-          <preamble>Action with message, importance, body, and subject (XMPP syntax)</preamble>
+          <preamble>Action with body, importance, message, and subject (XMPP syntax)</preamble>
           <artwork><![CDATA[
   <message from='notify.example.com' 
            to='romeo@im.example.com' 
+           type='headline'
            xml:lang='en'>
     <subject>ALERT!</subject>
     <body>Contact Juliet immediately!</body>
@@ -181,10 +184,10 @@
           ]]></artwork>
         </figure>
       </section>
-      <section title='Action with from message, importance, body, and subject' anchor='examples-full'>
+      <section title='Action with from, message, importance, body, and subject' anchor='examples-full'>
         <t>The following action specifies a ":from" tag, an ":importance" tag, and a ":message" tag in the Sieve script, as well as a "body" parameter and a "subject" parameter in the query component of the XMPP URI.  As a result, the ":message" tag from the Sieve script overrides the "body" parameter from the XMPP URI when generating the XML character data of the XMPP &lt;body/&gt; element.  In addition, the Sieve engine includes a URI pointing to the message, as well as an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Reply-To" (which encapsulates the value of the ":from" tag) and a SHIM header named "Resent-From" (which encapsulates the value of the original email message that triggered the notification).</t>
         <figure>
-          <preamble>Action with from, message, importance, body, and subject (Sieve syntax)</preamble>
+          <preamble>Action with body, from, importance, message, and subject (Sieve syntax)</preamble>
           <artwork><![CDATA[
   notify :from "bill.shakespeare@example.com"
          :importance "1"
@@ -196,10 +199,11 @@
         </figure>
         <t>The resulting XMPP &lt;message/&gt; stanza might be as follows.</t>
         <figure>
-          <preamble>Action with message, importance, body, and subject (XMPP syntax)</preamble>
+          <preamble>Action with body, from, importance, message, and subject (XMPP syntax)</preamble>
           <artwork><![CDATA[
   <message from='notify.example.com' 
            to='romeo@im.example.com' 
+           type='headline'
            xml:lang='en'>
     <subject>ALERT!</subject>
     <body>Contact Juliet immediately!</body>
@@ -210,7 +214,7 @@
     </headers>
     <x xmlns='jabber:x:oob'>
       <url>
-        imap://romeo@example.com/INBOX;UIDVALIDITY=385759045/;UID=20
+        imap://romeo@example.com/INBOX;UIDVALIDITY=385759045/;UID=21
       </url>
     </x>
   </message>
