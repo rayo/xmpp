@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="December" day="5"/>
+    <date year="2007" month="December" day="6"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -196,6 +196,31 @@ romeo@example.net               juliet@example.com
     <section title='Node Identifier' anchor='addressing-node'>
       <t><iref item='Node Identifier'/>The NODE IDENTIFIER portion of a JID is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  Typically a node identifier uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user conference service).  The entity represented by an XMPP node identifier is addressed within the context of a specific domain.  <iref item='Bare JID'/>When the domain is an XMPP server and the entity is a local account on the server, the resulting address (of the form &lt;node@domain&gt;) is called a BARE JID.</t>
       <t>A node identifier MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two node identifiers, an application MUST first apply the Nodeprep profile to each identifier.</t>
+      <t>Note:  Because the additional characters prohibited by Nodeprep (see <xref target='nodeprep'/>) are prohibited after normalization, an implementation should not enable a human user to input any Unicode code point whose decomposition includes those characters; such code points include but are not necessarily limited to the following (refer to <xref target='UNICODE'/> for further information).</t>
+        <t>
+          <list style='symbols'>
+             <t>2100 (ACCOUNT OF)</t>
+             <t>2101 (ADDRESSED TO THE SUBJECT)</t>
+             <t>2105 (CARE OF)</t>
+             <t>2106 (CADA UNA)</t>
+             <t>226E (NOT LESS-THAN)</t>
+             <t>226F (NOT GREATER-THAN)</t>
+             <t>2A74 (DOUBLE COLON EQUAL)</t>
+             <t>FE13 (SMALL COLON)</t>
+             <t>FE60 (SMALL AMPERSAND)</t>
+             <t>FE64 (SMALL LESS-THAN SIGN)</t>
+             <t>FE65 (SMALL GREATER-THAN SIGN)</t>
+             <t>FE6B (SMALL COMMERCIAL AT)</t>
+             <t>FF02 (FULLWIDTH QUOTATION MARK)</t>
+             <t>FF06 (FULLWIDTH AMPERSAND)</t>
+             <t>FF07 (FULLWIDTH APOSTROPHE)</t>
+             <t>FF0F (FULLWIDTH SOLIDUS)</t>
+             <t>FF1A (FULLWIDTH COLON)</t>
+             <t>FF1C (FULLWIDTH LESS-THAN SIGN)</t>
+             <t>FF1E (FULLWIDTH GREATER-THAN SIGN)</t>
+             <t>FF20 (FULLWIDTH COMMERCIAL AT)</t>
+          </list>
+        </t>
     </section>
 
     <section title="Resource Identifier" anchor="addressing-resource">
@@ -3660,7 +3685,7 @@ S2: </stream:stream>
       <t>The rationale for this order is that <xref target="TCP"/> is the base connection layer used by all of the protocols stacked on top of TCP, <xref target="TLS"/> is often provided at the operating system layer, <xref target="SASL"/> is often provided at the application layer, and XMPP is the application itself.</t>
     </section>
     <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
-      <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Some SASL mechanisms provide such a binding.  However, if a SASL mechanism does not provide such a binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
+      <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings.  However, if a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
     </section>
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
       <t>At a minimum, all implementations MUST support the following mechanisms:</t>
@@ -3670,7 +3695,7 @@ S2: </stream:stream>
         <t hangText='for both authentication and confidentiality:'>TLS plus SASL PLAIN for password-based authentication or TLS plus SASL EXTERNAL for non-password-based authentication (using the TLS_RSA_WITH_3DES_EDE_CBC_SHA cipher supporting peer certificates)</t>
       </list></t>
       <t>Naturally, implementations MAY support other ciphers with TLS and MAY support other SASL mechanisms.</t>
-      <t>Note: The use of TLS plus SASL plain for replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based authentication mechanism.  Implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.</t>
+      <t>Note: The use of TLS plus SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication and confidentiality.  Implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.</t>
     </section>
     <section title="Firewalls" anchor="security-firewalls">
       <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
@@ -4141,6 +4166,19 @@ S2: </stream:stream>
   <seriesInfo name="ISO" value="Standard 10646-1 Addendum 2" />
 </reference>
 
+<reference anchor="UNICODE">
+  <front>
+    <title>The Unicode Standard, Version 3.2.0</title>
+    <author>
+      <organization>The Unicode Consortium</organization>
+    </author>
+    <date year="2000" />
+  </front>
+  <annotation>
+    The Unicode Standard, Version 3.2.0 is defined by The Unicode Standard, Version 3.0 (Reading, MA, Addison-Wesley, 2000. ISBN 0-201-61633-5), as amended by the Unicode Standard Annex #27: Unicode 3.1 (http://www.unicode.org/reports/tr27/) and by the Unicode Standard Annex #28: Unicode 3.2 (http://www.unicode.org/reports/tr28/).
+  </annotation>
+</reference>
+
 <reference anchor='UTF-8'>
 <front>
 <title>UTF-8, a transformation format of ISO 10646</title>
@@ -4332,6 +4370,18 @@ S2: </stream:stream>
 </author>
 <date year="1988" />
 </front>
+</reference>
+
+<reference anchor='CHANNEL'>
+<front>
+<title>On the Use of Channel Bindings to Secure Channels</title>
+<author initials='N.' surname='Williams' fullname='N. Williams'>
+<organization /></author>
+<date year='2007' month='November' />
+<abstract>
+<t>The concept of channel binding allows applications to establish that the two end-points of a secure channel at one network layer are the same as at a higher layer by binding authentication at the higher layer to the channel at the lower layer. This allows applications to delegate session protection to lower layers, which has various performance benefits.&lt;/t>&lt;t> This document discusses and formalizes the concept of channel binding to secure channels. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5056' />
+<format type='TXT' octets='49995' target='ftp://ftp.isi.edu/in-notes/rfc5056.txt' />
 </reference>
 
 <reference anchor='DNSSEC'>
@@ -5246,16 +5296,18 @@ specifications of each URI scheme.
           <t>Table C.9</t>
         </list></t>
         <t>In addition, the following Unicode characters are also prohibited:</t>
-        <t><list style='hanging'>
-          <t>#x22 (")</t>
-          <t>#x26 (&amp;)</t>
-          <t>#x27 (')</t>
-          <t>#x2F (/)</t>
-          <t>#x3A (:)</t>
-          <t>#x3C (&lt;)</t>
-          <t>#x3E (&gt;)</t>
-          <t>#x40 (@)</t>
-        </list></t>
+        <t>
+          <list style='hanging'>
+            <t>#x22 (QUOTATION MARK)</t>
+            <t>#x26 (AMPERSAND)</t>
+            <t>#x27 (APOSTROPHE)</t>
+            <t>#x2F (SOLIDUS)</t>
+            <t>#x3A (COLON)</t>
+            <t>#x3C (LESS-THAN SIGN)</t>
+            <t>#x3E (GREATER-THAN SIGN)</t>
+            <t>#x40 (COMMERCIAL AT)</t>
+          </list>
+        </t>
       </section>
       <section title="Bidirectional Characters" anchor="nodeprep-bidirectional">
         <t>This profile specifies checking bidirectional strings, as described in Section 6 of <xref target="STRINGPREP"/>.</t>
