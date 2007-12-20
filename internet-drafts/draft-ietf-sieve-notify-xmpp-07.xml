@@ -60,7 +60,7 @@
       </section>
 
       <section title='Notify tag ":from"' anchor='def-from'>
-        <t>The ":from" tag has no special meaning for this notification mechanism, and this specification puts no restriction on its use.  The value of the ":from" tag MAY be transformed into XMPP syntax; if so, it SHOULD be encapsulated as the value of an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Reply-To".</t>
+        <t>If included, the ":from" tag MUST be an email address.  The value of the ":from" tag MAY be included in the human-readable XML character data of the XMPP notification; alternatively or in addition, it MAY be transformed into formal XMPP syntax, in which case it MUST be encapsulated as the value of an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Resent-From".</t>
       </section>
 
       <section title='Notify tag ":importance"' anchor='def-importance'>
@@ -79,14 +79,13 @@
         <t>The xmpp mechanism results in the sending of an XMPP message to notify a recipient about an email message.  The general XMPP syntax is as follows:</t>
         <t><list style='symbols'>
           <t>The notification MUST be an XMPP &lt;message/&gt; stanza.</t>
-          <t>The value of the XMPP 'from' attribute SHOULD be the XMPP address of the notification service associated with the SIEVE engine or the XMPP address of the entity to be notified.</t>
+          <t>The value of the XMPP 'from' attribute SHOULD be the XMPP address of the notification service associated with the SIEVE engine or the XMPP address of the entity to be notified.  The value of the XMPP 'from' attribute MUST NOT be generated from the Sieve ":from" tag.</t>
           <t>The value of the XMPP 'to' attribute MUST be the XMPP address specified in the XMPP URI contained in the "method" notify parameter.</t>
           <t>The value of the XMPP 'type' attribute MUST be 'headline' or 'normal'.</t>
           <t>The XMPP &lt;message/&gt; stanza MUST include a &lt;body/&gt; child element.  If the ":message" tag is included in the Sieve script, that string MUST be used as the XML character data of the &lt;body/&gt; element.  If not and if the XMPP URI contained in the "method" notify parameter specified a "body" parameter in the query component, that value SHOULD be used.  Otherwise the XML character data SHOULD be some configurable text indicating that the message is a Sieve notification.</t>
           <t>The XMPP &lt;message/&gt; stanza MAY include a &lt;subject/&gt; child element.  If the XMPP URI contained in the "method" notify parameter specified a "subject" parameter in the query component, that value SHOULD be used as the XML character data of the &lt;subject/&gt; element.  Otherwise the XML character data SHOULD be some configurable text indicating that the message is a Sieve notification.</t>
           <t>The XMPP &lt;message/&gt; stanza SHOULD include a URI for the recipient to use as a hint in locating the message, encapsulated as the XML character data of a &lt;url/&gt; child element of an &lt;x/&gt; element qualified by the 'jabber:x:oob' namespace as specified in <xref target='OOB'/>.  If included, the URI SHOULD be an Internet Message Access Protocol <xref target='IMAP'/> URL that specifies the location of the message as defined in <xref target='IMAP-URL'/>, but MAY be another URI type that can specify or hint at the location of an email message, such as a URI for an HTTP resource <xref target='HTTP'/> or a POP3 mailbox <xref target='POP-URL'/> at which the message can be accessed.  It is not expected that an XMPP user agent shall directly handle such a URI, but instead that it shall invoke an appropriate helper application to handle the URI.</t>
-          <t>The XMPP &lt;message/&gt; stanza MAY include an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Reply-To", which encapsulates the value of the ":from" tag.</t>
-          <t>The XMPP &lt;message/&gt; stanza MAY include an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Resent-From", which encapsulates the value of the envelope recipient address of the original email message that triggered the notification.</t>
+          <t>The XMPP &lt;message/&gt; stanza MAY include an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Resent-From".  If the Sieve script included a ":from" tag, the "Resent-From" value MUST be the value of the ":from" tag; otherwise the "Resent-From" value SHOULD be the envelope recipient address of the original email message that triggered the notification.</t>
         </list></t>
       </section>
 
@@ -185,11 +184,11 @@
         </figure>
       </section>
       <section title='Action with from, message, importance, body, and subject' anchor='examples-full'>
-        <t>The following action specifies a ":from" tag, an ":importance" tag, and a ":message" tag in the Sieve script, as well as a "body" parameter and a "subject" parameter in the query component of the XMPP URI.  As a result, the ":message" tag from the Sieve script overrides the "body" parameter from the XMPP URI when generating the XML character data of the XMPP &lt;body/&gt; element.  In addition, the Sieve engine includes a URI pointing to the message, as well as an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Reply-To" (which encapsulates the value of the ":from" tag) and a SHIM header named "Resent-From" (which encapsulates the value of the original email message that triggered the notification).</t>
+        <t>The following action specifies a ":from" tag, an ":importance" tag, and a ":message" tag in the Sieve script, as well as a "body" parameter and a "subject" parameter in the query component of the XMPP URI.  As a result, the ":message" tag from the Sieve script overrides the "body" parameter from the XMPP URI when generating the XML character data of the XMPP &lt;body/&gt; element.  In addition, the Sieve engine includes a URI pointing to the message, as well as an XMPP Stanza Headers and Internet Metadata <xref target='SHIM'/> header named "Resent-From" (which encapsulates the value of the ":from" tag).</t>
         <figure>
           <preamble>Action with body, from, importance, message, and subject (Sieve syntax)</preamble>
           <artwork><![CDATA[
-  notify :from "bill.shakespeare@example.com"
+  notify :from "romeo.my.romeo@example.com"
          :importance "1"
          :message "Contact Juliet immediately!"
          "xmpp:romeo@im.example.com?message
@@ -208,8 +207,7 @@
     <subject>ALERT!</subject>
     <body>Contact Juliet immediately!</body>
     <headers xmlns='http://jabber.org/protocol/shim'>
-      <header name='Reply-To'>bill.shakespeare@example.net</header>
-      <header name='Resent-From'>romeo@example.com</header>
+      <header name='Resent-From'>romeo.my.romeo@example.com</header>
       <header name='Urgency'>high</header>
     </headers>
     <x xmlns='jabber:x:oob'>
@@ -235,7 +233,7 @@
           <t>The value of the XMPP 'to' attribute MUST be the XMPP address specified in the XMPP URI contained in the "method" parameter.</t>
           <t>In accordance with <xref target='XMPP-URI'/>, an implementation MUST ignore any URI action or parameter it does not understand (i.e., the URI MUST be processed as if the action or parameter were not present).  It is RECOMMENDED to support the XMPP "message" query type (see <xref target='QUERIES'/>) and the associated "body" and "subject" parameters, which parameters SHOULD be mapped to the XMPP &lt;body/&gt; and &lt;subject/&gt; child elements of the XMPP &lt;message/&gt; stanza, respectively.  However, if included then the Sieve notify ":message" parameter MUST be mapped to the XMPP &lt;body/&gt; element, overriding the "body" parameter (if any) included in the XMPP URI.</t>
           <t>An implementation MUST NOT include any other extraneous information not specified in parameters to the notify action.</t>
-          <t>In response to a notify_method_capability test for the "online" notification-capability, an implementation SHOULD return a value of "yes" if it has knowledge of an active presence session (see <xref target='XMPP-IM'/>) for the specified XMPP notification-uri; otherwise it SHOULD return a value of "maybe" (since typical XMPP systems may not allow a SIEVE engine to gain knowledge about the presence of XMPP entities).</t>
+          <t>In response to a notify_method_capability test for the "online" notification-capability, an implementation SHOULD return a value of "yes" if it has knowledge of an active presence session (see <xref target='XMPP-IM'/>) for the specified XMPP notification-uri but only if the entity that requested the test is authorized to know the presence of the associated XMPP entity (e.g., via explicit presence subscription as specified in <xref target='XMPP-IM'/>); otherwise it SHOULD return a value of "maybe" (since typical XMPP systems may not allow a SIEVE engine to gain knowledge about the presence of XMPP entities).</t>
           <t>An implementation SHOULD NOT attempt to retry delivery of a notification if it receives an XMPP error of type "auth" or "cancel", MAY attempt to retry delivery if it receives an XMPP error of type "wait", and MAY attempt to retry delivery if it receives an XMPP error of "modify" but only if it makes appropriate modifications to the notification (see <xref target='XMPP'/>); in any case the number of retries SHOULD be limited to a configurable number no less than 3 and no more than 10.  An implementation MAY throttle notifications if the number of notifications within a given time period becomes excessive according to local service policy.  Duplicate suppression (if any) is a matter of implementation and is not specified herein.</t>
         </list>
       </t>
@@ -248,6 +246,8 @@
 
     <section title='Security Considerations' anchor='sec'>
       <t>Depending on the information included, sending a notification can be comparable to forwarding mail to the notification recipient.  Care must be taken when forwarding mail automatically, to ensure that confidential information is not sent into an insecure environment.  In particular, implementations MUST conform to the security considerations given in <xref target='NOTIFY'/>, <xref target='SIEVE'/>, and <xref target='XMPP'/>.</t>
+      <t><xref target='NOTIFY'/> specifies that a notification method MUST provide mechanisms for avoiding notification loops. One type of notification loop can be caused by message forwarding; however, such loops are prevented because XMPP does not support forwarding of messages from one XMPP address to another. Another type of notification loop can be caused by auto-replies to XMPP messages received by the XMPP notification service associated with the Sieve engine; therefore such a service MUST NOT auto-reply to XMPP messages it receives.</t>
+      <t>The XMPP notification service associated with a Sieve engine MUST NOT leak presence (network availability) information regarding users of the service.  In particular, the service MUST NOT reveal presence information via a notify_method_capability test to entities that are not authorized to know such information (e.g., via a presence subscription as specified in <xref target='XMPP-IM'/>).</t>
     </section>
 
     <section title='IANA Considerations' anchor='iana'>
