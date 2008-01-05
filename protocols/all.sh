@@ -13,4 +13,6 @@ done < protocols.txt
 
 rm protocols.txt
 
+cp index.shtml $protopath/
+
 # END
