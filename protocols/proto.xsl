@@ -37,7 +37,7 @@
           </xsl:attribute>
           <xsl:value-of select='/manifest/specnum'/> 
         </a>
-        (a <xsl:value-of select='/manifest/status'/> Standard of the <xsl:value-of select='/manifest/publisher'/>). <xsl:value-of select='/manifest/specnum'/><xsl:text> </xsl:text><xsl:value-of select='/manifest/abstract'/></p>
+        (a <xsl:value-of select='/manifest/status'/> Standard of the <xsl:value-of select='/manifest/publisher'/>). <xsl:value-of select='/manifest/abstract'/></p>
         <xsl:variable name='name.count' select='count(/manifest/namespace/name)'/>
         <xsl:if test='$name.count &gt; 0'>
         <p>The following XML namespaces are used in the context of the <xsl:value-of select='/manifest/title'/> protocol:</p>
