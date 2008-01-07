@@ -38,11 +38,14 @@
           <xsl:value-of select='/manifest/specnum'/> 
         </a>
         (a <xsl:value-of select='/manifest/status'/> Standard of the <xsl:value-of select='/manifest/publisher'/>). <xsl:value-of select='/manifest/specnum'/><xsl:text> </xsl:text><xsl:value-of select='/manifest/abstract'/></p>
+        <xsl:variable name='name.count' select='count(/manifest/namespace/name)'/>
+        <xsl:if test='$name.count &gt; 0'>
         <p>The following XML namespaces are used in the context of the <xsl:value-of select='/manifest/title'/> protocol:</p>
           <ul>
             <xsl:apply-templates select='/manifest/namespace' mode='name'/>
           </ul>
-        <xsl:variable name='schema.count' select='count(/manifest/namespace)'/>
+        </xsl:if>
+        <xsl:variable name='schema.count' select='count(/manifest/namespace/schema)'/>
         <xsl:if test='$schema.count &gt; 0'>
           <p>The following XML schemas are available for the <xsl:value-of select='/manifest/title'/> protocol:</p>
           <ul>
