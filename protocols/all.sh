@@ -13,6 +13,6 @@ done < protocols.txt
 
 rm protocols.txt
 
-cp index.shtml $protopath/
+cp index.shtml $path/
 
 # END
