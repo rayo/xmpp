@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2007" month="December" day="20"/>
+    <date year="2008" month="January" day="14"/>
     <area>Applications</area>
     <keyword>RFC</keyword>
     <keyword>Request for Comments</keyword>
@@ -2171,16 +2171,16 @@ S: <message from='romeo@example.net'
         </figure>
         <t>For information about server processing of inbound and outbound XML stanzas based on the nature of the 'to' address, refer to <xref target='rules'/>.</t>
         <section title="Client-to-Server Streams" anchor="stanzas-attributes-to-c2s">
-          <t>The following rules apply to the 'to' attribute in the context of XML streams qualified by the 'jabber:client' namespace (i.e., client-to-server streams).</t>
+          <t>The following rules apply to inclusion of the 'to' attribute in the context of XML streams qualified by the 'jabber:client' namespace (i.e., client-to-server streams).</t>
           <t>
             <list style='numbers'>
               <t>A stanza with a specific intended recipient MUST possess a 'to' attribute.</t>
-              <t>A stanza sent from a client to a server for direct processing by the server (e.g., presence sent to the server for broadcasting to other entities) SHOULD NOT possess a 'to' attribute.</t>
+              <t>A stanza sent from a client to a server for direct processing by the server on behalf of the client (e.g., presence sent to the server for broadcasting to other entities) MUST NOT possess a 'to' attribute.</t>
             </list>
           </t>
         </section>
         <section title="Server-to-Server Streams" anchor="stanzas-attributes-to-s2s">
-          <t>The following rules apply to the 'to' attribute in the context of XML streams qualified by the 'jabber:server' namespace (i.e., server-to-server streams).</t>
+          <t>The following rules apply to inclusion of the 'to' attribute in the context of XML streams qualified by the 'jabber:server' namespace (i.e., server-to-server streams).</t>
           <t>
             <list style='numbers'>
               <t>A stanza MUST possess a 'to' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error and terminate both the XML stream and the underlying TCP connection with the offending server.</t>
@@ -3443,7 +3443,7 @@ S2: </stream:stream>
         <t>If the server receives a presence stanza with no 'to' attribute, it SHOULD broadcast it to the entities that are subscribed to the sending entity's presence, if applicable (the semantics of presence broadcast for presence applications are defined in <xref target="XMPP-IM"/>).</t>
       </section>
       <section title="IQ" anchor="rules-noto-IQ">
-        <t>If the server receives an IQ stanza with no 'to' attribute, it MUST treat the stanza as if the 'to' address were the bare JID &lt;node@domain&lt; of the sending entity, as follows:</t>
+        <t>If the server receives an IQ stanza with no 'to' attribute, it MUST process the stanza on behalf of the account from which received the stanza, as follows:</t>
         <t>
           <list style='numbers'>
             <t>If the IQ stanza is of type "get" or "set" and the server understands the namespace that qualifies the payload, the server MUST handle the stanza on behalf of the sending entity or return an appropriate error to the sending entity.  While the meaning of "handle" is determined by the semantics of the qualifying namespace, in general the server shall respond to the IQ stanza of type "get" or "set" by returning an appropriate IQ stanza of type "result" or "error", responding as if the server were the bare JID of the sending entity.  As an example, if the sending entity sends an IQ stanza of type "get" where the payload is qualified by the 'jabber:iq:roster' namespace (as described in <xref target='XMPP-IM'/>), then the server shall return the roster associated with the sending entity's bare JID to the particular resource of the sending entity that requested the roster.</t>
@@ -3461,13 +3461,13 @@ S2: </stream:stream>
       <section title="Resource at Domain" anchor="rules-local-resource">
         <t>If the JID contained in the 'to' attribute is of the form &lt;domain/resource&gt;, then the server MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
       </section>
-      <section title="Node at Local Domain" anchor="rules-local-node">
+      <section title="Node at Domain" anchor="rules-local-node">
         <t>If the JID contained in the 'to' attribute is of the form &lt;node@domain&gt; (bare JID) or &lt;node@domain/resource&gt; (full JID), then the server SHOULD deliver the stanza to the intended recipient.  The following rules apply:</t>
         <t>
           <list style="numbers">
             <t>If the JID contains an XMPP resource identifier (i.e., is of the form &lt;node@domain/resource&gt;) and there exists a connected resource that exactly matches the full JID, the recipient's server SHOULD deliver the stanza to that connection.</t>
             <t>If the JID contains an XMPP resource identifier and there exists no connected resource that exactly matches the full JID, the recipient's server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-            <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, the recipient's server SHOULD deliver the stanza to at least one of the connected resources if the stanza is a message or presence stanza and SHOULD handle it directly on behalf of the node if the stanza is an IQ stanza.</t>
+            <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, (1) if the stanza is a message or presence stanza then the recipient's server SHOULD deliver the stanza to at least one of the connected resources and (2) if the stanza is an IQ stanza then the recipient's server MUST handle it directly on behalf of the node (and if the sender has generated an IQ stanza for which the bare JID matches that of the connected user itself then the recipient's server MUST treat the IQ stanza as if it included no 'to' address).</t>
           </list>
         </t>
         <t>Note: More detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t>
