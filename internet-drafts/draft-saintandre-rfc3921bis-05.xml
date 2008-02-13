@@ -665,7 +665,7 @@ CS: <presence from='juliet@example.com'
             </t>
             <t>If the contact exists and the user already has a subscription to the user's presence, then the contact's server SHOULD auto-reply on behalf of the contact by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.  If the contact previously sent a presence stanza of type "subscribed" and the contact's server treated that as indicating "pre-approval" for the user's presence subscription (see <xref target='substates'/>), then the contact's server MAY also auto-reply on behalf of the contact.</t>
             <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one interested resource associated with the contact when the subscription request is received by the contact's server, the contact's server MUST broadcast that subscription request to all interested resources in accordance with <xref target="rules">Server Rules for Processing XML Stanzas</xref>.</t>
-            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no interested resources when the subscription request is received by the contact's server, the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an interested resource, until the contact either approves or denies the request.  (Note: The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an interested resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an interested resource; this helps to prevent "subscription request spam".)</t>
+            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no interested resources when the subscription request is received by the contact's server, the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an interested resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an interested resource, until the contact either approves or denies the request.  (Note: The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an interested resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an interested resource; this helps to prevent "subscription request spam".)</t>
           </list>
         </t>
         <t>Note:  Until and unless the contact approves the subscription request as described under <xref target='sub-request-handle'/>, the contact's server MUST NOT add an item for the user to the contact's roster.</t>
@@ -1486,9 +1486,31 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Thread" anchor="message-elements-thread">
-        <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element may also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It may also be used for &lt;message/&gt; stanzas not related to a conversation, such as a game session or between plugins.</t>
-        <t>The value of the &lt;thread/&gt; element MUST be a universally unique identifier (UUID) as described in <xref target='UUID'/>.</t>
-        <t>The use of the &lt;thread/&gt; element is OPTIONAL.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations.  A message stanza MUST NOT contain more than one &lt;thread/&gt; element.  The &lt;thread/&gt; element MUST NOT possess any attributes.  The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
+        <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element may also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It may also be used for &lt;message/&gt; stanzas not related to a conversation, such as a game session or between plugins.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations.</t>
+        <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL.  Because the &lt;thread/&gt; element uniquely identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
+        <t>The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The value of the &lt;thread/&gt; element MUST be a universally unique identifier (UUID) as described in <xref target='UUID'/>.</t>
+        <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child; the value of the 'parent' MUST conform to the syntax of the &lt;thread/&gt; element itself.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
+        <figure>
+          <artwork><![CDATA[
+<message
+    to='romeo@example.net'
+    from='juliet@example.com/balcony'
+    type='chat'
+    xml:lang='en'>
+  <subject>I implore you!</subject>
+  <subject xml:lang='cs'>
+    &#x00DA;p&#x011B;nliv&#x011B; pros&#x00EDm!
+  </subject>
+  <body>Wherefore art thou, Romeo?</body>
+  <body xml:lang='cs'>
+     Pro&#x010D;e&#x017E; jsi ty, Romeo?
+  </body>
+  <thread parent='e0ffe42b28561960c6b12b944a092794b9683a38'>
+    0e3141cd80894871a68e6fe6b1ec56fa
+  </thread>
+</message>
+          ]]></artwork>
+        </figure>
         <t>For detailed recommendations regarding use of the &lt;thread/&gt; element, refer to <xref target='XEP-0201'/>.</t>
       </section>
     </section>
@@ -3063,6 +3085,17 @@ US: </stream:stream>
   </xs:element>
 
   <xs:element name='thread' type='xs:NMTOKEN'/>
+  <xs:element name='subject'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:NMTOKEN'>
+          <xs:attribute name='parent' 
+                        type='xs:NMTOKEN'
+                        use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
 
   <xs:element name='presence'>
     <xs:complexType>
