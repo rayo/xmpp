@@ -1,14 +1,14 @@
 <?xml version='1.0'?>
 <!DOCTYPE rfc SYSTEM 'rfc2629.dtd'>
-<?rfc toc='yes'?>
-<?rfc tocdepth='2'?>
-<?rfc symrefs='yes'?>
 <?rfc compact='yes'?>
 <?rfc strict='yes'?>
-<rfc category='info' docName='draft-saintandre-atompub-notify-06' ipr='full3978'>
+<?rfc symrefs='yes'?>
+<?rfc toc='yes'?>
+<?rfc tocdepth='2'?>
+<rfc category='info' docName='draft-saintandre-atompub-notify-07' ipr='full3978'>
 
   <front>
-    <title abbrev='ATOM-PUBSUB'>Transporting Atom Notifications over the Extensible Messaging and Presence Protocol (XMPP)</title>
+    <title abbrev='ATOMSUB'>Atomsub: Transporting Atom Notifications over the Publish-Subscribe Extension to the Extensible Messaging and Presence Protocol (XMPP)</title>
     <author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre'>
       <organization>XMPP Standards Foundation</organization>
       <address>
@@ -28,7 +28,7 @@
         <email>bob@wyman.us</email>
       </address>
     </author>
-    <date year='2007' month='October' day='2'/>
+    <date year='2008' month='May' day='7'/>
     <area>Applications</area>
     <keyword>Atom</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -53,7 +53,7 @@
         </list></t>
         <t>Content syndication follows a classic "observer" or "publish-subscribe" software design pattern: a person or application publishes information to a "channel", and an event notification (or the data itself) is broadcasted to all those who are interested in knowing when such information is published or modified.  On the Internet today, publication of periodically-updated resources is handled by means of standard technologies such as <xref target='HTTP'/>, and it is not envisioned that this will change since <xref target='ATOM-PROTOCOL'/> specifies the use of HTTP for publication.  However, existing methods for learning that a resource has been updated are currently limited to "polling" for changes via HTTP, which is inherently inefficient.  What is needed is a technology that can be relied on to "push" information only when a resource undergoes a state change, and only to those who are interested in learning about such state changes.</t>
         <t>One possible technology for doing so is email, since <xref target='SMTP'/> provides a way to initiate the sending of information from "publishers" to "subscribers" (think, for example, of email lists such as those used to announce newly-published RFCs).  While email is one possible solution, it is not necessarily the best solution for Atom; in particular, <xref target='ATOM-FORMAT'/> defines an XML data format for content syndication, which implies that it might be beneficial to use a native XML delivery mechanism rather than to attach a special XML media type to email messages.  Thankfully, a specialized XML delivery protocol has been developed through the IETF: the Extensible Messaging and Presence Protocol (XMPP) as specified in <xref target='XMPP-CORE'/>.  XMPP has the added benefit of being optimized for near-real-time data delivery, which may be important in applications of Atom that require subscribers to be notified about syndicated content in a highly timely manner.</t>
-        <t>While the semantics of a normal XMPP &lt;message/&gt; element may be suitable for Atom content notifications, there also exists an XMPP extension that provides more structured communications in the context of information "channels" or "nodes" of the kind that are used in content syndication.  This extension is specified in <xref target='XMPP-PUBSUB'/> and may be especially useful for delivering notifications related to changes in Atom resources.  Therefore, this memo describes a method for notifying interested parties about changes in syndicated information encapsulated in the Atom feed format, where such notifications are delivered via the XMPP publish-subscribe extension.</t>
+        <t>While the semantics of a normal XMPP &lt;message/&gt; element may be suitable for Atom content notifications, there also exists an XMPP extension that provides more structured communications in the context of information "channels" or "nodes" of the kind that are used in typical content syndication technologies, where an interested entity can subscribe to that channel or node and thus receive notifications related to the topic of interest.  This extension is specified in <xref target='XMPP-PUBSUB'/> and may be especially useful for delivering notifications related to changes in Atom resources.  Therefore, this memo describes a method for notifying interested parties about changes in syndicated information encapsulated in the Atom feed format, where such notifications are delivered via the XMPP publish-subscribe extension.</t>
       </section>
 
       <section title='Terminology' anchor='intro-terms'>
@@ -97,7 +97,7 @@
         </figure>
         <t>In the examples shown below, we stipulate the following particulars:</t>
         <t><list style='symbols'>
-          <t>The XMPP address of the HTTP Service is "http-service.example.org".</t>
+          <t>The XMPP address of the HTTP Service is "atompub.example.org".</t>
           <t>The XMPP address of the XMPP Pubsub Service is "pubsub.example.com".</t>
           <t>The NodeID of the XMPP pubsub node to which the HTTP Service publishes and to which the XMPP Users subscribe is "an-atom-node".</t>
           <t>The ItemID of the XMPP pubsub item published by the HTTP Service is "70b2a83be71dfca04df91133d953fb22b41b4267".</t>
@@ -118,7 +118,7 @@
         <figure>
           <artwork><![CDATA[
 <iq type='set'
-    from='http-service.example.org'
+    from='atompub.example.org'
     to='pubsub.example.com'
     id='publish1'>
   <pubsub xmlns='http://jabber.org/protocol/pubsub'>
@@ -233,7 +233,7 @@
         <figure>
           <artwork><![CDATA[
 <iq type='set'
-    from='http-service.example.org'
+    from='atompub.example.org'
     to='pubsub.example.com'
     id='publish2'>
   <pubsub xmlns='http://jabber.org/protocol/pubsub'>
@@ -348,7 +348,7 @@
         <figure>
           <artwork><![CDATA[
 <iq type='set'
-    from='http-service.example.org'
+    from='atompub.example.org'
     to='pubsub.example.com'
     id='delete1'>
   <pubsub xmlns='http://jabber.org/protocol/pubsub'>
@@ -385,6 +385,9 @@
     </section>
 
     <section title='Implementation Notes' anchor='impl'>
+      <section title='Association Between User and Pubsub Node' anchor='impl-association'>
+        <t>As explained in <xref target='XMPP-PUBSUB'/>, a notification MAY include an XMPP SHIM Stanza Headers and Internet Metadata <xref target='XMPP-SHIM'/> header named "Reply-To" that specifies the JabberID of the publishing entity.  Alternatively, as described in <xref target='XMPP-PEP'/>, the XMPP server of the publishing entity MAY enable the publishing entity to associate a virtual pubsub service with the JabberID of its account, obviating the need for a separate pubsub service.</t>
+      </section>
       <section title='Generation of ItemIDs' anchor='impl-itemid'>
         <t>The pubsub ItemIDs MUST conform to the rules defined in <xref target="XMPP-PUBSUB"/>.  One possible method for generating a unique ItemID is to concatenate the XMPP address of the pubsub service, the pubsub node to which the item is published, and the atom:id of the feed entry, then hash the resulting string using the <xref target="SHA1"/> algorithm.</t>
       </section>
@@ -518,7 +521,7 @@
         <email>ralphm@ik.nu</email>
       </address>
     </author>
-    <date month="September" year="2007"/>
+    <date month="March" year="2008"/>
   </front>
   <seriesInfo name="XSF XEP" value="0060"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0060.html"/>
@@ -531,18 +534,15 @@
 <reference anchor="ATOM-PROTOCOL">
 <front>
 <title>The Atom Publishing Protocol</title>
-<author initials='B' surname='Hora' fullname='Bill de Hora'>
-    <organization />
-</author>
-<author initials='J' surname='Gregorio' fullname='Joe Gregorio'>
-    <organization />
-</author>
-<date month='July' day='11' year='2007' />
-<abstract><t>The Atom Publishing Protocol (APP) is an application-level protocol for publishing and editing Web resources. The protocol is based on HTTP transfer of Atom-formatted representations. The Atom format is documented in the Atom Syndication Format.</t></abstract>
-</front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-atompub-protocol-17' />
-<format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-atompub-protocol-17.txt' />
+<author initials='J.' surname='Gregorio' fullname='J. Gregorio'>
+<organization /></author>
+<author initials='B.' surname='de hOra' fullname='B. de hOra'>
+<organization /></author>
+<date year='2007' month='October' />
+<abstract>
+<t>The Atom Publishing Protocol (AtomPub) is an application-level protocol for publishing and editing Web resources.  The protocol is based on HTTP transfer of Atom-formatted representations.  The Atom format is documented in the Atom Syndication Format. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5023' />
+<format type='TXT' octets='102274' target='ftp://ftp.isi.edu/in-notes/rfc5023.txt' />
 </reference>
 
 <reference anchor='HTTP'>
@@ -667,6 +667,27 @@
 <format type='TXT' octets='192504' target='ftp://ftp.isi.edu/in-notes/rfc2821.txt' />
 </reference>
 
+<reference anchor="XMPP-PEP">
+  <front>
+    <title>Personal Eventing via Pubsub</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="K." surname="Smith" fullname="Kevin Smith">
+      <organization/>
+      <address>
+        <email>kevin@kismith.co.uk</email>
+      </address>
+    </author>
+    <date day="26" month="September" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0163"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0163.html"/>
+</reference>
+
 <reference anchor="XMPP-SHIM">
   <front>
     <title>Stanza Headers and Internet Metadata (SHIM)</title>
@@ -682,7 +703,7 @@
         <email>jhildebrand@jabber.com</email>
       </address>
     </author>
-    <date month="August" year="2005"/>
+    <date month="July" year="2006"/>
   </front>
   <seriesInfo name="XSF XEP" value="0131"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0131.html"/>
