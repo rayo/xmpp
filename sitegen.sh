@@ -20,7 +20,6 @@ cp about/*.* $basepath/about/
 cp council/*.* $basepath/council/
 cp council/agendas/*.* $basepath/council/agendas/
 cp council/members/*.* $basepath/council/members/
-cp devcon/*.* $basepath/devcon/
 cp extensions/*html $basepath/extensions/
 cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
@@ -28,6 +27,7 @@ cp index.shtml $basepath/
 cp interop/*.* $basepath/interop/
 cp schemas/*.* $basepath/schemas/
 cp sorttable.js $basepath/
+cp summit/*.* $basepath/summit/
 cp xmpp.css $basepath/
 cp xsf/*.* $basepath/xsf/
 cp xsf/board/*.* $basepath/xsf/board/
