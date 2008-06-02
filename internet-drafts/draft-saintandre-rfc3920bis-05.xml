@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2008" month="May" day="30"/>
+    <date year="2008" month="June" day="2"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -552,22 +552,42 @@ S: <stream:features/>
     </section>
 
     <section title="Closing Streams" anchor="streams-close">
-      <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other party in the absence of a stream error by sending a closing stream tag:</t>
-      <figure>
-        <artwork><![CDATA[
+      <t>An XML stream between two entities can be closed because a stream error has occurred or in some cases in the absence of an error.  Where possible, it is preferable to trigger a stream close only because a stream error has occurred.</t>
+      <section title="With Stream Error" anchor="streams-close-witherror">
+        <t>If a stream error has occurred, the entity that detects the error MUST send a stream error to the other entity, send a closing &lt;/stream&gt; tag, and immediately terminate the underlying TCP connection.</t>
+        <figure>
+          <artwork><![CDATA[
+C: <message><body></message>
+
+S: <stream:error>
+     <xml-not-well-formed 
+         xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
+   </stream:error>
+   </stream:stream>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Without Stream Error" anchor="streams-close-withouterror">
+        <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other party in the absence of a stream error by sending a closing stream tag:</t>
+        <figure>
+          <artwork><![CDATA[
 P: </stream:stream>
-        ]]></artwork>
-      </figure>
-      <t>The entity that sends the closing stream tag SHOULD wait for the other party to also close its stream:</t>
-      <figure>
-        <artwork><![CDATA[
+          ]]></artwork>
+        </figure>
+        <t>The entity that sends the closing stream tag SHOULD wait for the other party to also close its stream:</t>
+        <figure>
+          <artwork><![CDATA[
 S: </stream:stream>
-        ]]></artwork>
-      </figure>
-      <t>However, the entity that sends the first closing stream tag MAY consider both streams to be void if the other party does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is left up to the implementation or deployment).</t>
-      <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
-      <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other partyi (or if it considers the stream to be void after a reasonable amount of time), it MUST terminate the underlying TCP connection or connections.</t>
-      <t>Note: Closing of XML streams is handled differently in the case of a stream error; see <xref target='streams-error-rules-unrecoverable'/>.</t>
+          ]]></artwork>
+        </figure>
+        <t>However, the entity that sends the first closing stream tag MAY consider both streams to be void if the other party does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is left up to the implementation or deployment).</t>
+        <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
+        <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other partyi (or if it considers the stream to be void after a reasonable amount of time), it MUST terminate the underlying TCP connection or connections.</t>
+      </section>
+      <section title="Handling of Idle Streams" anchor="streams-close-idle">
+        <t>An XML stream can become idle, i.e., neither entity has sent XMPP traffic over the stream for some period of time (usually at least several minutes).  A server MAY close an idle stream with a local client or remote server.  The idle timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communications over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='XMPP-IM'/>, so it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established every 24 to 48 hours if they are timed out.</t> 
+        <t>An XML stream can appear idle at the XMPP level because the undelying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a white space character over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  The time between such "whitespace pings" is a matter of implementation and local service policy; however, it is RECOMMENDED that these pings be sent not more than once every 60 seconds.</t>
+      </section>
     </section>
 
     <section title="Stream Errors" anchor="streams-error">
@@ -3610,7 +3630,7 @@ S2: </stream:stream>
     </section>
 
     <section title="White Space" anchor="xml-whitespace">
-      <t>Except where explicitly disallowed (e.g., during <xref target='tls'>TLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref>), either entity MAY send white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between XML stanzas or between any other first-level elements sent over the stream; one common use for sending such white space characters is to check the viability of the underlying TCP connection after a period of inactivity.</t>
+      <t>Except where explicitly disallowed (e.g., during <xref target='tls'>TLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref>), either entity MAY send white space characters (matching production [3] content of <xref target="XML"/>) within the root stream element as separators between XML stanzas or between any other first-level elements sent over the stream.  One common use for sending such white space characters is explained under <xref target='streams-close-idle'/>.</t>
     </section>
 
   </section>
