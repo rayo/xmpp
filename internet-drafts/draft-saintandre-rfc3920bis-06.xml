@@ -3627,15 +3627,15 @@ S2: </stream:stream>
       <section title="Certificate Generation" anchor="security-certificates-generation">
         <section title="Server Certificates" anchor="security-certificates-generation-server">
           <t>In a digital certificate to be presented by an XMPP server or service (i.e., a SERVER CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs (i.e., domain identifiers) associated with domains serviced at the server.  The representations described in the following sections are RECOMMENDED.  These representations are described in preference order.</t>
-          <section title="Service Name" anchor="security-certificates-generation-server-dnssrv">
-            <t>A server's domain identifier SHOULD be represented as a service name, i.e., as an otherName field of type "id-on-dnsSRV" as specified in <xref target='X509-SRV'/>.</t>
+          <section title="SRVName" anchor="security-certificates-generation-server-srvname">
+            <t>A server's domain identifier SHOULD be represented as an SRVName, i.e., as an otherName field of type "id-on-dnsSRV" as specified in <xref target='X509-SRV'/>.</t>
           </section>
-          <section title="DNS Name" anchor="security-certificates-generation-server-dnsname">
-            <t>A server's domain identifier SHOULD be represented as a DNS name, i.e., as a subjectAltName extension of type dNSName.</t>
-            <t>The DNS name MAY contain the wildcard character '*'.  The wildcard character applies only to the left-most domain name component or component fragment and match any single component or component fragment.  For instance, a DNS name of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself; similarly, a DNS name of im*.example.net matches im1.example.net and im2.example.net but not chat.example.net or example.net itself.</t>
+          <section title="dNSName" anchor="security-certificates-generation-server-dnsname">
+            <t>A server's domain identifier SHOULD be represented as a dNSName, i.e., as a subjectAltName extension of type dNSName.</t>
+            <t>The dNSName MAY contain the wildcard character '*'.  The wildcard character applies only to the left-most domain name component or component fragment and match any single component or component fragment.  For instance, a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself; similarly, a dNSName of im*.example.net matches im1.example.net and im2.example.net but not chat.example.net or example.net itself.</t>
           </section>
-          <section title="XMPP OID" anchor="security-certificates-generation-server-xmppaddr">
-            <t>A server's domain identifier MAY be represented as an XMPP OID, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.  In server certificates, this representation is included for the sake of backward-compatibility.</t>
+          <section title="XmppAddr" anchor="security-certificates-generation-server-xmppaddr">
+            <t>A server's domain identifier MAY be represented as an XmppAddr, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.  In server certificates, this representation is included for the sake of backward-compatibility.</t>
           </section>
           <section title="Common Name" anchor="security-certificates-generation-server-cn">
             <t>A server's domain identifier SHOULD NOT be represented as a Common Name; instead, the Common Name field MUST be reserved for representation of a human-friendly name.</t>
@@ -3648,16 +3648,16 @@ _xmpp-client._tcp.im.example.com. 400 IN SRV 20 0 5222 x.example.com
 _xmpp-server._tcp.im.example.com. 400 IN SRV 20 0 5269 x.example.com
               ]]></artwork>
             </figure>
-            <t>The certificate presented when connecting to x.example.com contains the following representations:</t>
-            <figure>
-              <artwork><![CDATA[
-subjectAltName=otherName:id-on-dnsSRV:_xmpp-client.im.example.com
-subjectAltName=otherName:id-on-dnsSRV:_xmpp-server.im.example.com
-subjectAltName=dNSName:im.example.com
-subjectAltName=otherName:id-on-xmppAddr;UTF8:im.example.com
-CN=Example Products, Inc.
-              ]]></artwork>
-            </figure>
+            <t>The certificate presented by x.example.com contains the following representations:</t>
+            <t>
+              <list style='symbols'>
+                <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-client.im.example.com"</t>
+                <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-server.im.example.com"</t>
+                <t>A dNSName containing an ASCII string of "im.example.com"</t>
+                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF8 string of: "im.example.com"</t>
+                <t>A CN containing an ASCII string of "Example Products, Inc."</t>
+              </list>
+            </t>
             <t>For our second (more complex) example, consider an ISP called "Example Internet Services".  It hosts an XMPP service at "example.net" (i.e., user addresses at the service are of the form "user@example.net"), but SRV lookups for the xmpp-client and xmpp-server services at "example.net" yield two machines ("x1.example.net" and "x2.example.net") as follows:</t>
             <figure>
               <artwork><![CDATA[
@@ -3668,27 +3668,27 @@ _xmpp-server._tcp.example.net. 68400 IN SRV 20 0 5269 x2.example.net.
               ]]></artwork>
             </figure>
             <t>Example Internet Services also hosts chatrooms at chat.example.net, and provides SRV records for those services as well.  It also may provide other such services in the future, so it wishes to represent a wildcard in its certificate to handle future growth.</t>
-            <t>The certificate presented when connecting to either x1.example.net or x2.example.net contains the following representations:</t>
-            <figure>
-              <artwork><![CDATA[
-subjectAltName=otherName:id-on-dnsSRV:_xmpp-client.example.net
-subjectAltName=otherName:id-on-dnsSRV:_xmpp-client.chat.example.net
-subjectAltName=otherName:id-on-dnsSRV:_xmpp-server.example.net
-subjectAltName=otherName:id-on-dnsSRV:_xmpp-server.chat.example.net
-subjectAltName=dNSName:example.net
-subjectAltName=dNSName:*.example.net
-subjectAltName=otherName:id-on-xmppAddr;UTF8:example.net
-subjectAltName=otherName:id-on-xmppAddr;UTF8:chat.example.net
-CN=Example Internet Services
-              ]]></artwork>
-            </figure>
+            <t>The certificate presented by either x1.example.net or x2.example.net contains the following representations:</t>
+            <t>
+              <list style='symbols'>
+                <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-client.example.net"</t>
+                <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-client.chat.example.net"</t>
+                <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-server.example.net"</t>
+                <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-server.chat.example.net"</t>
+                <t>A dNSName containing an ASCII string of "example.net"</t>
+                <t>A dNSName containing an ASCII string of "*.example.net"</t>
+                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF8 string of: "example.net"</t>
+                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF8 string of: "chat.example.net"</t>
+                <t>A CN containing an ASCII string of "Example Internet Services"</t>
+              </list>
+            </t>
           </section>
         </section>
         <section title="Client Certificates" anchor="security-certificates-generation-client">
-          <t>In a digital certificate to be presented by an XMPP client controlled by a human user (i.e., a CLIENT CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs associated with an XMPP user.  If included, a JID MUST be represented as an XMPP OID, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.</t>
+          <t>In a digital certificate to be presented by an XMPP client controlled by a human user (i.e., a CLIENT CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs associated with an XMPP user.  If included, a JID MUST be represented as an XmppAddr, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.</t>
         </section>
         <section title="ASN.1 Object Identifier" anchor="security-certificates-generation-oid">
-          <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" (also called an XMPP OID) is defined as follows.</t>
+          <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" (also called an XmppAddr) is defined as follows.</t>
           <figure>
             <artwork><![CDATA[
 id-pkix OBJECT IDENTIFIER ::= { iso(1) identified-organization(3)
@@ -3717,12 +3717,12 @@ XmppAddr ::= UTF8String
         <section title="Server Certificates" anchor="security-certificates-validation-server">
           <t>When an XMPP entity (client or server) validates a certificate presented by a server, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-server-case1">
-            <t>If the server certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the entity SHOULD check the certificate for any instances of the service name, DNS name, and XMPP OID (in that order of preference) as described under <xref target='security-certificates-generation-server-dnssrv'/>, <xref target='security-certificates-generation-server-dnsname'/>, and <xref target='security-certificates-generation-server-xmppaddr'/>.  There are three possible sub-cases:</t>
+            <t>If the server certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the entity SHOULD check the certificate for any instances of the SRVName, dNSName, and XmppAddr (in that order of preference) as described under <xref target='security-certificates-generation-server-srvname'/>, <xref target='security-certificates-generation-server-dnsname'/>, and <xref target='security-certificates-generation-server-xmppaddr'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
-                <t hangText='Sub-Case #1:'>The entity finds at least one service name, DNS name, or XMPP OID that matches the hostname to which it attempted to connect; the entity SHOULD use this represented domain identifier as the validated identity of the server.  Note: the server certificate MUST be checked against the hostname as provided by the entity (client or server), not the hostname as resolved via the Domain Name System; e.g., if a user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  A user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a hostname to be checked for connection purposes.</t>
-                <t hangText='Sub-Case #2:'>The entity finds no service name, DNS name, or XMPP OID that matches the hostname to which it attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt; the entity MUST NOT use the represented domain identifier (if any) as the validated identity of the server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash) and in future connection attempts behave as in Sub-Case #3.  If the connecting entity is a server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; a server or automated client MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
-                <t hangText='Sub-Case #3:'>The entity finds no service name, DNS name, or XMPP OID that matches the hostname to which it attempted to connect but a human user has permanently accepted the certificate during a previous connection attempt; the entity MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed.</t>
+                <t hangText='Sub-Case #1:'>The entity finds at least one SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect; the entity SHOULD use this represented domain identifier as the validated identity of the server.  Note: the server certificate MUST be checked against the hostname as provided by the entity (client or server), not the hostname as resolved via the Domain Name System; e.g., if a user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  A user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a hostname to be checked for connection purposes.</t>
+                <t hangText='Sub-Case #2:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt; the entity MUST NOT use the represented domain identifier (if any) as the validated identity of the server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash) and in future connection attempts behave as in Sub-Case #3.  If the connecting entity is a server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; a server or automated client MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
+                <t hangText='Sub-Case #3:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect but a human user has permanently accepted the certificate during a previous connection attempt; the entity MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed.</t>
               </list>
             </t>
           </section>
@@ -3736,12 +3736,12 @@ XmppAddr ::= UTF8String
         <section title="Client Certificates" anchor="security-certificates-validation-client">
           <t>When a server validates a certificate presented by a client, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-client-case1">
-            <t>If the client certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server SHOULD check the certificate for any instances of the XMPP OID as described under <xref target='security-certificates-generation-oid'/>.  There are three possible sub-cases:</t>
+            <t>If the client certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server SHOULD check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-oid'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
-                <t hangText='Sub-Case #1:'>The server finds one XMPP OID for which the domain identifier portion of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use this represented JID as the validated identity of the client.</t>
-                <t hangText='Sub-Case #2:'>The server finds more than one XMPP OID for which the domain identifier portion of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use one of these represented JIDs as the validated identity of the client, choosing among them according to local service policies.</t>
-                <t hangText='Sub-Case #3:'>The server finds no XMPP OIDs, or finds at least one XMPP OID but the domain identifier portion of the represented JID does not match one of the configured hostnames of the server itself; the server MUST NOT use the represented JID (if any) as the validated identity of the client and instead MUST either validate the identity of the client using other means.</t>
+                <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domain identifier portion of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use this represented JID as the validated identity of the client.</t>
+                <t hangText='Sub-Case #2:'>The server finds more than one XmppAddr for which the domain identifier portion of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use one of these represented JIDs as the validated identity of the client, choosing among them according to local service policies.</t>
+                <t hangText='Sub-Case #3:'>The server finds no XmppAddrs, or finds at least one XmppAddr but the domain identifier portion of the represented JID does not match one of the configured hostnames of the server itself; the server MUST NOT use the represented JID (if any) as the validated identity of the client and instead MUST either validate the identity of the client using other means.</t>
               </list>
             </t>
           </section>
