@@ -44,8 +44,8 @@
       <t>
         <list style='numbers'>
           <t><iref item='Roster'/>The central point of focus is a list of one's contacts or "buddies" (in XMPP this list is called a ROSTER).</t>
-          <t>The purpose of using such an application is to exchange relatively brief text messages with each of one's contacts in close to real time -- often relatively large numbers of such messages in rapid succession, in the form of one-to-one "chat sessions".</t>
-          <t><iref item='Presence'/>The catalyst for exchanging messages is PRESENCE -- i.e., information about the network availability of each of one's contacts (thus knowing who is online and available for a chat session).</t>
+          <t>The purpose of using such an application is to exchange relatively brief text messages with each of one's contacts in close to real time -- often relatively large numbers of such messages in rapid succession, in the form of one-to-one chat sessions as described under <xref target='message-chat'/>.</t>
+          <t><iref item='Presence'/>The catalyst for exchanging messages is PRESENCE -- i.e., information about the network availability of each of one's contacts (thus knowing who is online and available for a one-to-one chat session).</t>
           <t>Presence information is provided only to contacts that a user has authorized via a presence subscription.</t>
         </list>
       </t>
@@ -603,6 +603,7 @@ S: <iq to='juliet@example.com/balcony' type='error' id='delete_2'>
 UC: <presence to='juliet@example.com' type='subscribe'/>
           ]]></artwork>
         </figure>
+        <t>A user's client SHOULD NOT send a presence subscription to a full JID &lt;contact@domain/resource&gt;.</t>
         <t>Typically the user's client prompts the user for information about the potential contact ("handle" and desired roster group) and generates a roster set with that information before sending the subscription request, but that behavior is recommended rather than required.</t>
       </section>
 
@@ -615,6 +616,7 @@ US: <presence from='romeo@example.net'
               type='subscribe'/>
           ]]></artwork>
         </figure>
+        <t>Note:  If the subscription request is directed to a full JID &lt;contact@domain/resource&gt; instead of a bare JID &lt;contact@domain&gt;, the user's server MAY treat it as if the request had been directed to the contact's bare JID and modify the 'to' address accordingly.  This simplifies processing of presence subscriptions.</t>
         <t>If the potential contact is hosted on the same server, the server MUST adhere to the rules specified in the next section in processing the subscription request and delivering it to the (local) contact.</t>
         <t>If the potential contact is hosted on a different server, the user's server then routes the stanza to that foreign domain in accordance with core XMPP stanza processing rules.</t>
         <t>The user's server MUST then send a roster push to all of the user's interested resources, containing the potential contact with a subscription state of "none" and with notation that the subscription is pending (via an 'ask' attribute whose value is "subscribe").</t>
@@ -665,6 +667,7 @@ CS: <presence from='juliet@example.com'
             <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no interested resources when the subscription request is received by the contact's server, the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an interested resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an interested resource, until the contact either approves or denies the request.  (Note: The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an interested resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an interested resource; this helps to prevent "subscription request spam".)</t>
           </list>
         </t>
+        <t>Note:  If the subscription request is directed to a full JID &lt;contact@domain/resource&gt; instead of a bare JID &lt;contact@domain&gt;, the contact's server MAY treat it as if the request had been directed to the contact's bare JID.  This simplifies processing of presence subscriptions.</t>
         <t>Note:  Until and unless the contact approves the subscription request as described under <xref target='sub-request-handle'/>, the contact's server MUST NOT add an item for the user to the contact's roster.</t>
       </section>
 
@@ -993,7 +996,7 @@ CS: <presence from='juliet@example.com/balcony'
 
       <section title="Client Processing of Inbound Presence" anchor="presence-initial-client">
         <t>When the contact's client receives presence from the user and the user is in the contact's roster, it SHOULD display the presence information in an appropriate roster interface.</t>
-        <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message'/>).</t>
+        <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).</t>
         <t>Otherwise, the client SHOULD ignore the presence information and not display it to the contact.</t>
       </section>
     </section>
@@ -1083,6 +1086,7 @@ UC: <presence>
             <t>The last presence stanza received from the contact during the user's presence session was not of type "error" or "unsubscribe".</t>
           </list>
         </t>
+        <t>As an optimization, if the subscription type is "both", the server MAY send subsequent presence notifications to a contact only if the contact is online according to the user's server.  That is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact or if the last presence stanza received from the contact during the user's presence session was of type "unavailable", the user's server MAY opt not to send subsequent presence notifications from the user to the contact.</t>
         <figure>
           <artwork><![CDATA[
 US: <presence from='juliet@example.com/balcony' 
@@ -1101,7 +1105,6 @@ US: <presence from='juliet@example.com/balcony'
     </presence>
           ]]></artwork>
         </figure>
-        <t>Note:  As an optimization, if the subscription state is "both" then the user's server MAY choose to broadcast subsequent presence only if the server has received available presence from the contact at some point during the user's session; i.e., if the server never received available presence from the contact and the user has a mutual presence subscription with the contact, it MAY decline to send subsequent presence to the contact.</t>
         <t>The user's server MUST also send the presence stanza to all of the user's available resources.</t>
         <figure>
           <artwork><![CDATA[
@@ -1141,7 +1144,7 @@ CS: <presence from='juliet@example.com/balcony'
 
       <section title="Client Processing of Inbound Presence" anchor="presence-broadcast-client">
         <t>When the contact's client receives presence from the user and the user is in the contact's roster, it SHOULD display the presence information in an appropriate roster interface.</t>
-        <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message'/>).</t>
+        <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).</t>
         <t>Otherwise, the client SHOULD ignore the presence information and not display it to the contact.</t>
       </section>
     </section>
@@ -1170,10 +1173,10 @@ US: <presence type='unavailable'>
         <t>
           <list style='numbers'>
             <t>The contact is in the user's roster with a subscription type of "from" or "both".</t>
-            <t>The contact has at least one resource that is online according to the user's server.</t>
             <t>The last presence stanza received from the contact during the user's presence session was not of type "error" or "unsubscribe".</t>
           </list>
         </t>
+        <t>As an optimization, if the subscription type is "both", the server MAY send the unavailable presence notification to a contact only if the contact is online according to the user's server.  That is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact or if the last presence stanza received from the contact during the user's presence session was of type "unavailable", the user's server MAY opt not to send the unavailable presence notification from the user to the contact.</t>
         <t>See <xref target='presence-directed'/> regarding rules that supplement the foregoing.</t>
         <t>If the unavailable presence stanza was gracefully received from the client, the server MUST broadcast the full XML of the presence stanza.</t>
         <figure>
@@ -1224,7 +1227,7 @@ CS: <presence from='juliet@example.com/balcony'
 
       <section title="Client Processing of Inbound Unavailable Presence" anchor="presence-unavailable-client">
         <t>When the contact's client receives unavailable presence from the user and the user is in the contact's roster, it SHOULD display the unavailable presence information in an appropriate roster interface.</t>
-        <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the unavailable presence information in the user interface for that chat session.</t>
+        <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the unavailable presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).</t>
         <t>Otherwise, the client SHOULD ignore the unavailable presence information and not display it to the contact.</t>
       </section>
     </section>
@@ -1233,7 +1236,7 @@ CS: <presence from='juliet@example.com/balcony'
       <t>This section supplements and in some respects modifies the rules defined above, but only for the special case of directed presence.</t>
       <section title="Client Generation of Directed Presence" anchor="presence-directed-gen">
         <t>As noted, directed presence is a presence stanza with a 'to' attribute whose value is the bare JID or full JID of the other entity and with either no 'type' attribute (indicating availability) or a 'type' attribute whose value is "unavailable".</t>
-        <t>If a user exchanges messages or IQ stanzas with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity, subject to user approval (either explicitly for this entity or implicitly via a configuration setting).  If a client supports this feature, it MUST allow the user to disable the feature in order to prevent presence sharing with unknown entities.</t>
+        <t>Information about the use of directed presence in the context of a one-to-one chat session is provided under <xref target='message-chat'/>.</t>
       </section>
       <section title="Server Processing of Outbound Directed Presence" anchor="presence-directed-outbound">
         <t>When the user's server receives the directed presence stanza, it SHOULD process it according to the following rules.</t>
@@ -1403,7 +1406,7 @@ CS: <presence from='juliet@example.com/balcony'
       <t>Common uses of the message stanza in instant messaging applications include single messages, messages sent in the context of a chat conversation, messages sent in the context of a multi-user chat room, headlines and other alerts, and errors.  These uses are differentiated via the 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
       <t>
         <list style="symbols">
-          <t>chat -- The message is sent in the context of a one-to-one chat conversation.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.  (For detailed recommendations regarding chat sessions, refer to <xref target='XEP-0201'/>.)</t>
+          <t>chat -- The message is sent in the context of a one-to-one chat session.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding chat sessions are provided under <xref target='message-chat'/>.</t>
           <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
           <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A receiving client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details, refer to <xref target="XEP-0045"/>).</t>
           <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, alerts, etc.), or the sender wishes the message to be delivered as if it were so generated.  No reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources.</t>
@@ -1533,6 +1536,14 @@ CS: <presence from='juliet@example.com/balcony'
 </message>
         ]]></artwork>
       </figure>
+    </section>
+
+    <section title="One-to-One Chat Sessions" anchor="message-chat">
+      <t>In practice, instant messaging activity between human users tends to occur in form of a conversational burst that we call <iref item='Chat Session'/> a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
+      <t>When a human user intends to engage in such a chat session with a contact (rather than sending a single message to which no reply is expected), the user's client SHOULD send a message of type "chat" and the contact's client SHOULD preserve that message type in subsequent replies.   The user's client also SHOULD include a &lt;thread/&gt; element on its initial message, which the contact's client SHOULD also preserve during the life of the chat session.</t>
+      <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt;).  Until and unless the user's client receives a reply from the contact, it MUST continue sending any further messages to the contact's bare JID.  The contact's client SHOULD address its subsequent replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies.</t>
+      <t>If a user exchanges messages with a contact but the user does not normally share presence with the contact via a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the contact, subject to user approval (either explicitly for this contact or implicitly via a configuration setting).  If a client supports this feature, it MUST allow the user to disable the feature in order to prevent presence sharing with unknown entities.</t>
+      <t>An example of a chat session as described above is provided under <xref target='session'/>.</t>
     </section>
   </section>
 
@@ -1668,10 +1679,28 @@ UC: <presence
     </presence>
       ]]></artwork>
     </figure>
-    <t>Now the user has a threaded conversation (chat session) with one of his contacts.</t>
+    <t>Now the user has a chat session with one of his contacts.</t>
     <figure>
       <preamble>Example 9: A threaded conversation</preamble>
       <artwork><![CDATA[
+CC: <message
+        from='juliet@example.com/balcony'
+        to='romeo@example.net'
+        type='chat'
+        xml:lang='en'>
+      <body>My ears have not yet drunk a hundred words</body>
+      <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
+    </message>
+
+CC: <message
+        from='juliet@example.com/balcony'
+        to='romeo@example.net'
+        type='chat'
+        xml:lang='en'>
+      <body>Of that tongue's utterance, yet I know the sound:</body>
+      <thread>e0ffe42b28561960c6b12b944a092794b9683a38</thread>
+    </message>
+
 CC: <message
         from='juliet@example.com/balcony'
         to='romeo@example.net'
