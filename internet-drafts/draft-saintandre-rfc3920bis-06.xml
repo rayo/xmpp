@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2008" month="June" day="2"/>
+    <date year="2008" month="June" day="6"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -3714,15 +3714,16 @@ XmppAddr ::= UTF8String
         </section>
       </section>
       <section title="Certificate Validation" anchor="security-certificates-validation">
-        <t>When an XMPP entity is presented with a server certificate or client certificate by a peer for the purpose of encryption or authentication as described under <xref target='tls'/> and <xref target='sasl'/>, the entity MUST validate the certificate in order to determine if the certificate shall be considered a TRUSTED CERTIFICATE, i.e., a certificate that is acceptable for encryption and authentication in accordance with the XMPP entity's local service policies or configured settings.  The following rules apply.</t>
-        <section title="Server Certificates" anchor="security-certificates-validation-server">
-          <t>When an XMPP entity (client or server) validates a certificate presented by a server, there are three possible cases, as discussed in the following sections.</t>
+        <t>When an XMPP entity is presented with a server certificate or client certificate by a peer for the purpose of encryption or authentication of XML streams as described under <xref target='tls'/> and <xref target='sasl'/>, the entity MUST validate the certificate in order to determine if the certificate shall be considered a TRUSTED CERTIFICATE, i.e., a certificate that is acceptable for encryption and/or authentication in accordance with the XMPP entity's local service policies or configured settings.</t>
+        <t>For both server certificates and client certificates, the validating entity MUST verify the integrity of the certificate, MUST verify that the certificate has been properly signed by the issuing Certificate Authority, and SHOULD support certificate revocation messages.  An implementation MUST enable a human user to view information about the full chain of certificates.</t>
+        <section title="Server-to-Server Streams" anchor="security-certificates-validation-s2s">
+          <t>When an XMPP entity (client or server) validates a certificate presented by an XMPP server, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-server-case1">
             <t>If the server certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the entity SHOULD check the certificate for any instances of the SRVName, dNSName, and XmppAddr (in that order of preference) as described under <xref target='security-certificates-generation-server-srvname'/>, <xref target='security-certificates-generation-server-dnsname'/>, and <xref target='security-certificates-generation-server-xmppaddr'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
-                <t hangText='Sub-Case #1:'>The entity finds at least one SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect; the entity SHOULD use this represented domain identifier as the validated identity of the server.  Note: the server certificate MUST be checked against the hostname as provided by the entity (client or server), not the hostname as resolved via the Domain Name System; e.g., if a user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  A user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a hostname to be checked for connection purposes.</t>
-                <t hangText='Sub-Case #2:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt; the entity MUST NOT use the represented domain identifier (if any) as the validated identity of the server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash) and in future connection attempts behave as in Sub-Case #3.  If the connecting entity is a server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; a server or automated client MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
+                <t hangText='Sub-Case #1:'>The entity finds at least one SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect; the entity SHOULD use this represented domain identifier as the validated identity of the XMPP server.  Note: the server certificate MUST be checked against the hostname as provided by the entity (client or server), not the hostname as resolved via the Domain Name System; e.g., if a user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "xmpp.example.net", the certificate MUST be checked as "example.net".  A user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a hostname to be checked for connection purposes.</t>
+                <t hangText='Sub-Case #2:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt; the entity MUST NOT use the represented domain identifier (if any) as the validated identity of the XMPP server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash) and in future connection attempts behave as in Sub-Case #3.  (Note: It is the resposibility of the human user to verify the hash or fingerprint of the certificate with the peer over a trusted communication layer.)  If the connecting entity is an XMPP server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; an XMPP server or automated client MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
                 <t hangText='Sub-Case #3:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect but a human user has permanently accepted the certificate during a previous connection attempt; the entity MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed.</t>
               </list>
             </t>
@@ -3734,8 +3735,8 @@ XmppAddr ::= UTF8String
             <t>If the server certificate is self-signed, the entity MUST proceed as under Case #1, Sub-Case #2 or Case #1, Sub-Case #3 as appropriate.</t>
           </section>
         </section>
-        <section title="Client Certificates" anchor="security-certificates-validation-client">
-          <t>When a server validates a certificate presented by a client, there are three possible cases, as discussed in the following sections.</t>
+        <section title="Client-to-Server Streams" anchor="security-certificates-validation-c2s">
+          <t>When an XMPP server validates a certificate presented by a client, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-client-case1">
             <t>If the client certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server SHOULD check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-oid'/>.  There are three possible sub-cases:</t>
             <t>
@@ -3752,6 +3753,9 @@ XmppAddr ::= UTF8String
           <section title="Case #3" anchor="security-certificates-validation-client-case3">
             <t>If the client certificate is self-signed, the server MUST proceed as under Case #1, Sub-Case #3.</t>
           </section>
+        </section>
+        <section title="Use of Certificates in XMPP Extensions" anchor="security-certificates-validation-extensions">
+          <t>Certificates MAY be used in extensions to XMPP for the purpose of application-layer encryption or authentication above the level of XML streams (e.g., for end-to-end encryption).  Such extensions shall define their own certificate handling rules, which at a minimum SHOULD be consistent with the rules specified herein but MAY specify additional rules.</t>
         </section>
       </section>
     </section>
