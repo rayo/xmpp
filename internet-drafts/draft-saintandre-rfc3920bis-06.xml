@@ -268,6 +268,7 @@ romeo@example.net           juliet@im.example.com
           <t>If the first reconnection attempt does not succeed, an entity SHOULD back off exponentially on the time between subsequent reconnection attempts.</t>
         </list>
       </t>
+      <t>Note: A disconnected entity may not be able to determine the cause of disconnection, and therefore SHOULD NOT assume that is needs to reconnect immediately.</t>
     </section>
     <section title="Other Bindings" anchor="tcp-other">
       <t>There is no necessary coupling of an XML stream to a TCP connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines a binding of XMPP to TCP only.</t>
@@ -574,7 +575,7 @@ S: </stream:stream>
         <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other party (or if it considers the stream to be void after a reasonable amount of time), it MUST terminate the underlying TCP connection or connections.</t>
       </section>
       <section title="Handling of Idle Streams" anchor="streams-close-idle">
-        <t>An XML stream can become idle, i.e., neither entity has sent XMPP traffic over the stream for some period of time (usually at least several minutes).  A server MAY close an idle stream with a local client or remote server.  The idle timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communications over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='XMPP-IM'/>, so it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established every 24 to 48 hours if they are timed out.</t> 
+        <t>An XML stream can become idle, i.e., neither entity has sent XMPP traffic over the stream for some period of time (usually at least several minutes).  A server MAY close an idle stream with a local client or remote server, preferably through use of the &lt;connection-timeout/&gt; stream error.  The idle timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communications over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='XMPP-IM'/>; therefore it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established every 24 to 48 hours if they are timed out.</t> 
         <t>An XML stream can appear idle at the XMPP level because the undelying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a white space character over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  The time between such "whitespace pings" is a matter of implementation and local service policy; however, it is RECOMMENDED that these pings be sent not more than once every 60 seconds.</t>
       </section>
     </section>
@@ -3100,7 +3101,7 @@ S: <stream:features>
             ]]></artwork>
           </figure>
         <figure>
-          <preamble>Step 9: Client selects an authentication mechanism, in this case <xref target='DIGEST-MD5'/> with an empty authorization identity ("="):</preamble>
+          <preamble>Step 9: Client selects an authentication mechanism, in this case <xref target='PLAIN'/>:</preamble>
           <artwork><![CDATA[
 C: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
          mechanism='PLAIN'>R0m30R0cks</auth>
