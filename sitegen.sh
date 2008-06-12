@@ -25,6 +25,10 @@ cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
 cp index.shtml $basepath/
 cp interop/*.* $basepath/interop/
+cp non-free/gps_datum.html $basepath/extensions/
+cp non-free/*.gif $basepath/images/
+cp non-free/*.jpg $basepath/images/
+cp non-free/*.png $basepath/images/
 cp schemas/*.* $basepath/schemas/
 cp sorttable.js $basepath/
 cp summit/*.* $basepath/summit/
