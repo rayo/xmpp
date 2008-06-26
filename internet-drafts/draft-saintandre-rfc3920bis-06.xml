@@ -299,17 +299,19 @@ romeo@example.net           juliet@im.example.com
     <section title="Stream Security" anchor="streams-security">
       <t>For the purpose of stream security, both Transport Layer Security (see <xref target='tls'/>) and the Simple Authentication and Security Layer (see <xref target='sasl'/>) are mandatory to implement.</t>
       <t>When negotiating XML streams in XMPP 1.0, TLS SHOULD be used as defined under <xref target='tls'/> and SASL MUST be used as defined under <xref target='sasl'/>.  The initial stream and the response stream MUST be secured separately, although security in both directions MAY be established via mechanisms that provide mutual authentication.</t>
-      <t>The initiating entity SHOULD NOT attempt to send <xref target="stanzas">XML stanzas</xref> over the stream before the stream has been authenticated.  However, if it does attempt to do so, the receiving entity MUST NOT accept such stanzas and MUST return a &lt;not-authorized/&gt; stream error and then terminate both the XML stream and the underlying TCP connection.</t>
+      <t>The initiating entity SHOULD NOT attempt to send <xref target="stanzas">XML stanzas</xref> over the stream before the stream has been authenticated.  However, if it does attempt to do so, the receiving entity MUST NOT accept such stanzas and MUST return a &lt;not-authorized/&gt; stream error.</t>
       <t><list style='empty'><t>Note: This rule applies to XML stanzas only (i.e., &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; elements qualified by the default namespace) and not to XML elements used for stream negotiation (e.g., elements used to complete <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref>).</t></list></t>
     </section>
 
     <section title="Stream Attributes" anchor="streams-attr">
-      <t>The attributes of the root &lt;stream/&gt; element are as follows.</t>
+      <t>The attributes of the root &lt;stream/&gt; element are defined in the following sections.</t>
       <section title='from' anchor='streams-attr-from'>
-        <t>In client-to-server communication, the 'from' attribute SHOULD be included in the initial stream header and (if included) MUST be set to the account name (i.e., bare JID = &lt;node@domain&gt;) of the entity controlling the client.</t>
+        <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
+        <t><list style='empty'><t>Note: It is possible for an entity to have more than one XMPP identity (e.g., in the case of a server that provides virtual hosting).  It is also possible that an entity does not know the XMPP identity of the principal controlling the entity (e.g., because the XMPP identity is assigned at a level other than the XMPP application layer, as in the General Security Service Application Program Interface <xref target='GSS-API'/>).</t></list></t>
+        <t>For initial stream headers in client-to-server communication, if the client knows the XMPP identity of the principal controlling the client (typically an account name of the form &lt;node@domain&gt;), then it MUST include the 'from' attribute and MUST set its value to that identity.  If the client does not know the XMPP identity of the principal controlling the client, then it MUST NOT include the 'from' attribute.</t>
         <figure>
           <artwork><![CDATA[
-C: <?xml version='1.0'?>
+I: <?xml version='1.0'?>
    <stream:stream
        from='juliet@im.example.com'
        to='im.example.com'
@@ -319,10 +321,10 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In server-to-server communication, the 'from' attribute SHOULD be included in the initial stream header and (if included) MUST be set to a hostname serviced by the initiating entity.</t>
+        <t>For initial stream headers in server-to-server communication, a server MUST include the 'from' attribute and MUST set its value to a hostname serviced by the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
-P: <?xml version='1.0'?>
+I: <?xml version='1.0'?>
    <stream:stream
        from='example.net'
        to='im.example.com'
@@ -332,10 +334,10 @@ P: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In both client-to-server and server-to-server communications, the 'from' attribute MUST be included in the response stream header and MUST be set to a hostname serviced by the receiving entity that is granting access to the initiating entity.</t>
+        <t>For response stream headers in both client-to-server and server-to-server communication, the receiving entity MUST include the 'from' attribute and MUST set its value to a hostname serviced by the receiving entity (which MAY be a hostname other than that specified in the 'to' attribute of the initial stream header).</t>
         <figure>
           <artwork><![CDATA[
-S: <?xml version='1.0'?>
+R: <?xml version='1.0'?>
    <stream:stream
        from='im.example.com'
        id='++TR84Sm6A3hnt3Q065SnAbbk3Y='
@@ -349,10 +351,10 @@ S: <?xml version='1.0'?>
         <t><list style='empty'><t>Note: Each entity MUST verify the identity of the other entity before exchanging XML stanzas with it (see <xref target='security-client'/> and <xref target='security-server'/>).</t></list></t>
       </section>
       <section title='to' anchor='streams-attr-to'>
-        <t>In both client-to-server and server-to-server communications, the 'to' attribute SHOULD be included in the initial stream header and (if included) MUST be set to a hostname serviced by the receiving entity.</t>
+        <t>For initial stream headers in both client-to-server and server-to-server communication, the initiating entity MUST include the 'to' attribute and MUST set its value to a hostname that the initiating entity knows or expects the receiving entity to service.</t>
         <figure>
           <artwork><![CDATA[
-C: <?xml version='1.0'?>
+I: <?xml version='1.0'?>
    <stream:stream
        from='juliet@im.example.com'
        to='im.example.com'
@@ -362,10 +364,10 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In client-to-server communication, if the client included a 'from' address in the initial stream header then the server SHOULD include a 'to' attribute in the response stream header and (if included) MUST set the 'to' attribute to the bare JID specified in the 'from' attribute of the initial stream header.</t>
+        <t>For response stream headers in client-to-server communication, if the client included a 'from' attribute in the initial stream header then the server MUST include a 'to' attribute in the response stream header and MUST set its value to the bare JID specified in the 'from' attribute of the initial stream header.  If the client did not include a 'from' attribute in the initial stream header then the server MUST NOT include a 'to' attribute in the response stream header.</t>
         <figure>
           <artwork><![CDATA[
-S: <?xml version='1.0'?>
+R: <?xml version='1.0'?>
    <stream:stream
        from='im.example.com'
        id='++TR84Sm6A3hnt3Q065SnAbbk3Y='
@@ -376,10 +378,10 @@ S: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>In server-to-server communication, if the initiating entity included a 'from' address in the initial stream header then the receiving entity SHOULD include a 'to' attribute in the response stream header and (if included) MUST set the 'to' attribute to the hostname specified in the 'from' attribute of the initial stream header.</t>
+        <t>For response stream headers in server-to-server communication, the receiving entity MUST include a 'to' attribute in the response stream header and MUST set its value to the hostname specified in the 'from' attribute of the initial stream header.</t>
         <figure>
           <artwork><![CDATA[
-S: <?xml version='1.0'?>
+R: <?xml version='1.0'?>
    <stream:stream
        from='im.example.com'
        id='g4qSvGvBxJ+xeAd7QKezOQJFFlw='
@@ -393,23 +395,12 @@ S: <?xml version='1.0'?>
         <t><list style='empty'><t>Note: Each entity MUST verify the identity of the other entity before exchanging XML stanzas with it (see <xref target='security-client'/> and <xref target='security-server'/>).</t></list></t>
       </section>
       <section title='id' anchor='streams-attr-id'>
-        <t>There SHOULD NOT be an 'id' attribute in the initial stream header; however, if an 'id' attribute is included, it SHOULD be silently ignored by the receiving entity.</t>
+        <t><iref item='Stream ID'/>The 'id' attribute communicates a unique identifier for the stream.  This identifier is called a STREAM ID.  The stream ID MUST be generated by the receiving entity, MUST BE unique within the receiving application (normally a server), and MUST be both unpredictable and nonrepeating because it can be security-critical (see <xref target="RANDOM"/> for recommendations regarding randomness for security purposes).</t>
+        <t>For initial stream headers, the initiating entity MUST NOT include the 'id' attribute; however, if the 'id' attribute is included, the receiving entity MUST silently ignore it.</t>
+        <t>For response stream headers, the receiving entity MUST include the 'id' attribute.</t>
         <figure>
           <artwork><![CDATA[
-C: <?xml version='1.0'?>
-   <stream:stream
-       from='juliet@im.example.com'
-       to='im.example.com'
-       version='1.0'
-       xml:lang='en'
-       xmlns='jabber:client'
-       xmlns:stream='http://etherx.jabber.org/streams'>
-          ]]></artwork>
-        </figure>
-        <t>The 'id' attribute MUST be included in the response XML stream header.  This attribute is a unique identifier created by the receiving entity to function as a identifier for the initiating entity's two streams with the receiving entity, and MUST be unique within the receiving application (normally a server).</t>
-        <figure>
-          <artwork><![CDATA[
-S: <?xml version='1.0'?>
+R: <?xml version='1.0'?>
    <stream:stream
        from='im.example.com'
        id='++TR84Sm6A3hnt3Q065SnAbbk3Y='
@@ -420,13 +411,13 @@ S: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>Note: The stream ID may be security-critical and therefore MUST be both unpredictable and nonrepeating (see <xref target="RANDOM"/> for recommendations regarding randomness for security purposes).</t></list></t>
       </section>
       <section title='xml:lang' anchor='streams-attr-xmllang'>
-        <t>An 'xml:lang' attribute (as defined in Section 2.12 of <xref target='XML'/>) SHOULD be included in the initial stream header to specify the default language of any human-readable XML character data it sends over that stream.</t>
+        <t>The 'xml:lang' attribute communicates an entity's preferred or default language for any human-readable XML character data to be sent over the stream.  The syntax of this attribute is defined in Section 2.12 of <xref target='XML'/>; in particular, the value of the 'xml:lang' attribute MUST conform to the NMTOKEN datatype (as defined in Section 2.3 of <xref target="XML"/>) and MUST conform to the language identifier format defined in <xref target="LANGTAGS"/>.</t>
+        <t>For initial stream headers, the initiating entity SHOULD include the 'xml:lang' attribute.</t>
         <figure>
           <artwork><![CDATA[
-C: <?xml version='1.0'?>
+I: <?xml version='1.0'?>
    <stream:stream
        from='juliet@im.example.com'
        to='im.example.com'
@@ -436,10 +427,10 @@ C: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>If the attribute is included, the receiving entity SHOULD remember that value as the default for both the initial stream and the response stream; if the attribute is not included, the receiving entity SHOULD use a configurable default value for both streams, which it MUST communicate in the response stream header.</t>
+        <t>For response stream headers, the receiving entity MUST include the 'xml:lang' attribute.  If initiating entity included an 'xml:lang' attribute in its initial stream header and the receiving entity supports that language, the value of the 'xml:lang' attribute MUST be identifier for the initiating entity's preferred language; if the receiving entity supports a language that closely matches the initiating entity's preferred language (e.g., "de" instead of "de-CH"), then the value of the 'xml:lang' attribute SHOULD be the identifier for the matching language; if the receiving entity does not support the initiating entity's preferred language or a closely matching language (or the initiating entity did not include the 'xml:lang' attribute in its initial stream header), then the value of the 'xml:lang' attribute MUST be the identifier for the default language of the receiving entity.</t>
         <figure>
           <artwork><![CDATA[
-S: <?xml version='1.0'?>
+R: <?xml version='1.0'?>
    <stream:stream
        from='im.example.com'
        id='++TR84Sm6A3hnt3Q065SnAbbk3Y='
@@ -450,10 +441,10 @@ S: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>For all stanzas sent over the initial stream, if the initiating entity does not include an 'xml:lang' attribute, the receiving entity SHOULD apply the default value; if the initiating entity does include an 'xml:lang' attribute, the receiving entity MUST NOT modify or delete it (see also <xref target="stanzas-attributes-lang"/>).  The value of the 'xml:lang' attribute MUST conform to the NMTOKEN datatype (as defined in Section 2.3 of <xref target="XML"/>) and MUST conform to the format defined in <xref target="LANGTAGS"/>.</t>
+        <t>If the initiating entity included the 'xml:lang' attribute in its initial stream header, the receiving entity SHOULD remember that value as the default xml:lang for all stanzas sent by the initiating entity.  As described under <xref target="stanzas-attributes-lang"/>, the initiating entity can include the 'xml:lang' attribute in any XML stanzas it sends over the stream.  If the initiating entity does not include the 'xml:lang' attribute in any such stanza, the receiving entity SHOULD add the 'xml:lang' attribute to the stanza, whose value MUST be the identifier for the language preferred by the initiating entity (even if the receiving entity does not support that language for human-readable XML character data it generates and sends to the initiating entity, such as in stream or stanza errors).  If the initiating entity includes the 'xml:lang' attribute in any such stanza, the receiving entity MUST NOT modify or delete it.</t>
       </section>
       <section title='version' anchor='streams-attr-version'>
-        <t>The presence of the version attribute set to a value of at least "1.0" signals support for the stream-related protocols (including stream features) defined in this specification.</t>
+        <t>The inclusion of the version attribute set to a value of at least "1.0" signals support for the stream-related protocols (including stream features) defined in this specification.</t>
         <t>The version of XMPP specified herein is "1.0"; in particular, XMPP 1.0 encapsulates the stream-related protocols (<xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="streams-error">stream errors</xref>), as well as the basic semantics of the three defined XML stanza types (&lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;).</t>
         <t>The numbering scheme for XMPP versions is "&lt;major&gt;.&lt;minor&gt;".  The major and minor numbers MUST be treated as separate integers and each number MAY be incremented higher than a single digit.  Thus, "XMPP 2.4" would be a lower version than "XMPP 2.13", which in turn would be lower than "XMPP 12.3".  Leading zeros (e.g., "XMPP 6.01") MUST be ignored by recipients and MUST NOT be sent.</t>
         <t>The major version number should be incremented only if the stream and stanza formats or required actions have changed so dramatically that an older version entity would not be able to interoperate with a newer version entity if it simply ignored the elements and attributes it did not understand and took the actions specified in the older specification.</t>
@@ -463,12 +454,12 @@ S: <?xml version='1.0'?>
           <list style='numbers'>
             <t>The initiating entity MUST set the value of the 'version' attribute in the initial stream header to the highest version number it supports (e.g., if the highest version number it supports is that defined in this specification, it MUST set the value to "1.0").</t>
             <t>The receiving entity MUST set the value of the 'version' attribute in the response stream header to either the value supplied by the initiating entity or the highest version number supported by the receiving entity, whichever is lower.  The receiving entity MUST perform a numeric comparison on the major and minor version numbers, not a string match on "&lt;major&gt;.&lt;minor&gt;".</t>
-            <t>If the version number included in the response stream header is at least one major version lower than the version number included in the initial stream header and newer version entities cannot interoperate with older version entities as described, the initiating entity SHOULD generate an &lt;unsupported-version/&gt; stream error and terminate the XML stream and underlying TCP connection.</t>
+            <t>If the version number included in the response stream header is at least one major version lower than the version number included in the initial stream header and newer version entities cannot interoperate with older version entities as described, the initiating entity SHOULD generate an &lt;unsupported-version/&gt; stream error.</t>
             <t>If either entity receives a stream header with no 'version' attribute, the entity MUST consider the version supported by the other entity to be "0.9" and SHOULD NOT include a 'version' attribute in the response stream header.</t>
           </list>
         </t>
       </section>
-      <section title='Summary' anchor='streams-attr-summary'>
+      <section title='Summary of Stream Attributes' anchor='streams-attr-summary'>
         <t>We can summarize the attributes of the root &lt;stream/&gt; element as follows.</t>
         <figure>
           <artwork><![CDATA[
@@ -495,7 +486,7 @@ S: <?xml version='1.0'?>
       <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the streams namespace prefix) to the initiating entity in order to announce any stream-level features that can be negotiated (or capabilities that otherwise need to be advertised).</t>
       <figure>
         <artwork><![CDATA[
-S: <?xml version='1.0'?>
+R: <?xml version='1.0'?>
    <stream:stream
        from='im.example.com'
        id='++TR84Sm6A3hnt3Q065SnAbbk3Y='
@@ -504,16 +495,35 @@ S: <?xml version='1.0'?>
        xml:lang='en'
        xmlns='jabber:client'
        xmlns:stream='http://etherx.jabber.org/streams'>
-S: <stream:features>
+R: <stream:features>
      <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
        <required/>
      </starttls>
    </stream:features>
         ]]></artwork>
       </figure>
-      <t>Stream features are used mainly to advertise <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="bind">resource binding</xref>; however, stream features also can be used to advertise features associated with various XMPP extensions.  If an entity does not understand or support a feature, it SHOULD silently ignore the associated feature.</t>
-      <t>If one or more security features (e.g., TLS and SASL) need to be successfully negotiated before a non-security-related feature (e.g., resource binding) can be offered, the non-security-related feature SHOULD NOT be included in the stream features that are advertised before the relevant security features have been negotiated.</t>
-      <t>If a feature must be negotiated before the initiating entity may proceed, that feature SHOULD include a &lt;required/&gt; child element and the receiving entity SHOULD NOT advertize any other stream features until the required feature has been negotiated.</t>
+      <t>Stream features are used mainly to advertise <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="bind">resource binding</xref>; however, stream features also can be used to advertise features associated with various XMPP extensions.  If an entity does not understand or support a feature that has been advertised, it MUST silently ignore the associated feature.</t>
+      <t>If it is necessary for a feature to be successfully negotiated before the initiating entity may proceed with the sending of XML stanzas or with further steps of the stream negotiation, the advertisement of that feature MUST include an empty &lt;required/&gt; child element.</t>
+      <figure>
+        <artwork><![CDATA[
+R: <stream:features>
+     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
+       <required/>
+     </bind>
+   </stream:features>
+        ]]></artwork>
+      </figure>
+      <t>If successful negotiation of a feature is discretionary, the advertisement of that feature MUST include an empty &lt;optional/&gt; child element.</t>
+      <figure>
+        <artwork><![CDATA[
+R: <stream:features>
+     <session xmlns='urn:ietf:params:xml:ns:xmpp-session'>
+       <optional/>
+     </session>
+   </stream:features>
+        ]]></artwork>
+      </figure>
+      <t>If it is necessary for a feature to be successfully negotiated before the initiating entity may proceed with the sending a non-security-related feature or with further steps of the stream negotiation, the receiving entity SHOULD NOT advertise any other stream features until the required feature has been successfully negotiated; however, if the required feature is security-critical (e.g., STARTTLS or SASL) then the receiving entity MUST NOT advertise any other stream features until the security-critical feature has been successfully negotiated.</t>
       <t>The order of child elements contained in any given &lt;stream:features/&gt; element is not significant.</t>
       <t>After completing negotiation of any stream feature (even stream features that do not require a stream restart), the receiving entity MUST send an updated list of stream features to the initiating entity.  However, if there are no features to be advertised (e.g., in the stream reset initiated after successful SASL negotiation for a server-to-server connection, or after resource binding for a client-to-server stream) then the receiving entity MUST send an empty &lt;stream:features/&gt; element.</t>
       <figure>
@@ -530,10 +540,18 @@ S: <?xml version='1.0'?>
 S: <stream:features/>
         ]]></artwork>
       </figure>
+      <t>At any time after stream establishment, the receiving entity MAY send additional or modified stream feature advertisements (e.g., because a new feature has been enabled).</t>
     </section>
 
-    <section title="Closing Streams" anchor="streams-close">
-      <t>An XML stream between two entities can be closed because a stream error has occurred or in some cases in the absence of an error.  Where possible, it is preferable to trigger a stream close only because a stream error has occurred.</t>
+    <section title="Closing a Stream" anchor="streams-close">
+      <t>An XML stream between two entities can be closed because a stream error has occurred or in some cases in the absence of an error.  Where feasible, it is preferable to close a stream only if a stream error has occurred.</t>
+      <t>A stream is closed by sending a closing &lt;/stream&gt; tag over the TCP connection.</t>
+      <figure>
+        <artwork><![CDATA[
+S: </stream:stream>
+        ]]></artwork>
+      </figure>
+      <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
       <section title="With Stream Error" anchor="streams-close-witherror">
         <t>If a stream error has occurred, the entity that detects the error MUST close the stream as described under <xref target='streams-error-rules'/>.</t>
       </section>
@@ -551,12 +569,11 @@ S: </stream:stream>
           ]]></artwork>
         </figure>
         <t>However, the entity that sends the first closing stream tag MAY consider both streams to be void if the other party does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is left up to the implementation or deployment).</t>
-        <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
         <t>After the entity that sent the first closing stream tag receives a reciprocal closing stream tag from the other party (or if it considers the stream to be void after a reasonable amount of time), it MUST terminate the underlying TCP connection or connections.</t>
       </section>
       <section title="Handling of Idle Streams" anchor="streams-close-idle">
         <t>An XML stream can become idle, i.e., neither entity has sent XMPP traffic over the stream for some period of time (usually at least several minutes).  A server MAY close an idle stream with a local client or remote server, preferably through use of the &lt;connection-timeout/&gt; stream error.  The idle timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communications over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='XMPP-IM'/>; therefore it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established every 24 to 48 hours if they are timed out.</t> 
-        <t>An XML stream can appear idle at the XMPP level because the undelying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a white space character over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  The time between such "whitespace pings" is a matter of implementation and local service policy; however, it is RECOMMENDED that these pings be sent not more than once every 60 seconds.</t>
+        <t>An XML stream can appear idle at the XMPP level because the undelying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a space character (U+0020) over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  <iref item='Whitespace Ping'/>The sending of such a space character is called a WHITESPACE PING.  The time between such whitespace pings is a matter of implementation and local service policy; however, it is RECOMMENDED that these pings be sent not more than once every 60 seconds.</t>
       </section>
     </section>
 
@@ -565,7 +582,7 @@ S: </stream:stream>
       <section title="Rules" anchor="streams-error-rules">
         <t>The following rules apply to stream-level errors.</t>
         <section title="Stream Errors Are Unrecoverable" anchor="streams-error-rules-unrecoverable">
-          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send a stream error to the other entity, send a closing &lt;/stream&gt; tag, and immediately terminate the underlying TCP connection.</t>
+          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send a &lt;stream:error/&gt; element with an appropriate child element that specifies the error condition and at the same time send a closing &lt;/stream&gt; tag.</t>
           <figure>
             <artwork><![CDATA[
 C: <message><body></message>
@@ -577,9 +594,15 @@ S: <stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
+          <t>The entity that generates the stream error then SHOULD immediately terminate the underlying TCP connection, although it MAY wait until after it receives a closing &lt;/stream&gt; tag from the entity to which it sent the stream error.</t>
+          <figure>
+            <artwork><![CDATA[
+C: </stream:stream>
+            ]]></artwork>
+          </figure>
         </section>
         <section title="Stream Errors Can Occur During Setup" anchor="streams-error-rules-setup">
-          <t>If the error occurs while the stream is being set up, the receiving entity MUST still send the opening &lt;stream&gt; tag, include the &lt;error/&gt; element as a child of the stream element, send the closing &lt;/stream&gt; tag, and immediately terminate the underlying TCP connection.</t>
+          <t>If the error occurs while the stream is being set up, the receiving entity MUST still send the opening &lt;stream&gt; tag, include the &lt;error/&gt; element as a child of the stream element, and send the closing &lt;/stream&gt; tag (preferably all at the same time).</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -609,16 +632,17 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="Stream Errors When the Host is Unspecified" anchor="streams-error-rules-host">
-          <t>If the initiating entity provides no 'to' attribute or provides an unknown host in the 'to' attribute and the error occurs during stream setup, the receiving entity SHOULD provide its authoritative hostname in the 'from' attribute of the stream header sent before termination.</t>
+          <t>If the initiating entity provides no 'to' attribute or provides an unknown host in the 'to' attribute and the error occurs during stream setup, the receiving entity MUST provide its authoritative hostname in the 'from' attribute of the stream header sent before termination.</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
    <stream:stream
        from='juliet@im.example.com'
+       to='unknown.host.example.com'
        version='1.0'
        xml:lang='en'
        xmlns='jabber:client'
-       xmlns:stream='http://wrong.namespace.example.org/'>
+       xmlns:stream='http://etherx.jabber.org/streams'>
 
 S: <?xml version='1.0'?>
    <stream:stream
@@ -630,7 +654,7 @@ S: <?xml version='1.0'?>
        xmlns='jabber:client'
        xmlns:stream='http://etherx.jabber.org/streams'>
    <stream:error>
-     <invalid-namespace 
+     <host-unknown
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
    </stream:stream>
@@ -658,7 +682,7 @@ S: <?xml version='1.0'?>
           <t>MAY contain a &lt;text/&gt; child element containing XML character data that describes the error in more detail; this element MUST be qualified by the 'urn:ietf:params:xml:ns:xmpp-streams' namespace and SHOULD possess an 'xml:lang' attribute specifying the natural language of the XML character data.</t>
           <t>MAY contain a child element for an application-specific error condition; this element MUST be qualified by an application-defined namespace, and its structure is defined by that namespace (see <xref target='streams-error-app'/>).</t>
         </list></t>
-        <t>The &lt;text/&gt; element is OPTIONAL.  If included, it SHOULD be used only to provide descriptive or diagnostic information that supplements the meaning of a defined condition or application-specific condition.  It SHOULD NOT be interpreted programmatically by an application.  It SHOULD NOT be used as the error message presented to a human user, but MAY be shown in addition to the error message associated with the included condition element or elements.</t>
+        <t>The &lt;text/&gt; element is OPTIONAL.  If included, it MUST be used only to provide descriptive or diagnostic information that supplements the meaning of a defined condition or application-specific condition.  It MUST NOT be interpreted programmatically by an application.  It MUST NOT be used as the error message presented to a human user, but MAY be shown in addition to the error message associated with the included condition element or elements.</t>
       </section>
       <section title="Defined Stream Error Conditions" anchor="streams-error-conditions">
         <t>The following stream-level error conditions are defined.</t>
@@ -678,7 +702,7 @@ S: <stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
-          <t>This error MAY be used instead of the more specific XML-related errors, such as &lt;bad-namespace-prefix/&gt;, &lt;invalid-xml/&gt;, &lt;restricted-xml/&gt;, &lt;unsupported-encoding/&gt;, and &lt;xml-not-well-formed/&gt;.  However, the more specific errors are preferred.</t>
+          <t>This error MAY be used instead of the more specific XML-related errors, such as &lt;bad-namespace-prefix/&gt;, &lt;invalid-xml/&gt;, &lt;restricted-xml/&gt;, &lt;unsupported-encoding/&gt;, and &lt;xml-not-well-formed/&gt;.  However, the more specific errors are RECOMMENDED.</t>
         </section>
         <section title="bad-namespace-prefix" anchor="streams-error-conditions-bad-namespace-prefix">
           <t>The entity has sent a namespace prefix that is unsupported, or has sent no namespace prefix on an element that requires such a prefix (see <xref target="xml-ns"/>).</t>
@@ -782,7 +806,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="host-unknown" anchor="streams-error-conditions-host-unknown">
-          <t>The value of the 'to' attribute provided in the initial stream header does not correspond to a hostname that is hosted by the receiving entity.</t>
+          <t>The value of the 'to' attribute provided in the initial stream header does not correspond to a hostname that is hosted by the receiving entity, or is not a valid hostname.</t>
           <t>(In the following example, the peer specifies a 'to' address of "example.org" when connecting to the "im.example.com" server, but the server knows nothing of that address.)</t>
           <figure>
             <artwork><![CDATA[
@@ -841,7 +865,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="invalid-from" anchor="streams-error-conditions-invalid-from">
-          <t>The JID or hostname provided in a 'from' address does not match an authorized JID or validated domain negotiated between servers via SASL, or between a client and a server via authentication and resource binding.</t>
+          <t>The JID or hostname provided in a 'from' address is not a valid JID or does not match an authorized JID or validated domain negotiated between servers via SASL, or between a client and a server via authentication and resource binding.</t>
           <t>(In the following example, a peer that has authenticated only as "example.net" attempts to send a stanza from an address at "example.org".)</t> 
           <figure>
             <artwork><![CDATA[
@@ -877,7 +901,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="invalid-namespace" anchor="streams-error-conditions-invalid-namespace">
-          <t>The streams namespace name is something other than "http://etherx.jabber.org/streams" (see <xref target="xml-ns"/>).</t>
+          <t>The streams namespace name is something other than "http://etherx.jabber.org/streams" (see <xref target="xml-ns"/>) or the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server").</t>
           <t>(In the following example, the client specifies a streams namespace of 'http://wrong.namespace.example.org/' instead of the correct namespace of "http://etherx.jabber.org/streams".)</t>
           <figure>
             <artwork><![CDATA[
@@ -1247,7 +1271,7 @@ S: <stream:error>
      <text xml:lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-streams'>
        Some special application diagnostic information!
      </text>
-     <escape-your-data xmlns='application-ns'/>
+     <escape-your-data xmlns='http://example.com/ns'/>
    </stream:error>
    </stream:stream>
           ]]></artwork>
@@ -2064,7 +2088,7 @@ S: <iq id='bind_2' type='error'>
             </list>
           </t>
           <t>Which of these the server does is up to the implementation, although it is RECOMMENDED to implement case #1.</t>
-          <t>In case #2, the server MUST send a &lt;conflict/&gt; stream error to the current resource, terminate the XML stream and underlying TCP connection for the current resource, and return an IQ stanza of type "result" (indicating success) to the newly-requested resource.</t>
+          <t>In case #2, the server MUST send a &lt;conflict/&gt; stream error to the current resource and return an IQ stanza of type "result" (indicating success) to the newly-requested resource.</t>
           <t>In case #3, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resource identifier before sending another request for resource binding.</t>
         </section>
       </section>
@@ -2194,7 +2218,7 @@ S: <message from='romeo@example.net'
           <t>The following rules apply to inclusion of the 'to' attribute in the context of XML streams qualified by the 'jabber:server' namespace (i.e., server-to-server streams).</t>
           <t>
             <list style='numbers'>
-              <t>A stanza MUST possess a 'to' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error and terminate both the XML stream and the underlying TCP connection with the offending server.</t>
+              <t>A stanza MUST possess a 'to' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error.</t>
             </list>
           </t>
         </section>
@@ -2225,8 +2249,8 @@ S: <message from='romeo@example.net'
           <t>The following rules apply to the 'from' attribute in the context of XML streams qualified by the 'jabber:server' namespace (i.e., server-to-server streams).</t>
           <t>
             <list style='numbers'>
-              <t>A stanza MUST possess a 'from' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error and terminate the underlying TCP connection.</t>
-              <t>The domain identifier portion of the JID contained in the 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof) as communicated in the SASL negotiation (see <xref target='sasl'/>), server dialback (see <xref target='XEP-0220'/>, or similar means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error and terminate the underlying TCP connection.</t>
+              <t>A stanza MUST possess a 'from' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error.</t>
+              <t>The domain identifier portion of the JID contained in the 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof) as communicated in the SASL negotiation (see <xref target='sasl'/>), server dialback (see <xref target='XEP-0220'/>, or similar means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error.</t>
             </list>
           </t>
           <t>Enforcement of these rules helps to prevent a denial of service attack launched from a rogue server.</t>
@@ -5451,14 +5475,14 @@ specifications of each URI scheme.
         <t>In addition, the following additional Unicode characters are also prohibited:</t>
         <t>
           <list style='hanging'>
-            <t>#x0022 (QUOTATION MARK)</t>
-            <t>#x0026 (AMPERSAND)</t>
-            <t>#x0027 (APOSTROPHE)</t>
-            <t>#x002F (SOLIDUS)</t>
-            <t>#x003A (COLON)</t>
-            <t>#x003C (LESS-THAN SIGN)</t>
-            <t>#x003E (GREATER-THAN SIGN)</t>
-            <t>#x0040 (COMMERCIAL AT)</t>
+            <t>U+0022 (QUOTATION MARK)</t>
+            <t>U+0026 (AMPERSAND)</t>
+            <t>U+0027 (APOSTROPHE)</t>
+            <t>U+002F (SOLIDUS)</t>
+            <t>U+003A (COLON)</t>
+            <t>U+003C (LESS-THAN SIGN)</t>
+            <t>U+003E (GREATER-THAN SIGN)</t>
+            <t>U+0040 (COMMERCIAL AT)</t>
           </list>
         </t>
       </section>
@@ -5469,26 +5493,26 @@ specifications of each URI scheme.
         <t>Because the additional characters prohibited by Nodeprep are prohibited after normalization, an implementation MUST NOT enable a human user to input any Unicode code point whose decomposition includes those characters; such code points include but are not necessarily limited to the following (refer to <xref target='UNICODE'/> for complete information).</t>
         <t>
           <list style='symbols'>
-            <t>#x2100 (ACCOUNT OF)</t>
-            <t>#x2101 (ADDRESSED TO THE SUBJECT)</t>
-            <t>#x2105 (CARE OF)</t>
-            <t>#x2106 (CADA UNA)</t>
-            <t>#x226E (NOT LESS-THAN)</t>
-            <t>#x226F (NOT GREATER-THAN)</t>
-            <t>#x2A74 (DOUBLE COLON EQUAL)</t>
-            <t>#xFE13 (SMALL COLON)</t>
-            <t>#xFE60 (SMALL AMPERSAND)</t>
-            <t>#xFE64 (SMALL LESS-THAN SIGN)</t>
-            <t>#xFE65 (SMALL GREATER-THAN SIGN)</t>
-            <t>#xFE6B (SMALL COMMERCIAL AT)</t>
-            <t>#xFF02 (FULLWIDTH QUOTATION MARK)</t>
-            <t>#xFF06 (FULLWIDTH AMPERSAND)</t>
-            <t>#xFF07 (FULLWIDTH APOSTROPHE)</t>
-            <t>#xFF0F (FULLWIDTH SOLIDUS)</t>
-            <t>#xFF1A (FULLWIDTH COLON)</t>
-            <t>#xFF1C (FULLWIDTH LESS-THAN SIGN)</t>
-            <t>#xFF1E (FULLWIDTH GREATER-THAN SIGN)</t>
-            <t>#xFF20 (FULLWIDTH COMMERCIAL AT)</t>
+            <t>U+2100 (ACCOUNT OF)</t>
+            <t>U+2101 (ADDRESSED TO THE SUBJECT)</t>
+            <t>U+2105 (CARE OF)</t>
+            <t>U+2106 (CADA UNA)</t>
+            <t>U+226E (NOT LESS-THAN)</t>
+            <t>U+226F (NOT GREATER-THAN)</t>
+            <t>U+2A74 (DOUBLE COLON EQUAL)</t>
+            <t>U+FE13 (SMALL COLON)</t>
+            <t>U+FE60 (SMALL AMPERSAND)</t>
+            <t>U+FE64 (SMALL LESS-THAN SIGN)</t>
+            <t>U+FE65 (SMALL GREATER-THAN SIGN)</t>
+            <t>U+FE6B (SMALL COMMERCIAL AT)</t>
+            <t>U+FF02 (FULLWIDTH QUOTATION MARK)</t>
+            <t>U+FF06 (FULLWIDTH AMPERSAND)</t>
+            <t>U+FF07 (FULLWIDTH APOSTROPHE)</t>
+            <t>U+FF0F (FULLWIDTH SOLIDUS)</t>
+            <t>U+FF1A (FULLWIDTH COLON)</t>
+            <t>U+FF1C (FULLWIDTH LESS-THAN SIGN)</t>
+            <t>U+FF1E (FULLWIDTH GREATER-THAN SIGN)</t>
+            <t>U+FF20 (FULLWIDTH COMMERCIAL AT)</t>
           </list>
         </t>
       </section>
