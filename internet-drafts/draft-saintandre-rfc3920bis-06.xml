@@ -2021,15 +2021,21 @@ C: <iq id='bind_1' type='set'>
 S: <iq id='bind_1' type='result'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
       <jid>
-   juliet@im.example.com/4db06f06-1ea4-11dc-aca3-000bcd821bfb
+        juliet@im.example.com/4db06f06-1ea4-11dc-aca3-000bcd821bfb
       </jid>
     </bind>
    </iq>
           ]]></artwork>
         </figure>
       </section>
-      <section title="Error Case" anchor="bind-servergen-error">
-        <t>It is possible that the client is not allowed to bind a resource to the stream (e.g., because the node or user has reached a limit on the number of connected resources allowed).  In this case, the server MUST return a &lt;not-allowed/&gt; stanza error to the client.</t>
+      <section title="Error Cases" anchor="bind-servergen-error">
+        <t>When a client asks the server to generate a resource identifer during resource binding, the following stanza error conditions are possible:</t>
+        <t>
+          <list style="symbols">
+            <t>The account has reached a limit on the number of simultaneous connected resources allowed.</t>
+            <t>The client is otherwise not allowed to bind a resource to the stream.</t>
+          </list>
+        </t>
         <figure>
           <artwork><![CDATA[
 S: <iq id='bind_1' type='error'>
@@ -2039,11 +2045,35 @@ S: <iq id='bind_1' type='error'>
    </iq>
           ]]></artwork>
         </figure>
+        <section title="Resource Constraint" anchor="bind-servergen-error-resourceconstraint">
+          <t>If the account has reached a limit on the number of simultaneous connnected resources allowed, the server MUST return a &lt;resource-constraint/&gt; error.</t>
+          <figure>
+            <artwork><![CDATA[
+S: <iq id='bind_2' type='error'>
+     <error type='cancel'>
+       <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="Not Allowed" anchor="bind-servergen-error-notallowed">
+          <t>If the client is otherwise not allowed to bind a resource to the stream, the server MUST return a &lt;not-allowed/&gt; error.</t>
+          <figure>
+            <artwork><![CDATA[
+S: <iq id='bind_2' type='error'>
+     <error type='cancel'>
+       <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+     </error>
+   </iq>
+            ]]></artwork>
+          </figure>
+        </section>
       </section>
     </section>
-    <section title="Client-Generated Resource Identifier" anchor="bind-clientgen">
-      <t>A client MAY attempt to specify the resource identifier on its own rather than asking the server to generate a resource identifier on its behalf.</t>
-      <section title="Success Case" anchor="bind-clientgen-success">
+    <section title="Client-Submitted Resource Identifier" anchor="bind-clientsubmit">
+      <t>Instead of asking the server to generate a resource identifier on its behalf, a client MAY attempt to submit a resource identifier that it has generated or that the controlling user has provided.</t>
+      <section title="Success Case" anchor="bind-clientsubmit-success">
         <t>A client asks its server to accept a client-generated resource identifier by sending an IQ stanza of type "set" containing a &lt;bind/&gt; element with a child &lt;resource/&gt; element containing non-zero-length XML character data.</t>
         <figure>
           <artwork><![CDATA[
@@ -2077,28 +2107,15 @@ S: <iq id='bind_2' type='result'>
           ]]></artwork>
         </figure>
       </section>
-      <section title="Error Cases" anchor="bind-clientgen-error">
-        <t>When a client attempts to set its own XMPP resource identifier during resource binding, the following stanza error conditions are possible:</t>
+      <section title="Error Cases" anchor="bind-clientsubmit-error">
+        <t>When a client attempts to submit its own XMPP resource identifier during resource binding, the following stanza error conditions are possible in addition to those described under <xref target='bind-servergen-error'/>:</t>
         <t>
           <list style="symbols">
-            <t>The client is not allowed to bind a resource to the stream (e.g., because the node or user has reached a limit on the number of connected resources allowed).</t>
             <t>The provided resource identifier cannot be processed by the server, e.g. because it is not in accordance with the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/>).</t>
             <t>The provided resource identifier is already in use.</t>
           </list>
         </t>
-        <section title="Not Allowed" anchor="bind-clientgen-error-notallowed">
-          <t>If the client is not allowed to bind a resource to the stream, the server MUST return a &lt;not-allowed/&gt; error.</t>
-          <figure>
-            <artwork><![CDATA[
-S: <iq id='bind_2' type='error'>
-     <error type='cancel'>
-       <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-     </error>
-   </iq>
-            ]]></artwork>
-          </figure>
-        </section>
-        <section title="Bad Request" anchor="bind-clientgen-error-badrequest">
+        <section title="Bad Request" anchor="bind-clientsubmit-error-badrequest">
           <t>If the provided resource identifier cannot be processed by the server, the server MAY return a &lt;bad-request/&gt; error (but SHOULD instead apply the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/> or otherwise process the resource identifier so that it is in conformance).</t>
           <figure>
             <artwork><![CDATA[
@@ -2110,7 +2127,7 @@ S: <iq id='bind_2' type='error'>
             ]]></artwork>
           </figure>
         </section>
-        <section title="Conflict" anchor="bind-clientgen-error-conflict">
+        <section title="Conflict" anchor="bind-clientsubmit-error-conflict">
           <t>If there is already a connected resource of the same name, the server MUST do one of the following:</t>
           <t>
             <list style='numbers'>
@@ -2123,6 +2140,10 @@ S: <iq id='bind_2' type='error'>
           <t>In case #2, the server MUST send a &lt;conflict/&gt; stream error to the current resource and return an IQ stanza of type "result" (indicating success) to the newly-requested resource.</t>
           <t>In case #3, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resource identifier before sending another request for resource binding.</t>
         </section>
+      </section>
+      <section title="Retries" anchor="bind-clientsubmit-retries">
+        <t>If an error occurs when a client submits a resource identifier, the server SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the client to tolerate incorrectly-provided resource identifiers (e.g., bad data formats or duplicate text strings) without being forced to reconnect.</t>
+        <t>After the client has reached the retry limit, the server MUST return a &lt;policy-violation/&gt; stream error to the client.</t>
       </section>
     </section>
     <section title="Binding Multiple Resources" anchor="bind-multi">
@@ -3193,22 +3214,24 @@ S: <stream:features>
    </stream:features>
           ]]></artwork>
         </figure>
-        <t>Upon being so informed that resource binding is required, the client MUST bind a resource to the stream; here we assume that the client asks the server to generate a resource identifier on its behalf.</t>
+        <t>Upon being so informed that resource binding is required, the client MUST bind a resource to the stream; here we assume that the client submits a human-readable text string.</t>
         <figure>
           <preamble>Step 13: Client binds a resource:</preamble>
           <artwork><![CDATA[
 C: <iq id='bind_1' type='set'>
-     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>
+     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
+       balcony
+     </bind>
    </iq>
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Step 14: Server generates resource identifier and informs client of successful resource binding:</preamble>
+          <preamble>Step 14: Server accepts submitted resource identifier and informs client of successful resource binding:</preamble>
           <artwork><![CDATA[
 S: <iq id='bind_1' type='result'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <jid>
-   juliet@im.example.com/4db06f06-1ea4-11dc-aca3-000bcd821bfb
+         juliet@im.example.com/balcony
        </jid>
      </bind>
    </iq>
@@ -3220,7 +3243,7 @@ S: <iq id='bind_1' type='result'>
         <figure>
           <artwork><![CDATA[
 C: <message 
-     from='juliet@im.example.com/4db06f06-1ea4-11dc-aca3-000bcd821bfb'
+     from='juliet@im.example.com/balcony'
      to='romeo@example.net'
      xml:lang='en'>
      <body>Art thou not Romeo, and a Montague?</body>
@@ -3232,8 +3255,8 @@ C: <message
         <figure>
           <artwork><![CDATA[
 E: <message 
-     from='romeo@example.net/63a6be961ea411dca38b000bcd821cgc'
-     to='juliet@im.example.com/4db06f06-1ea4-11dc-aca3-000bcd821bfb'
+     from='romeo@example.net/orchard'
+     to='juliet@im.example.com/balcony'
      xml:lang='en'>
      <body>Neither, fair saint, if either thee dislike.</body>
    </message>
