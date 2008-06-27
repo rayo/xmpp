@@ -1131,7 +1131,7 @@ S: <stream:error>
 S: <stream:error>
      <undefined-condition 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
-     <app-error xmlns='some-application-ns'/>
+     <app-error xmlns='http://example.com/ns'/>
    </stream:error>
    </stream:stream>
             ]]></artwork>
@@ -1669,7 +1669,7 @@ R: <stream:features>
         <figure>
           <artwork><![CDATA[
 I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
-         mechanism='PLAIN'>r0m30r0cks</auth>
+         mechanism='PLAIN'>UjBtMzBSMGNrcw==</auth>
           ]]></artwork>
         </figure>
       </section>
@@ -2051,7 +2051,8 @@ S: <iq id='bind_1' type='error'>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
      <error type='cancel'>
-       <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <resource-constraint 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
    </iq>
             ]]></artwork>
@@ -2272,6 +2273,7 @@ S: <message from='romeo@example.net'
           <t>
             <list style='numbers'>
               <t>A stanza MUST possess a 'to' attribute; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error.</t>
+              <t>The domain identifier portion of the JID in the 'to' atttribute MUST match a hostname serviced by the receiving server; if a server receives a stanza that does not meet this restriction, it MUST generate a &lt;host-unknown/&gt; or &lt;host-gone/&gt; stream error.</t>
             </list>
           </t>
         </section>
@@ -2407,7 +2409,7 @@ Requesting                  Responding
           </t>
           <t>An entity that receives an IQ request of type "get" or "set" MUST reply with an IQ response of type "result" or "error".  The response MUST preserve the 'id' attribute of the request.</t>
           <t>An entity that receives a stanza of type "result" or "error" MUST NOT respond to the stanza by sending a further IQ response of type "result" or "error"; however, the requesting entity MAY send another request (e.g., an IQ of type "set" in order to provide required information discovered through a get/result pair).</t>
-          <t>An IQ stanza of type "get" or "set" MUST contain one and only one child element, which specifies the semantics of the particular request.</t>
+          <t>An IQ stanza of type "get" or "set" MUST contain exactly one child element, which specifies the semantics of the particular request.</t>
           <t>An IQ stanza of type "result" MUST include zero or one child elements.</t>
           <t>An IQ stanza of type "error" MAY include the child element contained in the associated "get" or "set" and MUST include an &lt;error/&gt; child; for details, see <xref target="stanzas-error"/>.</t>
         </list></t>
@@ -2552,7 +2554,7 @@ E: <presence
           </figure>
         </section>
         <section title="gone" anchor="stanzas-error-conditions-gone">
-          <t>The recipient or server can no longer be contacted at this address, typically on a permanent basis; the associated error type SHOULD be "cancel" or "modify" and the error stanza SHOULD include a new address as the XML character data of the &lt;gone/&gt; element (which SHOULD be a URI or IRI at which the entity can be contacted, typically an XMPP IRI as specified in <xref target='XMPP-URI'/>).</t>
+          <t>The recipient or server can no longer be contacted at this address, typically on a permanent basis, and no updated address is available for forwarding or redirection; the associated error type SHOULD be "cancel" or "modify" and the error stanza SHOULD include a new address as the XML character data of the &lt;gone/&gt; element (which SHOULD be a URI or IRI at which the entity can be contacted, typically an XMPP IRI as specified in <xref target='XMPP-URI'/>).</t>
           <figure>
             <artwork><![CDATA[
 C: <presence
@@ -2775,7 +2777,7 @@ E: <presence
           <t><list style='empty'><t>Note: An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it SHOULD return a &lt;service-unavailable/&gt; error.</t></list></t>
         </section>
         <section title="redirect" anchor="stanzas-error-conditions-redirect">
-          <t>The recipient or server is redirecting requests for this information to another entity, typically in a temporary fashion; the associated error type SHOULD be "modify" and the error stanza SHOULD contain the alternate address in the XML character data of the &lt;redirect/&gt; element (which SHOULD be a URI or IRI at which the entity can be contacted, typically an XMPP IRI as specified in <xref target='XMPP-URI'/>).</t>
+          <t>The recipient or server is redirecting requests for this information to another entity, typically in a temporary fashion (the &lt;gone/&gt; condition is used for permanent addressing failures); the associated error type SHOULD be "modify" and the error stanza SHOULD contain the alternate address in the XML character data of the &lt;redirect/&gt; element (which SHOULD be a URI or IRI at which the entity can be contacted, typically an XMPP IRI as specified in <xref target='XMPP-URI'/>).</t>
           <figure>
             <artwork><![CDATA[
 C: <presence
@@ -3022,7 +3024,7 @@ S: <message from='romeo@example.net'
 <iq id='some-id' type='error'>
   <error type='modify'>
     <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-    <too-many-parameters xmlns='application-ns'/>
+    <too-many-parameters xmlns='http://example.com/ns'/>
   </error>
 </iq>
           ]]></artwork>
@@ -3037,11 +3039,12 @@ S: <message from='romeo@example.net'
           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
       [ ... application-specific information ... ]
     </text>
-    <special-application-condition xmlns='application-ns'/>
+    <too-many-parameters xmlns='http://example.com/ns'/>
   </error>
 </message>
           ]]></artwork>
         </figure>
+        <t>An entity that receives an application-specific error condition it does not understand MUST ignore the condition.</t>
       </section>
     </section>
 
@@ -3163,7 +3166,7 @@ S: <stream:features>
           <preamble>Step 9: Client selects an authentication mechanism, in this case <xref target='PLAIN'/>:</preamble>
           <artwork><![CDATA[
 C: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
-         mechanism='PLAIN'>R0m30R0cks</auth>
+         mechanism='PLAIN'>UjBtMzBSMGNrcw==</auth>
           ]]></artwork>
         </figure>
         <figure>
@@ -3501,8 +3504,8 @@ S2: </stream:stream>
         <t>
           <list style="numbers">
             <t>If the JID contains an XMPP resource identifier (i.e., is of the form &lt;node@domain/resource&gt;) and there exists a connected resource that exactly matches the full JID, the recipient's server SHOULD deliver the stanza to that connection.</t>
-            <t>If the JID contains an XMPP resource identifier and there exists no connected resource that exactly matches the full JID, the recipient's server SHOULD return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-            <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, (1) if the stanza is a message or presence stanza then the recipient's server SHOULD deliver the stanza to at least one of the connected resources and (2) if the stanza is an IQ stanza then the recipient's server MUST handle it directly on behalf of the node (and if the sender has generated an IQ stanza for which the bare JID matches that of the connected user itself then the recipient's server MUST treat the IQ stanza as if it included no 'to' address).</t>
+            <t>If the JID contains an XMPP resource identifier and there exists no connected resource that exactly matches the full JID, then (1) if the stanza is a message stanza the recipient's server SHOULD deliver the stanza to at least one of the connected resources, (2) if the stanza is a presence stanza the recipient's server SHOULD silently discard it, and (3) if the stanza is an IQ stanza the recipient's server return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
+            <t>If the JID is of the form &lt;node@domain&gt; and there exists at least one connected resource for the node, then (1) if the stanza is a message or presence stanza the recipient's server SHOULD deliver the stanza to at least one of the connected resources and (2) if the stanza is an IQ stanza the recipient's server MUST handle it directly on behalf of the node (and if the sender has generated an IQ stanza for which the bare JID matches that of the connected user itself the recipient's server MUST treat the IQ stanza as if it included no 'to' address).</t>
           </list>
         </t>
         <t><list style='empty'><t>Note: More detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t></list></t>
@@ -3525,7 +3528,7 @@ S2: </stream:stream>
       </section>
       <section title="Error Handling" anchor="rules-foreign-error">
         <t>If routing to the intended recipient's server is unsuccessful, the sender's server MUST return an error to the sender, which SHOULD be &lt;remote-server-not-found/&gt; if resolution of the foreign domain is unsuccessful and &lt;remote-server-timeout/&gt; if resolution succeeds but streams cannot be negotiated.</t>
-        <t>If stream negotiation with the intended recipient's server is successful but the foreign server cannot deliver the stanza to the recipient, the foreign server shall return an error to the sender by way of the sender's server.</t>
+        <t>If stream negotiation with the intended recipient's server is successful but the foreign server cannot deliver the stanza to the recipient, the foreign server shall return an appropriate error to the sender by way of the sender's server.</t>
       </section>
     </section>
   </section>
@@ -3560,7 +3563,7 @@ S2: </stream:stream>
       </section>
       <section title="Default Namespace" anchor="xml-ns-default">
         <t>A default namespace declaration is REQUIRED and defines the allowable first-level children of the root stream element.  This namespace declaration MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The default namespace declaration applies to the stream and all first-level child element sent within a stream unless explicitly qualified by the streams namespace or another namespace).</t>
-        <t>A server implementation MUST support the following two default namespaces (for historical reasons, an implementation MAY support only these two default namespaces):</t>
+        <t>A server implementation MUST support the following two default namespaces (for historical reasons, an implementation MAY refuse to support any other default namespaces):</t>
         <t><list style="symbols">
           <t>jabber:client -- this default namespace is declared when the stream is used for communication between a client and a server</t>
           <t>jabber:server -- this default namespace is declared when the stream is used for communication between two servers</t>
@@ -3775,7 +3778,7 @@ XmppAddr ::= UTF8String
         </section>
       </section>
       <section title="Certificate Validation" anchor="security-certificates-validation">
-        <t>When an XMPP entity is presented with a server certificate or client certificate by a peer for the purpose of encryption or authentication of XML streams as described under <xref target='tls'/> and <xref target='sasl'/>, the entity MUST validate the certificate in order to determine if the certificate shall be considered a TRUSTED CERTIFICATE, i.e., a certificate that is acceptable for encryption and/or authentication in accordance with the XMPP entity's local service policies or configured settings.</t>
+        <t>When an XMPP entity is presented with a server certificate or client certificate by a peer for the purpose of encryption or authentication of XML streams as described under <xref target='tls'/> and <xref target='sasl'/>, the entity MUST validate the certificate to determine if the certificate shall be considered a TRUSTED CERTIFICATE, i.e., a certificate that is acceptable for encryption and/or authentication in accordance with the XMPP entity's local service policies or configured settings.</t>
         <t>For both server certificates and client certificates, the validating entity MUST verify the integrity of the certificate, MUST verify that the certificate has been properly signed by the issuing Certificate Authority, and SHOULD support certificate revocation messages.  An implementation MUST enable a human user to view information about the full chain of certificates.</t>
         <section title="Server-to-Server Streams" anchor="security-certificates-validation-s2s">
           <t>When an XMPP entity (client or server) validates a certificate presented by an XMPP server, there are three possible cases, as discussed in the following sections.</t>
@@ -3849,7 +3852,6 @@ XmppAddr ::= UTF8String
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
       <t>At a minimum, all implementations MUST support the following mechanisms:</t>
       <t><list style='hanging'>
-        <t hangText='for authentication only:'>the SASL <xref target="DIGEST-MD5"/> mechanism</t>
         <t hangText='for confidentiality only:'>TLS (using the TLS_RSA_WITH_3DES_EDE_CBC_SHA cipher)</t>
         <t hangText='for both authentication and confidentiality:'>TLS plus the SASL <xref target='PLAIN'/> mechanism for password-based authentication or TLS plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) for non-password-based authentication (using the TLS_RSA_WITH_3DES_EDE_CBC_SHA cipher supporting peer certificates)</t>
       </list></t>
@@ -4068,18 +4070,6 @@ XmppAddr ::= UTF8String
 <format type='TXT' octets='16622' target='ftp://ftp.isi.edu/in-notes/rfc2277.txt' />
 <format type='HTML' octets='26556' target='http://xml.resource.org/public/rfc/html/rfc2277.html' />
 <format type='XML' octets='15544' target='http://xml.resource.org/public/rfc/xml/rfc2277.xml' />
-</reference>
-
-<reference anchor='DIGEST-MD5'>
-<front>
-<title>Using Digest Authentication as a SASL Mechanism</title>
-<author initials='P.' surname='Leach' fullname='P. Leach'>
-<organization /></author>
-<author initials='C.' surname='Newman' fullname='C. Newman'>
-<organization /></author>
-<date month='May' year='2000' /></front>
-<seriesInfo name='RFC' value='2831' />
-<format type='TXT' octets='58124' target='ftp://ftp.isi.edu/in-notes/rfc2831.txt' />
 </reference>
 
 <reference anchor='DNS-SRV'>
@@ -4610,6 +4600,18 @@ XmppAddr ::= UTF8String
 <t>The concept of channel binding allows applications to establish that the two end-points of a secure channel at one network layer are the same as at a higher layer by binding authentication at the higher layer to the channel at the lower layer. This allows applications to delegate session protection to lower layers, which has various performance benefits.&lt;/t>&lt;t> This document discusses and formalizes the concept of channel binding to secure channels. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='5056' />
 <format type='TXT' octets='49995' target='ftp://ftp.isi.edu/in-notes/rfc5056.txt' />
+</reference>
+
+<reference anchor='DIGEST-MD5'>
+<front>
+<title>Using Digest Authentication as a SASL Mechanism</title>
+<author initials='P.' surname='Leach' fullname='P. Leach'>
+<organization /></author>
+<author initials='C.' surname='Newman' fullname='C. Newman'>
+<organization /></author>
+<date month='May' year='2000' /></front>
+<seriesInfo name='RFC' value='2831' />
+<format type='TXT' octets='58124' target='ftp://ftp.isi.edu/in-notes/rfc2831.txt' />
 </reference>
 
 <reference anchor='DNSSEC'>
@@ -5269,27 +5271,6 @@ specifications of each URI scheme.
   </front>
   <seriesInfo name="XSF XEP" value="0156"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0156.html"/>
-</reference>
-
-<reference anchor="XEP-0157">
-  <front>
-    <title>Contact Addresses for XMPP Services</title>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email>stpeter@jabber.org</email>
-      </address>
-    </author>
-    <author initials="J." surname="Konieczny" fullname="Jacek Konieczny">
-      <organization/>
-      <address>
-        <email>jajcus@jajcus.net</email>
-      </address>
-    </author>
-    <date day="31" month="January" year="2007"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0157"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0157.html"/>
 </reference>
 
 <reference anchor="XEP-0165">
@@ -6044,7 +6025,6 @@ specifications of each URI scheme.
 
     <section title="Contact Addresses" anchor="contact">
       <t>Consistent with <xref target='MAILBOXES'/>, an organization that offers an XMPP service should provide an Internet mailbox of "XMPP" for inquiries related to that service, where the host portion of the resulting mailto URI should be the organization's domain, not necessarily the domain of the XMPP service itself (e.g., the XMPP service might be offered at im.example.com but the Internet mailbox should be &lt;im.example.com&gt;).</t>
-      <t>In addition, the XMPP service should provide a way to discover the XMPP contact address(es) of the service administrator(s), as specified in <xref target='XEP-0157'/>.</t>
     </section>
 
     <section title="Account Provisioning" anchor="provisioning">
