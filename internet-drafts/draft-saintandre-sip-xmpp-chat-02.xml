@@ -6,7 +6,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="info" docName="draft-saintandre-sip-xmpp-chat-01.txt" ipr="full3978">
+<rfc category="info" docName="draft-saintandre-sip-xmpp-chat-02.txt" ipr="full3978">
 
   <front>
     <title abbrev="SIP-XMPP Interworking: Chat">Interworking between the Session Initiation Protocol (SIP) and the Extensible Messaging and Presence Protocol (XMPP): One-to-One Text Chat</title>
@@ -61,7 +61,7 @@
         <email>Salvatore.Loreto@ericsson.com</email>
       </address>
     </author>
-    <date year="2008" month="June" day="25"/>
+    <date year="2008" month="July" day="7"/>
     <area>RAI</area>
     <keyword>Text Chat</keyword>
     <keyword>Instant Messaging</keyword>
@@ -92,7 +92,7 @@
           <list style="numbers"> 
             <t>Single messages, which are sent from the sender to the recipient outside the context of any one-to-one chat session or multi-user text conference.  The message is immediately delivered and not stored in an inbox.  In XMPP a single message is a &lt;message/&gt; stanza of type "normal" as specified in <xref target='XMPP-IM'/>.  In SIP/SIMPLE a single message is sent via the MESSAGE method as specified in <xref target="SIP-MSG"/>.</t>
             <t>One-to-one chat messages, which are sent from the sender to the recipient (i.e., one-to-one) in the context of a "chat session" between the two entities.  In XMPP a chat message is a &lt;message/&gt; stanza of type "chat".  In SIP/SIMPLE a chat message is sent using an MSRP session as specified in <xref target='MSRP'/>.</t>
-            <t>Groupchat messages, which are sent from a sender to multiple recipients (i.e., 2 or more) in the context of a "multi-user chat session", "text conference", or "chatroom".  In XMPP a groupchat message is a &lt;message/&gt; stanza of type "groupchat" that is reflected from the sender to multiple recipients by a multi-user chat service as defined in <xref target='MUC'/>.  In SIP/SIMPLE a groupchat message is  reflected from the sender to multiple recipients by a conference server that uses MSRP to handle groupchat sessions.</t>
+            <t>Groupchat messages, which are sent from a sender to multiple recipients (i.e., 2 or more) in the context of a "multi-user chat session", "text conference", or "chatroom".  In XMPP a groupchat message is a &lt;message/&gt; stanza of type "groupchat" that is reflected from the sender to multiple recipients by a multi-user chat service, as defined in <xref target='MUC'/>.  In SIP/SIMPLE a groupchat message is reflected from the sender to multiple recipients by a conference server that uses MSRP to handle groupchat sessions, as defined in <xref target='MSRP-MULTI'/>.</t>
           </list>
         </t>
         <t>This document covers only scenario #2 above for converting XMPP messages of type "chat" to and from their corresponding SIP INVITE and MSRP message types on the SIP/SIMPLE side.</t>
@@ -119,14 +119,14 @@
             <t>If the gateway has knowledge of the recipient's online endpoints (available resources in XMPP or registered UAs in SIP), then it SHOULD discover the capabilities of those endpoints.</t>
             <t>If the gateway determines that one or more of the endpoints supports formal chat sessions, it SHOULD initiate a formal chat session with one of those endpoints (deciding which based on presence information or communications priority).</t>
             <t>If the gateway determines that none of the endpoints supports formal chat sessions, it SHOULD initiate an informal chat session with one of those endpoints (deciding which based on presence information or communications priority).</t>
-            <t>If the gateway does know if the recipient has any online endpoints, it SHOULD return an appropriate error to the sender.</t>
+            <t>If the gateway does not know if the recipient has any online endpoints, it SHOULD return an appropriate error to the sender.</t>
           </list>
         </t>
         <t>The methods by which a gateway determines support for various capabilities are protocol-specific.  For XMPP a gateway SHOULD use the Service Discovery extension defined in <xref target='DISCO'/> or, if it receives presence information from the XMPP endpoint, use the Entity Capabilities extension defined in <xref target='CAPS'/>.  For MSRP a gateway SHOULD use the Session Description Protocol defined in <xref target='SDP'/> in conjunction with a high-level protocol that provides a capability query, such as the SIP OPTIONS request defined in <xref target='SIP'/>.</t>
       </section>
 
       <section title="Connection Maintenance" anchor="intro-connections">
-        <t>XMPP makes use of long-lived TCP connections.  If mobility affecting Layer 3 causes a dropped connection, the connection must be re-established.  If mobility preserves the IP address, the TCP connection will be dropped.  Any TLS session and SASL associations must be re-established if the TCP connection is dropped.  XMPP binds directly to TCP in the core specification, so the TCP session must remain open for the entire duration of the chat session.  The XMPP Standards Foundation does define protocol extensions enabling transport of XMPP traffic over HTTP (refer to <xref target='BOSH'/> and <xref target='BOSH-XMPP'/>), so that individual messages are carried using HTTP and are more robust in environments such as mobile networks, allowing for better recovery if a TCP session is broken.</t>
+        <t>XMPP makes use of long-lived TCP connections.  If mobility affecting Layer 3 causes a dropped connection, the connection must be re-established.  If mobility does not preserve the IP address, the TCP connection will be dropped.  Any TLS session and SASL associations must be re-established if the TCP connection is dropped.  XMPP binds directly to TCP in the core specification, so the TCP session must remain open for the entire duration of the chat session.  The XMPP Standards Foundation does define protocol extensions enabling transport of XMPP traffic over HTTP (refer to <xref target='BOSH'/> and <xref target='BOSH-XMPP'/>), so that individual messages are carried using HTTP and are more robust in environments such as mobile networks, allowing for better recovery if a TCP session is broken.</t>
         <t>SIMPLE is similar when using MSRP.  The Message Session Relay Protocol <xref target="MSRP"/> is a protocol for transmitting instant messages (IM) in the context of a session.  The protocol specification describes how the session can be negotiated and established with an offer or answer (see <xref target="OFFER"/>) using the Session Description Protocol <xref target="SDP"/>.  In SIMPLE, this exchange is carried using SIP as the signaling protocol.  After the TCP connection is established, if it fails for any reason, then an MSRP endpoint MAY choose to re-create such a session using a new SDP exchange in a SIP re-INVITE.  SIMPLE also uses the MESSAGE request type for transporting instant messaging outside the context of a session.  The MESSAGE request is sent inside the signaling path without establishing any dedicated connection.</t>
       </section>
 
@@ -374,15 +374,15 @@ Call-ID: 711609sa
         <figure>
           <preamble>Example: (F8) Gateway transforms XMPP message to MSRP</preamble>
           <artwork><![CDATA[
-   MSRP a786hjs2 SEND
-   To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
-   From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
-   Message-ID: 87652491
-   Byte-Range: 1-25/25
-   Content-Type: text/plain
+MSRP a786hjs2 SEND
+To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
+From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
+Message-ID: 87652491
+Byte-Range: 1-25/25
+Content-Type: text/plain
 
-   Art thou not Romeo, and a Montague?
-   -------a786hjs2$
+Art thou not Romeo, and a Montague?
+-------a786hjs2$
           ]]></artwork>
         </figure>
         <t>Upon receiving the SEND request, if the request either contains a Failure-Report header field value of "yes" or does not contain a Failure-Report header at all, Romeo's client MUST immediately generate and send a response.</t>
@@ -398,15 +398,15 @@ From-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
         <figure>
           <preamble>Example: (F9) Romeo sends a reply</preamble>
           <artwork><![CDATA[
-   MSRP a786hjs2 SEND
-   To-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
-   From-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
-   Message-ID: 87652491
-   Byte-Range: 1-25/25
-   Content-Type: text/plain
+MSRP a786hjs2 SEND
+To-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
+From-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
+Message-ID: 87652491
+Byte-Range: 1-25/25
+Content-Type: text/plain
 
-   Neither, fair saint, if either thee dislike.
-   -------a786hjs2$
+Neither, fair saint, if either thee dislike.
+-------a786hjs2$
           ]]></artwork>
         </figure>
         <t>The MSRP-XMPP gateway would then transform that message into appropriate XMPP syntax for routing to the intended recipient.</t>
@@ -539,6 +539,7 @@ XMPP User                      GW                      SIP User
           ]]></artwork>
         </figure>
         <t>Upon receiving such stanza cancelling the session negotiation, the XMPP-MSRP gateway MUST send a SIP BYE.  Once the XMPP-MSRP receives the 200 OK, the internal session data is removed and the session is officially cancelled also in the gateway.</t>
+        <t>If the SIP user had sent any messages to XMPP while awaiting confirmation of the session, the gateway MUST return them to the SIP user with an appropriate error.</t>
       </section>
 
       <section title="Rejecting a Formal Session" anchor="xmppf-reject">
@@ -614,6 +615,7 @@ XMPP User                      GW                      SIP User
     |                          |(F5) (MSRP) SEND          |
     |                          |------------------------->|
     |                          |(F6) (MSRP) A reply       |
+    |                          |<-------------------------|
     |(F7) (XMPP) A reply       |                          |
     |<-------------------------|                          |
     |                          |                          |
@@ -690,32 +692,34 @@ Call-ID: 711609sa
       <figure>
         <preamble>Example: (F5) Gateway transforms XMPP message to MSRP</preamble>
         <artwork><![CDATA[
-   MSRP a786hjs2 SEND
-   To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
-   From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
-   Message-ID: 87652491
-   Byte-Range: 1-25/25
-   Content-Type: text/plain
+MSRP a786hjs2 SEND
+To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
+From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
+Message-ID: 87652491
+Byte-Range: 1-25/25
+Content-Type: text/plain
 
-   Art thou not Romeo, and a Montague?
-   -------a786hjs2$
+Art thou not Romeo, and a Montague?
+-------a786hjs2$
         ]]></artwork>
       </figure>
       <t>Romeo can then send a reply using his MSRP user agent.</t>
       <figure>
         <preamble>Example: (F6) Romeo sends a reply</preamble>
         <artwork><![CDATA[
-   MSRP a786hjs2 SEND
-   To-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
-   From-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
-   Message-ID: 87652491
-   Byte-Range: 1-25/25
-   Content-Type: text/plain
+MSRP a786hjs2 SEND
+To-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
+From-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
+Message-ID: 87652491
+Byte-Range: 1-25/25
+Failure-Report: no
+Content-Type: text/plain
 
-   Neither, fair saint, if either thee dislike.
-   -------a786hjs2$
+Neither, fair saint, if either thee dislike.
+-------a786hjs2$
         ]]></artwork>
       </figure>
+      <t>Note: As previously described, if the users have not negotiated the use message receipts, it is RECOMMENDED that the gateway shall insert a Failure-Report header field value of "no" during the creation of a SEND request.</t>
       <t>The MSRP-XMPP gateway would then transform that message into appropriate XMPP syntax for routing to the intended recipient.</t>
       <figure>
         <preamble>Example: (F7) Gateway transforms MSRP message to XMPP</preamble>
@@ -1004,15 +1008,16 @@ I take thee at thy word ...
         <figure>
           <preamble>Example: (F10) Gateway transforms XMPP message to MSRP</preamble>
           <artwork><![CDATA[
-   MSRP a786hjs2 SEND
-   To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
-   From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
-   Message-ID: 87652491
-   Byte-Range: 1-25/25
-   Content-Type: text/plain
+MSRP a786hjs2 SEND
+To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
+From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
+Message-ID: 87652491
+Byte-Range: 1-25/25
+Failure-Report: no
+Content-Type: text/plain
 
-   What man art thou ...?
-   -------a786hjs2$
+What man art thou ...?
+-------a786hjs2$
           ]]></artwork>
         </figure>
       </section>
@@ -1268,15 +1273,16 @@ I take thee at thy word ...
         <figure>
           <preamble>Example: (F8) Gateway transforms XMPP message to MSRP</preamble>
           <artwork><![CDATA[
-   MSRP a786hjs2 SEND
-   To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
-   From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
-   Message-ID: 87652491
-   Byte-Range: 1-25/25
-   Content-Type: text/plain
+MSRP a786hjs2 SEND
+To-Path: msrp://example.net:12763/kjhd37s2s20w2a;tcp
+From-Path: msrp://gw.example.net:7654/jshA7weztas;tcp
+Message-ID: 87652491
+Byte-Range: 1-25/25
+Failure-Report: no
+Content-Type: text/plain
 
-   What man art thou ...?
-   -------a786hjs2$
+What man art thou ...?
+-------a786hjs2$
           ]]></artwork>
         </figure>
         <figure>
@@ -1696,6 +1702,26 @@ CSeq: 1 BYE
 <t>These documents are revisions of RFCs 1521, 1522, and 1590, which themselves were revisions of RFCs 1341 and 1342.  An appendix in RFC 2049 describes differences and changes from previous versions.</t></abstract></front>
 <seriesInfo name='RFC' value='2045' />
 <format type='TXT' octets='72932' target='ftp://ftp.isi.edu/in-notes/rfc2045.txt' />
+</reference>
+
+<reference anchor='MSRP-MULTI'>
+<front>
+<title>Multi-party Instant Message (IM) Sessions Using the Message Session Relay  Protocol (MSRP)</title>
+<author initials='A' surname='Niemi' fullname='Aki Niemi'>
+    <organization />
+</author>
+<author initials='M' surname='Garcia-Martin' fullname='Miguel Garcia-Martin'>
+    <organization />
+</author>
+<author initials='G' surname='Sandbakken' fullname='Geir Arne Sandbakken'>
+    <organization />
+</author>
+<date month='February' day='4' year='2008' />
+<abstract><t>The Message Session Relay Protocol (MSRP) defines a mechanism for sending instant messages within a peer-to-peer session, negotiated using the Session Initiation Protocol (SIP) and the Session Description Protocol (SDP).  This document defines the necessary tools for establishing multi-party instant messaging (IM) sessions, or chat rooms, with MSRP.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-simple-chat-02' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-simple-chat-02.txt' />
 </reference>
 
 <reference anchor="MUC">
