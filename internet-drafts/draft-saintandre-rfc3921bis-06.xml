@@ -1517,12 +1517,18 @@ CS: <presence from='juliet@example.com/balcony'
   </section>
 
   <section title="Exchanging Messages" anchor="message">
-    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client (if, that is, messaging functionality is enabled and the server is not a presence-only service).  One kind of stanza that may be exchanged is &lt;message/&gt;.  Exchanging messages is a basic use of XMPP and occurs when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules"/>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same server) or for routing the message to the recipient's server (if the recipient is on a different server).  Thus a message stanza is used to "push" information to another entity.</t>
-    <t>As noted under <xref target='presence-directed'/>, if a user exchanges messages with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity.</t>
+    <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One kind of stanza that may be exchanged is &lt;message/&gt; (if, that is, messaging functionality is enabled and the server is not a presence-only service).  Exchanging messages is a basic use of XMPP and occurs when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules"/>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same local server) or for routing the message to the recipient's server (if the recipient is on a remote server).  Thus a message stanza is used to "push" information to another entity.</t>
+    <section title="One-to-One Chat Sessions" anchor="message-chat">
+      <t>In practice, instant messaging activity between human users tends to occur in form of a conversational burst that we call <iref item='Chat Session'/> a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
+      <t>When a human user intends to engage in such a chat session with a contact (rather than sending a single message to which no reply is expected), the user's client SHOULD send a message of type "chat" and the contact's client SHOULD preserve that message type in subsequent replies.   The user's client also SHOULD include a &lt;thread/&gt; element with its initial message, which the contact's client SHOULD also preserve during the life of the chat session.</t>
+      <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt;).  Until and unless the user's client receives a reply from the contact, it MUST continue sending any further messages to the contact's bare JID.  The contact's client SHOULD address its subsequent replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies.</t>
+      <t>As noted under <xref target='presence-directed'/>, if a user exchanges message stanzas with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity.</t>
+      <t>An example of a chat session is provided under <xref target='session'/>.</t>
+    </section>
+    <section title="Message Syntax" anchor="message-syntax">
     <t>The following sections describe the syntax of the &lt;message/&gt; stanza.</t>
-    <section title="Attributes" anchor="message-attributes">
-      <section title="To Attribute" anchor="message-attributes-to">
-        <t>An instant messaging client SHOULD specify an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.</t>
+      <section title="To Attribute" anchor="message-syntax-to">
+        <t>An instant messaging client specifies an intended recipient for a message by providing the JID of an entity other than the sender in the 'to' attribute of the &lt;message/&gt; stanza.</t>
         <t>If the message is being sent outside the context of any existing chat session or received message, the value of the 'to' address SHOULD be of the form &lt;user@domain&gt; rather than of the form &lt;user@domain/resource&gt;.</t>
         <figure>
           <artwork><![CDATA[
@@ -1535,7 +1541,7 @@ CS: <presence from='juliet@example.com/balcony'
 </message>
           ]]></artwork>
         </figure>
-        <t>If the message is being sent in reply to a message previously received from an address of the form &lt;user@domain/resource&gt; (e.g., within the context of a chat session), the value of the 'to' address SHOULD be of the form &lt;user@domain/resource&gt; rather than of the form &lt;user@domain&gt; unless the sender has knowledge (via presence) that the intended recipient's resource is no longer available.</t>
+        <t>If the message is being sent in reply to a message previously received from an address of the form &lt;user@domain/resource&gt; (e.g., within the context of a one-to-one chat session as described under <xref target='message-chat'/>), the value of the 'to' address SHOULD be of the form &lt;user@domain/resource&gt; rather than of the form &lt;user@domain&gt; unless the sender has knowledge (via presence) that the intended recipient's resource is no longer available.</t>
         <figure>
           <artwork><![CDATA[
 <message
@@ -1548,42 +1554,39 @@ CS: <presence from='juliet@example.com/balcony'
           ]]></artwork>
         </figure>
       </section>
-      <section title="Type Attribute" anchor="message-attributes-type">
-      <t>Common uses of the message stanza in instant messaging applications include single messages, messages sent in the context of a chat conversation, messages sent in the context of a multi-user chat room, headlines and other alerts, and errors.  These uses are differentiated via the 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
+      <section title="Type Attribute" anchor="message-syntax-type">
+      <t>Common uses of the message stanza in instant messaging applications include: single messages; messages sent in the context of a one-to-one chat session; messages sent in the context of a multi-user chat room; alerts, notifications, or other information to which no reply is expected; and errors.  These uses are differentiated via the 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
       <t>
         <list style="symbols">
-          <t>chat -- The message is sent in the context of a one-to-one chat session.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding chat sessions are provided under <xref target='message-chat'/>.</t>
+          <t>chat -- The message is sent in the context of a one-to-one chat session.  A receiving client SHOULD present the message in an interface enabling one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding one-to-one chat sessions are provided under <xref target='message-chat'/>.</t>
           <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.</t>
-          <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A receiving client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Full definition of XMPP-based groupchat protocols is out of scope for this document (for details, refer to <xref target="XEP-0045"/>).</t>
-          <t>headline -- The message is probably generated by an automated service that delivers or broadcasts content (news, sports, market information, syndicated content, alerts, etc.), or the sender wishes the message to be delivered as if it were so generated.  No reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat sessions, or groupchat sessions (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources.</t>
+          <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  A receiving client SHOULD present the message in an interface enabling many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  Definition of XMPP-based groupchat functionality is out of scope for this document (for details, refer to <xref target="XEP-0045"/>).</t>
+          <t>headline -- The message provides an alert, a notification, or other information to which no reply is expected (e.g., news headlines, sports updates, near-real-time market data, and syndicated content).  Because no reply to the message is expected, and a receiving client SHOULD present the message in an interface that appropriately differentiates the message from standalone messages, chat messages, or groupchat messages (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources.</t>
           <t>normal -- The message is a standalone message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  A receiving client SHOULD present the message in an interface enabling the recipient to reply, but without a conversation history.  This is the default value of the 'type' attribute.</t>
         </list>
       </t>
       <t>An IM application SHOULD support all of the foregoing message types.  If an application receives a message with no 'type' attribute or the application does not understand the value of the 'type' attribute provided, it MUST consider the message to be of type "normal" (i.e., "normal" is the default).</t>
       <t>Although the 'type' attribute is OPTIONAL, it is considered polite to mirror the type in any replies to a message; furthermore, some specialized applications (e.g., a multi-user chat service) MAY at their discretion enforce the use of a particular message type (e.g., type='groupchat').</t>
       </section>
-    </section>
-    <section title="Child Elements" anchor="message-elements">
-      <t>An XMPP message stanza MAY contain any allowable child elements qualified by the 'jabber:client' (or 'jabber:server') namespace, as well as any other child element that is qualified by a namespace other than the default namespace.  The defined payloads are described in the following sections and extended content payloads are described in the appropriate XMPP extension specifications (not herein).</t>
-      <section title="Body" anchor="message-elements-body">
+      <section title="Body Element" anchor="message-syntax-body">
         <t>The &lt;body/&gt; element contains human-readable XML character data that specifies the textual contents of the message; this child element is normally included but is OPTIONAL.</t>
         <figure>
           <artwork><![CDATA[
 <message
-    to='romeo@example.net'
     from='juliet@example.com/balcony'
+    to='romeo@example.net'
     type='chat'
     xml:lang='en'>
   <body>Wherefore art thou, Romeo?</body>
 </message>
           ]]></artwork>
         </figure>
-        <t>The &lt;body/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;body/&gt; element MAY be included in a message stanza, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
+        <t>The &lt;body/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;body/&gt; element MAY be included in a message stanza, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
         <figure>
           <artwork><![CDATA[
 <message
-    to='romeo@example.net'
     from='juliet@example.com/balcony'
+    to='romeo@example.net'
     type='chat'
     xml:lang='en'>
   <body>Wherefore art thou, Romeo?</body>
@@ -1595,14 +1598,13 @@ CS: <presence from='juliet@example.com/balcony'
         </figure>
         <t>The &lt;body/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
       </section>
-
-      <section title="Subject" anchor="message-elements-subject">
+      <section title="Subject Element" anchor="message-syntax-subject">
         <t>The &lt;subject/&gt; element contains human-readable XML character data that specifies the topic of the message.</t>
         <figure>
           <artwork><![CDATA[
 <message
-    to='romeo@example.net'
     from='juliet@example.com/balcony'
+    to='romeo@example.net'
     type='chat'
     xml:lang='en'>
   <subject>I implore you!</subject>
@@ -1610,12 +1612,12 @@ CS: <presence from='juliet@example.com/balcony'
 </message>
           ]]></artwork>
         </figure>
-        <t>The &lt;subject/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;subject/&gt; element MAY be included for the purpose of providing alternate versions of the same subject, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which may include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
+        <t>The &lt;subject/&gt; element MUST NOT possess any attributes, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;subject/&gt; element MAY be included for the purpose of providing alternate versions of the same subject, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
         <figure>
           <artwork><![CDATA[
 <message
-    to='romeo@example.net'
     from='juliet@example.com/balcony'
+    to='romeo@example.net'
     type='chat'
     xml:lang='en'>
   <subject>I implore you!</subject>
@@ -1631,17 +1633,17 @@ CS: <presence from='juliet@example.com/balcony'
         </figure>
         <t>The &lt;subject/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
       </section>
-
-      <section title="Thread" anchor="message-elements-thread">
-        <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element may also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It may also be used for &lt;message/&gt; stanzas not related to a conversation, such as a game session or between plugins.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations.</t>
+      <section title="Thread Element" anchor="message-syntax-thread">
+        <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element can also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It MAY also be used for &lt;message/&gt; stanzas not related to a human conversation, such as a game session or an interaction between plugins.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations or messagingg sessions.</t>
         <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL.  Because the &lt;thread/&gt; element uniquely identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
-        <t>The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning may be derived from it, and only exact comparisons may be made against it.  The value of the &lt;thread/&gt; element MUST be a universally unique identifier (UUID) as described in <xref target='UUID'/>.</t>
-        <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child; the value of the 'parent' MUST conform to the syntax of the &lt;thread/&gt; element itself.  The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
+        <t>The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning can be derived from it, and only exact comparisons can be made against it.  The value of the &lt;thread/&gt; element MUST be a universally unique identifier (UUID) as described in <xref target='UUID'/>.</t>
+        <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child; the value of the 'parent' MUST conform to the syntax of the &lt;thread/&gt; element itself.</t>
+        <t>The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
         <figure>
           <artwork><![CDATA[
 <message
-    to='romeo@example.net'
     from='juliet@example.com/balcony'
+    to='romeo@example.net'
     type='chat'
     xml:lang='en'>
   <subject>I implore you!</subject>
@@ -1661,15 +1663,14 @@ CS: <presence from='juliet@example.com/balcony'
         <t>For detailed recommendations regarding use of the &lt;thread/&gt; element, refer to <xref target='XEP-0201'/>.</t>
       </section>
     </section>
-
-    <section title="Extended Content" anchor="message-elements-extended">
+    <section title="Extended Content" anchor="message-syntax-extended">
       <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any child element that is qualified by a namespace other than the default namespace; this applies to the message stanza as well.</t>
       <t>(In the following example, the message stanza includes an XHTML-formatted version of the message as defined in <xref target='XEP-0071'/>).)</t>
       <figure>
         <artwork><![CDATA[
 <message
-    to='romeo@example.net'
     from='juliet@example.com/balcony'
+    to='romeo@example.net'
     type='chat'
     xml:lang='en'>
   <body>Wherefore art thou, Romeo?</body>
@@ -1684,17 +1685,10 @@ CS: <presence from='juliet@example.com/balcony'
       </figure>
     </section>
 
-    <section title="One-to-One Chat Sessions" anchor="message-chat">
-      <t>In practice, instant messaging activity between human users tends to occur in form of a conversational burst that we call <iref item='Chat Session'/> a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
-      <t>When a human user intends to engage in such a chat session with a contact (rather than sending a single message to which no reply is expected), the user's client SHOULD send a message of type "chat" and the contact's client SHOULD preserve that message type in subsequent replies.   The user's client also SHOULD include a &lt;thread/&gt; element on its initial message, which the contact's client SHOULD also preserve during the life of the chat session.</t>
-      <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt;).  Until and unless the user's client receives a reply from the contact, it MUST continue sending any further messages to the contact's bare JID.  The contact's client SHOULD address its subsequent replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies.</t>
-      <t>If a user exchanges messages with a contact but the user does not normally share presence with the contact via a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the contact, subject to user approval (either explicitly for this contact or implicitly via a configuration setting).  If a client supports this feature, it MUST allow the user to disable the feature in order to prevent presence sharing with unknown entities.</t>
-      <t>An example of a chat session as described above is provided under <xref target='session'/>.</t>
-    </section>
   </section>
 
   <section title="Exchanging IQ Stanzas" anchor="iq">
-    <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is required) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all cases by the extended namespace that qualifies the direct child element of an IQ stanza of type "get" or "set".  The 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the &lt;error/&gt; common to all stanza types.  This document defines one such extended namespace, for <xref target="roster">Managing the Roster</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
+    <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is mandatory) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics required to complete particular use cases are defined in all instances by the extended namespace that qualifies the direct child element of an IQ stanza of type "get" or "set".  The 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the &lt;error/&gt; element common to all stanza types.  This document defines one such extended namespace, for <xref target="roster">Managing the Roster</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
     <t>As noted under <xref target='presence-directed'/>, if a user exchanges IQ stanzas with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity.</t>
   </section>
 
@@ -1702,7 +1696,7 @@ CS: <presence from='juliet@example.com/balcony'
     <t>The examples in this section illustrate a possible instant messaging and presence session.  The user is romeo@example.net, he has an available resource whose resource identifier is "orchard", and he has the following individuals in his roster:</t>
     <t><list style="symbols">
       <t>juliet@example.com (subscription="both" and she has two available resources, one whose resource identifier is "chamber" and another whose resource identifier is "balcony")</t>
-      <t>benvolio@example.org (subscription="to")</t>
+      <t>benvolio@example.net (subscription="to")</t>
       <t>mercutio@example.org (subscription="from")</t>
     </list></t>
     <t>First, the user completes the preconditions (stream establishment, TLS and SASL negotiation, and resource binding) described in <xref target='XMPP-CORE'/>; those protocol flows are not reproduced here.</t>
@@ -1710,7 +1704,9 @@ CS: <presence from='juliet@example.com/balcony'
     <figure>
       <preamble>Example 1: User requests current roster from server:</preamble>
       <artwork><![CDATA[
-UC: <iq from='romeo@example.net/balcony' type='get' id='ex1'>
+UC: <iq from='romeo@example.net/balcony'
+        id='ex1'
+        type='get'>
       <query xmlns='jabber:iq:roster'/>
     </iq>
       ]]></artwork>
@@ -1718,7 +1714,9 @@ UC: <iq from='romeo@example.net/balcony' type='get' id='ex1'>
     <figure>
       <preamble>Example 2: User receives roster from server:</preamble>
       <artwork><![CDATA[
-US: <iq to='romeo@example.net/balcony' type='result' id='ex1'>
+US: <iq to='romeo@example.net/balcony'
+        id='ex1'
+        type='result'>
       <query xmlns='jabber:iq:roster'>
         <item jid='romeo@example.com'
               name='Juliet'
@@ -1746,14 +1744,14 @@ UC: <presence from='romeo@example.net/orchard'/>
       <preamble>Example 4: User's server sends presence probes to contacts with subscription="to" and subscription="both" on behalf of the user's available resource:</preamble>
       <artwork><![CDATA[
 US: <presence
-        type='probe'
         from='romeo@example.net/orchard'
-        to='juliet@example.com'/>
+        to='juliet@example.com'
+        type='probe'/>
 
 US: <presence
-        type='probe'
         from='romeo@example.net/orchard'
-        to='benvolio@example.org'/>
+        to='benvolio@example.org'
+        type='probe'/>
         ]]></artwork>
     </figure>
     <figure>
@@ -1796,7 +1794,7 @@ CS: <presence
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 7: Contacts' servers deliver user's initial presence to all available resources or return unsubscribed to user:</preamble>
+      <preamble>Example 7: Contacts' servers deliver user's initial presence to all available resources:</preamble>
       <artwork><![CDATA[
 CS: <presence
         from='romeo@example.net/orchard'
@@ -1808,8 +1806,7 @@ CS: <presence
 
 CS: <presence
         from='mercutio@example.org'
-        to='romeo@example.net'
-        type='unsubscribed'/>
+        to='romeo@example.net'/>
       ]]></artwork>
     </figure>
     <figure>
@@ -1825,7 +1822,7 @@ UC: <presence
     </presence>
       ]]></artwork>
     </figure>
-    <t>Now the user has a chat session with one of his contacts.</t>
+    <t>Now the user engages in a chat session with one of his contacts.</t>
     <figure>
       <preamble>Example 9: A threaded conversation</preamble>
       <artwork><![CDATA[
@@ -1932,9 +1929,9 @@ CC: <presence from='juliet@example.com/chamber' type='unavailable'/>
       <preamble>Example 14: Contact's server sends unavailable presence to user:</preamble>
       <artwork><![CDATA[
 CS: <presence
-        type='unavailable'
         from='juliet@example.com/chamber'
-        to='romeo@example.net'/>
+        to='romeo@example.net'
+        type='unavailable'/>
       ]]></artwork>
     </figure>
     <t>Now the user ends his presence session.</t>
@@ -1949,20 +1946,20 @@ UC: <presence from='romeo@example.net/orchard'
       ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 16: User's server broadcasts unavailable presence to contact as well as to the person to whom the user sent directed presence:</preamble>
+      <preamble>Example 16: User's server broadcasts unavailable presence to contacts as well as to the person to whom the user sent directed presence:</preamble>
       <artwork><![CDATA[
 US: <presence
-        type='unavailable'
         from='romeo@example.net/orchard'
         to='juliet@example.com'
+        type='unavailable'
         xml:lang='en'>
       <status>gone home</status>
     </presence>
 
 US: <presence
-        type='unavailable'
         from='romeo@example.net/orchard'
         to='nurse@example.com'
+        type='unavailable'
         xml:lang='en'>
       <status>gone home</status>
     </presence>
