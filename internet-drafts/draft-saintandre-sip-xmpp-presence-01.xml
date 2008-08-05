@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc category='info' docName='draft-saintandre-sip-xmpp-presence-00' ipr='full3978'>
+<rfc category='info' docName='draft-saintandre-sip-xmpp-presence-01' ipr='full3978'>
 
   <front>
     <title abbrev="SIP-XMPP Interworking: Presence">Interworking between the Session Initiation Protocol (SIP) and the Extensible Messaging and Presence Protocol (XMPP): Presence</title>
@@ -47,7 +47,7 @@
         <email>jhildebrand@jabber.com</email>
       </address>
     </author>
-    <date year="2008" month="January" day="4"/>
+    <date year="2008" month="August" day="5"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Jabber</keyword>
@@ -162,12 +162,19 @@
           <figure>
             <preamble>Example: XMPP user receives acknowledgement from SIP contact:</preamble>
             <artwork><![CDATA[
-|  <presence to='romeo@example.net'
-|            from='juliet@example.com'
+|  <presence from='romeo@example.net'
+|            to='juliet@example.com'
 |            type='subscribed'/>
             ]]></artwork>
           </figure>
-          <t>For information about handling of the NOTIFY message, see <xref target="pres"/>.</t>
+          <t>As described under <xref target="pres"/>, the gateway MUST also generate a presence notification to the XMPP user:</t>
+          <figure>
+            <preamble>Example: XMPP user receives presence notification from SIP contact:</preamble>
+            <artwork><![CDATA[
+|  <presence from='romeo@example.net/orchard'
+|            to='juliet@example.com'/>
+            ]]></artwork>
+          </figure>
         </section>
         <section title="Refreshing" anchor="sub-xmpp-refresh">
           <t>It is the responsibility of the XMPP-SIMPLE gateway to set the value of the "Expires" header and to periodically renew the subscription on the SIMPLE side of the gateway so that the subscription appears to be permanent to the XMPP user (e.g., the XMPP-SIMPLE gateway SHOULD send a new SUBSCRIBE request to the SIP user whenever the XMPP user sends initial presence to its XMPP server, i.e., upon initiating a presence session with the XMPP server).  See the <xref target='sec'>Security Considerations</xref> of this document for important information and requirements regarding the security implications of this functionality.</t>
@@ -204,8 +211,8 @@
           <figure>
             <preamble>Example: XMPP user receives unsubscribed notification:</preamble>
             <artwork><![CDATA[
-|  <presence to='romeo@example.net'
-|            from='juliet@example.com'
+|  <presence from='romeo@example.net'
+|            to='juliet@example.com'
 |            type='unsubscribed'/>
             ]]></artwork>
           </figure>
@@ -230,6 +237,7 @@
 |  Content-Length: 0
             ]]></artwork>
           </figure>
+          <t>Notice that the "Expires" header was not included in the SUBSCRIBE request; this means that the default value of 3600 (i.e., 3600 seconds = 1 hour) applies.</t>
           <t>Upon receiving such a request, a SIMPLE-XMPP gateway is responsible for translating it into an XMPP subscription request from the SIP user to the XMPP user:</t>
           <figure>
             <preamble>Example: SIP user subscribes to XMPP contact (XMPP transformation):</preamble>
@@ -239,7 +247,7 @@
 |            type='subscribe'/>
             ]]></artwork>
           </figure>
-          <t>Notice that the "Expires" header was not included in the SUBSCRIBE request; this means that the default value of 3600 (i.e., 3600 seconds = 1 hour) applies.</t>
+          <t>In accordance with <xref target='XMPP-IM'/>, the XMPP user's server MUST deliver the presence subscription request to the XMPP user (or, if a subscription already exists in the XMPP user's roster, discard the subscribe request).  If the XMPP user approves the subscription request, the XMPP server then MUST return a presence stanza of type "subscribed" from the XMPP user to the SIP user; if a subscription already exists, the XMPP server SHOULD auto-reply with a presence stanza of type "subscribed".  In any case, if the SIMPLE-XMPP gateway receives a presence stanza of type "subscribed" from the XMPP user, it SHOULD silently discard the stanza.</t>
         </section>
         <section title="Refreshing" anchor="sub-sip-refresh">
           <t>It is the responsibility of the SIMPLE-XMPP gateway to properly handle the difference between short-lived SIP presence subscriptions and long-lived XMPP presence subscriptions.  The gateway has two options when the SIP user's subscription expires:</t>
@@ -417,7 +425,7 @@
 |            entity='pres:romeo@example.net'>
 |    <tuple id='orchard'>
 |      <status>
-|        <basic>open</basic>
+|        <basic>closed</basic>
 |      </status>
 |    </tuple>
 |  </presence>
@@ -463,14 +471,16 @@
       <figure>
        <preamble>A basic example of PIDF over XMPP:</preamble>
        <artwork><![CDATA[
-<presence from='romeo@example.net/orchard' xml:lang='en'>
-  <show>dnd</show>
+<presence from='romeo@example.net/orchard' 
+          to='nurse@example.com'
+          xml:lang='en'>
   <status>Wooing Juliet</status>
   <presence xmlns='urn:ietf:params:xml:ns:pidf'
             entity='pres:romeo@example.net'>
     <tuple id='orchard'>
       <status>
         <basic>open</basic>
+        <note>Wooing Juliet</note>
       </status>
     </tuple>
   </presence>
@@ -660,36 +670,28 @@
   <seriesInfo name='RFC' value='2119' />
 </reference>
 
-<reference anchor="XML" target="http://www.w3.org/TR/REC-xml">
-  <front>
-    <title abbrev="XML">Extensible Markup Language (XML) 1.0 (2nd ed)</title>
-    <author initials="T." surname="Bray" fullname="Tim Bray">
-      <organization>Textuality and Netscape</organization>
-      <address>
-        <email>tbray@textuality.com</email>
-      </address>
-    </author>
-    <author initials="J." surname="Paoli" fullname="Jean Paoli">
-      <organization>Microsoft</organization>
-      <address>
-        <email>jeanpa@microsoft.com</email>
-      </address>
-    </author>
-    <author initials="C.M." surname="Sperberg-McQueen" fullname="C.  M.  Sperberg-McQueen">
-      <organization>University of Illinois at Chicago and Text Encoding Initiative</organization>
-      <address>
-        <email>cmsmcq@uic.edu</email>
-      </address>
-    </author>
-    <author initials="E." surname="Maler" fullname="Eve Maler">
-      <organization>Sun Microsystems</organization>
-      <address>
-        <email>eve.maler@east.sun.com</email>
-      </address>
-    </author>
-    <date day="6" month="October" year="2000"/>
-  </front>
-  <seriesInfo name="W3C" value="REC-xml"/>
+<reference anchor='XML' target='http://www.w3.org/TR/2006/REC-xml-20060816'>
+<front>
+<title>Extensible Markup Language (XML) 1.0 (Fourth Edition)</title>
+<author initials='J.' surname='Paoli' fullname='Jean Paoli'>
+    <organization />
+</author>
+<author initials='E.' surname='Maler' fullname='Eve Maler'>
+    <organization />
+</author>
+<author initials='C.' surname='Sperberg-McQueen' fullname='C. M. Sperberg-McQueen'>
+    <organization />
+</author>
+<author initials='F.' surname='Yergeau' fullname='François Yergeau'>
+    <organization />
+</author>
+<author initials='T.' surname='Bray' fullname='Tim Bray'>
+    <organization />
+</author>
+<date month='August' day='16' year='2006' />
+</front>
+<seriesInfo name='World Wide Web Consortium Recommendation' value='REC-xml-20060816' />
+<format type='HTML' target='http://www.w3.org/TR/2006/REC-xml-20060816' />
 </reference>
 
 <reference anchor="XML-NAMES" target="http://www.w3.org/TR/REC-xml-names">
