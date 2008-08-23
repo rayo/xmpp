@@ -32,6 +32,7 @@ cp non-free/*.png $basepath/images/
 cp schemas/*.* $basepath/schemas/
 cp sorttable.js $basepath/
 cp summit/*.* $basepath/summit/
+cp trademark/*.* $basepath/trademark/
 cp xmpp.css $basepath/
 cp xsf/*.* $basepath/xsf/
 cp xsf/board/*.* $basepath/xsf/board/
