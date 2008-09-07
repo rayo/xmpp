@@ -4,14 +4,16 @@
 
 path=/var/www/vhosts/xmpp.org/protocols
 
-ls -d * > protocols.txt
+ls -d */ > tmp.txt
+
+sed s/.$// tmp.txt > protocols.txt
 
 while read f
 do
     xsltproc proto.xsl $f/manifest.xml > $path/$f/index.html
 done < protocols.txt
 
-rm protocols.txt
+#rm protocols.txt
 
 cp index.shtml $path/
 
