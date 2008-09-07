@@ -2,7 +2,7 @@
 # for each manifest, generate an HTML file
 # usage: ./all.sh
 
-path=/var/www/xmpp.org/protocols
+path=/var/www/vhosts/xmpp.org/protocols
 
 ls -d * > protocols.txt
 

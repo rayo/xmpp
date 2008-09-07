@@ -11,10 +11,7 @@
 # rfcs/
 # 
 
-# STAGE
-#basepath=/var/www/stage.xmpp.org
-# PRODUCTION
-basepath=/var/www/xmpp.org
+basepath=/var/www/vhosts/xmpp.org
 
 cp about/*.* $basepath/about/
 cp council/*.* $basepath/council/
