@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2008" month="July" day="1"/>
+    <date year="2008" month="September" day="18"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -88,7 +88,7 @@
     </section>
     <section title="Conventions" anchor="intro-conventions">
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>.</t>
+      <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, and LF.</t>
       <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent Unicode characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
       <t>In examples, lines have been wrapped for improved readability, "[...]" means elision, and the following prepended strings are used (these prepended strings are not to be sent over the wire):</t>
       <t>
@@ -174,20 +174,21 @@ romeo@example.net           juliet@im.example.com
                      ; a "nodepoint" is a UTF-8 encoded Unicode code
                      ; point that satisfies the Nodeprep profile of
                      ; stringprep
-   domain          = fqdn / address-literal / idnlabel
-   fqdn            = (idnlabel 1*("." idnlabel))
-                     ; an "idnlabel" is an internationalized label
-                     ; as described in RFC 3490
+   domain          = fqdn / address-literal
+   fqdn            = *(ldhlabel ".") toplabel
+   ldhlabel        = letdig [*61(ldh) letdig]
+   toplabel        = ALPHA   *61(ldh) letdig
+   letdig          = ALPHA / DIGIT
+   ldh             = ALPHA / DIGIT / "-"
    address-literal = IPv4address / IPv6address
                      ; the "IPv4address" and "IPv6address" rules are
-                     ; defined in Appendix B of RFC 2373
+                     ; defined in RFC 3986
    resource        = 1*(resourcepoint)
                      ; a "resourcepoint" is a UTF-8 encoded Unicode
                      ; code point that satisfies the Resourceprep
                      ; profile of stringprep
         ]]></artwork>
       </figure>
-      <t><list style='empty'><t>Note: The "IPv4address" and "IPv6address" rules are indeed provided in <xref target='RFC2373'/> and were removed from <xref target='IPv6'/>, which superseded RFC 2373.</t></list></t>
       <t>All JIDs are based on the foregoing structure.  One common use of this structure is to identify a messaging and presence account, the server that hosts the account, and a connected resource (e.g., a specific device) in the form of &lt;node@domain/resource&gt;.  However, node types other than clients are possible; for example, a specific chat room offered by a multi-user conference service (see <xref target='XEP-0045'/>) could be addressed as &lt;room@service&gt; (where "room" is the name of the chat room and "service" is the hostname of the multi-user conference service) and a specific occupant of such a room could be addressed as &lt;room@service/nick&gt; (where "nick" is the occupant's room nickname).  Many other JID types are possible (e.g., &lt;domain/resource&gt; could be a server-side script or service).</t>
       <t>Each allowable portion of a JID (node identifier, domain identifier, and resource identifier) MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
       <t><list style='empty'><t>Note: While the format of a JID is consistent with <xref target="URI"/>, an entity's address on an XMPP network MUST be represented as a JID (without a URI scheme) and not a <xref target="URI"/> or <xref target="IRI"/> as specified in <xref target="XMPP-URI"/>; the latter specification is provided only for identification and interaction outside the context of the XMPP wire protocol itself.</t></list></t>
@@ -197,7 +198,7 @@ romeo@example.net           juliet@im.example.com
       <t><iref item='Domain Identifier'/>The DOMAIN IDENTIFIER portion of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domain identifier is a valid JID).  Typically a domain identifier identifies the "home" server to which clients connect for XML routing and data management functionality.  However, it is not necessary for an XMPP domain identifier to identify an entity that provides core XMPP server functionality (e.g., a domain identifier can identity an entity such as a multi-user conference service, a publish-subscribe service, or a user directory).</t>
       <t><list style='empty'><t>Note: A single server can service multiple domain identifiers, i.e., multiple local domains; this is typically referred to as virtual hosting.</t></list></t>
       <t>The domain identifier for every server or service that will communicate over a network SHOULD be a fully qualified domain name (see <xref target='DNS'/>); while the domain identifier MAY be either an Internet Protocol (IPv4 or IPv6) address or a text label that is resolvable on a local network (commonly called an "unqualified hostname"), it is possible that domain identifiers that are IP addresses will not be acceptable to other services for the sake of interdomain communication.  Furthermore, domain identifiers that are unqualified hostnames MUST NOT be used on public networks but MAY be used on private networks.</t>
-      <t><list style='empty'><t>Note: If the domain identifier includes a final character considered to be a label separator (dot) by <xref target='IDNA'/> or <xref target='STD13'/>, this character MUST be stripped from the domain identifier before the JID of which it is a part is used for the purpose of routing an XML stanza, comparing against another JID, or constructing an <xref target='XMPP-URI'/>; in particular, the character MUST be stripped before any other canonicalization steps are taken, such as application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> or completion of the ToASCII operation as described in <xref target='IDNA'/>.</t></list></t>
+      <t><list style='empty'><t>Note: If the domain identifier includes a final character considered to be a label separator (dot) by <xref target='IDNA'/> or <xref target='DNS'/>, this character MUST be stripped from the domain identifier before the JID of which it is a part is used for the purpose of routing an XML stanza, comparing against another JID, or constructing an <xref target='XMPP-URI'/>; in particular, the character MUST be stripped before any other canonicalization steps are taken, such as application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> or completion of the ToASCII operation as described in <xref target='IDNA'/>.</t></list></t>
       <t>A domain identifier MUST be an "internationalized domain name" as defined in <xref target='IDNA'/>, that is, "a domain name in which every label is an internationalized label".  When preparing a text label (consisting of a sequence of Unicode code points) for representation as an internationalized label in the process of constructing an XMPP domain identifier or comparing two XMPP domain identifiers, an application MUST ensure that for each text label it is possible to apply without failing the ToASCII operation specified in <xref target='IDNA'/> with the UseSTD3ASCIIRules flag set (thus forbidding ASCII code points other than letters, digits, and hyphens).  If the ToASCII operation can be applied without failing, then the label is an internationalized label.  An internationalized domain name (and therefore an XMPP domain identifier) is constructed from its constituent internationalized labels by following the rules specified in <xref target='IDNA'/>.</t>
       <t><list style='empty'><t>Note: The ToASCII operation includes application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> and encoding using the algorithm specified in <xref target='PUNYCODE'/>; for details, see <xref target='IDNA'/>.  Although the output of the ToASCII operation is not used in XMPP, it MUST be possible to apply that operation without failing.</t></list></t>
     </section>
@@ -237,6 +238,7 @@ romeo@example.net           juliet@im.example.com
            <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
         </list>
       </t>
+      <t><list style='empty'><t>Note: If the initiating entity has been explicitly configured to associate a particular hostname (and potentially port) with the original hostname of the receiving entity (say, to "hardcode" an association between an original hostname of example.net and a configured hostname and of webcm.example.com:80), the initiating entity SHALL use the configured name instead of the original name when following the resolution process described above.</t></list></t>
       <t><list style='empty'><t>Note: Many XMPP servers are implemented in such a way that they can host additional services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at hostnames that are subdomains of the hostname of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or subdomains of the first-level domain of the underlying host (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity from a remote domain wishes to use such additional services, it would generate an appropriate XML stanza and the remote domain itself would attempt to resolve the service's hostname via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if a service wishes to enable entities from remote domains to access these additional services, it needs to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for its main XMPP service.</t></list></t>
     </section>
     <section title="Client-to-Server Communication" anchor="tcp-c2s">
@@ -312,7 +314,7 @@ romeo@example.net           juliet@im.example.com
 
     <section title="Stream Attributes" anchor="streams-attr">
       <t>The attributes of the root &lt;stream/&gt; element are defined in the following sections.</t>
-      <t><list style='empty'><t>Note: The attributes of the root &lt;stream/&gt; element are not prepended by a 'stream:' prefix because, in accordance with Section 5.3 of <xref target="XML-NAMES"/>, the default namespace does not apply to attribute names.</t></list></t>
+      <t><list style='empty'><t>Note: The attributes of the root &lt;stream/&gt; element are not prepended by a 'stream:' prefix because, as explained in <xref target="XML-NAMES"/>, "[d]efault namespace declarations do not apply directly to attribute names; the interpretation of unprefixed attributes is determined by the element on which they appear."</t></list></t>
       <section title='from' anchor='streams-attr-from'>
         <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
         <t><list style='empty'><t>Note: It is possible for an entity to have more than one XMPP identity (e.g., in the case of a server that provides virtual hosting).  It is also possible that an entity does not know the XMPP identity of the principal controlling the entity (e.g., because the XMPP identity is assigned at a level other than the XMPP application layer, as in the General Security Service Application Program Interface <xref target='GSS-API'/>).</t></list></t>
@@ -1198,8 +1200,8 @@ Or to take arms against a sea of troubles,
 And by opposing end them?
            </summary>
            <link rel='alternate' type='text/html'
-                 href='http://denmark.lit/2003/12/13/atom03'/>
-           <id>tag:denmark.lit,2003:entry-32397</id>
+                 href='http://denmark.example/2003/12/13/atom03'/>
+           <id>tag:denmark.example,2003:entry-32397</id>
            <published>2003-12-13T18:30:02Z</published>
            <updated>2003-12-13T18:30:02Z</updated>
          </entry>
@@ -1608,8 +1610,8 @@ R: <stream:features>
         <t><xref target='SASL'/> specifies that a using protocol such as XMPP can define two methods by which the protocol can save round trips where allowed for the SASL mechanism:</t>
         <t>
           <list style='numbers'>
-            <t>When the SASL client (the XMPP "initiating entity") requests an authentication exchange, it can include "initial response" data with its request.  In XMPP this is done by including the initial response as the XML character data of the &lt;auth/&gt; element.</t>
-            <t>At the end of the authentication exchange, the SASL server (the XMPP "receiving entity") can include "additional data with success".  In XMPP this is done by including the additional data as the XML character data of the &lt;success/&gt; element.</t>
+            <t>When the SASL client (the XMPP "initiating entity") requests an authentication exchange, it can include "initial response" data with its request if appropriate for the SASL mechanism in use.  In XMPP this is done by including the initial response as the XML character data of the &lt;auth/&gt; element.</t>
+            <t>At the end of the authentication exchange, the SASL server (the XMPP "receiving entity") can include "additional data with success" if appropriate for the SASL mechanism in use.  In XMPP this is done by including the additional data as the XML character data of the &lt;success/&gt; element.</t>
           </list>
         </t>
         <t>For the sake of protocol efficiency, it is RECOMMENDED for XMPP clients and servers to use these methods, however they MUST support the less efficient modes as well.</t>
@@ -2979,9 +2981,9 @@ E: <message
           <figure>
             <artwork><![CDATA[
 C: <message
-       from='northumberland@shakespeare.lit'
+       from='northumberland@shakespeare.example'
        id='richard2-4.1.247'
-       to='kingrichard@royalty.england.lit'>
+       to='kingrichard@royalty.england.example'>
      <body>My lord, dispatch; read o'er these articles.</body>
      <amp xmlns='http://jabber.org/protocol/amp'>
        <rule action='notify' 
@@ -3108,6 +3110,10 @@ S: <message from='romeo@example.net'
       </list></t>
     </section>
 
+    <section title="Stanza Size" anchor="stanza-size">
+      <t>XMPP is optimized for the exchange of relatively large numbers of relatively small stanzas.  A client or server MAY enforce a maximum stanza size.  The maximum stanza size MUST NOT be smaller than 10000 bytes, from the opening "&lt;" character to the closing "&gt;" character.  If an entity receives a stanza that exceeds its maximum stanza size, it MUST return a &lt;not-acceptable/&gt; stanza error or a &lt;policy-violation/&gt; stream error.</t>
+    </section>
+
   </section>
 
   <section title="Examples" anchor="examples">
@@ -3217,7 +3223,7 @@ C: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
         <figure>
           <preamble>Step 10: Server informs client of success:</preamble>
           <artwork><![CDATA[
-S: <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>=</success>
+S: <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
           ]]></artwork>
         </figure>
         <figure>
@@ -3690,6 +3696,7 @@ S2: </stream:stream>
 
     <section title="Well-Formedness" anchor="xml-wellformed">
       <t>An XMPP entity MUST NOT accept XML data from another entity if that data is not well-formed in accordance with both the definition of "well-formed" in Section 2.1 of <xref target='XML'/> and the definition of "namespace-well-formed" in Section 7 of <xref target='XML-NAMES'/>.  If an XMPP entity receives XML data that is not well-formed, it MUST return an &lt;xml-not-well-formed/&gt; stream error and close the stream over which the data was received.</t>
+      <t><list style='empty'><t>Note: Because this restriction was underspecified in an earlier revision of this specification, it is possible that implementations based on that revision will send data that does not comply with the restriction; an entity SHOULD be liberal in accepting such data.</t></list></t>
     </section>
 
     <section title="Validation" anchor="xml-validation">
@@ -3780,7 +3787,7 @@ _xmpp-server._tcp.im.example.com. 400 IN SRV 20 0 5269 x.example.com
                 <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-client.im.example.com"</t>
                 <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-server.im.example.com"</t>
                 <t>A dNSName containing an ASCII string of "im.example.com"</t>
-                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF8 string of: "im.example.com"</t>
+                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF-8 string of: "im.example.com"</t>
                 <t>A CN containing an ASCII string of "Example Products, Inc."</t>
               </list>
             </t>
@@ -3802,8 +3809,8 @@ _xmpp-server._tcp.example.net. 68400 IN SRV 20 0 5269 x2.example.net.
                 <t>An otherName type of SRVName (id-on-dnsSRV) containing an IA5String (ASCII) string of: "_xmpp-server.chat.example.net"</t>
                 <t>A dNSName containing an ASCII string of "example.net"</t>
                 <t>A dNSName containing an ASCII string of "*.example.net"</t>
-                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF8 string of: "example.net"</t>
-                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF8 string of: "chat.example.net"</t>
+                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF-8 string of: "example.net"</t>
+                <t>An otherName type of XmppAddr (id-on-xmppAddr) containing a UTF-8 string of: "chat.example.net"</t>
                 <t>A CN containing an ASCII string of "Example Internet Services"</t>
               </list>
             </t>
@@ -3918,7 +3925,7 @@ XmppAddr ::= UTF8String
         <t hangText='for both confidentiality and authentication:'>TLS plus the SASL PLAIN mechanism (See <xref target='PLAIN'/>) for password-based authentication and TLS plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) for non-password-based authentication (using the TLS_RSA_WITH_3DES_EDE_CBC_SHA cipher supporting peer certificates)</t>
       </list></t>
       <t>Naturally, implementations MAY support other ciphers with TLS and MAY support other SASL mechanisms.</t>
-      <t><list style='empty'><t>Note: The use of TLS plus SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication.  For backward-compatibility, implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.</t></list></t>
+      <t><list style='empty'><t>Note: The use of TLS plus SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication.  For backward-compatibility, implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.  Refer to <xref target='PLAIN'/> for important security considerations related to the SASL PLAIN mechanism.</t></list></t>
     </section>
     <section title="Firewalls" anchor="security-firewalls">
       <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
@@ -4074,32 +4081,17 @@ XmppAddr ::= UTF8String
 
 <reference anchor='ABNF'>
 <front>
-<title abbrev='ABNF for Syntax Specifications'>Augmented BNF for Syntax Specifications: ABNF</title>
-<author initials='D.H.' surname='Crocker' fullname='David H.  Crocker'>
-<organization>Internet Mail Consortium</organization>
-<address>
-<postal>
-<street>675 Spruce Dr.</street>
-<city>Sunnyvale</city>
-<region>CA</region>
-<code>94086</code>
-<country>US</country></postal>
-<phone>+1 408 246 8253</phone>
-<facsimile>+1 408 249 6205</facsimile>
-<email>dcrocker@bbiw.net</email></address></author>
-<author initials='P.' surname='Overell' fullname='Paul Overell'>
-<organization>THUS plc.</organization>
-<address>
-<postal>
-<street>1/3 Berkeley Square</street>
-<street>99 Berkeley Street</street>
-<city>Glasgow</city>
-<code>G3 7HR</code>
-<country>UK</country></postal>
-<email>paulo@turnpike.com</email></address></author>
-<date month='October' year='2005' /></front>
-<seriesInfo name='RFC' value='4234' />
-<format type='TXT' octets='26351' target='ftp://ftp.isi.edu/in-notes/rfc4234.txt' />
+<title>Augmented BNF for Syntax Specifications: ABNF</title>
+<author initials='D.' surname='Crocker' fullname='D. Crocker'>
+<organization /></author>
+<author initials='P.' surname='Overell' fullname='P. Overell'>
+<organization /></author>
+<date year='2008' month='January' />
+<abstract>
+<t>Internet technical specifications often need to define a formal syntax.  Over the years, a modified version of Backus-Naur Form (BNF), called Augmented BNF (ABNF), has been popular among many Internet specifications.  The current specification documents ABNF.  It balances compactness and simplicity with reasonable representational power.  The differences between standard BNF and ABNF involve naming rules, repetition, alternatives, order-independence, and value ranges.  This specification also supplies additional rule definitions and encoding for a core lexical analyzer of the type common to several Internet specifications. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='STD' value='68' />
+<seriesInfo name='RFC' value='5234' />
+<format type='TXT' octets='26359' target='ftp://ftp.isi.edu/in-notes/rfc5234.txt' />
 </reference>
 
 <reference anchor="BASE64">
@@ -4213,20 +4205,6 @@ XmppAddr ::= UTF8String
 <format type='TXT' octets='51943' target='ftp://ftp.isi.edu/in-notes/rfc3490.txt' />
 </reference>
 
-<reference anchor='IPv6'>
-<front>
-<title>IP Version 6 Addressing Architecture</title>
-<author initials='R.' surname='Hinden' fullname='R. Hinden'>
-<organization /></author>
-<author initials='S.' surname='Deering' fullname='S. Deering'>
-<organization /></author>
-<date year='2006' month='February' />
-<abstract>
-<t>This specification defines the addressing architecture of the IP Version 6 (IPv6) protocol. The document includes the IPv6 addressing model, text representations of IPv6 addresses, definition of IPv6 unicast addresses, anycast addresses, and multicast addresses, and an IPv6 node's required addresses.&lt;/t>&lt;t> This document obsoletes RFC 3513, "IP Version 6 Addressing Architecture". [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='4291' />
-<format type='TXT' octets='52897' target='ftp://ftp.isi.edu/in-notes/rfc4291.txt' />
-</reference>
-
 <reference anchor="LANGTAGS">
 <front>
 <title>Tags for Identifying Languages</title>
@@ -4281,50 +4259,6 @@ XmppAddr ::= UTF8String
 <seriesInfo name='BCP' value='106' />
 <seriesInfo name='RFC' value='4086' />
 <format type='TXT' octets='114321' target='ftp://ftp.isi.edu/in-notes/rfc4086.txt' />
-</reference>
-
-<reference anchor='RFC2373'>
-<front>
-<title abbrev='IPv6 Addressing'>IP Version 6 Addressing Architecture</title>
-<author initials='R.M.' surname='Hinden' fullname='Robert M. Hinden'>
-<organization>Nokia</organization>
-<address>
-<postal>
-<street>232 Java Drive</street>
-<street>Sunnyvale</street>
-<street>CA 94089</street>
-<country>USA</country></postal>
-<phone>+1 408 990-2004</phone>
-<facsimile>+1 408 743-5677</facsimile>
-<email>hinden@iprg.nokia.com</email></address></author>
-<author initials='S.E.' surname='Deering' fullname='Stephen E. Deering'>
-<organization>Cisco Systems, Inc.</organization>
-<address>
-<postal>
-<street>170 West Tasman Drive</street>
-<street>San Jose</street>
-<street>CA 95134-1706</street>
-<country>USA</country></postal>
-<phone>+1 408 527-8213</phone>
-<facsimile>+1 408 527-8254</facsimile>
-<email>deering@cisco.com</email></address></author>
-<date year='1998' month='July' />
-<area>Internet</area>
-<keyword>internet protocol version 6</keyword>
-<keyword>IPv6</keyword>
-<keyword>addressing</keyword>
-<keyword>multicast</keyword>
-<abstract>
-<t>
-   This specification defines the addressing architecture of the IP
-   Version 6 protocol .  The document includes the IPv6 addressing
-   model, text representations of IPv6 addresses, definition of IPv6
-   unicast addresses, anycast addresses, and multicast addresses, and an
-   IPv6 node&apos;s required addresses.
-</t></abstract></front>
-<seriesInfo name='RFC' value='2373' />
-<format type='TXT' octets='52526' target='ftp://ftp.isi.edu/in-notes/rfc2373.txt' />
-<format type='XML' octets='55063' target='http://xml.resource.org/public/rfc/xml/rfc2373.xml' />
 </reference>
 
 <reference anchor="SASL">
@@ -4519,6 +4453,77 @@ XmppAddr ::= UTF8String
 <format type='XML' octets='62848' target='http://xml.resource.org/public/rfc/xml/rfc4122.xml' />
 </reference>
 
+<reference anchor='URI'>
+<front>
+<title abbrev='URI Generic Syntax'>Uniform Resource Identifier (URI): Generic Syntax</title>
+<author initials='T.' surname='Berners-Lee' fullname='Tim Berners-Lee'>
+<organization abbrev='W3C/MIT'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>Massachusetts Institute of Technology</street>
+<street>77 Massachusetts Avenue</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code>
+<country>USA</country></postal>
+<phone>+1-617-253-5702</phone>
+<facsimile>+1-617-258-5999</facsimile>
+<email>timbl@w3.org</email>
+<uri>http://www.w3.org/People/Berners-Lee/</uri></address></author>
+<author initials='R.' surname='Fielding' fullname='Roy T. Fielding'>
+<organization abbrev='Day Software'>Day Software</organization>
+<address>
+<postal>
+<street>5251 California Ave., Suite 110</street>
+<city>Irvine</city>
+<region>CA</region>
+<code>92617</code>
+<country>USA</country></postal>
+<phone>+1-949-679-2960</phone>
+<facsimile>+1-949-679-2972</facsimile>
+<email>fielding@gbiv.com</email>
+<uri>http://roy.gbiv.com/</uri></address></author>
+<author initials='L.' surname='Masinter' fullname='Larry Masinter'>
+<organization abbrev='Adobe Systems'>Adobe Systems Incorporated</organization>
+<address>
+<postal>
+<street>345 Park Ave</street>
+<city>San Jose</city>
+<region>CA</region>
+<code>95110</code>
+<country>USA</country></postal>
+<phone>+1-408-536-3024</phone>
+<email>LMM@acm.org</email>
+<uri>http://larry.masinter.net/</uri></address></author>
+<date year='2005' month='January' />
+<area>Applications</area>
+<keyword>uniform resource identifier</keyword>
+<keyword>URI</keyword>
+<keyword>URL</keyword>
+<keyword>URN</keyword>
+<keyword>WWW</keyword>
+<keyword>resource</keyword>
+<abstract>
+<t>
+A Uniform Resource Identifier (URI) is a compact sequence of characters
+that identifies an abstract or physical resource.  This specification
+defines the generic URI syntax and a process for resolving URI references
+that might be in relative form, along with guidelines and security
+considerations for the use of URIs on the Internet.
+The URI syntax defines a grammar that is a superset of all valid URIs,
+allowing an implementation to parse the common components of a URI
+reference without knowing the scheme-specific requirements of every
+possible identifier.  This specification does not define a generative
+grammar for URIs; that task is performed by the individual
+specifications of each URI scheme.
+</t></abstract></front>
+<seriesInfo name='STD' value='66' />
+<seriesInfo name='RFC' value='3986' />
+<format type='TXT' octets='141811' target='ftp://ftp.isi.edu/in-notes/rfc3986.txt' />
+<format type='HTML' octets='200858' target='http://xml.resource.org/public/rfc/html/rfc3986.html' />
+<format type='XML' octets='165759' target='http://xml.resource.org/public/rfc/xml/rfc3986.xml' />
+</reference>
+
 <reference anchor='X509'>
 <front>
 <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
@@ -4572,29 +4577,24 @@ XmppAddr ::= UTF8String
 </reference>
 
 <reference anchor="XML-NAMES" target="http://www.w3.org/TR/REC-xml-names">
-  <front>
-    <title>Namespaces in XML</title>
-    <author initials="T." surname="Bray" fullname="Tim Bray">
-      <organization>Textuality</organization>
-      <address>
-        <email>tbray@textuality.com</email>
-      </address>
-    </author>
-    <author initials="D." surname="Hollander" fullname="Dave Hollander">
-      <organization>Hewlett-Packard Company</organization>
-      <address>
-        <email>dmh@corp.hp.com</email>
-      </address>
-    </author>
-    <author initials="A." surname="Layman" fullname="Andrew Layman">
-      <organization>Microsoft</organization>
-      <address>
-        <email>andrewl@microsoft.com</email>
-      </address>
-    </author>
-    <date day="14" month="January" year="1999"/>
-  </front>
-  <seriesInfo name="W3C" value="REC-xml-names"/>
+<front>
+<title>Namespaces in XML 1.1 (Second Edition)</title>
+<author initials='A.' surname='Layman' fullname='Andrew Layman'>
+    <organization />
+</author>
+<author initials='D.' surname='Hollander' fullname='Dave Hollander'>
+    <organization />
+</author>
+<author initials='R.' surname='Tobin' fullname='Richard Tobin'>
+    <organization />
+</author>
+<author initials='T.' surname='Bray' fullname='Tim Bray'>
+    <organization />
+</author>
+<date month='August' day='16' year='2006' />
+</front>
+<seriesInfo name='World Wide Web Consortium Recommendation' value='REC-xml-names11-20060816' />
+<format type='HTML' target='http://www.w3.org/TR/2006/REC-xml-names11-20060816' />
 </reference>
 
     </references>
@@ -5081,96 +5081,6 @@ XmppAddr ::= UTF8String
 <date month='April' year='2001' /></front>
 <seriesInfo name='RFC' value='2821' />
 <format type='TXT' octets='192504' target='ftp://ftp.isi.edu/in-notes/rfc2821.txt' />
-</reference>
-
-<reference anchor='STD13'>
-<front>
-<title abbrev='Domain Implementation and Specification'>Domain names - implementation and specification</title>
-<author initials='P.' surname='Mockapetris' fullname='P. Mockapetris'>
-<organization>USC/ISI</organization>
-<address>
-<postal>
-<street>4676 Admiralty Way</street>
-<city>Marina del Rey</city>
-<region>CA</region>
-<code>90291</code>
-<country>US</country></postal>
-<phone>+1 213 822 1511</phone></address></author>
-<date year='1987' day='1' month='November' /></front>
-<seriesInfo name='STD' value='13' />
-<seriesInfo name='RFC' value='1035' />
-<format type='TXT' octets='125626' target='ftp://ftp.isi.edu/in-notes/rfc1035.txt' />
-</reference>
-
-<reference anchor='URI'>
-<front>
-<title abbrev='URI Generic Syntax'>Uniform Resource Identifier (URI): Generic Syntax</title>
-<author initials='T.' surname='Berners-Lee' fullname='Tim Berners-Lee'>
-<organization abbrev='W3C/MIT'>World Wide Web Consortium</organization>
-<address>
-<postal>
-<street>Massachusetts Institute of Technology</street>
-<street>77 Massachusetts Avenue</street>
-<city>Cambridge</city>
-<region>MA</region>
-<code>02139</code>
-<country>USA</country></postal>
-<phone>+1-617-253-5702</phone>
-<facsimile>+1-617-258-5999</facsimile>
-<email>timbl@w3.org</email>
-<uri>http://www.w3.org/People/Berners-Lee/</uri></address></author>
-<author initials='R.' surname='Fielding' fullname='Roy T. Fielding'>
-<organization abbrev='Day Software'>Day Software</organization>
-<address>
-<postal>
-<street>5251 California Ave., Suite 110</street>
-<city>Irvine</city>
-<region>CA</region>
-<code>92617</code>
-<country>USA</country></postal>
-<phone>+1-949-679-2960</phone>
-<facsimile>+1-949-679-2972</facsimile>
-<email>fielding@gbiv.com</email>
-<uri>http://roy.gbiv.com/</uri></address></author>
-<author initials='L.' surname='Masinter' fullname='Larry Masinter'>
-<organization abbrev='Adobe Systems'>Adobe Systems Incorporated</organization>
-<address>
-<postal>
-<street>345 Park Ave</street>
-<city>San Jose</city>
-<region>CA</region>
-<code>95110</code>
-<country>USA</country></postal>
-<phone>+1-408-536-3024</phone>
-<email>LMM@acm.org</email>
-<uri>http://larry.masinter.net/</uri></address></author>
-<date year='2005' month='January' />
-<area>Applications</area>
-<keyword>uniform resource identifier</keyword>
-<keyword>URI</keyword>
-<keyword>URL</keyword>
-<keyword>URN</keyword>
-<keyword>WWW</keyword>
-<keyword>resource</keyword>
-<abstract>
-<t>
-A Uniform Resource Identifier (URI) is a compact sequence of characters
-that identifies an abstract or physical resource.  This specification
-defines the generic URI syntax and a process for resolving URI references
-that might be in relative form, along with guidelines and security
-considerations for the use of URIs on the Internet.
-The URI syntax defines a grammar that is a superset of all valid URIs,
-allowing an implementation to parse the common components of a URI
-reference without knowing the scheme-specific requirements of every
-possible identifier.  This specification does not define a generative
-grammar for URIs; that task is performed by the individual
-specifications of each URI scheme.
-</t></abstract></front>
-<seriesInfo name='STD' value='66' />
-<seriesInfo name='RFC' value='3986' />
-<format type='TXT' octets='141811' target='ftp://ftp.isi.edu/in-notes/rfc3986.txt' />
-<format type='HTML' octets='200858' target='http://xml.resource.org/public/rfc/html/rfc3986.html' />
-<format type='XML' octets='165759' target='http://xml.resource.org/public/rfc/xml/rfc3986.xml' />
 </reference>
 
 <reference anchor='URN-OID'>
@@ -6114,7 +6024,7 @@ specifications of each URI scheme.
     </section>
 
     <section title="Contact Addresses" anchor="contact">
-      <t>Consistent with <xref target='MAILBOXES'/>, an organization that offers an XMPP service SHOULD provide an Internet mailbox of "XMPP" for inquiries related to that service, where the host portion of the resulting mailto URI MUST be the organization's domain, not the domain of the XMPP service itself (e.g., the XMPP service might be offered at im.example.com but the Internet mailbox would be &lt;xmpp.example.com&gt;).</t>
+      <t>Consistent with <xref target='MAILBOXES'/>, an organization that offers an XMPP service SHOULD provide an Internet mailbox of "XMPP" for inquiries related to that service, where the host portion of the resulting mailto URI MUST be the organization's domain, not the domain of the XMPP service itself (e.g., the XMPP service might be offered at im.example.com but the Internet mailbox would be &lt;xmpp@example.com&gt;).</t>
     </section>
 
     <section title="Account Provisioning" anchor="provisioning">
