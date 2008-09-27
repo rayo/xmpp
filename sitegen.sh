@@ -14,6 +14,7 @@
 basepath=/var/www/vhosts/xmpp.org
 
 cp about/*.* $basepath/about/
+cp ca/*.* $basepath/ca/
 cp council/*.* $basepath/council/
 cp council/agendas/*.* $basepath/council/agendas/
 cp council/members/*.* $basepath/council/members/
