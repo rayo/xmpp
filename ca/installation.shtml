@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC '-//W3C//DTD XHTML 1.0 Strict//EN' 'http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd'>
+<html xmlns='http://www.w3.org/1999/xhtml' xml:lang='en' lang='en'>
+<head>
+<title>XMPP ICA: Certificate Installation HOWTO</title>
+<!--#include virtual="/includes/head.txt" -->
+<h2>XMPP ICA: Certificate Installation HOWTO</h2>
+<p>Once you have obtained a domain certificate from the <a href='/ca/'>XMPP ICA</a> as explained in the <a href='issuance.shtml'>Certificate Issuance HOWTO</a>, proceed as follows to install your certificate.</p>
+<ol>
+  <li><p>Back up your "domain.csr", "domain.crt", and "domain.key" files and save them to a secure location.</p></li>
+  <li><p>Download the <a href='http://cert.startcom.org/ca.crt'>StartCom root certificate</a> ("ca.crt") and the <a href='http://cert.startcom.org/sub.class1.xmpp.ca.crt'>ICA certificate</a> ("sub.class1.xmpp.ca.crt").</p></li>
+  <li>
+    <p>Decrypt your "domain.key" file using the password you provided during certificate creation. You can do this using OpenSSL with the following command:</p>
+    <pre>openssl rsa -in domain.key -out domain.key</pre>
+  </li>
+  <li>
+    <p>Concatenate your "domain.crt" file, the ICA certificate, and your decrypted "domain.key" so that your server can present the entire certificate chain:</p>
+    <pre>cat domain.crt sub.class1.xmpp.ca.crt domain.key &gt; domain.crt</pre>
+    <p>Your "domain.crt" file should look something like this:</p>
+    <pre>
+-----BEGIN CERTIFICATE-----
+beginsomelongstringoflettersandnumbershere
+...
+endsomelongstringoflettersandnumbershere
+-----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+beginsomelongstringoflettersandnumbershere
+...
+endsomelongstringoflettersandnumbershere
+-----END CERTIFICATE-----
+-----BEGIN RSA PRIVATE KEY-----
+beginsomelongstringoflettersandnumbershere
+...
+endsomelongstringoflettersandnumbershere
+-----END RSA PRIVATE KEY-----
+    </pre>
+  </li>
+  <li><p>If your XMPP server software is written in Java, you will need to enable large key sizes by installing the "Java Cryptography Extension (JCE) Unlimited Strength Jurisdiction Policy Files" available at &lt;<a href='http://java.sun.com/javase/downloads/index.jsp'>http://java.sun.com/javase/downloads/index.jsp</a>&gt;.</p></li>
+  <li><p>Copy the "domain.crt" file to the machine where you run your XMPP server.</p></li>
+  <li><p>Check the file permissions to make sure that the "domain.crt" file is readable by your server software.</p></li>
+  <li><p>Configure your server software for SSL/TLS communication in accordance with its documentation.</p></li>
+  <li><p>Restart your server software.</p></li>
+  <li>
+    <p>Test the results by logging in using a recent release of any standard XMPP client. If you are running the legacy SSL-only port 5223, you also test by downloading the <a href="http://cert.startcom.org/ca.crt">StartCom root certificate</a> to your local machine and running the following OpenSSL command in the directory where you downloaded the root certificate:</p>
+    <pre>openssl s_client -connect your.server.tld:5223 -CAfile ca.crt</pre>
+  </li>
+</ol>
+<p>If you have any questions throughout this process, feel free to contact <a href='https://stpeter.im/?page_id=1968'>Peter Saint-Andre</a> via email or IM.</p>
+<!--#include virtual="/includes/foot.txt" -->
