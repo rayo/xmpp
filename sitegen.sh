@@ -28,6 +28,7 @@ cp non-free/*.gif $basepath/images/
 cp non-free/*.jpg $basepath/images/
 cp non-free/*.png $basepath/images/
 cp schemas/*.* $basepath/schemas/
+cp software/*.* $basepath/software/
 cp sorttable.js $basepath/
 cp summit/*.* $basepath/summit/
 cp tech/*.* $basepath/tech/
