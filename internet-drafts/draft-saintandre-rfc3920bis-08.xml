@@ -233,8 +233,8 @@ romeo@example.net           juliet@im.example.com
       <t>Before opening the TCP connection, the initiating entity first MUST resolve the Domain Name System (DNS) hostname associated with the receiving entity and determine the appropriate TCP port for communication with the receiving entity.  The process is:</t>
       <t>
         <list style='numbers'>
-          <t>Attempt to resolve the hostname using (a) a <xref target="DNS-SRV"/> Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections) and (b) a Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.net." or "_xmpp-server._tcp.im.example.com.".  The result of the SRV lookup will be one or more combinations of a port and hostname; the initiating entity MUST resolve the returned hostnames according to returned SRV record weight.  The client uses the IP address(es) from the first successfully resolved hostname (with the corresponding port number returned by the SRV lookup) in order to connect to the server.  If the client fails to connect using one of the IP addresses, the client uses the next resolved IP address to connect.  If the client fails to connect using all resolved IP addresses, then the client repeats the process of resolution and connection for the next hostname returned by the SRV lookup.</t>
-           <t>If the SRV lookup fails, the fallback SHOULD be a normal IPv4 or IPv6 address record resolution to determine the IP address, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.</t>
+          <t>Attempt to resolve the hostname using (a) a <xref target="DNS-SRV"/> Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections) and (b) a Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.net." or "_xmpp-server._tcp.im.example.com.".  The result of the SRV lookup will be one or more combinations of a port and hostname, which hostnames the initiating entity MUST resolve according to returned SRV record weight (if the result of the SRV lookup is a single RR with a Target of ".", i.e. the root domain, the initiating entity MUST abort SRV processing but SHOULD attempt a fallback resolution as described below).  The initiating entity uses the IP address(es) from the first successfully resolved hostname (with the corresponding port number returned by the SRV lookup) in order to connect to the receiving entity.  If the initiating entity fails to connect using one of the IP addresses, the initiating entity uses the next resolved IP address to connect.  If the initiating entity fails to connect using all resolved IP addresses, then the initiating entity repeats the process of resolution and connection for the next hostname returned by the SRV lookup.</t>
+           <t>If the SRV lookup aborts or fails, the fallback SHOULD be a normal IPv4 or IPv6 address record resolution to determine the IP address, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.</t>
            <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
         </list>
       </t>
@@ -513,8 +513,8 @@ R: <stream:features>
    </stream:features>
         ]]></artwork>
       </figure>
-      <t>Stream features are used mainly to advertise <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="bind">resource binding</xref>; however, stream features also can be used to advertise features associated with various XMPP extensions.  If an entity does not understand or support a feature that has been advertised, it MUST silently ignore the associated feature advertisement.</t>
-      <t>If it is necessary for a feature to be successfully negotiated before the initiating entity is allowed to proceed with the sending of XML stanzas or with further steps of the stream negotiation, the advertisement of that feature MUST include an empty &lt;required/&gt; child element.</t>
+      <t>Stream features are used mainly to advertise <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, and <xref target="bind">resource binding</xref>; however, stream features also can be used to advertise features associated with various XMPP extensions.</t>
+      <t>If it is mandatory for a feature to be successfully negotiated before the initiating entity will be allowed to proceed with the sending of XML stanzas or with further steps of the stream negotiation, the advertisement of that feature SHOULD include an empty &lt;required/&gt; child element but MAY include neither a &lt;required/&gt; element not an &lt;optional/&gt; element (i.e., features default to required).</t>
       <figure>
         <artwork><![CDATA[
 R: <stream:features>
@@ -534,6 +534,7 @@ R: <stream:features>
    </stream:features>
         ]]></artwork>
       </figure>
+      <t>If an entity does not understand or support a feature that has been advertised, it MUST still inspect the feature advertisement to determine if negotiation of the feature is mandatory.  If negotiation of an unsupported feature is mandatory (as determined by inclusion of the &lt;required/&gt; child element or the absence of an &lt;optional/&gt; child element), then the entity MUST abort the stream negotiation process.  If negotiation of an unsupported feature is discretionary (as determined by inclusion of the &lt;optional/&gt; child element or the absence of a child element), the entity MUST silently ignore the associated feature advertisement and proceed with the stream negotiation process.</t>
       <t><list style='empty'><t>Note: Implementations based on an earlier revision of this specification do not include the &lt;optional/&gt; child element and they include the &lt;required/&gt; child element only in the case of the STARTTLS feature.  Entities MUST accept stream feature advertisements without the child elements, and SHOULD consider consider negotiation of such features to be discretionary.</t></list></t>
       <t>If it is necessary for a feature to be successfully negotiated before the initiating entity is allowed to proceed with the sending a non-security-related feature or with further steps of the stream negotiation, the receiving entity SHOULD NOT advertise any other stream features until the mandatory feature has been successfully negotiated; however, if the mandatory feature is security-critical (e.g., STARTTLS or SASL) then the receiving entity MUST NOT advertise any other stream features until the security-critical feature has been successfully negotiated.</t>
       <t>The order of child elements contained in any given &lt;features/&gt; element is not significant.</t>
@@ -1591,8 +1592,7 @@ R: <stream:features>
         </t>
       </section>
       <section title="Security Layers" anchor="sasl-rules-layers">
-        <t>Upon successful SASL negotiation that involves negotiation of a security layer, the initiating entity MUST discard any knowledge obtained from the receiving entity that was not obtained via the SASL negotiation.</t>
-        <t>Upon successful SASL negotiation that involves negotiation of a security layer, the receiving entity MUST discard any knowledge obtained from the initiating entity that was not obtained via the SASL negotiation.  The receiving entity MUST also include an updated list of SASL mechanisms with the stream features it sends after SASL negotiation so that the initiating entity is able to detect any changes to the list of mechanisms supported by the receiving entity.</t>
+        <t>Upon successful SASL negotiation that involves negotiation of a security layer, both the initiating entity and the receiving MUST discard any application-layer state (i.e, state from the XMPP layer, excluding state from the TLS negotiation or SASL negotiation).</t>
       </section>
       <section title="Simple Usernames" anchor="sasl-rules-username">
         <t>It is possible that provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms).  The simple username provided during authentication MUST be as follows:</t>
@@ -1774,21 +1774,6 @@ R: <stream:stream
         <figure>
           <artwork><![CDATA[
 R: <stream:features>
-     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
-       <required/>
-     </bind>
-   </stream:features>
-          ]]></artwork>
-        </figure>
-        <t>As noted, if the successful SASL negotiation involved negotiation of a security layer, the receiving entity MUST also include an updated list of SASL mechanisms with the stream features so that the initiating entity is able to detect any changes to the list of mechanisms supported by the receiving entity.</t>
-        <figure>
-          <artwork><![CDATA[
-R: <stream:features>
-     <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-       <mechanism>EXTERNAL</mechanism>
-       <mechanism>PLAIN</mechanism>
-       <optional/>
-     </mechanisms>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <required/>
      </bind>
@@ -3706,7 +3691,7 @@ S2: </stream:stream>
       </t>
       <t>The following rules apply.</t>
       <t>An XMPP entity MUST NOT generate data that is not XML-well-formed.  An XMPP entity MUST NOT accept data that is not XML-well-formed; instead it MUST return an &lt;xml-not-well-formed/&gt; stream error and close the stream over which the data was received.</t>
-      <t>An XMPP entity MUST NOT generate data that is not namespace-well-formed.  An XMPP server SHOULD NOT route or deliver data that is not namespace-well-formed, but MUST NOT return a stream error in response to the receipt of such data.</t>
+      <t>An XMPP entity MUST NOT generate data that is not namespace-well-formed.  An XMPP server SHOULD NOT route or deliver data that is not namespace-well-formed, and SHOULD return a stanza error of &lt;not-acceptable/&ggt; or a stream error of &lt;xml-not-well-formed/&gt; in response to the receipt of such data.</t>
       <t><list style='empty'><t>Note: Because these restrictions were underspecified in an earlier revision of this specification, it is possible that implementations based on that revision will send data that does not comply with the restrictions; an entity SHOULD be liberal in accepting such data.</t></list></t>
     </section>
 
@@ -3725,6 +3710,10 @@ S2: </stream:stream>
 
     <section title="Whitespace" anchor="xml-whitespace">
       <t>Except where explicitly disallowed (e.g., during <xref target='tls'>TLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref>), either entity MAY send whitespace within the root stream element as separators between XML stanzas or between any other first-level elements sent over the stream.  One common use for sending such whitespace is explained under <xref target='streams-close-idle'/>.</t>
+    </section>
+
+    <section title="XML Versions" anchor="xml-versions">
+      <t>XMPP is an application profile of XML 1.0.  A future version of XMPP might be defined in terms of higher versions of XML, but this specification addresses XML 1.0 only.</t>
     </section>
 
   </section>
@@ -6053,7 +6042,6 @@ specifications of each URI scheme.
           <t>More fully specified stream closing handshake.</t>
           <t>Specified recommended stream reconnection algorithm.</t>
           <t>Specified return of &lt;restricted-xml/&gt; stream error in response to receipt of prohibited XML features.</t> 
-          <t>Specified that SASL mechanisms must be sent both before and after negotiation of SASL security layers.</t>
           <t>Specified that TLS plus SASL PLAIN is a mandatory-to-implement technology for client-to-server connections, since implementation of SASL EXTERNAL is uncommon in XMPP clients, in part because underlying security features such as end-user X.509 certificates are not yet widely deployed.</t>
           <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>More fully specified binding of multiple resources to the same stream.</t>
