@@ -22,6 +22,7 @@ cp extensions/*html $basepath/extensions/
 cp images/*.* $basepath/images/
 cp includes/*.* $basepath/includes/
 cp index.shtml $basepath/
+cp favicon.ico $basepath/
 cp interop/*.* $basepath/interop/
 cp non-free/gps_datum.html $basepath/extensions/
 cp non-free/*.gif $basepath/images/
