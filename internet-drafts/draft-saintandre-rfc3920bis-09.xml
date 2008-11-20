@@ -16,7 +16,7 @@
         <uri>https://stpeter.im/</uri>
       </address>
     </author>
-    <date year="2008" month="October" day="16"/>
+    <date year="2008" month="November" day="20"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -3898,9 +3898,6 @@ XmppAddr ::= UTF8String
       </list></t>
       <t>The rationale for this order is that <xref target="TCP"/> is the base connection layer used by all of the protocols stacked on top of TCP, <xref target="TLS"/> is often provided at the operating system layer, <xref target="SASL"/> is often provided at the application layer, and XMPP is the application itself.</t>
     </section>
-    <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
-      <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings.  However, if a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
-    </section>
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
       <t>At a minimum, all implementations MUST support the following mechanisms:</t>
       <t><list style='hanging'>
@@ -3910,8 +3907,11 @@ XmppAddr ::= UTF8String
       <t>Naturally, implementations MAY support other ciphers with TLS and MAY support other SASL mechanisms.</t>
       <t><list style='empty'><t>Note: The use of TLS plus SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication.  For backward-compatibility, implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.  Refer to <xref target='PLAIN'/> for important security considerations related to the SASL PLAIN mechanism.</t></list></t>
     </section>
-    <section title="Firewalls" anchor="security-firewalls">
-      <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
+    <section title="SASL Downgrade Attacks" anchor="security-downgrade">
+      <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
+    </section>
+    <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
+      <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings.  However, if a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
     </section>
     <section title="Use of base64 in SASL" anchor="security-base64">
       <t>Both the client and the server MUST verify any base64 data received during <xref target='sasl'>SASL negotiation</xref>.  An implementation MUST reject (not ignore) any characters that are not explicitly allowed by the base64 alphabet; this helps to guard against creation of a covert channel that could be used to "leak" information.</t>
@@ -3938,6 +3938,9 @@ XmppAddr ::= UTF8String
         <t>Mimicked addresses that involve characters from only one character set or from the character set typically employed by a particular user are not easy to combat (e.g., the simple typejacking attack previously described, which relies on a surface similarity between the characters "1" and "l" in some presentations).  However, mimicked addresses that involve characters from more than one character set, or from a character set not typically employed by a particular user, can be mitigated somewhat through intelligent presentation.  In particular, every human user of an XMPP technology presumably has a preferred language (or, in some cases, a small set of preferred languages), which an XMPP application SHOULD gather either explicitly from the user or implicitly via the operating system of the user's device.  Furthermore, every language has a range (or a small set of ranges) of characters normally used to represent that language in textual form.  Therefore, an XMPP application SHOULD warn the user when presenting a JID that uses characters outside the normal range of the user's preferred language(s).  This recommendation is not intended to discourage communication across language communities; instead, it recognizes the existence of such language communities and encourages due caution when presenting unfamiliar character sets to human users.</t>
         <t>For more detailed recommendations regarding prevention of address mimicking in XMPP systems, refer to <xref target='XEP-0165'/>.</t>
       </section>
+    </section>
+    <section title="Firewalls" anchor="security-firewalls">
+      <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
     </section>
     <section title="Denial of Service" anchor="security-dos">
       <t><xref target='DOS'/> defines denial of service as follows:</t>
