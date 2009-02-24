@@ -1,0 +1,258 @@
+<?xml version="1.0"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+<?rfc symrefs="yes"?>
+<?rfc compact="yes"?>
+<?rfc strict="yes"?>
+<rfc category="std" docName="draft-meyer-xmpp-sasl-cert-management-00" ipr="full3978">
+  
+  <front>
+    <title abbrev='XMPP-SASL-EXTERNAL'>Client Certificate Management for XMPP SASL EXTERNAL</title>
+    <author initials="D." surname="Meyer" fullname="D. Meyer">
+      <organization>TZI, Universitaet Bremen</organization>
+      <address>
+	<email>dmeyer@tzi.de</email>
+      </address>
+    </author>
+    <date year="2009" month="February" day="24"/>
+    <area>Applications</area>
+    <keyword>Extensible Messaging and Presence Protocol</keyword>
+    <keyword>XMPP</keyword>
+    <keyword>Jabber</keyword>
+    <keyword>SASL</keyword>
+    <abstract>
+      <t>This document defines a method to manage client certificates that can be used with SASL External to allow clients to log in to an XMPP account without a password.</t>
+    </abstract>
+  </front>
+  
+  <middle>
+    
+    <section title="Introduction" anchor="intro">
+      <t>An XMPP client typically needs a user name and a password to log in to an XMPP server. Many clients provide a mechanism to store these credentials to automatically log in. While this practice is very user friendly, it is a security risk for some devices. Mobile devices like a mobile phone or a laptop may get stolen, providing the thief with the required password. Mobile phones are particularly insecure: providing the password on the keypad for each log in is too complicated and the risk of losing the phone is high.</t>
+      <t>A solution to this problem is to allow a client to log in without knowing the password. XMPP as specified in <xref target='XMPP-CORE'/> allows the use of any SASL mechanism (see <xref target='SASL'/>) in the authentication of XMPP entities, including the SASL EXTERNAL mechanism. <xref target='XEP-0178'/> defines the usage of X.509 certificates used in the TLS handshake.</t>
+      <t>XEP-0178 assumes that the certificates used for SASL EXTERNAL are signed by a trusted CA. This may be a problem for the average user: signing a certificate is both an expensive and a complicated procedure. If the device gets stolen, the user also needs to provide the required information to the CA to revoke the certificate, and the server needs to keep its list of revoked certificates up-to-date. The end-to-end security mechanism described in <xref target='XMPP-E2E'/> relies on self-signed certificates (although CA-issued certificates are allowed). A client capable of secure end-to-end communication already has an X.509 certificate for that purpose. The same client certificate should be used for a client to log in. Since the certificates may not be signed by a trusted CA, the server must be aware of the list of certificates that are used by the users' clients. This document describes how to manage the list of client certificates.</t>
+    </section>
+
+    <section title='Certificate Management' anchor='manage'>
+      <t>From the user's point of view the initial client configuration is the same. The user needs to provide the user name and the password for the client to connect to the XMPP server. The main difference is that the client does not store the password for later use and creates an X.509 certificate for the future. It does not matter if the certificate is self-signed or issued by a trusted third party.</t>
+      <section title='Add an X.509 Certificate' anchor='add'>
+	<t>After the client has logged in and created the certificate, it uploads the certificate to the server. The &lt;certificate/&gt; data is the X.509 certificate in DER encoding. To be included in an XML stream the data is Base64 encoded. The client also SHOULD provide a name for the certificate to make it possible for the user to manage the different client certificates.</t>
+	<figure>
+	  <artwork><![CDATA[
+    <iq type='set'
+        from='hamlet@example.com/denmark'
+        id='hf4fdf'>
+      <append xmlns='urn:xmpp:saslcert:0'>
+        <name>Mobile Client</name>
+        <certificate>
+        MIICCTCCAXKgAwIBAgIJALhU0Id6xxwQMA0GCSqGSIb3DQEBBQUAMA4xDDAKBgNV
+        BAMTA2ZvbzAeFw0wNzEyMjgyMDA1MTRaFw0wODEyMjcyMDA1MTRaMA4xDDAKBgNV
+        BAMTA2ZvbzCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA0DPcfeJzKWLGE22p
+        RMINLKr+CxqozF14DqkXkLUwGzTqYRi49yK6aebZ9ssFspTTjqa2uNpw1U32748t
+        qU6bpACWHbcC+eZ/hm5KymXBhL3Vjfb/dW0xrtxjI9JRFgrgWAyxndlNZUpN2s3D
+        hKDfVgpPSx/Zp8d/ubbARxqZZZkCAwEAAaNvMG0wHQYDVR0OBBYEFJWwFqmSRGcx
+        YXmQfdF+XBWkeML4MD4GA1UdIwQ3MDWAFJWwFqmSRGcxYXmQfdF+XBWkeML4oRKk
+        EDAOMQwwCgYDVQQDEwNmb2+CCQC4VNCHesccEDAMBgNVHRMEBTADAQH/MA0GCSqG
+        SIb3DQEBBQUAA4GBAIhlUeGZ0d0msNVxYWAXg2lRsJt9INHJQTCJMmoUeTtaRjyp
+        ffJtuopguNNBDn+MjrEp2/+zLNMahDYLXaTVmBf6zvY0hzB9Ih0kNTh23Fb5j+yK
+        QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
+        </certificate>
+      </append>
+    </iq>
+          ]]></artwork>
+	</figure>
+    <t>The server either returns an empty result or an error. From now on a client can use that certificate to authenticate the user using SASL EXTERNAL. The client does not have to store the password for future logins.</t>
+    <t>The client adding the certificate does not need to be the client using it. A user may use a client to upload a certificate for a bot. The bot creates its certificate and private key, and the user uploads the certificate to the server with a different client. After that procedure the bot can log in to the XMPP network and even participate in secure end-to-end communication without ever knowing the user's password.</t>
+    <t>An optional element &lt;no-cert-management/&gt; inside the append element indicates that a client logged in with that certificate is not allowed to add or remove certificates from the list. A server MAY allow such a client to query the list of certificates.</t>
+	<figure>
+	  <artwork><![CDATA[
+    <iq type='set'
+        from='hamlet@example.com/denmark'
+        id='4fdsi8'>
+      <append xmlns='urn:xmpp:saslcert:0'>
+        <name>Simple Bot</name>
+        <no-cert-management/>
+        <certificate>
+            ...
+        </certificate>
+      </append>
+    </iq>
+          ]]></artwork>
+	</figure>
+      </section>
+  
+      <section title='Request a list of all Certificates'>
+	<t>A user may want to get a list of all certificates that can be used for SASL EXTERNAL. The client can query the list of the items by sending a query iq stanza.</t>
+	<figure>
+	  <artwork><![CDATA[
+    <iq type='get'
+        from='hamlet@example.com/denmark'
+        id='hf7435g'>
+      <query xmlns='urn:xmpp:saslcert:0'/>
+    </iq>
+           ]]></artwork>
+	</figure>
+	<t>The server then returns the list of all known certificates including the user provided name.</t>
+	<figure>
+	  <artwork><![CDATA[
+    <iq type='result'
+        to='hamlet@example.com/denmark'
+        id='hf7435g'>
+      <query xmlns='urn:xmpp:saslcert:0'>
+        <item id='428b1358a286430f628da23fb33ddaf6e474f5c5'>
+          <name>Mobile Client</name>
+	  <certificate>
+            ...
+          </certificate>
+        </item>
+        <item id='571b23d99892f4566017426e92c377288ed6c983'>
+          <name>Simple Bot</name>
+          <no-cert-management/>
+	  <certificate>
+            ...
+          </certificate>
+        </item>
+      </query>
+    </iq>
+          ]]></artwork>
+	</figure>
+      </section>
+      <section title='Disable a Certificate'>
+	<t>A client has to create a new certification before its current one expires. After the new certificate is added to the server, it MAY want to disable the old certificate to keep the list of certificates short. Without that, the list will grow indefinitely, making the certificate handling for the user more difficult. Once a certificate is removed it can no longer be used for SASL EXTERNAL. A server MAY automatically remove expired certificates for this list.</t>
+	<figure>
+	  <artwork><![CDATA[
+    <iq type='set'
+        from='hamlet@example.com/denmark'
+        id='di5rsh'>
+      <disable xmlns='urn:xmpp:saslcert:0'/>
+        <item id='428b1358a286430f628da23fb33ddaf6e474f5c5'/>
+      </disable>
+    </iq>
+          ]]></artwork>
+	</figure>
+      </section>
+      <section title='Revoke a Certificate'>
+	<t>The user may want to revoke a certificate from a stolen or compromised device. The mechanism is similar to disabling a certificate. The difference is that if a client is logged in with that compromised certificate using SASL EXTERNAL, the server SHOULD close the stream to that client forcing a log out of the client.</t>
+	<figure>
+	  <artwork><![CDATA[
+    <iq type='set'
+        from='hamlet@example.com/denmark'
+        id='rev9g'>
+      <revoke xmlns='urn:xmpp:saslcert:0'/>
+        <item id='428b1358a286430f628da23fb33ddaf6e474f5c5'/>
+      </revoke>
+    </iq>
+          ]]></artwork>
+	</figure>
+      </section>
+    </section>
+
+    <section title='SASL EXTERNAL' anchor='sasl'>
+      <t>The protocol flow is similar to the one described in XEP-0178. Only step 9 is different: the certificate does not need to be signed by a trusted entity if the certificate was uploaded by the user. The server still MUST reject the certificate if it is expired. In a company environment the server MAY only accept signed certificates; the behavior depends on the company's security policy. A free public XMPP server MUST allow self-signed certificates and certificates signed by a CA unknown to the server.</t>
+      <t>The client certificate SHOULD include a JID as defined in sections 15.2.1.2. and 15.2.1.3. in rfc3920bis: a JID MUST be represented as an XmppAddr, i.e., as a UTF8String within an otherName entity inside the subjectAltName.</t>
+	<figure>
+	  <artwork><![CDATA[
+    subjectAltName=otherName:id-on-xmppAddr;UTF8:hamlet@example.com
+          ]]></artwork>
+	</figure>
+	<t>If the subjectAltName contains a full JID the server MUST force the client to use the given resource during resource binding. The client is only allowed to use the provided resource name. If a client with the same resource name is currently logged in and that client is not forced to use that resource name, it SHOULD be logged out by the server.</t>
+    </section>
+
+    <section title='Security Considerations' anchor="sec">
+      <section title='Stream Characteristics'>
+	<t>This specification allows the user to manipulate an alternative way to log into the server. The certificates are not required to be signed and any certificate can be used. Therefore the server MUST reject any communication described in this document if the link between client and server is not secured with both STARTTLS and SASL to prevent a man-in-the-middle to modify the certificate.</t>
+      </section>
+      <section title='Changing the Password'>
+	<t><xref target='XEP-0077'/> defines a mechanism to change the password without knowing the current one. If the server supports password change it MUST return not-authorized for clients logged in using SASL EXTERNAL and MAY include a password change form requiring the old password. If the sending client has logged in using SASL EXTERNAL and the server supports XEP-0077 password changes it returns a form to change the password. If the client has logged in with the current password, the server MAY change the password without a form as specified in XEP-0077.</t>
+	<t>If a client is allowed to change the password without knowing the current password, the additional security provided by this document is compromised</t>
+      </section>
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references title="Informative References">
+
+      <reference anchor="XMPP-CORE">
+	<front>
+	  <title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+	  <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+	    <organization />
+	  </author>
+	  <date month='October' day='5' year='2007' />
+	  <abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network- aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities. This document also specifies the format for XMPP addresses, which are fully internationalizable. This document obsoletes RFC 3920.</t></abstract>
+	</front>
+	<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3920bis-04' />
+	<format type='TXT'
+		target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3920bis-04.txt' />
+      </reference>
+
+      <reference anchor="SASL">
+	<front>
+	  <title>Simple Authentication and Security Layer (SASL)</title>
+	  <author initials='A.' surname='Melnikov' fullname='A. Melnikov'>
+	  <organization /></author>
+	  <author initials='K.' surname='Zeilenga' fullname='K. Zeilenga'>
+	  <organization /></author>
+	  <date year='2006' month='June' />
+	  <abstract>
+	<t>&lt;p>The Simple Authentication and Security Layer (SASL) is a framework for providing authentication and data security services in connection-oriented protocols via replaceable mechanisms. It provides a structured interface between protocols and mechanisms. The resulting framework allows new protocols to reuse existing mechanisms and allows old protocols to make use of new mechanisms. The framework also provides a protocol for securing subsequent protocol exchanges within a data security layer.&lt;/p>&lt;p> This document describes how a SASL mechanism is structured, describes how protocols include support for SASL, and defines the protocol for carrying a data security layer over a connection. In addition, this document defines one SASL mechanism, the EXTERNAL mechanism.&lt;/p>&lt;p> This document obsoletes RFC 2222. [STANDARDS TRACK]&lt;/p></t></abstract></front>
+	<seriesInfo name='RFC' value='4422' />
+	<format type='TXT' octets='73206' target='ftp://ftp.isi.edu/in-notes/rfc4422.txt' />
+      </reference>
+
+      <reference anchor="X509">
+	<front>
+	  <title>ITU-T Recommendation X.509 (1997 E): Information Technology - Open Systems Interconnection - The Directory: Authentication Framework</title>
+	  <author><organization /></author>
+	  <date year='1997' month='June' />
+	</front>
+      </reference>
+
+      <reference anchor="XEP-0077">
+	<front>
+	  <title>In-Band Registration</title>
+	  <author initials='P.' surname='Saint-Andre' fullname='P.  Saint-Andre'>
+	    <organization>XMPP Software Foundation</organization>
+	  </author>
+	  <date year='2006' month='January' />
+	</front>
+	<seriesInfo name="XSF XEP" value="0077"/>
+	<format type="HTML" target="http://www.xmpp.org/extensions/xep-0077.html"/>
+      </reference>
+      
+      <reference anchor="XEP-0178">
+	<front>
+	  <title>Best Practices for Use of SASL EXTERNAL with Certificates</title>
+	  <author initials='P.' surname='Saint-Andre' fullname='P. Saint-Andre'>
+	    <organization>XMPP Software Foundation</organization>
+	  </author>
+	  <author initials='P.' surname='Millard' fullname='P. Millard'>
+	    <organization/>
+	  </author>
+	  <date year='2007' month='February' />
+	</front>
+	<seriesInfo name="XSF XEP" value="0178"/>
+	<format type="HTML" target="http://www.xmpp.org/extensions/xep-0178.html"/>
+      </reference>
+      
+      <reference anchor="XMPP-E2E">
+	<front>
+	  <title>FIXME: Reference to E2E draft</title>
+	  <author initials='P.' surname='Saint-Andre' fullname='P.  Saint-Andre'>
+	    <organization>XMPP Software Foundation</organization>
+	  </author>
+	  <author initials="D." surname="Meyer" fullname="D. Meyer">
+	    <organization>TZI, Universitaet Bremen</organization>
+	  </author>
+	  <date year='2009' month='February' />
+	</front>
+      </reference>
+      
+    </references>
+    
+  </back>
+  
+</rfc>
