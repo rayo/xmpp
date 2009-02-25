@@ -5,7 +5,7 @@
 <?rfc symrefs='yes'?>
 <?rfc toc='yes'?>
 <?rfc tocdepth='2'?>
-<rfc category="std" docName='draft-hildebrand-sip-caps-00' ipr='trust200811'>
+<rfc category="std" docName='draft-hildebrand-sip-caps-00' ipr='trust200902'>
 
   <front>
     <title abbrev="SIP Capabilities Shorthand">A Shorthand Notation and Header Field for Device Capabilities in the Session Initiation Protocol (SIP)</title>
@@ -21,7 +21,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year='2009' month='January' day='26'/>
+    <date year='2009' month='February' day='24'/>
     <area>RAI</area>
     <abstract>
       <t>This document defines a shorthand notation for device capabilities data that is advertised using the format specified in RFC 3840.  The approach taken here is to define (1) a method for transforming any existing SIP capability into a Uniform Resource Name (URN) located in a new branch of the IETF URN tree, (2) an algorithm for canonical ordering, concatenation, and hashing of the URN-transformed capabilities, and (3) a header field for communicating the resulting hash.</t>
@@ -31,7 +31,15 @@
   <middle>
 
     <section title='Introduction' anchor='intro'>
-      <t>Entities that implement the Session Initiation Protocol <xref target="SIP"/> can provide information about their capabilities using the SIP OPTIONS method as well as the format defined in <xref target='RFC3840'/>.  Because full capabilities information can become verbose and is frequently duplicated across entities (e.g., user agents that deploy identical software versions), there is value in defining a "shorthand" notation for capabilities data.  This document defines such a shorthand notation.  The approach taken here is to define (1) a method for transforming any existing SIP capability into a Uniform Resource Name <xref target='URN'/> located in a new branch of the IETF URN tree, (2) an algorithm for canonical ordering, concatenation, and hashing of the URN-transformed capabilities, and (3) a header field for communicating the resulting hash.  To help ensure interoperability, this shorthand notation is compatible with the shorthand notation currently used by Extensible Messaging and Presence Protocol <xref target='XMPP'/> technologies and defined in <xref target='XEP-0115'/>.</t>
+      <t>Entities that implement the Session Initiation Protocol <xref target="SIP"/> can provide information about their capabilities using the SIP OPTIONS method as well as the format defined in <xref target='RFC3840'/>.  Because full capabilities information can become verbose and is frequently duplicated across entities (e.g., user agents that deploy identical software versions), there is value in defining a "shorthand" notation for capabilities data.  This document defines such a shorthand notation.  The approach taken here is to define the following:</t>
+      <t>
+        <list style='numbers'>
+          <t>A method for transforming any existing SIP capability into a Uniform Resource Name <xref target='URN'/>.</t>
+          <t>An algorithm for canonical ordering, concatenation, and hashing of the URN-transformed capabilities.</t>
+          <t>A header field for communicating the resulting hash.</t>
+        </list>
+      </t>
+      <t>To help ensure interoperability, this shorthand notation is compatible with the shorthand notation currently used by Extensible Messaging and Presence Protocol <xref target='XMPP'/> technologies and defined in <xref target='XEP-0115'/>.</t>
       <t>Note: The capitalized key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="TERMS">RFC 2119</xref>.</t>
     </section>
 
@@ -46,8 +54,8 @@ urn:ietf:params:xml:ns:sip-feature:[tag]:[value]
       <t>Each feature value shall be constructed according to the rules in <xref target='RFC3840'/>, with the following exceptions:</t>
       <t>
         <list style='numbers'>
-          <t>If the term of the conjunction is a disjunction, the value of the contact parameter is a quoted string, where the quoted string is a comma separated list of strings, each one derived from one of the terms in the disjunction.  However, instead of converting the quote characters containing quoted strings to the less-than sign "&lt;" and greater-than sign "&gt" as in <xref target='RFC3840'/>, each entity from the comma-separated string shall be encapsulated as a separate URN.  For example, the feature value sip.description="PC, MyClient" shall be transformed into two URNs: "urn:ietf:params:xml:ns:sip-feature:description:PC" and "urn:ietf:params:xml:ns:sip-feature:description:MyClient".</t>
-          <t>Filters shall not be converted, since a conversion algorithm for filters has not yet been defined in this specification.  (A future version of this specification could define such a transformation.)</t>
+          <t>If the term of the conjunction is a disjunction, the value of the contact parameter is a quoted string, where the quoted string is a comma separated list of strings, each one derived from one of the terms in the disjunction.  However, instead of converting the quote characters containing quoted strings to the less-than sign "&lt;" and greater-than sign "&gt" as in <xref target='RFC3840'/>, each entity from the comma-separated string shall be encapsulated as a separate URN.  As an example, the feature value sip.description="PC, MyClient" shall be transformed into two URNs: "urn:ietf:params:xml:ns:sip-feature:description:PC" and "urn:ietf:params:xml:ns:sip-feature:description:MyClient".</t>
+          <t>Filters shall not be converted, since a conversion algorithm for filters has not yet been defined in this specification.  (A future version of this specification might define such a transformation.)</t>
         </list>
       </t>
       <t>As an example, consider the feature predicate shown in <xref target='RFC3840'/>:</t>
@@ -76,18 +84,18 @@ urn:ietf:params:xml:ns:sip-feature:+rangeparam:-4:+5.125
       </figure>
     </section>
 
-    <section title='Algorithm' anchor='algorithm'>
+    <section title='Generation Algorithm' anchor='generation'>
       <t>The value of the caps hash MUST be generated according to the following method.</t>
       <t>Note: All sorting operations MUST be performed using "i;octet" collation as specified in Section 9.3 of <xref target='RFC4790'/>.</t>
       <t>
         <list style='numbers'>
           <t>Initialize an empty string S.</t>
-          <t>Generate one or more "identities" for the entity, where each identity formed of a string CATEGORY '/' [TYPE] '/' [LANG] '/' [NAME]. For user agents the CATEGORY shall be "client", the TYPE shall be "sip", the LANG shall be the value of the Accept-Language SIP header <xref target='SIP'/> if typically included by the entity, and the NAME shall be the value of the User Agent SIP header <xref target='SIP'/> if typically provided by the entity.  If any of these fields is unknown, the value of the field MUST elided but the '/' separator MUST be included; for example, for a user agent with User-Agent header value of "SIP Communicator 1.0" but no Accept-Language header value, the identity would be "client/sip//SIP Communicator 1.0".</t>
+          <t>Generate one or more "identities" for the entity, where each identity formed of a string CATEGORY '/' [TYPE] '/' [LANG] '/' [NAME]. For user agents the CATEGORY shall be "client", the TYPE shall be "sip", the LANG shall be the value of the Accept-Language SIP header <xref target='SIP'/> if typically included by the entity, and the NAME shall be the value of the User Agent SIP header <xref target='SIP'/> if typically provided by the entity.  If any of these fields is unknown, the value of the field MUST elided but the '/' separator MUST be included; as an example, for a user agent with User-Agent header value of "SIP Communicator 1.0" but no Accept-Language header value, the identity would be "client/sip//SIP Communicator 1.0".</t>
           <t>For each identity (if there are multiple identities, e.g., because the entity advertises support for multiple languages), append the 'category/type/lang/name' to S, followed by the '&lt;' character.</t>
           <t>Sort the supported capabilities (where each capability is formed using the transformation method described under <xref target='transform'/>).</t>
           <t>For each capability, append the capability to S, followed by the '&lt;' character.</t>
           <t>Ensure that S is encoded according to the UTF-8 encoding as specified in <xref target='RFC3269'/>.</t>
-          <t>Compute the verification string by hashing S using the desired hashing algorithm (e.g., SHA-1 as defined in <xref target='RFC3174'/>. The hashed data MUST be generated with binary output and encoded using Base64 as specified in Section 4 of <xref target='RFC4648'/> (note: the Base64 output MUST NOT include whitespace and MUST set padding bits to zero).  For example, the OpenSSL command for producing such output with SHA-1 is "echo -n 'S' | openssl dgst -binary -sha1 | openssl enc -nopad -base64".</t>
+          <t>Compute the verification string by hashing S using the desired hashing algorithm (e.g., SHA-1 as defined in <xref target='RFC3174'/>. The hashed data MUST be generated with binary output and encoded using Base64 as specified in Section 4 of <xref target='RFC4648'/> (note: the Base64 output MUST NOT include whitespace and MUST set padding bits to zero).  For reference, the OpenSSL command for producing such output with SHA-1 is "echo -n 'S' | openssl dgst -binary -sha1 | openssl enc -nopad -base64".</t>
         </list>
       </t>
     </section>
@@ -121,15 +129,43 @@ urn:ietf:params:xml:ns:sip-feature:+rangeparam:-4:+5.125<
       <t>When hashed in accordance with SHA-1, the output string would then result in the following verification string.</t>
       <figure>
         <artwork><![CDATA[
-FjT8lauof4Em3iouRhOtNKXC9sY=
+x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
         ]]></artwork>
       </figure>
       <t>The resulting Caps header value would then be as follows.</t>
       <figure>
         <artwork><![CDATA[
-Caps: sha-1 FjT8lauof4Em3iouRhOtNKXC9sY=
+Caps: sha-1 x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
         ]]></artwork>
       </figure>
+    </section>
+
+    <section title='Processing' anchor='processing'>
+      <t>When an entity receives a Caps header, it SHOULD proceed as follows.</t>
+      <t>
+        <list style='numbers'>
+          <t>If the value of the hash-func portion of the Caps header does not match one of the processing application's supported hash functions, do the following:
+            <list style='numbers'>
+              <t>Send a SIP OPTIONS request to the generating entity.</t>
+              <t>Receive SIP OPTIONS response from the generating entity.</t>
+              <t>Do not validate or globally cache the Caps header as described below; instead, the processing application SHOULD associate the discovered capabilities <em>only</em> with the SIP address of the generating entity.</t>
+            </list>
+          </t>
+          <t>If the value of the hash-func portion of the Caps header matches one of the processing application's supported hash functions, validate the value string by doing the following:
+            <list style='symbols'>
+              <t>Send a SIP OPTIONS request to the generating entity.</t>
+              <t>Receive a SIP OPTIONS response from the generating entity.</t>
+              <t>If the response includes more than one identity with the same category/type/lang/name, consider the entire response to be ill-formed.</t>
+              <t>If the response includes more than one capability with the same XML character data, consider the entire response to be ill-formed.</t>
+              <t>If the response includes more than one extended service discovery information form with the same FORM_TYPE or the FORM_TYPE field contains more than one &lt;value/&gt; element with different XML character data, consider the entire response to be ill-formed.</t>
+              <t>If the response includes an extended service discovery information form where the FORM_TYPE field is not of type "hidden" or the form does not include a FORM_TYPE field, ignore the form but continue processing.</t>
+              <t>If the response is considered well-formed, reconstruct the hash by using the service discovery information response to generate a local hash in accordance with the <link url='#ver-gen'>Generation Method</link>).</t>
+              <t>If the values of the received and reconstructed hashes match, the processing application MUST consider the result to be valid and SHOULD globally cache the result for all JabberIDs with which it communicates.</t>
+              <t>If the values of the received and reconstructed hashes do not match, the processing application MUST consider the result to be invalid and MUST NOT globally cache the verification string; however, it SHOULD check the service discovery identity and supported features of another generating entity who advertises that value.</t>
+            </list>
+          </t>
+        </list>
+      </t>
     </section>
 
     <section title='IANA Considerations' anchor='iana'>
