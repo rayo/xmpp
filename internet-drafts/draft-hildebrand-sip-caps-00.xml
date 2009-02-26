@@ -21,7 +21,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year='2009' month='February' day='24'/>
+    <date year='2009' month='February' day='26'/>
     <area>RAI</area>
     <abstract>
       <t>This document defines a shorthand notation for device capabilities data that is advertised using the format specified in RFC 3840.  The approach taken here is to define (1) a method for transforming any existing SIP capability into a Uniform Resource Name (URN) located in a new branch of the IETF URN tree, (2) an algorithm for canonical ordering, concatenation, and hashing of the URN-transformed capabilities, and (3) a header field for communicating the resulting hash.</t>
@@ -111,12 +111,38 @@ urn:ietf:params:xml:ns:sip-feature:+rangeparam:-4:+5.125
       </figure>
     </section>
 
+    <section title='Processing' anchor='processing'>
+      <t>When an entity receives a Caps header, it SHOULD proceed as follows.</t>
+      <t>
+        <list style='numbers'>
+          <t>If the value of the hash-func portion of the Caps header does not match one of the processing application's supported hash functions, do the following:
+            <list style='numbers'>
+              <t>Send a SIP OPTIONS request to the generating entity.</t>
+              <t>Receive SIP OPTIONS response from the generating entity.</t>
+              <t>Do not validate or globally cache the Caps header as described below; instead, the processing application SHOULD associate the discovered capabilities only with the SIP address of the generating entity.</t>
+            </list>
+          </t>
+          <t>If the value of the hash-func portion of the Caps header matches one of the processing application's supported hash functions, validate the value string by doing the following:
+            <list style='symbols'>
+              <t>Send a SIP OPTIONS request to the generating entity.</t>
+              <t>Receive a SIP OPTIONS response from the generating entity.</t>
+              <t>If the response includes more than one identity with the same category/type/lang/name, consider the entire response to be ill-formed.</t>
+              <t>If the response includes more than one capability with the same XML character data, consider the entire response to be ill-formed.</t>
+              <t>If the response is considered well-formed, reconstruct the hash by using the OPTIONS response to generate a local hash in accordance with the generation method.</t>
+              <t>If the values of the received and reconstructed hashes match, the processing application MUST consider the result to be valid and SHOULD globally cache the result for all entities with which it communicates.</t>
+              <t>If the values of the received and reconstructed hashes do not match, the processing application MUST consider the result to be invalid and MUST NOT globally cache the value of the Caps header; however, it MAY send a SIP OPTIONS request to another generating entity who advertises that same value for the Caps header.</t>
+            </list>
+          </t>
+        </list>
+      </t>
+    </section>
+
     <section title='Example' anchor='example'>
-      <t>Consider a user agent that advertises an Accept-Language header value of "en-us", a User-Agent header value of "SIP Communicator 1.0", and capabilities of sip.mobility=fixed, sip.events=presence, sip.events=message-summary, language=en, sip.description="PC", sip.newparam=TRUE, and rangeparam=-4..5125/1000.</t>
+      <t>Consider a user agent that advertises an Accept-Language header value of "en", a User-Agent header value of "SIP Communicator 1.0", and capabilities of sip.mobility=fixed, sip.events=presence, sip.events=message-summary, language=en, sip.description="PC", sip.newparam=TRUE, and rangeparam=-4..5125/1000.</t>
       <t>The output string "S" would be as follows (line breaks are not significant):</t>
       <figure>
         <artwork><![CDATA[
-client/sip/en-us/SIP Communicator 1.0<
+client/sip/en/SIP Communicator 1.0<
 urn:ietf:params:xml:ns:sip-feature:mobility:fixed<
 urn:ietf:params:xml:ns:sip-feature:events:presence<
 urn:ietf:params:xml:ns:sip-feature:events:message-summary<
@@ -138,34 +164,73 @@ x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
 Caps: sha-1 x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
         ]]></artwork>
       </figure>
-    </section>
-
-    <section title='Processing' anchor='processing'>
-      <t>When an entity receives a Caps header, it SHOULD proceed as follows.</t>
-      <t>
-        <list style='numbers'>
-          <t>If the value of the hash-func portion of the Caps header does not match one of the processing application's supported hash functions, do the following:
-            <list style='numbers'>
-              <t>Send a SIP OPTIONS request to the generating entity.</t>
-              <t>Receive SIP OPTIONS response from the generating entity.</t>
-              <t>Do not validate or globally cache the Caps header as described below; instead, the processing application SHOULD associate the discovered capabilities <em>only</em> with the SIP address of the generating entity.</t>
-            </list>
-          </t>
-          <t>If the value of the hash-func portion of the Caps header matches one of the processing application's supported hash functions, validate the value string by doing the following:
-            <list style='symbols'>
-              <t>Send a SIP OPTIONS request to the generating entity.</t>
-              <t>Receive a SIP OPTIONS response from the generating entity.</t>
-              <t>If the response includes more than one identity with the same category/type/lang/name, consider the entire response to be ill-formed.</t>
-              <t>If the response includes more than one capability with the same XML character data, consider the entire response to be ill-formed.</t>
-              <t>If the response includes more than one extended service discovery information form with the same FORM_TYPE or the FORM_TYPE field contains more than one &lt;value/&gt; element with different XML character data, consider the entire response to be ill-formed.</t>
-              <t>If the response includes an extended service discovery information form where the FORM_TYPE field is not of type "hidden" or the form does not include a FORM_TYPE field, ignore the form but continue processing.</t>
-              <t>If the response is considered well-formed, reconstruct the hash by using the service discovery information response to generate a local hash in accordance with the <link url='#ver-gen'>Generation Method</link>).</t>
-              <t>If the values of the received and reconstructed hashes match, the processing application MUST consider the result to be valid and SHOULD globally cache the result for all JabberIDs with which it communicates.</t>
-              <t>If the values of the received and reconstructed hashes do not match, the processing application MUST consider the result to be invalid and MUST NOT globally cache the verification string; however, it SHOULD check the service discovery identity and supported features of another generating entity who advertises that value.</t>
-            </list>
-          </t>
-        </list>
-      </t>
+      <t>This Caps header could be included in any outbound SIP response or notification that an entity generates, such as a SIP 200 OK or (as shown in the following example) a presence notification.</t>
+      <figure>
+        <artwork><![CDATA[
+   NOTIFY sip:192.0.2.2 SIP/2.0
+   Via: SIP/2.0/TCP x2s.example.com;branch=z9hG4bKna998sk
+   From: <sip:juliet@example.com>;tag=gh19
+   To: <sip:romeo@example.net>;tag=yt66
+   Call-ID: j4s0h4vny@example.com
+   Event: presence
+   Subscription-State: active;expires=599
+   Max-Forwards: 70
+   CSeq: 157 NOTIFY
+   Contact: <sip:sipgate.example.com;transport=tcp>
+   User-Agent: SIP Communicator 1.0
+   Caps: sha-1 x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
+   Content-Type: application/pidf+xml
+   Content-Length: 192
+   
+   <?xml version='1.0' encoding='UTF-8'?>
+   <presence xmlns='urn:ietf:params:xml:ns:pidf'
+             entity='pres:juliet@example.com'>
+     <tuple id='balcony'>
+       <status>
+         <basic>open</basic>
+       </status>
+     </tuple>
+   </presence>
+        ]]></artwork>
+      </figure>
+      <t>As described, an entity that receives a SIP message with a Caps header can then send an OPTIONS request to the generating entity.</t>
+      <figure>
+        <artwork><![CDATA[
+   OPTIONS sip:juliet@example.com SIP/2.0
+   Via: SIP/2.0/TCP x2s.example.net;branch=z9hG4bKna998sk
+   From: <sip:romeo@example.net>;tag=ffd2
+   To: <sip:juliet@example.com>
+   Call-ID: l04th3s1p@example.net
+   Max-Forwards: 70
+   CSeq: 63104 OPTIONS
+   Contact: <sip:sip.example.net;transport=tcp>
+   Accept: application/sdp
+   Content-Length: 0
+        ]]></artwork>
+      </figure>
+      <t>The generating entity would then reply.</t>
+      <figure>
+        <artwork><![CDATA[
+   SIP/2.0 200 OK
+   Via: SIP/2.0/TCP foo.example.com;branch=z9hG4bKna998sk
+        ;received=192.0.2.4
+   From: <sip:juliet@example.com>;tag=gh19
+   To: <sip:romeo@example.net>;tag=ffd2
+   Call-ID: l04th3s1p@example.net
+   CSeq: 63104 OPTIONS
+   Contact: <sip:juliet@example.com>
+     ;mobility="fixed";events="!presence,message-summary"
+     ;language="en";description="<PC>";+sip.newparam
+     ;+rangeparam="#-4:+5.125"
+   User-Agent: SIP Communicator 1.0
+   Allow: INVITE, ACK, CANCEL, OPTIONS, BYE
+   Accept: application/sdp
+   Accept-Encoding: gzip
+   Accept-Language: en
+   Caps: sha-1 x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
+        ]]></artwork>
+      </figure>
+      <t>The processing entity would then construct a capabilities hash from the capabilities communicated by the generating entity and check that the hashes match.</t>
     </section>
 
     <section title='IANA Considerations' anchor='iana'>
@@ -193,7 +258,7 @@ Caps: sha-1 x6Ra/0PZmzlFToQ7z6rPBTJ1QRA=
     </section>
 
     <section title='Security Considerations' anchor='security'>
-      <t>To follow.</t>
+      <t>Absent signing of the full SIP message (including headers), both the Caps header and the OPTIONS reply could be modified in transit.</t>
     </section>
 
   </middle>
