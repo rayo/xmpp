@@ -21,7 +21,7 @@
     <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="February" day="26"/>
+    <date year="2009" month="February" day="7"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -127,7 +127,165 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
         ]]></artwork>
       </figure>
     </section>
-  
+
+    <section title='Subsequent Login via SASL EXTERNAL' anchor='sasl'>
+      <t>The RECOMMENDED protocol flow for client-to-server use of SASL EXTERNAL with end-user certificates is as follows:</t>
+      <t>
+        <list style='numbers'>
+          <t>Client initiates stream to the server.
+            <figure>
+              <artwork><![CDATA[
+    <stream:stream 
+            xmlns:stream='http://etherx.jabber.org/streams' 
+            xmlns='jabber:client' 
+            to='example.com' 
+            version='1.0'>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Server replies with stream header.
+            <figure>
+              <artwork><![CDATA[
+    <stream:stream 
+            xmlns:stream='http://etherx.jabber.org/streams' 
+            xmlns='jabber:client' 
+            id='c2s_234' 
+            from='example.com' 
+            version='1.0'>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Server advertises TLS stream feature.
+            <figure>
+              <artwork><![CDATA[
+    <stream:features>
+      <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
+        <required/>
+      </starttls>
+    </stream:features>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Client sends STARTTLS command to the server.
+            <figure>
+              <artwork><![CDATA[
+    <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Server tells the client to proceed.
+            <figure>
+              <artwork><![CDATA[
+    <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>During TLS handshake, the server requests a certificate and the client presents its certificate.</t>
+          <t>TLS negotiation completes successfully.</t>
+          <t>Client initiates a new stream header to the server.
+            <figure>
+              <artwork><![CDATA[
+    <stream:stream 
+            xmlns:stream='http://etherx.jabber.org/streams' 
+            xmlns='jabber:client' 
+            to='example.com' 
+            version='1.0'>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Server replies with stream header.
+            <figure>
+              <artwork><![CDATA[
+    <stream:stream 
+            xmlns:stream='http://etherx.jabber.org/streams' 
+            xmlns='jabber:client' 
+            id='c2s_345' 
+            from='example.com' 
+            version='1.0'>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Server advertises SASL mechanisms. If the server expects that the client will be able to authenticate and authorize as the identity provided in the presented certificate, then the server SHOULD advertise the SASL EXTERNAL mechanism; otherwise, if presented certificate is unacceptable (e.g., because the certificate is expired, not yet valid, or revoked), the server MUST NOT offer the EXTERNAL mechanism.
+            <figure>
+              <artwork><![CDATA[
+    <stream:features>
+      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+        <mechanism>EXTERNAL<mechanism>
+        <mechanism>DIGEST-MD5<mechanism>
+        <mechanism>ANONYMOUS<mechanism>
+        <required/>
+      </mechanisms>
+    </stream:features>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Because the client presented a certificate, it SHOULD consider EXTERNAL to be its preferred SASL mechanism. If the client certificate includes only one XMPP address and the user wishes to authorize as the identity that has been authenticated by the TLS layer (i.e., the XMPP address that is contained in the client certificate), then the client SHOULD NOT include an authorization identity (i.e., the XML character data for the &lt;auth/&gt; element SHOULD be "=", indicating an empty response); if the client certificate contains more than one XMPP address or if the user wishes to authorize as another identity, then the client MUST include an authorization identity; if the client certificate contain no XMPP address, then the client SHOULD include an authorization identity (but MAY include no authorzation identity since the client may not even know its identity, instead having it assigned by the server).
+            <figure>
+              <artwork><![CDATA[
+    <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='EXTERNAL'>=</auth>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Server determines whether to allow authentication and authorization of user.
+            <list style='numbers'>
+              <t>If (1) the certificate presented by the client contains only one valid XMPP address that corresponds to a registered account on the server and (2) the client did not pass an authorization identity in the SASL exchange, then the server SHOULD allow authentication and authorization of that JID. For the purpose of client authentication and authorization with a server, a valid XMPP address is a JID encapsulated as a subjectAltName entity of type otherName with an ASN.1 Object Identifier of "id-on-xmppAddr" as specified in Section 15.2.1.3 of <xref target='rfc3920bis'/>.
+                <figure>
+                  <artwork><![CDATA[
+    <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+                  ]]></artwork>
+                </figure>
+              </t>
+              <t>If the certificate contains more than one valid XMPP address that corresponds to a registered account on the server (e.g., because the server offers virtual hosting), then the server SHOULD allow authentication and authorization of the JID specified as the authorization identity.
+                <figure>
+                  <artwork><![CDATA[
+    <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+                  ]]></artwork>
+                </figure>
+              </t>
+              <t>If no authorization identity is included, then the server MUST return a SASL failure case of &lt;invalid-authzid/&gt; and close the stream.
+                <figure>
+                  <artwork><![CDATA[
+    <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+      <invalid-authzid/>
+    </failure>
+    </stream:stream>
+                  ]]></artwork>
+                </figure>
+              </t>
+              <t>If the certificate does not contain an XMPP address, then the server MAY attempt to determine if there is a registered account associated with the user, for example by performing an LDAP lookup based on the Common Name in the certificate; if such a JID mapping is successful and the mapped JID matches the authorization identity provided, then the server SHOULD allow authentication and authorization of that mapped JID.
+                <figure>
+                  <artwork><![CDATA[
+    <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+                  ]]></artwork>
+                </figure>
+              </t>
+              <t>If JID mapping is unsuccessful, then the server MUST return a SASL failure case of &lt;not-authorized/&gt; and close the stream.
+                <figure>
+                  <artwork><![CDATA[
+    <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+      <not-authorized/>
+    </failure>
+    </stream:stream>
+                  ]]></artwork>
+                </figure>
+              </t>
+              <t>If JID mapping is successful but the mapped JID does not match the authorization identity provided (if any), then the server MUST return a SASL failure case of &lt;invalid-authzid/&gt; and close the stream.
+                <figure>
+                  <artwork><![CDATA[
+    <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+      <invalid-authzid/>
+    </failure>
+    </stream:stream>
+                  ]]></artwork>
+                </figure>
+              </t>
+            </list>
+          </t>
+          <t>If SASL authentication succeeded, the client opens new stream, then the client and server proceed with resource binding as described in <xref target='rfc3920bis'/>.  If the XmppAddr in the certificate is a full JID then the server MUST force the client to use the defined resource during resource binding.  The client is only allowed to use the provided resource name.  If a client with the same resource name is currently logged in and that client is not forced to use the specified resource name, it SHOULD be logged out by the server.</t>
+        </list>
+      </t>
+    </section>
+
     <section title='Requesting the List of Certificates' anchor='list'>
       <t>A client can request the list of all certificates that are authorized to authenticate using SASL EXTERNAL.  This is done by sending an XMPP IQ stanza of type "get" containing a &lt;list/&gt; element qualified by the 'urn:xmpp:saslcert:0' namespace.</t>
       <figure>
@@ -194,164 +352,6 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 </iq>
         ]]></artwork>
       </figure>
-    </section>
-
-    <section title='Authentication via SASL EXTERNAL' anchor='sasl'>
-      <t>The RECOMMENDED protocol flow for client-to-server use of SASL EXTERNAL with end-user certificates is as follows:</t>
-      <t>
-        <list style='numbers'>
-          <t>Client initiates stream to server.
-            <figure>
-              <artwork><![CDATA[
-    <stream:stream 
-            xmlns:stream='http://etherx.jabber.org/streams' 
-            xmlns='jabber:client' 
-            to='example.com' 
-            version='1.0'>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Server replies with stream header.
-            <figure>
-              <artwork><![CDATA[
-    <stream:stream 
-            xmlns:stream='http://etherx.jabber.org/streams' 
-            xmlns='jabber:client' 
-            id='c2s_234' 
-            from='example.com' 
-            version='1.0'>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Server advertizes TLS stream feature.
-            <figure>
-              <artwork><![CDATA[
-    <stream:features>
-      <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
-        <required/>
-      </starttls>
-    </stream:features>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Client sends STARTTLS command to server.
-            <figure>
-              <artwork><![CDATA[
-    <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Server informs client to proceed.
-            <figure>
-              <artwork><![CDATA[
-    <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>During TLS handshake, server requests certificate and client presents certificate.</t>
-          <t>TLS negotiation completes successfully.</t>
-          <t>Client initiates a new stream header to server.
-            <figure>
-              <artwork><![CDATA[
-    <stream:stream 
-            xmlns:stream='http://etherx.jabber.org/streams' 
-            xmlns='jabber:client' 
-            to='example.com' 
-            version='1.0'>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Server replies with stream header.
-            <figure>
-              <artwork><![CDATA[
-    <stream:stream 
-            xmlns:stream='http://etherx.jabber.org/streams' 
-            xmlns='jabber:client' 
-            id='c2s_345' 
-            from='example.com' 
-            version='1.0'>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Server advertizes SASL mechanisms. If server expects that client will be able to authenticate and authorize as the identity provided in the presented certificate, then server SHOULD advertize the SASL EXTERNAL mechanism; otherwise, if presented certificate is unacceptable (e.g., because the certificate is expired, not yet valid, or revoked), server MUST NOT offer the EXTERNAL mechanism.
-            <figure>
-              <artwork><![CDATA[
-    <stream:features>
-      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-        <mechanism>EXTERNAL<mechanism>
-        <mechanism>DIGEST-MD5<mechanism>
-        <mechanism>ANONYMOUS<mechanism>
-        <required/>
-      </mechanisms>
-    </stream:features>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Because client presented a certificate, client SHOULD consider EXTERNAL to be its preferred SASL mechanism. If the client certificate includes only one XMPP address and the user wishes to authorize as the identity that has been authenticated by the TLS layer (i.e., the XMPP address that is contained in the client certificate), then the client SHOULD NOT include an authorization identity (i.e., the XML character data for the &lt;auth/&gt; element SHOULD be "=", indicating an empty response); if the client certificate contains more than one XMPP address or if the user wishes to authorize as another identity, then the client MUST include an authorization identity; if the client certificate contain no XMPP address, then the client SHOULD include an authorization identity (but MAY include no authorzation identity since the client may not even know its identity, instead having it assigned by the server).
-            <figure>
-              <artwork><![CDATA[
-    <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' mechanism='EXTERNAL'>=</auth>
-              ]]></artwork>
-            </figure>
-          </t>
-          <t>Server determines whether to allow authentication and authorization of user.
-            <list style='numbers'>
-              <t>If the certificate presented by the client contains only one valid XMPP address that corresponds to a registered account on the server and client did not pass an authorization identity in the SASL exchange, then the server SHOULD allow authentication and authorization of that JID. For the purpose of client authentication and authorization with a server, a valid XMPP address is a JID encapsulated as a subjectAltName entity of type otherName with an ASN.1 Object Identifier of "id-on-xmppAddr" as specified in Section 15.2.1.3 of <xref target='rfc3920bis'/>.
-                <figure>
-                  <artwork><![CDATA[
-    <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
-                  ]]></artwork>
-                </figure>
-              </t>
-              <t>If the certificate contains more than one valid XMPP address that corresponds to a registered account on the server (e.g., because the server offers virtual hosting), then the server SHOULD allow authentication and authorization of the JID specified as the authorization identity.
-                <figure>
-                  <artwork><![CDATA[
-    <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
-                  ]]></artwork>
-                </figure>
-              </t>
-              <t>If no authorization identity is included, then the server MUST return a SASL failure case of &lt;invalid-authzid/&gt; and close the stream.
-                <figure>
-                  <artwork><![CDATA[
-    <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-      <invalid-authzid/>
-    </failure>
-    </stream:stream>
-                  ]]></artwork>
-                </figure>
-              </t>
-              <t>If the certificate does not contain an XMPP address, then the server MAY attempt to determine if there is a registered account associated with the user, for example by performing an LDAP lookup based on the Common Name in the certificate; if such a JID mapping is successful and the mapped JID matches the authorization identity provided, then the server SHOULD allow authentication and authorization of that mapped JID.
-                <figure>
-                  <artwork><![CDATA[
-    <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
-                  ]]></artwork>
-                </figure>
-              </t>
-              <t>If JID mapping is unsuccessful, then the server MUST return a SASL failure case of &lt;not-authorized/&gt; and close the stream.
-                <figure>
-                  <artwork><![CDATA[
-    <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-      <not-authorized/>
-    </failure>
-    </stream:stream>
-                  ]]></artwork>
-                </figure>
-              </t>
-              <t>If JID mapping is successful but the mapped JID does not match the authorization identity provided (if any), then the server MUST return a SASL failure case of &lt;invalid-authzid/&gt; and close the stream.
-                <figure>
-                  <artwork><![CDATA[
-    <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-      <invalid-authzid/>
-    </failure>
-    </stream:stream>
-                  ]]></artwork>
-                </figure>
-              </t>
-            </list>
-          </t>
-          <t>If SASL authentication succeeded, client opens new stream, then client and server proceed with resource binding as described in <xref target='rfc3920bis'/>.  If the XmppAddr in the certificate is a full JID then the server MUST force the client to use the defined resource during resource binding.  The client is only allowed to use the provided resource name.  If a client with the same resource name is currently logged in and that client is not forced to use that resource name, it SHOULD be logged out by the server.</t>
-        </list>
-      </t>
     </section>
 
     <section title='Security Considerations' anchor="sec">
