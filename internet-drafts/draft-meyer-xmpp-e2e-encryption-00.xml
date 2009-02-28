@@ -12,16 +12,16 @@
     <author initials="D." surname="Meyer" fullname="D.  Meyer">
       <organization>Universitaet Bremen TZI</organization>
       <address>
-	<email>dmeyer@tzi.de</email>
+        <email>dmeyer@tzi.de</email>
       </address>
     </author>
     <author initials="P." surname="Saint-Andre" fullname="P.  Saint-Andre">
       <organization>Cisco</organization>
       <address>
-	<email>psaintan@cisco.com</email>
+        <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="February" day="27"/>
+    <date year="2009" month="February" day="28"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -61,7 +61,7 @@
       <t>We expand on this approach in the following section.</t>
     </section>
 
-    <section title='Protocol Flow' anchor='proto'>
+    <section title='XTLS Protocol Flow' anchor='proto'>
       <t>The basic flow for an XTLS session is as follows, where traffic represented by single dashes (---) is sent over the XMPP signalling channel and traffic represented by double lines (===) is sent over the negotiated transport.</t>
       <figure>
         <artwork><![CDATA[
@@ -248,7 +248,10 @@ Initiator                   Responder
         ]]></artwork>
       </figure>
       <t>The initiator then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
-      <t>If the TLS negotiation has finished successfully, then the Jingle implementation shall signal to the using application that the transport has been secured and is ready to be used.  The parties can then begin to exchange application data over the encrypted transport.  For end-to-end encryption of XMPP traffic, the application data is an end-to-end XML stream.  Because the transport is an in-band bytestream, the XMPP data is also prepared as described in <xref target='XEP-0047'/> (i.e., Base64-encoded).</t>
+      <t>If the TLS negotiation has finished successfully, then the Jingle implementation shall signal to the using application that the transport has been secured and is ready to be used.  The parties can then begin to exchange application data over the encrypted transport.</t>
+    </section>
+    <section title='End-to-End Streams over XTLS Protocol Flow' anchor='streamproto'>
+      <t>For end-to-end encryption of XMPP traffic, the application data is an end-to-end XML stream. After the XTLS session is set up, the peers open an XML stream to excahnge messages. The XML streams are sent though the XTLS connection. In this example the streams are sent over TLS over IBB.</t>
       <t>First the initiator constructs an initial stream header.</t>
       <figure>
         <artwork><![CDATA[
@@ -261,7 +264,7 @@ Initiator                   Responder
         ]]></artwork>
       </figure>
       <t>Note: In accordance with <xref target='rfc3920bis'/>, the initial stream header SHOULD include the 'to' and 'from' attributes, which SHOULD specify the full JIDs of the clients. The initiator SHOULD include the version='1.0' flag as shown in the previous example.</t>
-      <t>The initiator then encodes the stream header in IBB and sends it to the responder.</t>
+      <t>The initiator then sends the stream header through the TLS stream and encodes the TLS data in IBB and sends it to the responder.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.net/orchard' 
@@ -269,15 +272,12 @@ Initiator                   Responder
     to='juliet@capulet.com/balcony'
     type='set'>
   <data xmlns='http://jabber.org/protocol/ibb' seq='4' sid='vj3hs98y'>
-    PHN0cmVhbTpzdHJlYW0geG1sbnM9J2phYmJlcjpjbGllbnQnIHhtbG5zOnN0cmVh
-    bT0naHR0cDovL2V0aGVyeC5qYWJiZXIub3JnL3N0cmVhbXMnIGZyb209J3JvbWVv
-    QG1vbnRhZ3VlLmxpdC9vcmNoYXJkJyB0bz0nanVsaWV0QGNhcHVsZXQubGl0L2Jh
-    bGNvbnknIHZlcnNpb249JzEuMCc+
+    Base64-TLS-data-of-the-stream-header
   </data>
 </iq>
         ]]></artwork>
       </figure>
-      <t>The responder then acknowledges receipt by an IQ stanza of type "result" (not shown here).</t>
+      <t>The responder then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
       <t>The responder then constructs a response stream header back to the initiator.</t>
       <figure>
         <artwork><![CDATA[
@@ -290,7 +290,7 @@ Initiator                   Responder
         version='1.0'>
         ]]></artwork>
       </figure>
-      <t>The responder then encodes the response stream header in IBB and sends it to the initiator.</t>
+      <t>The responder then sends the response stream header over the TLS link it to the initiator.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
@@ -298,10 +298,7 @@ Initiator                   Responder
     to='romeo@montague.net/orchard' 
     type='set'>
   <data xmlns='http://jabber.org/protocol/ibb' seq='4' sid='vj3hs98y'>
-    PHN0cmVhbTpzdHJlYW0geG1sbnM9J2phYmJlcjpjbGllbnQnIHhtbG5zOnN0cmVh
-    bT0naHR0cDovL2V0aGVyeC5qYWJiZXIub3JnL3N0cmVhbXMnIGZyb209J2p1bGll
-    dEBjYXB1bGV0LmxpdC9iYWxjb255JyBpZD0naHM5MWdoMTgzNmQ4czcxNycgdG89
-    J3JvbWVvQG1vbnRhZ3VlLmxpdC9vcmNoYXJkJyB2ZXJzaW9uPScxLjAnPg==
+    Base64-TLS-data-of-the-responce-stream-header
   </data>
 </iq>
         ]]></artwork>
@@ -316,7 +313,7 @@ Initiator                   Responder
 </message>
         ]]></artwork>
       </figure>
-      <t>The initiator then encodes the message in IBB and sends it to the responder.</t>
+      <t>The initiator then sends the message over the XTLS connection to the responder.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.net/orchard' 
@@ -324,10 +321,7 @@ Initiator                   Responder
     to='juliet@capulet.com/balcony'
     type='set'>
   <data xmlns='http://jabber.org/protocol/ibb' seq='5' sid='vj3hs98y'>
-    PG1lc3NhZ2UgZnJvbT0ncm9tZW9AbW9udGFndWUubGl0L29yY2hhcmQnIHRvPSdq
-    dWxpZXRAY2FwdWxldC5saXQvYmFsY29ueSc+PGJvZHk+TSZhcG9zO2xhZHksIEkg
-    d291bGQgYmUgcGxlYXNlZCB0byBtYWtlIHlvdXIgYWNxdWFpbnRhbmNlLjwvYm9k
-    eT48L21lc3NhZ2U+
+    Base64-TLS-data
   </data>
 </iq>
         ]]></artwork>
@@ -341,7 +335,7 @@ Initiator                   Responder
 </message>
         ]]></artwork>
       </figure>
-      <t>The responder then encodes the reply in IBB and sends it to the initiator.</t>
+      <t>The responder then sends the reply over the XTLS connection to the initiator.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
@@ -349,9 +343,7 @@ Initiator                   Responder
     to='romeo@montague.net/orchard' 
     type='set'>
   <data xmlns='http://jabber.org/protocol/ibb' seq='5' sid='vj3hs98y'>
-    PG1lc3NhZ2UgZnJvbT0nanVsaWV0QGNhcHVsZXQubGl0L2JhbGNvbnknIHRvPSdy
-    b21lb0Btb250YWd1ZS5saXQvb3JjaGFyZCc+PGJvZHk+QXJ0IHRob3Ugbm90IFJv
-    bWVvLCBhbmQgYSBNb250YWd1ZT88L2JvZHk+PC9tZXNzYWdlPg==
+    Base64-TLS-data
   </data>
 </iq>
         ]]></artwork>
@@ -363,7 +355,7 @@ Initiator                   Responder
 </stream:stream>
         ]]></artwork>
       </figure>
-      <t>The responder then encodes the reply in IBB and sends it to the initiator.</t>
+      <t>The client sends the closing element to the peer over the XTLS connection.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
@@ -371,12 +363,12 @@ Initiator                   Responder
     to='romeo@montague.net/orchard' 
     type='set'>
   <data xmlns='http://jabber.org/protocol/ibb' seq='6' sid='vj3hs98y'>
-    PC9zdHJlYW06c3RyZWFtPg==
+    Base64-TLS-data
   </data>
 </iq>
         ]]></artwork>
       </figure>
-      <t>The initiator then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
+      <t>The peer then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
       <t>However, even after the application-level XML stream is terminated, the negotiated Jingle transport (here in-band bytestream) continues and could be re-used. To completely terminate the Jingle session, the terminating party would then also send a Jingle session-terminate message.</t>
       <figure>
         <artwork><![CDATA[
@@ -478,15 +470,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 </iq>
         ]]></artwork>
       </figure>
-      <t>The other party then acknowledges the session-terminate and the Jingle session is finished.</t>
-      <figure>
-        <artwork><![CDATA[
-<iq from='juliet@capulet.lit/balcony'
-    id='hz81vf48'
-    to='romeo@montague.lit/orchard'
-    type='result'/>
-        ]]></artwork>
-      </figure>
+      <t>The other party then acknowledges the session-terminate by sending an IQ stanza of type "result" (not shown here), and the Jingle session is finished.</t>
     </section>
 
     <section title='Determining Support' anchor='support'>
@@ -510,6 +494,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
     type='result'>
   <query xmlns='http://jabber.org/protocol/disco#info'>
     <feature var='urn:xmpp:jingle:security:xtls:0'/>
+    <feature var='urn:xmpp:jingle:apps:xmlstream:0'/>
   </query>
 </iq>
         ]]></artwork>
@@ -584,6 +569,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
   <seriesInfo name="XSF XEP" value="0047"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0047.html"/>
 </reference>
+
 <reference anchor="XEP-0166">
   <front>
     <title>Jingle</title>
