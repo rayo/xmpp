@@ -119,7 +119,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
       <name>Simple Bot</name>
       <no-cert-management/>
       <certificate>
-        Base64-encoded-cert-data
+        Certificate-in-DER-format-Base64-encoded
       </certificate>
     </item>
   </upload>
@@ -219,7 +219,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
               ]]></artwork>
             </figure>
           </t>
-          <t>Because the client presented a certificate, it SHOULD consider EXTERNAL to be its preferred SASL mechanism. If the client certificate includes only one XMPP address and the user wishes to authorize as the identity that has been authenticated by the TLS layer (i.e., the XMPP address that is contained in the client certificate), then the client SHOULD NOT include an authorization identity (i.e., the XML character data for the &lt;auth/&gt; element SHOULD be "=", indicating an empty response); if the client certificate contains more than one XMPP address or if the user wishes to authorize as another identity, then the client MUST include an authorization identity; if the client certificate contain no XMPP address, then the client SHOULD include an authorization identity (but MAY include no authorzation identity since the client may not even know its identity, instead having it assigned by the server).
+          <t>Because the client presented a certificate, it SHOULD consider EXTERNAL to be its preferred SASL mechanism. If the client certificate includes only one XMPP address and the user wishes to authorize as the identity that has been authenticated by the TLS layer (i.e., the XMPP address that is contained in the client certificate), then the client SHOULD NOT include an authorization identity (i.e., the XML character data for the &lt;auth/&gt; element SHOULD be "=", indicating an empty response); if the client certificate contains more than one XMPP address or if the user wishes to authorize as another identity, then the client MUST include an authorization identity; if the client certificate contain no XMPP address, then the client SHOULD include an authorization identity (but MAY omit the authorization identity if it does not know its identity, instead having it assigned by the server).
             <figure>
               <artwork><![CDATA[
     <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl' 
@@ -282,13 +282,13 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
               </t>
             </list>
           </t>
-          <t>If SASL authentication succeeded, the client opens new stream, then the client and server proceed with resource binding as described in <xref target='rfc3920bis'/>.  If the XmppAddr in the certificate is a full JID then the server MUST force the client to use the defined resource during resource binding.  The client is only allowed to use the provided resource name.  If a client with the same resource name is currently logged in and that client is not forced to use the specified resource name, it SHOULD be logged out by the server.</t>
+          <t>If SASL authentication succeeded, the client opens a new stream, then the client and server proceed with resource binding as described in <xref target='rfc3920bis'/>.  If the XmppAddr in the certificate is a full JID then the server MUST force the client to use the defined resource during resource binding.  The client is only allowed to use the provided resource name.  If a client with the same resource name is currently logged in and that client is not forced to use the specified resource name, it SHOULD be logged out by the server.</t>
         </list>
       </t>
     </section>
 
     <section title='Requesting the List of Certificates' anchor='list'>
-      <t>A client can request the list of all certificates that are authorized to authenticate using SASL EXTERNAL.  This is done by sending an XMPP IQ stanza of type "get" containing a &lt;list/&gt; element qualified by the 'urn:xmpp:saslcert:0' namespace.</t>
+      <t>A client can request the list of all certificates that are authorized to authenticate for its bare JID using SASL EXTERNAL.  This is done by sending an XMPP IQ stanza of type "get" containing a &lt;list/&gt; element qualified by the 'urn:xmpp:saslcert:0' namespace.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='hamlet@example.com/denmark'
@@ -298,7 +298,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 </iq>
          ]]></artwork>
       </figure>
-      <t>The server then returns the list of all known certificates, including the provided name.  Each certificate is contained in a separate &lt;item/&gt; element and identified by the value of the 'id' attribute. The 'id' SHOULD be the SHA1 value in hex of the certificate.</t>
+      <t>The server then returns the list of all known certificates, including the provided name.  Each certificate is contained in a separate &lt;item/&gt; element and uniquely identified by the value of the 'id' attribute.  In the following example the 'id' is the SHA1 value in hex of the certificate. The 'id' is used for the client to remove or revoke a certificate.</t>
       <figure>
         <artwork><![CDATA[
 <iq id='hf7435gj'
@@ -308,14 +308,14 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
     <item id='428b1358a286430f628da23fb33ddaf6e474f5c5'>
       <name>Mobile Client</name>
       <certificate>
-        Base64-encoded-cert-data
+        Certificate-in-DER-format-Base64-encoded
       </certificate>
     </item>
     <item id='571b23d99892f4566017426e92c377288ed6c983'>
       <name>Simple Bot</name>
       <no-cert-management/>
       <certificate>
-        Base64-encoded-cert-data
+        Certificate-in-DER-format-Base64-encoded
       </certificate>
     </item>
   </list>
@@ -325,7 +325,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
     </section>
 
     <section title='Removing a Certificate' anchor='remove'>
-      <t>A client needs to create a new certificate before its current one expires.  After the new certificate is uploaded to the server, it might want to remove the old certificate to keep the list of certificates short (otherwise the list will grow indefinitely, making certificate handling more difficult for the user).  The client removes a certificate by sending an XMPP IQ stanza of type "set" containing a &lt;remove/&gt; element that in turn contains an empty &lt;item/&gt; whose 'id' attribute uniquely identified the certificate. Similar to the upload procedure a client can remove multiple certificates by adding more than one &lt;item/&gt; element.</t>
+      <t>A client needs to create a new certificate before its current one expires.  After the new certificate is uploaded to the server, it might want to remove the old certificate to keep the list of certificates short (otherwise the list will grow indefinitely, making certificate handling more difficult for the user).  The client removes a certificate by sending an XMPP IQ stanza of type "set" containing a &lt;remove/&gt; element that in turn contains an empty &lt;item/&gt; whose 'id' attribute uniquely identifies the certificate as retrieved from the server with the &lt;list/&gt; IQ stanza. Similar to the upload procedure a client can remove multiple certificates by adding more than one &lt;item/&gt; element.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='hamlet@example.com/denmark'
