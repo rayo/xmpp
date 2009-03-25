@@ -28,7 +28,9 @@ cp non-free/gps_datum.html $basepath/extensions/
 cp non-free/*.gif $basepath/images/
 cp non-free/*.jpg $basepath/images/
 cp non-free/*.png $basepath/images/
+cp robots.txt $basepath/
 cp schemas/*.* $basepath/schemas/
+cp sitemap.xml $basepath/
 cp software/*.* $basepath/software/
 cp sorttable.js $basepath/
 cp summit/*.* $basepath/summit/
