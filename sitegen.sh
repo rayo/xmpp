@@ -30,6 +30,7 @@ cp non-free/*.jpg $basepath/images/
 cp non-free/*.png $basepath/images/
 cp robots.txt $basepath/
 cp schemas/*.* $basepath/schemas/
+cp services/*.* $basepath/services/
 cp sitemap.xml $basepath/
 cp software/*.* $basepath/software/
 cp sorttable.js $basepath/
