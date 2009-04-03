@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-saintandre-rfc3921bis-08" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-saintandre-rfc3921bis-09" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="March" day="8"/>
+    <date year="2009" month="April" day="2"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -2014,7 +2014,9 @@ US: </stream:stream>
         <t>
           <list style='symbols'>
             <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-            <t>For a message stanza, the server SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; as described in the next section (but without modifying the value of the 'to' attribute).</t>
+            <t>For a message stanza of type "chat", "headline", or "normal", the server SHOULD treat the stanza as if it were addressed to &lt;user@domain&gt; as described in the next section (but without modifying the value of the 'to' attribute).</t>
+            <t>For a message stanza of type "error", the server MUST silently ignore the stanza.</t>
+            <t>For a message stanza of type "groupchat", the server MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
             <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST silently ignore the stanza.</t>
             <t>For a presence stanza of type "subscribe", the server MUST follow the guidelines provided under <xref target='sub-request-inbound'/>.</t>
             <t>For a presence stanza of type "subscribed", "unsubscribe", or "unsubscribed", the server MUST ignore the stanza.</t>
@@ -2029,8 +2031,8 @@ US: </stream:stream>
         <section title="Message" anchor="rules-barejid-resource-message">
           <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.</t>
           <t>For a message stanza of type "chat" or "normal", the server SHOULD deliver the stanza to the highest-priority available resource. If there is not one highest-priority available resource but instead the highest priority is asserted by two or more available resources, these resources are said to form a "delivery tie".  In the case of a delivery tie, a server SHOULD deliver the message to all of the tied resources.  However, before delivering the message, a server MAY remove one or more resources from the tie.  Methods for doing so are outside the scope of this specification, but could include factors such as the resource's time of connection, time of last network or application activity, availability as determined by some hierarchy of &lt;show/&gt; values, or user-configured rules.  Nevertheless, a server MUST NOT remove all resources from the tie, and MUST deliver the message to at least one of the highest-priority resources (subject to appropriate security policies as described under <xref target='security'/> and in <xref target='rfc3920bis'/>).</t>
-          <t>For a message stanza of type "groupchat", the server SHOULD NOT deliver the stanza to any of the available resources but instead SHOULD return an error to the sender.</t>
-          <t>For a message stanza of type "error", the server SHOULD silently discard the message (i.e., neither deliver it to the intended recipient nor return an error to the sender).</t>
+          <t>For a message stanza of type "groupchat", the server MUST NOT deliver the stanza to any of the available resources but instead MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
+          <t>For a message stanza of type "error", the server MUST silently discard the message (i.e., neither deliver it to the intended recipient nor return a stanza error to the sender).</t>
           <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available or connected resources as described under <xref target='rules-barejid-noresource'/>.</t>
           <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
         </section>
