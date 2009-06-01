@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-saintandre-rfc3920bis-09" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-saintandre-rfc3920bis-10" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="March" day="8"/>
+    <date year="2009" month="June" day="1"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -204,12 +204,14 @@ romeo@example.net           juliet@im.example.com
 
     <section title='Node Identifier' anchor='addressing-node'>
       <t><iref item='Node Identifier'/>The NODE IDENTIFIER portion of a JID is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  Typically a node identifier uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user conference service).  The entity represented by an XMPP node identifier is addressed within the context of a specific domain.</t>
+      <t>A node identifier MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
       <t>A node identifier MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two node identifiers, an application MUST first ensure that the Nodeprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
     </section>
 
     <section title="Resource Identifier" anchor="addressing-resource">
       <t><iref item='Resource Identifier'/>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier can modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resource identifier uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP node identifier at a local domain.</t>
       <t><iref item='Bare JID'/>When an XMPP address does not include a resource identifier (i.e., when it is of the form &lt;domain&gt; or &lt;node@domain&gt;), it is referred to as a BARE JID.  <iref item='Full JID'/>When an XMPP address includes a resource identifier (i.e., when it is of the form &lt;domain/resource&gt; or &lt;node@domain/resource&gt;), is referred to as a FULL JID.</t>
+      <t>A resource identifier MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
       <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, an application MUST first ensure that the Resourceprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
       <t><list style='empty'><t>Note: For historical reasons, the term "resource identifier" is used in XMPP to refer to the optional portion of an XMPP address that follows the domain identifier and the "/" separator character; this use of the term "resource identifier" is not to be confused with the meanings of "resource" and "identifier" provided in Section 1.1 of <xref target="URI"/>.</t></list></t>
       <t>XMPP entities SHOULD consider resource identifiers to be opaque strings and SHOULD NOT impute meaning to any given resource identifier.  In paticular, the use of the '/' character as a separator between the domain identifier and the resource identifier does not imply that resource identifiers are hierarchical in the way that, say, HTTP addresses are hierarchical; thus for example an XMPP address of the form &lt;node@domain/foo/bar&gt; does not identify a resource "bar" that exists below a resource "foo" in a hierarchy of resources associated with the entity "node@domain".</t>
@@ -317,7 +319,7 @@ romeo@example.net           juliet@im.example.com
       <section title='from' anchor='streams-attr-from'>
         <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
         <t><list style='empty'><t>Note: It is possible for an entity to have more than one XMPP identity (e.g., in the case of a server that provides virtual hosting).  It is also possible that an entity does not know the XMPP identity of the principal controlling the entity (e.g., because the XMPP identity is assigned at a level other than the XMPP application layer, as in the General Security Service Application Program Interface <xref target='GSS-API'/>).</t></list></t>
-        <t>For initial stream headers in client-to-server communication, if the client knows the XMPP identity of the principal controlling the client (typically an account name of the form &lt;node@domain&gt;), then it SHOULD include the 'from' attribute and set its value to that identity.  If the client does not know the XMPP identity of the principal controlling the client, then it MUST NOT include the 'from' attribute.</t>
+        <t>For initial stream headers in client-to-server communication, if the client knows the XMPP identity of the principal controlling the client (typically an account name of the form &lt;node@domain&gt;), then it MAY include the 'from' attribute and set its value to that identity; if not, then it MUST NOT include the 'from' attribute.  Note: Including the XMPP identity before the stream is protected via TLS can expose that identity to eavesdroppers.</t>
         <figure>
           <artwork><![CDATA[
 I: <?xml version='1.0'?>
@@ -1979,13 +1981,13 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
   <section title="Resource Binding" anchor="bind">
     <section title="Overview" anchor="bind-overview">
       <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing"/>).  That is, there MUST be an XMPP resource identifier associated with the bare JID (&lt;node@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;node@domain/resource&gt;.  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client (see <xref target="rules"/>).</t>
-      <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is differentiated by a distinct resource identifier; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
+      <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resource identifier; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
       <t>If, before completing the resource binding step, the client attempts to send an outbound XML stanza (i.e., a stanza not directed to the server itself or to the client's own account), the server MUST NOT process the stanza and MUST either ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
       <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
     </section>
     <section title="Advertising Support" anchor="bind-feature">
       <t>Upon sending a new response stream header to the client after successful SASL negotiation, the server MUST include a &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace in the stream features it presents to the client; this &lt;bind/&gt; element MUST include an empty &lt;required/&gt; element to explicitly indicate that it is mandatory for the client to complete resource binding at this stage of the stream negotiation process.</t>
-      <t><list style='empty'><t>Note: The server MUST NOT include the resource binding stream feature until after successful SASL negotiation.</t></list></t>
+      <t><list style='empty'><t>Note: The server MUST NOT include the resource binding stream feature until after the client has authenticated, typically by means of successful SASL negotiation.</t></list></t>
       <figure>
         <artwork><![CDATA[
 S: <stream:stream
@@ -2047,7 +2049,7 @@ S: <iq id='bind_1' type='result'>
           <figure>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
-     <error type='cancel'>
+     <error type='wait'>
        <resource-constraint 
            xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -2158,102 +2160,6 @@ S: <iq id='bind_2' type='error'>
         <t>After the client has reached the retry limit, the server MUST return a &lt;policy-violation/&gt; stream error to the client.</t>
       </section>
     </section>
-    <section title="Binding Multiple Resources" anchor="bind-multi">
-      <t>A server MAY support binding of multiple resources to the same stream.  This functionality is desirable in certain environments (e.g., for devices that are unable to open more than one TCP connection or when a machine runs a local XMPP client daemon that is used by multiple applications).</t>
-      <section title="Support" anchor="bind-multi-support">
-        <t>If a server supports binding of multiple resources to a stream, it MUST enable a client to unbind resources.  A server that supports unbinding MUST also support binding of multiple resources.  Thus a client can discover whether a server supports binding of multiple resources by determining if the server advertises a stream feature of &lt;unbind/&gt;, as follows.</t>
-        <figure>
-          <artwork><![CDATA[
-S: <stream:features>
-     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
-       <required/>
-     </bind>
-     <unbind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
-       <optional/>
-     </unbind>
-   </stream:features>
-          ]]></artwork>
-        </figure>
-        <t>If a server supports binding of mulitple resources, it MUST also send the unbind feature advertisement after resource binding has been completed.</t>
-      </section>
-      <section title="Binding an Additional Resource" anchor="bind-multi-bind">
-        <t>A connected client binds an additional resource by following the protocol for binding of the original resource, i.e., by sending an IQ stanza of type "set" containing a &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace (either empty to request server generation of the resource identifier or containing a &lt;resource/&gt; element with XML character data to request a client-submitted resource identifier).</t>
-      </section>
-      <section title="Unbinding a Resource" anchor="bind-multi-unbind">
-        <section title="Success Case" anchor="bind-multi-unbind-success">
-          <t>A client unbinds a resource by sending an IQ stanza of type "set" containing an &lt;unbind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace, which in turn contains a child element of &lt;resource/&gt; whose XML character data specifies the resource to be unbound:</t>
-          <figure>
-            <artwork><![CDATA[
-C: <iq id='unbind_1' type='set'>
-     <unbind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
-       <resource>someresource</resource>
-     </unbind>
-   </iq>
-            ]]></artwork>
-          </figure>
-          <t>If no error occurs, the server MUST unbind the resource and no longer accept stanzas whose 'from' address specifies the full JID associated with that resource.</t>
-          <figure>
-            <artwork><![CDATA[
-S: <iq id='unbind_1' type='result'/>
-            ]]></artwork>
-          </figure>
-          <t>When a client unbinds the only resource associated with the stream, the server SHOULD close the stream and terminate the TCP connection.</t>
-          <figure>
-            <artwork><![CDATA[
-S: <iq id='unbind_1' type='result'/>
-
-S: </stream:stream>
-            ]]></artwork>
-          </figure>
-        </section>
-        <section title="Error Cases" anchor="bind-multi-unbind-error">
-          <section title="Unbind Not Supported" anchor="bind-multi-unbind-badrequest">
-            <t>If the server understands the 'urn:ietf:params:xml:ns:xmpp-bind' namespace but does not understand the &lt;unbind/&gt; element, it MUST return a stanza error, which MUST be &lt;feature-not-implemented/&gt;.</t>
-            <figure>
-              <artwork><![CDATA[
-S: <iq id='unbind_1' type='error'>
-     <error type='modify'>
-       <feature-not-implemented
-           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-     </error>
-   </iq>
-              ]]></artwork>
-            </figure>
-          </section>
-          <section title="No Such Resource" anchor="bind-multi-unbind-itemnotfound">
-            <t>If there is no such resource for that stream, the server MUST return an error of &lt;item-not-found/&gt;.</t>
-            <figure>
-              <artwork><![CDATA[
-S: <iq id='unbind_1' type='error'>
-     <error type='cancel'>
-       <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-     </error>
-   </iq>
-              ]]></artwork>
-            </figure>
-          </section>
-        </section>
-      </section>
-      <section title="From Addresses" anchor="bind-multi-from">
-        <t>When a client binds multiple resources to the same stream, proper management of 'from' addresses is imperative.  In particular, a client MUST specify a 'from' address on every stanza it sends over a stream to which it has bound multiple resources, where the 'from' address is the full JID (&lt;node@domain.tld/resource&gt;) associated with the relevant resource.  If a client does not specify a 'from' address on a stanza it sends over a stream to which it has bound multiple resources, the server MUST return the stanza to the client with an &lt;unknown-sender/&gt; stanza error.</t>
-        <figure>
-          <artwork><![CDATA[
-C: <message to='romeo@example.net'>
-     <body>Wherefore art thou?</body>
-   </message>
-
-S: <message from='romeo@example.net'
-            type='error'>
-     <body>Wherefore art thou?</body>
-     <error type='modify'>
-       <unknown-sender xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-     </error>
-   </message>
-          ]]></artwork>
-        </figure>
-        <t>Naturally, the rules regarding validation of asserted 'from' addresses still apply (see <xref target='rules'/>).</t>
-      </section>
-    </section>
   </section>
 
   <section title="XML Stanzas" anchor="stanzas">
@@ -2306,7 +2212,7 @@ S: <message from='romeo@example.net'
           <t>The following rules apply to the 'from' attribute in the context of XML streams qualified by the 'jabber:client' namespace (i.e., client-to-server streams).</t>
           <t>
             <list style='numbers'>
-              <t>When the server receives an XML stanza from a client and the stanza does not include a 'from' attribute, the server MUST add a 'from' attribute to the stanza, where the value of the 'from' attribute is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination"/>), or the bare JID (&lt;node@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='rfc3921bis'/>); the only exception to this rule occurs when multiple resources are bound to the same stream as described under <xref target='bind-multi'/>.</t>
+              <t>When the server receives an XML stanza from a client and the stanza does not include a 'from' attribute, the server MUST add a 'from' attribute to the stanza, where the value of the 'from' attribute is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination"/>), or the bare JID (&lt;node@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='rfc3921bis'/>).</t>
               <t>When the server receives an XML stanza from a client and the stanza includes a 'from' attribute, the server MUST either (a) validate that the value of the 'from' attribute provided by the client is that of a connected resource for the associated entity or (b) override the provided 'from' attribute by adding a 'from' attribute as specified under Rule #1.</t>
               <t>When the server generates a stanza from the server for delivery to the client on behalf of the account of the connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (a) not include a 'from' attribute or (b) include a 'from' attribute whose value is the account's bare JID (&lt;node@domain&gt;).</t>
               <t>When the server generates a stanza from the server itself for delivery to the client, the stanza MUST include a 'from' attribute whose value is the bare JID (i.e., &lt;domain&gt;) of the server.</t>
@@ -2618,13 +2524,12 @@ E: <presence
           <t>The addressed JID or item requested cannot be found; the associated error type SHOULD be "cancel" or "modify".</t>
           <figure>
             <artwork><![CDATA[
-C: <iq id='unbind_1' type='set'>
-     <unbind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
-       <resource>someresource</resource>
-     </unbind>
-   </iq>
+C: <presence from='userfoo@example.com/bar'
+             to='nosuchroom@conference.example.org/foo'/>
 
-S: <iq id='unbind_1' type='error'>
+S: <presence from='nosuchroom@conference.example.org/foo' 
+             to='userfoo@example.com/bar'
+             type='error'>
      <error type='cancel'>
        <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -3030,24 +2935,6 @@ E: <iq from='pubsub.example.com'
            xmlns='http://jabber.org/protocol/pubsub#errors'/>
      </error>
    </iq>
-            ]]></artwork>
-          </figure>
-        </section>
-        <section title="unknown-sender" anchor="stanzas-error-conditions-unknown-sender">
-          <t>The stanza 'from' address specified by a connected client is not valid for the stream (e.g., the stanza does not include a 'from' address when multiple resources are bound to the stream as described under <xref target='bind-multi-from'/>); the associated error type SHOULD be "modify".</t>
-          <figure>
-            <artwork><![CDATA[
-C: <message to='romeo@example.net'>
-     <body>Wherefore art thou?</body>
-   </message>
-
-S: <message from='romeo@example.net'
-            type='error'>
-     <body>Wherefore art thou?</body>
-     <error type='modify'>
-       <unknown-sender xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-     </error>
-   </message>
             ]]></artwork>
           </figure>
         </section>
@@ -3759,6 +3646,7 @@ S2: </stream:stream>
     </section>
     <section title="Certificates" anchor="security-certificates">
       <t>Channel encryption of an XML stream using Transport Layer Security as described under <xref target='tls'/>, and in some cases also authentication as described under <xref target='sasl'/>, is commonly based on a digital certificate presented by the receiving entity (or, in the case of mutual authentication, both the receiving entity and the initiating entity).  This section describes best practices regarding the generation of digital certificates to be presented by XMPP entities and the verification of digital certificates presented by XMPP entities.</t>
+      <t>For both client and server certificates, a certificate MUST conform to the format defined in  <xref target='X509'/>.  Considerations specific to client certificates or server certificates are described in the following sections.</t> 
       <section title="Certificate Generation" anchor="security-certificates-generation">
         <section title="Server Certificates" anchor="security-certificates-generation-server">
           <t>In a digital certificate to be presented by an XMPP server (i.e., a SERVER CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs (i.e., domain identifiers) associated with domains serviced at the server.  The representations described in the following sections are RECOMMENDED.  These representations are provided in preference order.</t>
@@ -3845,6 +3733,7 @@ XmppAddr ::= UTF8String
             </list>
           </t>
           <t>Use of the "id-on-xmppAddr" format is RECOMMENDED in the generation of certificates, but all three formats MUST be supported for the purpose of certificate validation.</t>
+          <t>The "id-on-xmppAddr" object identifier MAY be used on conjuction with the extended key usage extension specified in Section 4.2.1.12 of <xref target='X509'/> in order to explicitly define and limit the intended use of a certificate to the XMPP network.</t>
         </section>
       </section>
       <section title="Certificate Validation" anchor="security-certificates-validation">
@@ -3920,8 +3809,8 @@ XmppAddr ::= UTF8String
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
       <t>At a minimum, all implementations MUST support the following mechanisms:</t>
       <t><list style='hanging'>
-        <t hangText='for confidentiality only:'>TLS (using the TLS_RSA_WITH_3DES_EDE_CBC_SHA cipher)</t>
-        <t hangText='for both confidentiality and authentication:'>TLS plus the SASL PLAIN mechanism (See <xref target='PLAIN'/>) for password-based authentication and TLS plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) for non-password-based authentication (using the TLS_RSA_WITH_3DES_EDE_CBC_SHA cipher supporting peer certificates)</t>
+        <t hangText='for confidentiality only:'>TLS (using the TLS_RSA_WITH_AES_128_CBC_SHA cipher)</t>
+        <t hangText='for both confidentiality and authentication:'>TLS plus the SASL PLAIN mechanism (See <xref target='PLAIN'/>) for password-based authentication and TLS plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) for non-password-based authentication (using the TLS_RSA_WITH_AES_128_CBC_SHA cipher supporting peer certificates)</t>
       </list></t>
       <t>Naturally, implementations MAY support other ciphers with TLS and MAY support other SASL mechanisms.</t>
       <t><list style='empty'><t>Note: The use of TLS plus SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication.  For backward-compatibility, implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.  Refer to <xref target='PLAIN'/> for important security considerations related to the SASL PLAIN mechanism.</t></list></t>
@@ -4533,17 +4422,23 @@ specifications of each URI scheme.
 <reference anchor='X509'>
 <front>
 <title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+<author initials='D.' surname='Cooper' fullname='D. Cooper'>
+<organization /></author>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'>
+<organization /></author>
+<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
+<organization /></author>
 <author initials='R.' surname='Housley' fullname='R. Housley'>
 <organization /></author>
 <author initials='W.' surname='Polk' fullname='W. Polk'>
 <organization /></author>
-<author initials='W.' surname='Ford' fullname='W. Ford'>
-<organization /></author>
-<author initials='D.' surname='Solo' fullname='D. Solo'>
-<organization /></author>
-<date month='April' year='2002' /></front>
-<seriesInfo name='RFC' value='3280' />
-<format type='TXT' octets='295556' target='ftp://ftp.isi.edu/in-notes/rfc3280.txt' />
+<date year='2008' month='May' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5280' />
+<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
 </reference>
 
 <reference anchor='X509-SRV'>
@@ -5910,20 +5805,6 @@ specifications of each URI scheme.
     </xs:complexType>
   </xs:element>
 
-  <xs:element name='unbind'>
-    <xs:complexType>
-      <xs:choice>
-        <xs:choice>
-          <xs:element name='resource' type='resourceType'/>
-        </xs:choice>
-        <xs:choice>
-          <xs:element name='optional' type='empty'/>
-          <xs:element name='required' type='empty'/>
-        </xs:choice>
-      </xs:choice>
-    </xs:complexType>
-  </xs:element>
-
   <xs:simpleType name='fullJIDType'>
     <xs:restriction base='xs:string'>
       <xs:minLength value='8'/>
@@ -6050,7 +5931,6 @@ specifications of each URI scheme.
           <t>Specified that TLS plus SASL PLAIN is a mandatory-to-implement technology for client-to-server connections, since implementation of SASL EXTERNAL is uncommon in XMPP clients, in part because underlying security features such as end-user X.509 certificates are not yet widely deployed.</t>
           <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>More fully specified binding of multiple resources to the same stream.</t>
-          <t>Added the &lt;unknown-sender/&gt; stanza error condition to provide appropriate handling of stanzas when multiple resources are bound to the same stream.</t>
           <t>Added the &lt;not-modified/&gt; stanza error condition to enable potential ETags usage.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified process of DNS SRV lookups and fallbacks.</t>
