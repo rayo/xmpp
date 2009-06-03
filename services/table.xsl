@@ -13,6 +13,7 @@
       <td>
         <a>
           <xsl:attribute name='href'><xsl:value-of select='website'/></xsl:attribute>
+          <xsl:attribute name='title'><xsl:value-of select='desc'/></xsl:attribute>
           <xsl:value-of select='domain'/>
         </a>
       </td>
