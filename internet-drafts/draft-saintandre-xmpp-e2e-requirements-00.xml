@@ -1,0 +1,330 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rfc SYSTEM "rfc2629.dtd">
+<?rfc compact="yes"?>
+<?rfc iprnotified="no" ?>
+<?rfc strict="yes"?>
+<?rfc symrefs="yes"?>
+<?rfc toc="yes"?>
+<?rfc tocdepth="4"?>
+
+<rfc category="info" docName="draft-saintandre-xmpp-e2e-requirements-00" ipr="trust200902">
+
+  <front>
+    <title abbrev="XMPP E2E Requirements">Requirements for End-to-End Encryption in the Extensible Messaging and Presence Protocol (XMPP)</title>
+
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization>Cisco</organization>
+      <address>
+        <email>psaintan@cisco.com</email>
+      </address>
+    </author>
+
+    <date day="5" month="June" year="2009"/>
+    <area>Applications</area>
+    <workgroup>XMPP</workgroup>
+    <keyword>Internet-Draft</keyword>
+
+    <abstract>
+      <t>This document describes requirements for end-to-end encryption in the Extensible Messaging and Presence Protocol (XMPP).</t>
+    </abstract>
+  </front>
+
+  <middle>
+
+    <section title='Introduction' anchor='intro'>
+      <t>End-to-end or "e2e" encryption of traffic sent over the Extensible Messaging and Presence Protocol (XMPP) is a desirable goal.  Since 1999, the Jabber/XMPP developer community has experimented with several such technologies, including OpenPGP <xref target='XMPP-PGP'/>, S/MIME <xref target='XMPP-SMIME'/>, and encrypted sessions <xref target='ESessions'/>.  More recently, the community has explored the possibility of using Transport Layer Security <xref target='TLS'/> as the base technology for e2e encryption.  In order to provide a foundation for deciding on a sustainable approach to e2e encryption, this document specifies a set of requirements that the ideal technology would meet.</t>
+      <t>The preferred venue for discussion of this document is the xmpp@ietf.org mailing list; visit <eref target='https://www.ietf.org/mailman/listinfo/xmpp'/> for further information.</t>
+      <t>Much of the text in this document has been copied from <xref target='XEP-0210'/>.</t>
+    </section>
+
+    <section title='Scope' anchor='scope'>
+      <t>There are several different kinds of communications between XMPP entitites:</t>
+      <t>
+        <list style='numbers'>
+          <t>One-to-one communication sessions between two entities, where each entity is online and available during the life of the session so that all of the communications occur in real time.</t>
+          <t>One-to-one messages that are not transferred in real time but that instead are stored when sent and then forwarded when the recipient is next online; these are usually called "offline messages" as described in <xref target='OFFLINE'/>.</t>
+          <t>One-to-many information broadcast, such as undirected presence stanzas sent from one user to many contacts as described in <xref target='XMPP-IM'/> and data syndication as described in <xref target='PUBSUB'/>.</t>
+          <t>Many-to-many communication sessions among more than two entities, such as a text conference in a chatroom as described in <xref target='MUC'/>.</t>
+        </list>
+      </t>
+      <t>Ideally, any technology for end-to-end encryption in XMPP could be extended to cover all the scenarios above.  However, both one-to-many broadcast and many-to-many sessions are deemed out-of-scope for this document, and this document puts more weight on one-to-one communication sessions (the typical scenario for XMPP) than on offline messages.</t>
+    </section>
+
+    <section title='Security Requirements' anchor='reqs-sec'>
+      <t>This document stipulates the following security requirements for end-to-end encryption of XMPP communications:</t>
+      <t>
+        <list style='hanging'>
+          <t hangText='Confidentiality:'>The one-to-one XML stanzas exchanged between two entities (conventionally, "Alice" and "Bob") must not be understandable to any other entity that might intercept the communications.  The encrypted stanzas should be understood by an intermediate server only to the extent required to route them.</t>
+          <t hangText='Integrity:'>Alice and Bob must be sure that no other entity can change the content of the XML stanzas they exchange, or remove or insert stanzas undetected.</t>
+          <t hangText='Replay Protection:'>Alice or Bob must be able to identify and reject any communications that are copies of their previous communications resent by another entity.</t>
+          <t hangText='Perfect Forward Secrecy:'>The encrypted communication should not be revealed even if long-lived keys are compromised in the future (e.g., Steve steals Bob's computer).  For long-lived sessions it must be possible to periodically change the decryption keys.</t>
+          <t hangText='PKI Independence:'>The protocol must not force the use of any public key infrastructure (PKI), certification authority, web of trust, or any other trust model that is external to the trust established between Alice and Bob.  However, if external authentication or trust models are available then Alice and Bob should be able to use such trust models to enhance any trust that exists between them.</t>
+          <t hangText='Authentication:'>Each party to a conversation must know that the other party is who they want to communicate with (Alice must be able to know that Bob really is Bob, and vice versa).  Note: Authentication can be as simple as Alice confirming that Bob is the same Bob that she communicated with yesterday or that she talked to on the telephone.  The reliable association between an entity and its public keys is "identification" and therefore beyond the scope of this document.</t>
+          <t hangText='Identity Protection:'>No other entity should be able to identify Alice or Bob.  The JabberIDs they use to route their stanzas are unavoidably vulnerable to interception.  Therefore, even if Alice and Bob protect their identities by using different JabberIDs for each session, it must be possible for their user agents to authenticate them transparently, without any other entity identifying them via an active ("man-in-the-middle") attack, or even linking them to their previous sessions.  If that is not possible because Alice and Bob choose to authenticate using public keys instead of retained shared secrets, then the public keys must not be revealed to other entities using a passive attack.  Bob should also be able to choose between protecting either his public key or Alice's public key from disclosure through an active attack.</t>
+          <t hangText='Robustness:'>The protocol should provide more than one difficult challenge that has to be overcome before an attack can succeed (for example, by generating encryption keys using as many shared secrets as possible, such as retained secrets or optional passwords).</t>
+          <t hangText='Upgradability:'>The protocol must be upgradable so that, if a vulnerability is discovered, a new version can fix it.  Alice must tell Bob which versions of the protocol she is prepared to support.</t>
+        </list>
+      </t>
+    </section>
+
+    <section title='Application Requirements' anchor='reqs-xmpp'>
+      <t>In addition to the foregoing security profile, this document also stipulates the following application-specific requirements:</t>
+      <t>
+        <list style='hanging'>
+          <t hangText='Generality:'>The solution must be generally applicable to the full content of any XML stanza type (&lt;message/&gt;, &lt;presence/&gt;, and &lt;;iq/&gt;) sent between two entities.  It is deemed acceptable if the solution does not apply to many-to-many stanzas (e.g., groupchat messages sent within the context of multi-user chat) or one-to-many stanzas (e.g., presence "broadcasts" and publish-subscribe notifications); end-to-end encryption of such stanzas might require separate solutions.</t>
+          <t hangText='Implementability:'>The only good security technology is an implemented security technology.  The solution should be one that XMPP client developers can implement in a relatively straightforward and interoperable fashion.  Ideally the solution would reuse existing technologies so that client developers can also reuse existing libraries, as they already do for security features such as Transport Layer Security <xref target='TLS'/> and the Simple Authentication and Security Layer <xref target='SASL'/>.</t>
+          <t hangText='Usability:'>The requirement of usability takes implementability one step further by stipulating that the solution should be one that organizations can deploy and humans can use with the ease-of-use of, say, "https:" URLs.  Experience has shown that solutions requiring a full public key infrastructure do not get widely deployed and that solutions requiring any user action are not widely used.  If, however, Alice and/or Bob are prepared to verify the integrity of their copies of each other's keys (thus enabling them to discover targeted active attacks or even the mass surveilance of a population), then the actions necessary for them to achieve that should be minimal (requiring no more effort than a one-time out-of-band verification of a string of up to 8 alphanumeric characters).</t>
+          <t hangText='Efficiency:'>Cryptographic operations are highly CPU intensive, particularly public key and Diffie-Hellman operations.  Cryptographic data structures can be relatively large, especially public keys and certificates.  Network round trips can introduce unacceptable delays, especially over high-latency wireless connections.  The solution must perform efficiently even when CPU and network bandwidth are constrained.  The number of stanzas required for negotiation of encrypted communication should be minimized.</t>
+          <t hangText='Flexibility:'>The solution must be compatible with a variety of existing and future cryptographic algorithms and identity certification schemes, including <xref target='X509'/> and <xref target='OpenPGP'/>.  The protocol must also be able to evolve to correct the weaknesses that are inevitably discovered once any cryptographic protocol is in widespread use.</t>
+          <t hangText='Offline messages:'>It should be possible to encrypt one-to-one communications that are stored for later delivery (so-called "offline messages") and still benefit from Perfect Forward Secrecy (with a slightly longer period of vulnerability than if both parties were online simultaneously).  However, any vulnerabilities introduced into the solution in order to enable such offline communications must not make real-time communications more vulnerable.</t>
+        </list>
+      </t>
+    </section>
+
+    <section title='Security Considerations' anchor='sec'>
+      <t>Security issues are discussed throughout this document.</t>
+    </section>
+
+    <section title='IANA Considerations' anchor='iana'>
+      <t>No actions by the IANA are defined by this document.</t>
+    </section>
+
+  </middle>
+
+  <back>
+
+    <references title="Informative References">
+
+<reference anchor="ESessions">
+  <front>
+    <title>Encrypted Session Negotiation</title>
+    <author initials="I." surname="Paterson" fullname="Ian Paterson">
+      <organization/>
+      <address>
+        <email>ian.paterson@clientside.co.uk</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="D." surname="Smith" fullname="Dave Smith">
+      <organization/>
+      <address>
+        <email>dizzyd@jabber.org</email>
+      </address>
+    </author>
+    <date day="30" month="May" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0116"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0116.html"/>
+</reference>
+
+<reference anchor="MUC">
+  <front>
+    <title>Multi-User Chat</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="16" month="July" year="2008"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0045"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0045.html"/>
+</reference>
+
+<reference anchor="OFFLINE">
+  <front>
+    <title>Best Practices for Handling Offline Messages</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="24" month="January" year="2006"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0160"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0160.html"/>
+</reference>
+
+<reference anchor='OpenPGP'>
+<front>
+<title>OpenPGP Message Format</title>
+<author initials='J.' surname='Callas' fullname='J. Callas'>
+<organization /></author>
+<author initials='L.' surname='Donnerhacke' fullname='L. Donnerhacke'>
+<organization /></author>
+<author initials='H.' surname='Finney' fullname='H. Finney'>
+<organization /></author>
+<author initials='D.' surname='Shaw' fullname='D. Shaw'>
+<organization /></author>
+<author initials='R.' surname='Thayer' fullname='R. Thayer'>
+<organization /></author>
+<date year='2007' month='November' />
+<abstract>
+<t>This document is maintained in order to publish all necessary information needed to develop interoperable applications based on the OpenPGP format. It is not a step-by-step cookbook for writing an application. It describes only the format and methods needed to read, check, generate, and write conforming packets crossing any network. It does not deal with storage and implementation questions. It does, however, discuss implementation issues necessary to avoid security flaws.&lt;/t>&lt;t> OpenPGP software uses a combination of strong public-key and symmetric cryptography to provide security services for electronic communications and data storage. These services include confidentiality, key management, authentication, and digital signatures. This document specifies the message formats used in OpenPGP. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4880' />
+<format type='TXT' octets='203706' target='ftp://ftp.isi.edu/in-notes/rfc4880.txt' />
+</reference>
+
+<reference anchor="PUBSUB">
+  <front>
+    <title>Publish-Subscribe</title>
+    <author initials="P." surname="Millard" fullname="Peter Millard">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="R." surname="Meijer" fullname="Ralph Meijer">
+      <organization/>
+      <address>
+        <email>ralphm@ik.nu</email>
+      </address>
+    </author>
+    <date day="03" month="September" year="2008"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0060"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0060.html"/>
+</reference>
+
+<reference anchor="SASL">
+<front>
+<title>Simple Authentication and Security Layer (SASL)</title>
+<author initials='A.' surname='Melnikov' fullname='A. Melnikov'>
+<organization /></author>
+<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>&lt;p>The Simple Authentication and Security Layer (SASL) is a framework for providing authentication and data security services in connection-oriented protocols via replaceable mechanisms. It provides a structured interface between protocols and mechanisms. The resulting framework allows new protocols to reuse existing mechanisms and allows old protocols to make use of new mechanisms. The framework also provides a protocol for securing subsequent protocol exchanges within a data security layer.&lt;/p>&lt;p> This document describes how a SASL mechanism is structured, describes how protocols include support for SASL, and defines the protocol for carrying a data security layer over a connection. In addition, this document defines one SASL mechanism, the EXTERNAL mechanism.&lt;/p>&lt;p> This document obsoletes RFC 2222. [STANDARDS TRACK]&lt;/p></t></abstract></front>
+<seriesInfo name='RFC' value='4422' />
+<format type='TXT' octets='73206' target='ftp://ftp.isi.edu/in-notes/rfc4422.txt' />
+</reference>
+
+<reference anchor='TLS'>
+<front>
+<title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+<author initials='T.' surname='Dierks' fullname='T. Dierks'>
+<organization /></author>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<date year='2008' month='August' />
+<abstract>
+<t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5246' />
+<format type='TXT' octets='222395' target='ftp://ftp.isi.edu/in-notes/rfc5246.txt' />
+</reference>
+
+<reference anchor='X509'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+<author initials='D.' surname='Cooper' fullname='D. Cooper'>
+<organization /></author>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'>
+<organization /></author>
+<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
+<organization /></author>
+<author initials='R.' surname='Housley' fullname='R. Housley'>
+<organization /></author>
+<author initials='W.' surname='Polk' fullname='W. Polk'>
+<organization /></author>
+<date year='2008' month='May' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5280' />
+<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
+</reference>
+
+<reference anchor="XEP-0210">
+  <front>
+    <title>Requirements for Encrypted Sessions</title>
+    <author initials="I." surname="Paterson" fullname="Ian Paterson">
+      <organization/>
+      <address>
+        <email>ian.paterson@clientside.co.uk</email>
+      </address>
+    </author>
+    <date day="30" month="May" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0210"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0210.html"/>
+</reference>
+
+<reference anchor="XMPP-IM">
+<front>
+<title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and  Presence</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization />
+</author>
+<date month='June' day='1' year='2009' />
+<abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-00.txt' />
+</reference>
+
+<reference anchor="XMPP-PGP">
+  <front>
+    <title>Current Jabber OpenPGP Usage</title>
+    <author initials="T." surname="Muldowney" fullname="Thomas Muldowney">
+      <organization/>
+      <address>
+        <email>temas@jabber.org</email>
+      </address>
+    </author>
+    <date day="29" month="November" year="2006"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0027"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0027.html"/>
+</reference>
+
+<reference anchor='XMPP-SMIME'>
+<front>
+<title abbrev='XMPP E2E'>End-to-End Signing and Object Encryption for the Extensible Messaging and Presence Protocol (XMPP)</title>
+<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+<organization>Jabber Software Foundation</organization>
+<address>
+<email>stpeter@jabber.org</email></address></author>
+<date year='2004' month='October' />
+<area>Applications</area>
+<workgroup>XMPP Working Group</workgroup>
+<keyword>RFC</keyword>
+<keyword>Request for Comments</keyword>
+<keyword>I-D</keyword>
+<keyword>Internet-Draft</keyword>
+<keyword>XMPP</keyword>
+<keyword>Extensible Messaging and Presence Protocol</keyword>
+<keyword>Jabber</keyword>
+<keyword>IM</keyword>
+<keyword>Instant Messaging</keyword>
+<keyword>Presence</keyword>
+<keyword>XML</keyword>
+<keyword>Extensible Markup Language</keyword>
+<abstract>
+<t>This memo defines methods of end-to-end signing and object encryption for the Extensible Messaging and Presence Protocol (XMPP).</t></abstract></front>
+<seriesInfo name='RFC' value='3923' />
+<format type='TXT' octets='51828' target='ftp://ftp.isi.edu/in-notes/rfc3923.txt' />
+<format type='HTML' octets='77480' target='http://xml.resource.org/public/rfc/html/rfc3923.html' />
+<format type='XML' octets='71879' target='http://xml.resource.org/public/rfc/xml/rfc3923.xml' />
+</reference>
+
+    </references>
+
+  </back>
+
+</rfc>
