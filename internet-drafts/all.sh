@@ -21,6 +21,7 @@ rm names.txt
 
 mv draft-*.html $idpath/
 mv draft-*.txt $idpath/
+cp draft-*.xml $idpath/
 cp index.shtml $idpath/
 
 # END
