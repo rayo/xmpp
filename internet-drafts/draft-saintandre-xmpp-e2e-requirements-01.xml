@@ -7,7 +7,7 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="info" docName="draft-saintandre-xmpp-e2e-requirements-00" ipr="trust200902">
+<rfc category="info" docName="draft-saintandre-xmpp-e2e-requirements-01" ipr="trust200902">
 
   <front>
     <title abbrev="XMPP E2E Requirements">Requirements for End-to-End Encryption in the Extensible Messaging and Presence Protocol (XMPP)</title>
@@ -19,7 +19,7 @@
       </address>
     </author>
 
-    <date day="5" month="June" year="2009"/>
+    <date day="29" month="June" year="2009"/>
     <area>Applications</area>
     <workgroup>XMPP</workgroup>
     <keyword>Internet-Draft</keyword>
@@ -50,6 +50,22 @@
       <t>Ideally, any technology for end-to-end encryption in XMPP could be extended to cover all the scenarios above.  However, both one-to-many broadcast and many-to-many sessions are deemed out-of-scope for this document, and this document puts more weight on one-to-one communication sessions (the typical scenario for XMPP) than on offline messages.</t>
     </section>
 
+    <section title='Threat Analysis' anchor='threat'>
+      <t>XMPP technologies are typically deployed using a client-server architecture.  As a result, XMPP endpoints (often but not always controlled by human users) need to communicate through one or more servers.  For example, the user juliet@capulet.lit connects to the capulet.lit server and the user romeo@montague.lit connects to the montague.lit server, but in order for Juliet to send a message to Romeo the message will be routed over her client-to-server connection with capulet.lit, over a server-to-server connection between capulet.lit and montague.lit, and over Romeo's client-to-server connection with montague.lit.  Although <xref target='XMPP-CORE'/> requires support for Transport Layer Security <xref target='TLS'/> to make it possible to encrypt all of these connections, when XMPP is deployed any of these connections might be unencrypted.  Furthermore, even if the server-to-server connection is encrypted and both of the client-to-server connections are encrypted, the message would still be in the clear while processed by both the capulet.lit and montague.lit servers.</t>
+      <t>In this specification we primarily address communications security ("commsec") between two parties, especially confidentiality, data integrity, and peer entity authentication.  Communications security can be subject to a variety of attacks, which <xref target='RFC3552'/> divides into passive and active categories.  In a passive attack, information is leaked (e.g., a passive attacker could read all of the messages that Juliet sends to Romeo).  In an active attack, the attacker can add, modify, or delete messages between the parties, thus disrupting communications.</t>
+      <t>Traditionally, it seems that XMPP users have been concerned more about passive attacks (such as eavesdropping) than about active attacks (such as man-in-the-middle), perhaps because they have thought that their communications are "just chat", because they have had no expectation that endpoints could be authenticated, or because they have believed that hijacked communications would be detected socially (e.g., because the other party did not have an authentic "voice" in a text conversation).  However, both forms of attack are of concern in this protocol.</t>
+      <t>In particular, we consider the following types of attacks and attackers:</t>
+      <t>
+        <list style='symbols'>
+          <t>One type of passive attack might involve monitoring all the conversations of a given party.  To help prevent this, it is important for the party to ensure that its connection with its server is protected using TLS.  However, in this case the eavesdropper could monitor outbound traffic from the party's server, either to other connected clients or to other servers, since that traffic might be unencrypted.  In addition, the eavesdropper could attack the party's server so that it gains access to all traffic within the server, or masquerade as the party's server so that the party is fooled into connecting to the attacker rather than directly to the party's server.</t>
+          <t>Another type of passive attack might involve monitoring of a single conversation between two particular parties.  In this case the eavesdropper could monitor communications over the server-to-server connection between the parties' servers, or over the client-to-server connection between either party and that party's server.</t>
+          <t>One type of active attack would involve modification of the XML stanzas used to advertise support for the protocol "building blocks" that make it possible to negotiate a secure session; as a result, other parties would be led to believe that the party does not have the ability to negotate a secure session and therefore would not attempt such a negotiation.</t>
+          <t>Another type of active attack would involve modification or outright deletion of the XML stanzas used to negotiate a secure session (such as those described in this document), with the result that the parties would think the negotiation has failed for legitimate reasons such as incompatibilities between the parties' clients.</t>
+          <t>A more sophisticated active attack would involve a cryptanalytic attack on the keying material or other credentials used to establish trust between the parties, such as an ephemeral password exchanged during an initial certificate exchange if Secure Remote Password <xref target='TLS-SRP'/> is used.</t>
+        </list>
+      </t>
+      <t>Other attacks are possible, and the foregoing list is best considered incomplete at this time.</t>
+    </section>
     <section title='Security Requirements' anchor='reqs-sec'>
       <t>This document stipulates the following security requirements for end-to-end encryption of XMPP communications:</t>
       <t>
@@ -71,7 +87,7 @@
       <t>In addition to the foregoing security profile, this document also stipulates the following application-specific requirements:</t>
       <t>
         <list style='hanging'>
-          <t hangText='Generality:'>The solution must be generally applicable to the full content of any XML stanza type (&lt;message/&gt;, &lt;presence/&gt;, and &lt;;iq/&gt;) sent between two entities.  It is deemed acceptable if the solution does not apply to many-to-many stanzas (e.g., groupchat messages sent within the context of multi-user chat) or one-to-many stanzas (e.g., presence "broadcasts" and publish-subscribe notifications); end-to-end encryption of such stanzas might require separate solutions.</t>
+          <t hangText='Generality:'>The solution must be generally applicable to the full content of any XML stanza type (&lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;) sent between two entities.  It is deemed acceptable if the solution does not apply to many-to-many stanzas (e.g., groupchat messages sent within the context of multi-user chat) or one-to-many stanzas (e.g., presence "broadcasts" and publish-subscribe notifications); end-to-end encryption of such stanzas might require separate solutions.</t>
           <t hangText='Implementability:'>The only good security technology is an implemented security technology.  The solution should be one that XMPP client developers can implement in a relatively straightforward and interoperable fashion.  Ideally the solution would reuse existing technologies so that client developers can also reuse existing libraries, as they already do for security features such as Transport Layer Security <xref target='TLS'/> and the Simple Authentication and Security Layer <xref target='SASL'/>.</t>
           <t hangText='Usability:'>The requirement of usability takes implementability one step further by stipulating that the solution should be one that organizations can deploy and humans can use with the ease-of-use of, say, "https:" URLs.  Experience has shown that solutions requiring a full public key infrastructure do not get widely deployed and that solutions requiring any user action are not widely used.  If, however, Alice and/or Bob are prepared to verify the integrity of their copies of each other's keys (thus enabling them to discover targeted active attacks or even the mass surveilance of a population), then the actions necessary for them to achieve that should be minimal (requiring no more effort than a one-time out-of-band verification of a string of up to 8 alphanumeric characters).</t>
           <t hangText='Efficiency:'>Cryptographic operations are highly CPU intensive, particularly public key and Diffie-Hellman operations.  Cryptographic data structures can be relatively large, especially public keys and certificates.  Network round trips can introduce unacceptable delays, especially over high-latency wireless connections.  The solution must perform efficiently even when CPU and network bandwidth are constrained.  The number of stanzas required for negotiation of encrypted communication should be minimized.</t>
@@ -199,6 +215,21 @@
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0060.html"/>
 </reference>
 
+<reference anchor='RFC3552'>
+<front>
+<title>Guidelines for Writing RFC Text on Security Considerations</title>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<author initials='B.' surname='Korver' fullname='B. Korver'>
+<organization /></author>
+<date year='2003' month='July' />
+<abstract>
+<t>All RFCs are required to have a Security Considerations section.  Historically, such sections have been relatively weak.  This document provides guidelines to RFC authors on how to write a good Security Considerations section.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t></abstract></front>
+<seriesInfo name='BCP' value='72' />
+<seriesInfo name='RFC' value='3552' />
+<format type='TXT' octets='110393' target='ftp://ftp.isi.edu/in-notes/rfc3552.txt' />
+</reference>
+
 <reference anchor="SASL">
 <front>
 <title>Simple Authentication and Security Layer (SASL)</title>
@@ -225,6 +256,24 @@
 <t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='5246' />
 <format type='TXT' octets='222395' target='ftp://ftp.isi.edu/in-notes/rfc5246.txt' />
+</reference>
+
+<reference anchor='TLS-SRP'>
+<front>
+<title>Using the Secure Remote Password (SRP) Protocol for TLS Authentication</title>
+<author initials='D.' surname='Taylor' fullname='D. Taylor'>
+<organization /></author>
+<author initials='T.' surname='Wu' fullname='T. Wu'>
+<organization /></author>
+<author initials='N.' surname='Mavrogiannopoulos' fullname='N. Mavrogiannopoulos'>
+<organization /></author>
+<author initials='T.' surname='Perrin' fullname='T. Perrin'>
+<organization /></author>
+<date year='2007' month='November' />
+<abstract>
+<t>This memo presents a technique for using the Secure Remote Password protocol as an authentication method for the Transport Layer Security protocol.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='5054' />
+<format type='TXT' octets='44445' target='ftp://ftp.isi.edu/in-notes/rfc5054.txt' />
 </reference>
 
 <reference anchor='X509'>
@@ -262,6 +311,20 @@
   </front>
   <seriesInfo name="XSF XEP" value="0210"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0210.html"/>
+</reference>
+
+<reference anchor="XMPP-CORE">
+<front>
+<title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization />
+</author>
+<date month='June' day='1' year='2009' />
+<abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.  This document also specifies the format for XMPP addresses, which are fully internationalizable.</t><t>This document obsoletes RFC 3920.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-00.txt' />
 </reference>
 
 <reference anchor="XMPP-IM">
