@@ -5,10 +5,10 @@
 <?rfc symrefs="yes"?>
 <?rfc compact="yes"?>
 <?rfc strict="yes"?>
-<rfc category="std" docName="draft-meyer-xmpp-e2e-encryption-01" ipr="trust200902">
+<rfc category="std" docName="draft-meyer-xmpp-e2e-encryption-02" ipr="trust200902">
   
   <front>
-    <title abbrev='XTLS'>Extensible Messaging and Presence Protocol (XMPP) End-to-End Encryption Using Transport Layer Security ("XTLS")</title>
+    <title abbrev='XTLS'>XTLS: End-to-End Encryption for the Extensible Messaging and Presence Protocol (XMPP) Using Transport Layer Security (TLS)</title>
     <author initials="D." surname="Meyer" fullname="Dirk Meyer">
       <organization>Universitaet Bremen TZI</organization>
       <address>
@@ -21,90 +21,42 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="March" day="8"/>
+    <date day="29" month="June" year="2009"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
     <keyword>Jabber</keyword>
     <keyword>encryption</keyword>
     <abstract>
-      <t>This document specifies "XTLS", a protocol for end-to-end encryption of Extensible Messaging and Presence Protocol (XMPP) traffic via an application-level usage of Transport Layer Security (TLS).  XTLS treats the end-to-end exchange of XML stanzas as a virtual transport and uses TLS to secure that transport, thus enabling XMPP entities to communicate in a way that is designed to prevent eavesdropping, tampering, and forgery of XML stanzas.  The protocol can be used for secure end-to-end messaging as well as any others application such as file transfer.</t>
+      <t>This document specifies "XTLS", a protocol for end-to-end encryption of Extensible Messaging and Presence Protocol (XMPP) traffic.  XTLS is an application-level usage of Transport Layer Security (TLS) that is set up using the XMPP Jingle extension for session negotiation and transported using any streaming transport as the data delivery mechanism.  Thus XTLS treats the end-to-end exchange of XML stanzas as a virtual transport and uses TLS to secure that transport, enabling XMPP entities to communicate in a way that is designed to ensure the confidentiality and integrity XML stanzas.  The protocol can be used for secure end-to-end messaging as well as other XMPP applications, such as file transfer.</t>
     </abstract>
   </front>
 
   <middle>
     <section title="Introduction" anchor="intro">
-      <t>End-to-end encryption of traffic sent over the Extensible Messaging and Presence Protocol (XMPP) is a desirable goal.  Since 1999, the Jabber/XMPP developer community has experimented with several such technologies, including OpenPGP <xref target='XEP-0027'/>, S/MIME <xref target='RFC3923'/>, and encrypted sessions or "ESessions" <xref target='XEP-0218'/>.  For various reasons, these technologies have not been widely implemented and deployed.  When the XMPP Standards Foundation asked various Internet security experts to complete a security review of encrypted sessions, it was recommended to explore the possibility of instead using the Transport Layer Security <xref target='TLS'/> as the base technology for XMPP.  That possibility is explored in this document.</t>
-      <t>TLS is the most widely implemented protocol for securing network traffic.  In addition to applications in the email infrastructure, the World Wide Web <xref target='HTTP-TLS'/>, and datagram transport for multimedia session negotiation <xref target='DTLS'/>, TLS is used in XMPP to secure TCP connections from client to server and from server to server, as specified in <xref target='rfc3920bis'/>.  Therefore TLS is already familiar to XMPP developers.</t>
-      <t>This specification, called "XTLS", defines a method whereby any XMPP entity that supports the XMPP Jingle negotiation framework <xref target='XEP-0166'/> can use TLS semantics for end-to-end encryption, whether the application data is sent over a streaming transport (like TCP) or a datagram transport (like UDP).  The basic use case is to tunnel XMPP stanzas between two IM users for end-to-end secure chat using end-to-end XML streams.  However, XTLS is not limited to encryption of one-to-one text chat, since it can be used between two XMPP clients for encryption of any XMPP payloads, between an XMPP client and a remote XMPP service (i.e., a service with which a client does not have a direct XML stream, such as a <xref target='XEP-0045'/> chatroom), or between two remote XMPP services.  Furthermore, XTLS can be used for encrypted file transfer using <xref target='XEP-0234'/>, for encrypted voice or video sessions using <xref target='XEP-0167'/> and <xref target='DTLS-SRTP'/>, and other applications.</t>
+      <t>End-to-end encryption of traffic sent over the Extensible Messaging and Presence Protocol (XMPP) is a desirable goal.  Requirements and a threat analysis for XMPP encryption are provided in <xref target='E2E-REQ'/>.  This document explores the possibility of using the Transport Layer Security <xref target='TLS'/> to meet those requirements.</t>
+      <t>TLS is the most widely implemented protocol for securing network traffic.  In addition to applications in the email infrastructure, the World Wide Web <xref target='HTTP-TLS'/>, and datagram transport for multimedia session negotiation <xref target='DTLS'/>, TLS is used in XMPP to secure TCP connections from client to server and from server to server, as specified in <xref target='XMPP-CORE'/>.  Therefore TLS is already familiar to XMPP developers.</t>
+      <t>This specification, called "XTLS", defines a method whereby any XMPP entity that supports the XMPP Jingle negotiation framework <xref target='JINGLE'/> can use TLS semantics for end-to-end encryption, whether the application data is sent over a streaming transport (like TCP) or a datagram transport (like UDP).  The basic use case is to tunnel XMPP stanzas between two IM users for end-to-end secure chat using end-to-end XML streams.  However, XTLS is not limited to encryption of one-to-one text chat, since it can be used between two XMPP clients for encryption of any XMPP payloads, between an XMPP client and a remote XMPP service (i.e., a service with which a client does not have a direct XML stream, such as a <xref target='MUC'/> chatroom), or between two remote XMPP services.  Furthermore, XTLS can be used for encrypted file transfer using <xref target='JINGLE-FILE'/>, for encrypted voice or video sessions using <xref target='JINGLE-RTP'/> and <xref target='DTLS-SRTP'/>, and other applications.</t>
       <t>Note: The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-    </section>
-
-    <section title='Scope' anchor='scope'>
-      <t>The XMPP communication exchanges of interest here exist in the context of a one-to-one communication "session" between two entities, where the information exchanged takes the form of XMPP stanzas. However, several other kinds of XMPP exchanges exist outside the context of one-to-one communication sessions:</t>
-      <t>
-        <list style='symbols'>
-          <t>Many-to-many sessions, such as a text conference in a chatroom as specified in <xref target='XEP-0045'/>.</t>
-          <t>One-to-many broadcast of information, such as undirected presence stanzas sent from one user to many contacts as described in <xref target='rfc3921bis'/> and data syndication implemented using the XMPP publish-subsribe technology described in <xref target='XEP-0060'/>.</t>
-          <t>One-to-one communications that are stored for later delivery rather than delivered immediately, such as the so-called "offline messages" described in <xref target='XEP-0160'/>.</t>
-        </list>
-      </t>
-      <t>Ideally, any technology for end-to-end encryption in XMPP could be extended to cover all the scenarios above as well as one-to-one communication sessions. However, many-to-many sessions, one-to-many broadcast, and offline messages are out of scope for this specification.</t>
-    </section>
-
-    <section title='Threat Analysis' anchor='threat'>
-      <t>XMPP technologies are typically deployed using a client-server architecture.  As a result, XMPP endpoints (often but not always controlled by human users) need to communicate through one or more servers.  For example, the user juliet@capulet.lit connects to the capulet.lit server and the user romeo@montague.lit connects to the montague.lit server, but in order for Juliet to send a message to Romeo the message will be routed over her client-to-server connection with capulet.lit, over a server-to-server connection between capulet.lit and montague.lit, and over Romeo's client-to-server connection with montague.lit.  Although <xref target='rfc3920bis'/> requires support for Transport Layer Security <xref target='TLS'/> to make it possible to encrypt all of these connections, when XMPP is deployed any of these connections might be unencrypted.  Furthermore, even if the server-to-server connection is encrypted and both of the client-to-server connections are encrypted, the message would still be in the clear while processed by both the capulet.lit and montague.lit servers.</t>
-      <t>In this specification we primarily address communications security ("commsec") between two parties, especially confidentiality, data integrity, and peer entity authentication.  Communications security can be subject to a variety of attacks, which <xref target='RFC3552'/> divides attacks into passive and active categories.  In a passive attack, information is leaked (e.g., a passive attacker could read all of the messages that Juliet sends to Romeo).  In an active attack, the attacker can add, modify, or delete messages between the parties, thus disrupting communications.</t>
-      <t>Traditionally, it seems that XMPP users have been concerned more about passive attacks (such as eavesdropping) than about active attacks (such as man-in-the-middle), perhaps because they have thought that their communications are "just chat", because they have had no expectation that endpoints could be authenticated, or because they have believed that hijacked communications would be detected socially (e.g., because the other party did not have an authentic "voice" in a text conversation).  However, both forms of attack are of concern in this protocol.</t>
-      <t>In particular, we consider the following types of attacks and attackers:</t>
-      <t>
-        <list style='symbols'>
-          <t>One type of passive attack might involve monitoring all the conversations of a given party.  To help prevent this, it is helpful for the party to ensure that its connection with its server is protected using TLS.  However, in this case the eavesdropper could monitor outbound traffic from the party's server, either to other connected clients or to other servers, since that traffic might be unencrypted.  In addition, the eavesdropper could attack the party's server so that it gains access to all traffic within the server, or masquerade as the party's server so that the party is fooled into connecting to the attacker rather than directly to the party's server.</t>
-          <t>Another type of passive attack might involve monitoring of a single conversation between two particular parties.  In this case the eavesdropper could monitor communications over the server-to-server connection between the parties' servers, or over the client-to-server connection between either party and that party's server.</t>
-          <t>One type of active attack would involve modification of the XML stanzas used to advertise support for the protocol "building blocks" that make it possible to negotiate a secure session; as a result, other parties would be led to believe that the party does not have the ability to negotate a secure session and therefore would not attempt such a negotiation.</t>
-          <t>Another type of active attack would involve modification or outright deletion of the XML stanzas used to negotiate a secure session (such as those described in this document), with the result that the parties would think the negotiation has failed for legitimate reasons such as incompatibilities between the parties' clients.</t>
-          <t>A more sophisticated active attack would involve a cryptanalytic attack on the keying material or other credentials used to establish trust between the parties, such as an ephemeral password exchanged during an initial certificate exchange if Secure Remote Password <xref target='TLS-SRP'/> is used.</t>
-        </list>
-      </t>
-      <t>Other attacks are possible, and the foregoing list is best considered incomplete at this time.</t>
-    </section>
-
-    <section title='Requirements' anchor='reqs'>
-      <t>(This section borrows some text from <xref target='XEP-0210'/>.)</t>
-      <t>This document stipulates the following requirements for end-to-end encryption of XMPP communications.  It is possible that some of those requirements can be met only with particular TLS cipher suites, or cannot be met at all without defining extensions to TLS itself; a full gap analysis has not yet been completed.</t>
-      <t>
-        <list style='symbols'>
-          <t>Confidentiality.  The one-to-one XML stanzas exchanged between two entities must not be understandable to any other entity that might intercept the communications. The encrypted stanzas are to be understood by an intermediate server only to the extent required to route them.</t>
-          <t>Integrity.  The two parties to an encrypted communication session must be sure that no other entity is able to change the content of the XML stanzas they exchange, or remove or insert stanzas into the session undetected.</t>
-          <t>Replay protection.  The two parties to an encrypted communication session must be able to identify and reject any communications that are copies of their previous communications resent by another entity.</t>
-          <t>Perfect forward secrecy.  The content of an encrypted communication should not be revealed even if long-lived keys are compromised in the future (e.g., if one of the parties loses their device). For long-lived sessions it should be possible to periodically change the decryption keys.</t>
-          <t>PKI independence.  The protocol must not rely on any public key infrastructure (PKI), certification authority, web of trust, or any other trust model that is external to the trust established between the two parties. However, if external authentication or trust models are available then the two parteis must be able to use them as a way of enhancing any trust that exists between them.</t>
-          <t>Authentication.  Each party to a conversation must know that the other party is who they want to communicate with.</t>
-          <t>Generality.  The solution must be generally applicable to the full content of any XML stanza type sent between two entities (i.e., message, presence, and IQ stanzas).</t>
-          <t>Implementability.  The only good security technology is an implemented security technology. The solution must be one that XMPP client developers can implement in a relatively straightforward and interoperable fashion, preferably by re-using existing building blocks such as Transport Layer Security XML streams, Jingle <xref target='XEP-0166'/>, and in-band bytestreams <xref target='XEP-0047'/>.</t>
-          <t>Usability.  The requirement of usability takes implementability one step further by stipulating that the solution must be one that organizations may deploy and humans may use with 100% transparency (with the ease-of-use of secure web browsing via HTTPS). Experience has shown that solutions requiring a full public key infrastructure do not get widely deployed and solutions requiring any user action are not widely used. If, however, the parties are prepared to verify the integrity of their copies of each other's keys (thus enabling them to discover targeted active attacks), then the actions necessary for them to verify key integrity must be minimal (requiring no more effort than a one-time out-of-band verification of a string of up to 6 alphanumeric characters).</t>
-          <t>Efficiency.  Cryptographic operations are highly CPU intensive, particularly public key and Diffie-Hellman operations. Cryptographic data structures can be relatively large, especially public keys and certificates. Network round trips can introduce unacceptable delays, especially over high-latency wireless connections. The solution must perform efficiently even when CPU and network bandwidth are constrained. The number of round trips required to set up an encrypted session should be minimized.</t>
-          <t>Flexibility.  The solution must be compatible with a variety of existing and future cryptographic algorithms and identity certification schemes, including X.509 and PGP.</t>
-        </list>
-      </t>
     </section>
 
     <section title='Approach' anchor='approach'>
       <t>In broad outline, XTLS takes the following approach to end-to-end encryption of XMPP traffic:</t>
       <t>
         <list style='numbers'>
-          <t>We assume that all XMPP entities will have X.509 certificates; realistically these certificates are likely to be self-signed and automatically generated by an XMPP client, however CA-issued certificates are encouraged to overcome problems with self-signed certificates.</t>
-          <t>We use the XMPP Jingle extensions as the negotiation framework (see <xref target='XEP-0166'/>).</t>
-          <t>We define a &lt;security/&gt; element that can be included in any Jingle negotiation, and a new "security-info" Jingle action for sending security-related information.</t>
-          <t>When an entity wishes to encrypt its communications with a second entity, it sends a Jingle session-initiate request that specifies the desired application type, a possible transport, the sender's X.509 fingerprint, and optionally hints about the sender's supported TLS methods.</t>
-          <t>If both parties support XTLS, the first data sent over the negotiated transport is TLS handshake data, not application data.  Once the TLS handshake has finished, the parties can then send application data over the now-encrypted transport.</t>
-          <t>The simplest scenario is end-to-end encryption of traditional XMPP text chat using end-to-end XML streams, in-band bytestreams (see <xref target='XEP-0047'/>), and previously-accepted X.509 certificates.</t>
-          <t>On first use of end-to-end encryption between two entities, it is encouraged to use secure remote passwords rather than leap-of-faith to bootstrap the subsequent use of the client-generated X.509 certificates.</t>
-          <t>More complex scenarios are theoretically supported (e.g., encrypted file transfer using SOCKS5 bytestreams and encrypted voice chat using DTLS-SRTP) but have not yet been fully defined.</t>
-          <t>XTLS theoretically can be used to establish a TLS-encrypted streaming transport or a DTLS-encrypted datagram transport, but integration with DTLS <xref target='DTLS'/> has not yet been prototyped so use with streaming transports is the more stable scenario.</t>
+          <t>We assume that all XMPP entities will have X.509 certificates; realistically these certificates are likely to be self-signed and automatically generated by an XMPP client, however certificates issued by known certification authorities are encouraged to overcome problems with self-signed certificates.</t>
+          <t>We use the XMPP Jingle extensions as the negotiation framework (see <xref target='JINGLE'/>).</t>
+          <t>We use the concept of Jingle security preconditions to ensure that the negotiated transport will be encrypted before used for sending application data.</t>
+          <t>When an entity wishes to encrypt its communications with a second entity, it sends a Jingle session-initiate request that specifies the desired application type, a possible transport, and a TLS security precondition that includes the sender's X.509 fingerprint and optionally hints about the sender's supported TLS methods.</t>
+          <t>If both parties support XTLS, the first data sent over the negotiated transport is TLS handshake data, not application data.  Once the TLS handshake has finished, the parties can then send application data over the now-encrypted transport (called an "XTLS tunnel").</t>
+          <t>The simplest scenario is end-to-end encryption of traditional XMPP text chat using end-to-end XML streams as the application and in-band bytestreams <xref target='IBB'/> as the transport.</t>
+          <t>If the parties have previously negotiated an XTLS tunnel, during the TLS negotiation each party simply needs to verify that the other party is presenting the same certificate as used in previous sessions.</t>
+          <t>If the parties have not previously negotiated an XTLS tunnel, they need to bootstrap trust in their certificates; to do so, it is encouraged to use secure remote passwords rather than leap-of-faith.</t>
         </list>
       </t>
       <t>We expand on this approach in the following section.</t>
+      <t>More complex scenarios are theoretically supported (e.g., encrypted file transfer using SOCKS5 bytestreams and encrypted voice chat using DTLS-SRTP) but have not yet been fully defined.</t>
+      <t>XTLS theoretically can be used to establish a TLS-encrypted streaming transport or a DTLS-encrypted datagram transport, but integration with DTLS <xref target='DTLS'/> has not yet been prototyped so use with streaming transports is the more stable scenario.</t>
     </section>
 
     <section title='XTLS Protocol Flow' anchor='proto'>
@@ -141,15 +93,15 @@ Initiator                   Responder
   |                            |
         ]]></artwork>
       </figure>
-      <t>To simplify the description we assume here that the parties already trust each other's certificates.  See discussion under <xref target='bootstrapping'/> for information about bootstrapping of certificate trust on the first communication.</t>
-      <t>First the initiator sends a Jingle session-initiate request (here the simple case of an end-to-end text chat session using in-band bytestreams <xref target='XEP-0047'/>.  This request includes a &lt;security/&gt; element that contains the fingerprint of the certificate that the initiator will use during the TLS negotiation and a list of TLS methods the initiator supports (here X.509 certificate based authentication and TLS-SRP).  Note that this information is exchanged over the insecure server based connection.  The purpose of the exchange is to gather information what TLS method should be used in the TLS handshake, e.g. if a client can not verify the fingerprint of the peer it MAY omit the X.509 method.  If both clients can verify the fingerprint of the other, it is likely that X.509 certificate based authentication will succeed (unless the data is altered); if one client can not verify the fingerprint the client MAY prompt the user for a password for TLS-SRP based authentication (see <xref target='bootstrapping'/> for details).</t>
+      <t>To simplify the description we assume here that the parties already trust each other's certificates.  See discussion under <xref target='bootstrapping'/> for information about bootstrapping of certificate trust when the parties first negotiate the use of an XTLS tunnel.</t>
+      <t>First the initiator sends a Jingle session-initiate request (here the simple case of an end-to-end text chat session using in-band bytestreams <xref target='IBB'/>).  This request includes a &lt;security/&gt; element that contains the fingerprint of the certificate that the initiator will use during the TLS negotiation and a list of TLS methods the initiator supports (here certificate-based authentication <xref target='X509'/> and TLS with Secure Remote Passwords <xref target='TLS-SRP'/>).  Note that this information is exchanged over the insecure server-based connection.  The purpose of the exchange is to gather information about which TLS method should be used in the TLS handshake, e.g. if a client cannot verify the fingerprint of the peer it MAY omit the X.509 method.  If both clients can verify the fingerprint of the other, it is likely that X.509 certificate-based authentication will succeed (unless the data is altered); if one client cannot verify the fingerprint the client MAY prompt the user for a password for TLS-SRP based authentication (see <xref target='bootstrapping'/> for details).</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.lit/orchard'
     id='xn28s7gk'
     to='juliet@capulet.lit/balcony'
     type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'>
+  <jingle xmlns='urn:xmpp:jingle:1'>
           action='session-initiate'
           initiator='romeo@montague.lit/orchard'
           sid='a73sjjvkla37jfea'>
@@ -176,7 +128,7 @@ Initiator                   Responder
     id='hf64hl'
     to='romeo@montague.net/orchard'
     type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'>
+  <jingle xmlns='urn:xmpp:jingle:1'>
           action='session-accept'
           initiator='romeo@montague.lit/orchard'
           sid='a73sjjvkla37jfea'>
@@ -198,8 +150,8 @@ Initiator                   Responder
       <t>The following rules apply to the responder's handling of the session-initiate message:</t>
       <t>
         <list style='numbers'>
-          <t>If the responder does not support Jingle-XTLS it will silently ignore the &lt;security/&gt; element in the offer and therefore will return a session-accept message without a &lt;security/&gt; element.</t>
-          <t>If the responder supports Jingle-XTLS it SHOULD return a session-accept message that contains a &lt;security/&gt; element.</t>
+          <t>If the responder does not support XTLS it will silently ignore the &lt;security/&gt; element in the offer and therefore will return a session-accept message without a &lt;security/&gt; element.</t>
+          <t>If the responder supports XTLS it MUST return a session-accept message that contains a &lt;security/&gt; element.</t>
           <t>If the responder thinks it will be able to verify the initiator's certificate, it MUST include the fingerprint for the responder's certificate in the &lt;security/&gt; element of the session-accept message.  This is the "happy path" and will occur when the parties have already verified each other's certificates.</t>
           <t>If the responder thinks it will not be able to verify the initiator's certificate, it MAY omit the fingerprint for the responder's certificate in the &lt;security/&gt; element of the session-accept message.  This indicates that certificate-based authentication is not possible.  In this case the responder SHOULD signal that it wishes to use some other authentication method, such as secure remote passwords (see discussion under <xref target='bootstrapping'/>).</t>
           <t>If the responding client cannot verify the initiator's certificate, it SHOULD ask the responding user if a password was exchanged between the parties that can be used for TLS-SRP.  If this is not the case, setting up a mutually-authenticated link will fail and the responder MAY terminate the session.  Alternatively it could send its own fingerprint knowing it cannot authenticate the initiator, in which case the responder has to trust that there is no man-in-the-middle (see discussion under <xref target='bootstrapping'/>).</t>
@@ -213,14 +165,14 @@ Initiator                   Responder
           <t>If the initiating client cannot verify the responder's certificate it SHOULD ask the initiating user if a password was exchanged between the parties that can be used for TLS-SRP.  If this is not the case, setting up a mutually-authenticated link will fail and the responder MAY terminate the session or proceed with leap-of-faith (see discussion under <xref target='bootstrapping'/>).</t>
         </list>
       </t>
-      <t>The initiator can now determine if X.509 certificate based authentication will work or if TLS-SRP will be used.  It sends an additional security-info message to the responder to signal its choice.  This step is not really necessary because the responder will see the initiator's choice in the first message of the TLS handshake, but it can help an implementation to set up its TLS library properly.  Because in this section we assume that the parties already have validated each other's certificates, the security method signalled here is "x509".</t>
+      <t>The initiator can now determine if X.509 certificate-based authentication will work or if TLS-SRP will be used.  It sends an additional security-info message to the responder to signal its choice.  This step is not really necessary because the responder will see the initiator's choice in the first message of the TLS handshake, but it can assist an implementation in setting up its TLS library properly.  Because in this section we assume that the parties already have validated each other's certificates, the security method signalled here is "x509".</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.lit/orchard'
     id='hf749j'
     to='juliet@capulet.lit/balcony'
     type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'>
+  <jingle xmlns='urn:xmpp:jingle:1'>
           action='security-info'
           initiator='romeo@montague.lit/orchard'
           sid='a73sjjvkla37jfea'>
@@ -234,9 +186,9 @@ Initiator                   Responder
         ]]></artwork>
       </figure>
       <t>The responder acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
-      <t>Parallel to the security-info exchange, the clients negotiate a transport for the Jingle session (here the transport is an in-band bytestream as defined in <xref target='XEP-0047'/>, for which the Jingle negotiation process is specified in <xref target='XEP-0261'/>; however other transports could be used, for example SOCKS5 bytestreams as defined in <xref target='XEP-0065'/> and negotiated for Jingle as specified in <xref target='XEP-0260'/>).  Because the parties wish to establish end-to-end encryption, they do not send application data over the transport until the transport has been secured.  Therefore the first data that they exchange over the transport consists of the standard four-way TLS handshake, encoded in accordance with the negotiated transport method.</t>
+      <t>Parallel to the security-info exchange, the clients negotiate a transport for the Jingle session (here the transport is an in-band bytestream as defined in <xref target='IBB'/>, for which the Jingle negotiation process is specified in <xref target='XEP-0261'/>; however other transports could be used, for example SOCKS5 bytestreams as defined in <xref target='XEP-0065'/> and negotiated for Jingle as specified in <xref target='XEP-0260'/>).  Because the parties wish to establish end-to-end encryption, they do not send application data over the transport until the transport has been secured.  Therefore the first data that they exchange over the transport consists of the standard four-way TLS handshake, encoded in accordance with the negotiated transport method.</t>
       <t><list style='empty'><t>Note: Each transport MUST define a specific time when both clients know that the transport is secured.  When XTLS is not used, the Jingle implementation would signal to the using application that the transport is open when the session-accept is sent or received, or when connectivity checks determine media can flow over one of the transport candidates.  When XTLS is used, the Jingle implementation starts a TLS handshake on the transport and signals to the using application that the transport is open only after the TLS handshake has finished successfully.</t></list></t>
-      <t>During the TLS handshake, the responder MUST take the role of the TLS server and the initiator MUST take the role of the TLS client.  Because the transport is an in-band bytestream, the TLS handshake data is prepared as described in <xref target='XEP-0047'/> (i.e., Base64-encoded).  First the initiator (acting as the TLS client) constructs a TLS ClientHello, encodes it according to IBB, and sends it to the responder.</t>
+      <t>During the TLS handshake, the responder MUST take the role of the TLS server and the initiator MUST take the role of the TLS client.  Because the transport is an in-band bytestream, the TLS handshake data is prepared as described in <xref target='IBB'/> (i.e., Base64-encoded).  First the initiator (acting as the TLS client) constructs a TLS ClientHello, encodes it according to IBB, and sends it to the responder.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.net/orchard' 
@@ -302,10 +254,10 @@ Initiator                   Responder
         ]]></artwork>
       </figure>
       <t>The initiator then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
-      <t>If the TLS negotiation has finished successfully, then the Jingle implementation shall signal to the using application that the transport has been secured and is ready to be used.  The parties can then begin to exchange application data over the encrypted transport.</t>
+      <t>If the TLS negotiation has finished successfully, then the Jingle implementation shall signal to the using application that the transport has been secured and is ready to be used.  The parties now have a secure channel for the end-to-end exchange of application data using XMPP as the virtual transport; we call such a channel an XTLS TUNNEL.</t>
     </section>
     <section title='End-to-End Streams over XTLS Protocol Flow' anchor='streamproto'>
-      <t>For end-to-end encryption of XMPP traffic, the application data is an end-to-end XML stream. After the XTLS session is set up, the peers open an XML stream to excahnge messages. The XML streams are sent though the XTLS connection. In this example the streams are sent over TLS over IBB.</t>
+      <t>For end-to-end encryption of XMPP stanzas (&lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;), the application data is an end-to-end XML stream.  After the XTLS tunnel is established, the peers open an XML stream over the tunnel to exchange stanzas.  In this example, the tunnel is established using a transport of IBB, but any streaming transport could be used.</t>
       <t>First the initiator constructs an initial stream header.</t>
       <figure>
         <artwork><![CDATA[
@@ -317,8 +269,8 @@ Initiator                   Responder
         version='1.0'>
         ]]></artwork>
       </figure>
-      <t>Note: In accordance with <xref target='rfc3920bis'/>, the initial stream header SHOULD include the 'to' and 'from' attributes, which SHOULD specify the full JIDs of the clients. The initiator SHOULD include the version='1.0' flag as shown in the previous example.</t>
-      <t>The initiator then sends the stream header through the TLS stream and encodes the TLS data in IBB and sends it to the responder.</t>
+      <t>Note: In accordance with <xref target='XMPP-CORE'/>, the initial stream header SHOULD include the 'to' and 'from' attributes, which SHOULD specify the full JIDs of the clients. The initiator SHOULD include the version='1.0' flag as shown in the previous example.</t>
+      <t>The initiator then transforms the stream header into TLS data, encodes the data into IBB, and sends an IQ-set to the responder.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.net/orchard' 
@@ -346,7 +298,7 @@ Initiator                   Responder
         version='1.0'>
         ]]></artwork>
       </figure>
-      <t>The responder then sends the response stream header over the TLS link it to the initiator.</t>
+      <t>The responder then sends the response stream header over the XTLS tunnel.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
@@ -362,7 +314,7 @@ Initiator                   Responder
         ]]></artwork>
       </figure>
       <t>The initiator then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
-      <t>Once the streams are established over the bytestreams, either entity then can send XMPP message, presence, and IQ stanzas, with or without 'to' and 'from' addresses.</t>
+      <t>Once the XML stream is established over the XTLS tunnel, either entity then can send XMPP message, presence, and IQ stanzas, with or without 'to' and 'from' addresses.</t>
       <t>For example, the initiator could construct an XMPP message.</t>
       <figure>
         <artwork><![CDATA[
@@ -374,7 +326,7 @@ Initiator                   Responder
 </message>
         ]]></artwork>
       </figure>
-      <t>The initiator then sends the message over the XTLS connection to the responder.</t>
+      <t>The initiator then sends the message over the XTLS tunnel.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.net/orchard' 
@@ -399,7 +351,7 @@ Initiator                   Responder
 </message>
         ]]></artwork>
       </figure>
-      <t>The responder then sends the reply over the XTLS connection to the initiator.</t>
+      <t>The responder then sends the reply over the XTLS tunnel.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
@@ -421,7 +373,7 @@ Initiator                   Responder
 </stream:stream>
         ]]></artwork>
       </figure>
-      <t>The client sends the closing element to the peer over the XTLS connection.</t>
+      <t>The client sends the closing element to the peer over the XTLS tunnel.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
@@ -437,14 +389,14 @@ Initiator                   Responder
         ]]></artwork>
       </figure>
       <t>The peer then acknowledges receipt by sending an IQ stanza of type "result" (not shown here).</t>
-      <t>However, even after the application-level XML stream is terminated, the negotiated Jingle transport (here in-band bytestream) continues and could be re-used. To completely terminate the Jingle session, the terminating party would then also send a Jingle session-terminate message.</t>
+      <t>However, even after the end-to-end XML stream is terminated, the negotiated Jingle transport (here an in-band bytestream) continues and could be re-used. To completely terminate the Jingle session, the terminating party would then also send a Jingle session-terminate message.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     id='psy617r4'
     to='romeo@montague.lit/orchard'
     type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'
+  <jingle xmlns='urn:xmpp:jingle:1'
           action='session-terminate'
           initiator='romeo@montague.lit/orchard'
           sid='851ba2'/>
@@ -461,30 +413,30 @@ Initiator                   Responder
           <t>Leap of faith.  The recipient can hope that there is no man-in-the-middle during the first communication session.  If the certificate does not change in future sessions, the recipient at least knows that it is talking with the same entity it talked with during the first session.  However, that entity might be a man-in-the-middle rather than the assumed communication partner.  Therefore, leap of faith is discouraged.</t>
           <t>Check fingerprints.  The parties could validate the certificate fingerprints via some trusted means outside the XMPP band, such as in person, via encrypted email, or over the phone.  This is not user-friendly because certificate fingerprints consist of long strings of letters and numbers.  As a result, few humans routinely check certificate fingerprints in protocols such as Secure Shell (ssh).</t>
           <t>One-time password.  The parties can exchange a user-friendly password known only to themselves and verify it out of band before the TLS handshake finishes.  For this purpose, it is REQUIRED for implementations to support at least one TLS cipher that uses Secure Remote Password (SRP) as defined in <xref target='TLS-SRP'/>.</t>
-          <t>Channel binding.  It is possible that a future version will describe how to use an appropriate Simple Authentication and Security Layer (SASL) mechanism, such as <xref target='SCRAM'/>, to authenticate the XTLS channel after the TLS handshake finishes using the concept of channel bindings (see <xref target='RFC5056'/>).</t>
+          <t>Channel binding.  It is possible that a future version of this specification will describe how to use an appropriate Simple Authentication and Security Layer (SASL) mechanism, such as <xref target='SCRAM'/>, to authenticate the XTLS tunnel after the TLS handshake finishes; such a method would use the concept of channel bindings as described in <xref target='RFC5056'/>.</t>
         </list>
       </t>
       <t>If the parties use a password or SASL channel binding to bootstrap trust, the process needs to be completed only once.  After the clients have authenticated with the shared secret, they can exchange their certificates for future communication.</t>
       <section title='Exchanging Certificates' anchor='exchange'>
-        <t>To retrieve the certificate of the peer for future communications, a client SHOULD request the certificate according to <xref target='XEP-0189'/> over the secure connection.  This works only if XTLS was used to set up an end-to-end secure XML stream; exchanging certificates if XTLS was used for other purposes like file transfer is not possible.  A client MUST NOT request the certificate over the insecure stream based on the connection to the XMPP server.</t>
+        <t>To retrieve the certificate of the peer for future communications, a client SHOULD request the certificate according to <xref target='XEP-0189'/> over the secure connection.  This works only if XTLS was used to set up an end-to-end secure XML stream; exchanging certificates if XTLS was used for other purposes like file transfer is not possible.  A client MUST NOT request the certificate over the insecure stream-based on the connection to the XMPP server.</t>
         <figure>
           <artwork><![CDATA[
 <iq from='romeo@montague.lit/orchard'
     id='hf7634k4'
     to='juliet@capulet.lit/balcony'
     type='get'>
-  <pubkeys xmlns='urn:xmpp:tmp:pubkey'/>
+  <pubkeys xmlns='urn:xmpp:pubkey:0'/>
 </iq>
           ]]></artwork>
         </figure>
-        <t>The peer MUST return its own client certificate.  If the user has different clients with different client certificates and one user certificate, the user certificate SHOULD also be returned.  The user certificate allows it to verify other client certificates using public key retrieval described in <xref target='XEP-0189'/>.</t>
+        <t>The peer MUST return its own client certificate.  If the user has different clients with different client certificates and one user certificate, the user certificate SHOULD also be returned.  The user certificate allows it to verify other client certificates using public key retrieval as described in <xref target='XEP-0189'/>.</t>
         <figure>
           <artwork><![CDATA[
 <iq from='juliet@capulet.com/balcony'
     id='hf7634k4'
     to='romeo@montague.lit/orchard'
     type='result'>
-  <pubkeys xmlns='urn:xmpp:tmp:pubkey'>
+  <pubkeys xmlns='urn:xmpp:pubkey:0'>
     <keyinfo>
       <x509cert>
 MIICCTCCAXKgAwIBAgIJALhU0Id6xxwQMA0GCSqGSIb3DQEBBQUAMA4xDDAKBgNV
@@ -511,12 +463,12 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
           <list style='symbols'>
             <t>The bot can be controlled via a remote control input device.  The human user can enter the same password or "PIN" on both the bot and the XMPP client.</t>
             <t>If the bot has no user input but does have a small display, it could display a random password.  The human user can then enter the provided password on the XMPP client.</t>
-            <t>The bot might have not enough buttons for input and has no output device.  In that case the password is fixed.  Similar to Bluetooth peering with simple devices such as a headset, the password will be written in the manual or printed on the device.  For security reasons the device SHOULD NOT use password-based authentication without any user input.  Many Bluetooth devices have at least one button to set the device into peering mode.</t>
-            <t>A bot may be associated with a web service and could display a random password when the user has logged in to the web site using HTTPS.  This assumes that an attacker does not have control over the web server and can perform a man-in-the-middle attack on XMPP level at the same time.  If the web service knows the GPG-key of the user (e.g.  launchpad) it could send an encrypted email.</t>
+            <t>The bot might not have enough buttons for input and might not have an output screen.  In that case the password is fixed.  Similar to Bluetooth peering with simple devices such as a headset, the password will be written in the manual or printed on the device.  For security reasons the device SHOULD NOT use password-based authentication without any user input.  Many Bluetooth devices have at least one button to set the device into peering mode.</t>
+            <t>A bot may be associated with a web service and could display a random password when the user has logged in to the web site using HTTPS.  This assumes that an attacker cannot at the same time both control over the web server and perform a man-in-the-middle attack on the XMPP channel.  If the web service knows the GPG key of the user it could send an encrypted email.</t>
           </list>
         </t>
         <t>A user might have different X.509 certificates for each device.  <xref target='XEP-0189'/> can be used to manage the user's certificates.  A client SHOULD check the peer's PubSub node for certificates.  This makes it possible to use the password method only once between two users even if one or both users switch clients.  A user can also communicate with a friend's bots:  they first open a secure link between two chat clients with a password and exchange the user certificates.  After that each device of a user can verify all devices of the other without the need of a password.</t>
-        <t>The retrieved certificate from the PubSub node may be signed by a CA the client can verify.  In that case the client MAY skip the password authentication and rely on the X.509 certificate chain.  The client SHOULD ask the user if the certificate should be accepted or if a password exchange is desired.</t>
+        <t>The retrieved certificate from the PubSub node might be signed by a certification authority that the client can verify.  In that case the client MAY skip the password authentication and rely on the X.509 certificate chain.  The client SHOULD ask the user if the certificate is acceptable or if a password exchange is desired.</t>
       </section>
     </section>
 
@@ -528,7 +480,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
     id='hz81vf48'
     to='juliet@capulet.lit/balcony'
     type='set'>
-  <jingle xmlns='urn:xmpp:jingle:0'
+  <jingle xmlns='urn:xmpp:jingle:1'
           action='session-terminate'
           initiator='romeo@montague.lit/orchard'
           sid='a73sjjvkla37jfea'>
@@ -542,7 +494,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 
     <section title='Determining Support' anchor='support'>
       <t>If an entity wishes to request the use of XTLS, it SHOULD first determine whether the intended responder supports the protocol.  This can be done directly via <xref target='XEP-0030'/> or indirectly via <xref target='XEP-0115'/>.</t>
-      <t>If an entity supports XTLS, it MUST report that by including a service discovery feature of "urn:xmpp:jingle:security:xtls:0" in response to disco#info requests.</t>
+      <t>If an entity supports XTLS, it MUST report that by including a service discovery feature of "urn:xmpp:jingle:security:xtls:1" in response to disco#info requests.</t>
       <figure>
         <artwork><![CDATA[
 <iq from='romeo@montague.lit/orchard'
@@ -560,8 +512,8 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
     to='romeo@montague.lit/orchard'
     type='result'>
   <query xmlns='http://jabber.org/protocol/disco#info'>
-    <feature var='urn:xmpp:jingle:security:xtls:0'/>
-    <feature var='urn:xmpp:jingle:apps:xmlstream:0'/>
+    <feature var='urn:xmpp:jingle:security:xtls:1'/>
+    <feature var='urn:xmpp:jingle:apps:xmlstream:1'/>
   </query>
 </iq>
         ]]></artwork>
@@ -575,7 +527,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
         <t>An implementation MUST at a minimum support the "srp" and "x509" methods.  A future version of this specification will document mandatory-to-implement TLS ciphers.</t>
       </section>
       <section title='Certificates' anchor='security-certs'>
-        <t>As noted, XTLS can be used between XMPP clients, between an XMPP client and a remote XMPP service (i.e., a service with which a client does not have a direct XML stream), or between remote XMPP services.  Therefore, a party to an XTLS bytestream will present either a client certificate or a server certificate as appropriate.  Such certificates MUST be generated and validated in accordance with the certificate guidelines guidelines provided in <xref target='rfc3920bis'/>.</t>
+        <t>As noted, XTLS can be used between XMPP clients, between an XMPP client and a remote XMPP service (i.e., a service with which a client does not have a direct XML stream), or between remote XMPP services.  Therefore, a party to an XTLS bytestream will present either a client certificate or a server certificate as appropriate.  Such certificates MUST be generated and validated in accordance with the certificate guidelines guidelines provided in <xref target='XMPP-CORE'/>.</t>
         <t>A future version of this specification might provide additional guidelines regarding certificate validation in the context of client-to-client encryption.</t>
       </section>
       <section title='Denial of Service' anchor='security-dos'>
@@ -585,7 +537,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
     </section>
 
     <section title='IANA Considerations' anchor='iana'>
-    <t>It might be helpful to create a registry of TLS methods that can be used in the context of XTLS (e.g., "openpgp" for use of <xref target='RFC5081'/>, "srp" for use of <xref target='TLS-SRP'/>, and "x509" for use of <xref target='TLS'/> with certificates). The registry could be maintained by the IANA or by the XMPP Registrar. A future version of this specification will provide more detailed information about the registration requirements.</t>
+    <t>It might be helpful to create a registry of TLS methods that can be used in the context of XTLS (e.g., "openpgp" for use of <xref target='RFC5081'/>, "srp" for use of <xref target='TLS-SRP'/>, and "x509" for use of <xref target='TLS'/> with certificates). The registry could be maintained by the IANA or by the XMPP Registrar (see <xref target='XEP-0053'/>). A future version of this specification will provide more detailed information about the registration requirements.</t>
     </section>
 
   </middle>
@@ -594,18 +546,18 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 
     <references title="Normative References">
 
-<reference anchor='rfc3920bis'>
+<reference anchor='E2E-REQ'>
 <front>
-<title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<title>Requirements for End-to-End Encryption in the Extensible Messaging and Presence Protocol (XMPP)</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='March' day='8' year='2009' />
-<abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.  This document also specifies the format for XMPP addresses, which are fully internationalizable.  This document obsoletes RFC 3920.</t></abstract>
+<date month='June' day='29' year='2009' />
+<abstract><t>This document describes requirements for end-to-end encryption in the Extensible Messaging and Presence Protocol (XMPP).</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3920bis-09' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-xmpp-e2e-requirements-01' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3920bis-09.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-xmpp-e2e-requirements-01.txt' />
 </reference>
 
 <reference anchor="TERMS">
@@ -663,7 +615,7 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 <format type='TXT' octets='222395' target='ftp://ftp.isi.edu/in-notes/rfc5246.txt' />
 </reference>
 
-<reference anchor="XEP-0047">
+<reference anchor="IBB">
   <front>
     <title>In-Band Bytestreams (IBB)</title>
     <author initials="J." surname="Karneges" fullname="Justin Karneges">
@@ -672,13 +624,13 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
         <email>justin@affinix.com</email>
       </address>
     </author>
-    <date day="21" month="November" year="2006"/>
+    <date day="17" month="March" year="2009"/>
   </front>
   <seriesInfo name="XSF XEP" value="0047"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0047.html"/>
 </reference>
 
-<reference anchor="XEP-0166">
+<reference anchor="JINGLE">
   <front>
     <title>Jingle</title>
     <author initials="S." surname="Ludwig" fullname="Scott Ludwig">
@@ -717,10 +669,24 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
         <email>jhildebrand@jabber.com</email>
       </address>
     </author>
-    <date day="18" month="December" year="2008"/>
+    <date day="10" month="June" year="2009"/>
   </front>
   <seriesInfo name="XSF XEP" value="0166"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0166.html"/>
+</reference>
+
+<reference anchor="XMPP-CORE">
+<front>
+<title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization />
+</author>
+<date month='June' day='1' year='2009' />
+<abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.  This document also specifies the format for XMPP addresses, which are fully internationalizable.</t><t>This document obsoletes RFC 3920.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-00.txt' />
 </reference>
 
     </references>
@@ -770,64 +736,73 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 <format type='TXT' octets='15170' target='ftp://ftp.isi.edu/in-notes/rfc2818.txt' />
 </reference>
 
-<reference anchor='RFC3552'>
-<front>
-<title>Guidelines for Writing RFC Text on Security Considerations</title>
-<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
-<organization /></author>
-<author initials='B.' surname='Korver' fullname='B. Korver'>
-<organization /></author>
-<date year='2003' month='July' />
-<abstract>
-<t>All RFCs are required to have a Security Considerations section.  Historically, such sections have been relatively weak.  This document provides guidelines to RFC authors on how to write a good Security Considerations section.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t></abstract></front>
-<seriesInfo name='BCP' value='72' />
-<seriesInfo name='RFC' value='3552' />
-<format type='TXT' octets='110393' target='ftp://ftp.isi.edu/in-notes/rfc3552.txt' />
+<reference anchor="JINGLE-FILE">
+  <front>
+    <title>Jingle File Transfer</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="19" month="February" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0234"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0234.html"/>
 </reference>
 
-<reference anchor="rfc3921bis">
-<front>
-<title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and  Presence</title>
-<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
-    <organization />
-</author>
-<date month='October' day='24' year='2008' />
-<abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
-</front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-rfc3921bis-07' />
-<format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-rfc3921bis-07.txt' />
+<reference anchor="JINGLE-RTP">
+  <front>
+    <title>Jingle RTP Sessions</title>
+    <author initials="S." surname="Ludwig" fullname="Scott Ludwig">
+      <organization/>
+      <address>
+        <email>scottlu@google.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="S." surname="Egan" fullname="Sean Egan">
+      <organization/>
+      <address>
+        <email>seanegan@google.com</email>
+      </address>
+    </author>
+    <author initials="R." surname="McQueen" fullname="Robert McQueen">
+      <organization/>
+      <address>
+        <email>robert.mcqueen@collabora.co.uk</email>
+      </address>
+    </author>
+    <author initials="D." surname="Cionoiu" fullname="Diana Cionoiu">
+      <organization/>
+      <address>
+        <email>diana@null.ro</email>
+      </address>
+    </author>
+    <date day="10" month="June" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0167"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0167.html"/>
 </reference>
 
-
-<reference anchor='RFC3923'>
-<front>
-<title abbrev='XMPP E2E'>End-to-End Signing and Object Encryption for the Extensible Messaging and Presence Protocol (XMPP)</title>
-<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre'>
-<organization>Jabber Software Foundation</organization>
-<address>
-<email>stpeter@jabber.org</email></address></author>
-<date year='2004' month='October' />
-<area>Applications</area>
-<workgroup>XMPP Working Group</workgroup>
-<keyword>RFC</keyword>
-<keyword>Request for Comments</keyword>
-<keyword>I-D</keyword>
-<keyword>Internet-Draft</keyword>
-<keyword>XMPP</keyword>
-<keyword>Extensible Messaging and Presence Protocol</keyword>
-<keyword>Jabber</keyword>
-<keyword>IM</keyword>
-<keyword>Instant Messaging</keyword>
-<keyword>Presence</keyword>
-<keyword>XML</keyword>
-<keyword>Extensible Markup Language</keyword>
-<abstract>
-<t>This memo defines methods of end-to-end signing and object encryption for the Extensible Messaging and Presence Protocol (XMPP).</t></abstract></front>
-<seriesInfo name='RFC' value='3923' />
-<format type='TXT' octets='51828' target='ftp://ftp.isi.edu/in-notes/rfc3923.txt' />
-<format type='HTML' octets='77480' target='http://xml.resource.org/public/rfc/html/rfc3923.html' />
-<format type='XML' octets='71879' target='http://xml.resource.org/public/rfc/xml/rfc3923.xml' />
+<reference anchor="MUC">
+  <front>
+    <title>Multi-User Chat</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="16" month="July" year="2008"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0045"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0045.html"/>
 </reference>
 
 <reference anchor='RFC5056'>
@@ -876,31 +851,45 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
 <front>
 <title>Salted Challenge Response (SCRAM) SASL Mechanism</title>
 <author initials='A' surname='Menon-Sen' fullname='Abhijit Menon-Sen'>
-<organization /></author>
+    <organization />
+</author>
 <author initials='A' surname='Melnikov' fullname='Alexey  Melnikov'>
-<organization /></author>
+    <organization />
+</author>
 <author initials='C' surname='Newman' fullname='Chris Newman'>
-<organization /></author>
-<date month='February' day='21' year='2009' />
-<abstract>
-<t>The secure authentication mechanism most widely deployed and used by Internet application protocols is the transmission of clear-text passwords over a channel protected by Transport Layer Security (TLS).  There are some significant security concerns with that mechanism, which could be addressed by the use of a challenge response authentication mechanism protected by TLS. Unfortunately, the challenge response mechanisms presently on the standards track all fail to meet requirements necessary for widespread deployment, and have had success only in limited use.  This specification describes a family of authentication mechanisms called the Salted Challenge Response Authentication Mechanism (SCRAM), which addresses the security concerns and meets the deployability requirements. When used in combination with TLS or an equivalent security layer, a mechanism from this family could improve the status-quo for application protocol authentication and provide a suitable choice for a mandatory-to-implement mechanism for future application protocol standards.</t></abstract></front>
-<seriesInfo name='Internet-Draft' value='draft-newman-auth-scram-10' />
-<format type='TXT' target='http://www.ietf.org/internet-drafts/draft-newman-auth-scram-10.txt' />
+    <organization />
+</author>
+<author initials='N' surname='Williams' fullname='Nicolas Williams'>
+    <organization />
+</author>
+<date month='May' day='23' year='2009' />
+<abstract><t>The secure authentication mechanism most widely deployed and used by Internet application protocols is the transmission of clear-text passwords over a channel protected by Transport Layer Security (TLS). There are some significant security concerns with that mechanism, which could be addressed by the use of a challenge response authentication mechanism protected by TLS.  Unfortunately, the challenge response mechanisms presently on the standards track all fail to meet requirements necessary for widespread deployment, and have had success only in limited use.  This specification describes a family of Simple Authentication and Security Layer (SASL, RFC 4422) authentication mechanisms called the Salted Challenge Response Authentication Mechanism (SCRAM), which addresses the security concerns and meets the deployability requirements.  When used in combination with TLS or an equivalent security layer, a mechanism from this family could improve the status-quo for application protocol authentication and provide a suitable choice for a mandatory-to-implement mechanism for future application protocol standards.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-newman-auth-scram-13' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-newman-auth-scram-13.txt' />
 </reference>
 
-<reference anchor="XEP-0027">
-  <front>
-    <title>Current Jabber OpenPGP Usage</title>
-    <author initials="T." surname="Muldowney" fullname="Thomas Muldowney">
-      <organization/>
-      <address>
-        <email>temas@jabber.org</email>
-      </address>
-    </author>
-    <date day="29" month="November" year="2006"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0027"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0027.html"/>
+<reference anchor='X509'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+<author initials='D.' surname='Cooper' fullname='D. Cooper'>
+<organization /></author>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'>
+<organization /></author>
+<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
+<organization /></author>
+<author initials='R.' surname='Housley' fullname='R. Housley'>
+<organization /></author>
+<author initials='W.' surname='Polk' fullname='W. Polk'>
+<organization /></author>
+<date year='2008' month='May' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5280' />
+<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
 </reference>
 
 <reference anchor="XEP-0030">
@@ -936,46 +925,19 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0030.html"/>
 </reference>
 
-<reference anchor="XEP-0045">
+<reference anchor="XEP-0053">
   <front>
-    <title>Multi-User Chat</title>
+    <title>XMPP Registrar Function</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
       <organization/>
       <address>
         <email/>
       </address>
     </author>
-    <date day="16" month="July" year="2008"/>
+    <date day="29" month="October" year="2008"/>
   </front>
-  <seriesInfo name="XSF XEP" value="0045"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0045.html"/>
-</reference>
-
-<reference anchor="XEP-0060">
-  <front>
-    <title>Publish-Subscribe</title>
-    <author initials="P." surname="Millard" fullname="Peter Millard">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <author initials="R." surname="Meijer" fullname="Ralph Meijer">
-      <organization/>
-      <address>
-        <email>ralphm@ik.nu</email>
-      </address>
-    </author>
-    <date day="03" month="September" year="2008"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0060"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0060.html"/>
+  <seriesInfo name="XSF XEP" value="0053"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0053.html"/>
 </reference>
 
 <reference anchor="XEP-0065">
@@ -1038,60 +1000,6 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0115.html"/>
 </reference>
 
-<reference anchor="XEP-0160">
-  <front>
-    <title>Best Practices for Handling Offline Messages</title>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <date day="24" month="January" year="2006"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0160"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0160.html"/>
-</reference>
-
-<reference anchor="XEP-0167">
-  <front>
-    <title>Jingle RTP Sessions</title>
-    <author initials="S." surname="Ludwig" fullname="Scott Ludwig">
-      <organization/>
-      <address>
-        <email>scottlu@google.com</email>
-      </address>
-    </author>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <author initials="S." surname="Egan" fullname="Sean Egan">
-      <organization/>
-      <address>
-        <email>seanegan@google.com</email>
-      </address>
-    </author>
-    <author initials="R." surname="McQueen" fullname="Robert McQueen">
-      <organization/>
-      <address>
-        <email>robert.mcqueen@collabora.co.uk</email>
-      </address>
-    </author>
-    <author initials="D." surname="Cionoiu" fullname="Diana Cionoiu">
-      <organization/>
-      <address>
-        <email>diana@null.ro</email>
-      </address>
-    </author>
-    <date day="19" month="December" year="2008"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0167"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0167.html"/>
-</reference>
-
 <reference anchor="XEP-0189">
   <front>
     <title>Public Key Publishing</title>
@@ -1117,57 +1025,6 @@ QChPXQUo0EGCaODWhfhKRNdseUozfNWOz9iTgMGw8eYNLllQRL//iAOfOr/8
   </front>
   <seriesInfo name="XSF XEP" value="0189"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0189.html"/>
-</reference>
-
-<reference anchor="XEP-0210">
-  <front>
-    <title>Requirements for Encrypted Sessions</title>
-    <author initials="I." surname="Paterson" fullname="Ian Paterson">
-      <organization/>
-      <address>
-        <email>ian.paterson@clientside.co.uk</email>
-      </address>
-    </author>
-    <date day="30" month="May" year="2007"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0210"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0210.html"/>
-</reference>
-
-<reference anchor="XEP-0218">
-  <front>
-    <title>Bootstrapping Implementation of Encrypted Sessions</title>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <author initials="I." surname="Paterson" fullname="Ian Paterson">
-      <organization/>
-      <address>
-        <email>ian.paterson@clientside.co.uk</email>
-      </address>
-    </author>
-    <date day="30" month="May" year="2007"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0218"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0218.html"/>
-</reference>
-
-<reference anchor="XEP-0234">
-  <front>
-    <title>Jingle File Transfer</title>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <date day="19" month="February" year="2009"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0234"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0234.html"/>
 </reference>
 
 <reference anchor="XEP-0260">
