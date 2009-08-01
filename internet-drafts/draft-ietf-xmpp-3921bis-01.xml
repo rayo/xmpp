@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="June" day="26"/>
+    <date year="2009" month="July" day="31"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -111,7 +111,7 @@
   </section>
 
   <section title="Managing the Roster" anchor="roster">
-    <t>In XMPP, one's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user can access roster information from any resource.</t>
+    <t>In XMPP, one's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user can access roster information from any resource.  Because the user's roster can contain confidential data, the server MUST restrict access to this data so that only authorized entities (typically limited to the account owner) are able to retrieve, modify, or delete it.</t>
     <section title="Syntax and Semantics" anchor="roster-syntax">
       <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The detailed syntax and semantics are defined in the following sections.</t>
       <section title="Roster Items" anchor="roster-syntax-items">
@@ -852,7 +852,7 @@ US: <iq id='b89c5r7ib577'
     </iq>
           ]]></artwork>
         </figure>
-        <t>(Otherwise -- that is, if the user does not exist, if the contact is not in the user's roster, or if the contact is in the user's roster with a subscription state other than those described in the foregoing check -- then the user's server MUST silently ignore the stanza by not delivering it to the user, not modifying the user's roster, and not generating a roster push to the user's interested resources.)</t>
+        <t>Otherwise -- that is, if the user does not exist, if the contact is not in the user's roster, or if the contact is in the user's roster with a subscription state other than those described in the foregoing check -- then the user's server MUST silently ignore the stanza by not delivering it to the user, not modifying the user's roster, and not generating a roster push to the user's interested resources.</t>
         <t>From the perspective of the user, there now exists a subscription to the contact's presence.</t>
         <t>The user's server MUST also deliver the available presence stanza received from each of the contact's available resources to each of the user's available resources.</t>
         <figure>
@@ -955,7 +955,7 @@ US: <iq id='h37h3u1bv401'
     </iq>
           ]]></artwork>
         </figure>
-        <t>(Otherwise -- that is, if the user does not exist, if the contact is not in the user's roster, or if the contact is in the user's roster with a subscription state other than those described in the foregoing check -- then the user's server MUST silently ignore the stanza by not delivering it to the user, not modifying the user's roster, and not generating a roster push to the user's interested resources.)</t>
+        <t>Otherwise -- that is, if the user does not exist, if the contact is not in the user's roster, or if the contact is in the user's roster with a subscription state other than those described in the foregoing check -- then the user's server MUST silently ignore the stanza by not delivering it to the user, not modifying the user's roster, and not generating a roster push to the user's interested resources.</t>
       </section>
     </section>
 
@@ -1034,7 +1034,7 @@ CS: <iq id='a78b4q6ha468'
           ]]></artwork>
         </figure>
         <t>The contact's server SHOULD also send a presence stanza of type "unsubscribed" and a presence stanza of type "unavailable" to the user.  However, the user's client MUST NOT depend on receiving these presence stanzas, since it MUST consider its presence subscription to the contact, and its presence information about the contact, to be null and void when it sends the presence stanza of type "unusbscribe" or when receives the roster push triggered by the unsubscribe request.</t>
-        <t>(Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.)</t>
+        <t>Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.  However, if the contact's server is keeping track of an inbound presence subscription request from the user to the contact without having added the user to the contact's roster because the contact has not yet approved or denied the subscription request (equivalent to a roster state of "None + Pending In"), then the contact's server MUST simply remove any record of the inbound presence subscription request (it cannot remove the user from the contact's roster because the user was never added to the contact's roster).</t>
       </section>
     </section>
   </section>
@@ -2118,7 +2118,6 @@ US: </stream:stream>
       <t>When a server processes an inbound presence stanza of type "probe" whose intended recipient is a user associated with one of the server's hostnames, the server MUST NOT reveal the user's presence if the sender is an entity that is not authorized to receive that information as determined by presence subscriptions (see <xref target="presence"/>).</t>
       <t>A user's server MUST NOT leak the user's network availability to entities who are not authorized to know the user's presence, either via an explicit subscription as described herein or via an existing trust relationship (such as presence-enabled user directories within organizations).</t>
       <t>When a server processes an outbound presence stanza with no type or of type "unavailable", it MUST follow the rules defined under <xref target="presence"/> in order to ensure that such presence information is not sent to entities that are not authorized to know such information.</t>
-      <t>When a server generates an error stanza in response to receiving a stanza for a user account that does not exist, the use of the &lt;service-unavailable/&gt; stanza error condition can help protect against dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.  However, subtle differences in the exact XML of error stanzas, as well as in the timing with which such errors are returned, can enable an attacker to determine the network presence of a user when more advanced blocking technologies are not used (see for instance <xref target='XEP-0016'/> and <xref target='XEP-0191'/>).</t>
       <t>A client MAY ignore the &lt;status/&gt; element when contained in a presence stanza of type "subscribe", "unsubscribe", "subscribed", or "unsubscribed"; this can help prevent "presence subscription spam".</t>
     </list></t>
   </section>
@@ -2798,7 +2797,7 @@ US: </stream:stream>
       <t><list style='numbers'>
         <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the user's roster by subscription='none'</t>
         <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
-        <t>"None + Pending In" = contact and user are not subscribed to each other, and contact has sent user a subscription request but user has not replied yet (note: contact's server SHOULD NOT push or deliver roster items in this state, but instead SHOULD wait until user has approved subscription request from contact); this is reflected in the user's roster by subscription='none'</t>
+        <t>"None + Pending In" = contact and user are not subscribed to each other, and contact has sent user a subscription request but user has not replied yet; in fact, the user's server MUST NOT add the contact to the user's roster or and MUST NOT push or deliver roster items to the user in this state, but instead MUST simply note the existence of the inbound presence subscription request and wait until the user has approved the subscription request before adding the contact to the user's roster.</t>
         <t>"None + Pending Out+In" = contact and user are not subscribed to each other, contact has sent user a subscription request but user has not replied yet, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
         <t>"To" = user is subscribed to contact (one-way); this is reflected in the user's roster by subscription='to'</t>
         <t>"To + Pending In" = user is subscribed to contact, and contact has sent user a subscription request but user has not replied yet; this is reflected in the user's roster by subscription='to'</t>

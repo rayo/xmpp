@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3920bis-00" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-ietf-xmpp-3920bis-01" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="June" day="1"/>
+    <date year="2009" month="July" day="31"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -87,6 +87,7 @@
     </section>
     <section title="Conventions" anchor="intro-conventions">
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
+      <t>Certain security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
       <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, and LF.</t>
       <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent Unicode characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
       <t>In examples, lines have been wrapped for improved readability, "[...]" means elision, and the following prepended strings are used (these prepended strings are not to be sent over the wire):</t>
@@ -153,7 +154,7 @@ romeo@example.net           juliet@im.example.com
     </section>
 
     <section title="Client" anchor="arch-client">
-      <t>A CLIENT is an entity that establishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas via the server to the client.  A client then uses XMPP to communicate with its server, other clients, and any other accessible entities on a network.  Multiple clients can connect simultaneously to a server on behalf of a local account, where each client is differentiated by the resource identifier portion of an XMPP address (e.g., &lt;node@domain/home&gt; vs. &lt;node@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.  The RECOMMENDED port for TCP connections between a client and a server is 5222, as registered with the IANA (see <xref target="iana-ports"/>).</t>
+      <t>A CLIENT is an entity that establishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas via the server to the client.  A client then uses XMPP to communicate with its server, other clients, and any other accessible entities on a network.  Multiple clients can connect simultaneously to a server on behalf of a local account, where each client is differentiated by the resource identifier portion of an XMPP address (e.g., &lt;localpart@domain/home&gt; vs. &lt;localpart@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.  The RECOMMENDED port for TCP connections between a client and a server is 5222, as registered with the IANA (see <xref target="iana-ports"/>).</t>
     </section>
 
     <section title="Network" anchor="arch-network">
@@ -164,12 +165,12 @@ romeo@example.net           juliet@im.example.com
   <section title="Addresses" anchor="addressing">
 
     <section title="Overview" anchor="addressing-overview">
-      <t><iref item='Entity'/>An ENTITY is anything that is network-addressable and that can communicate using XMPP.  <iref item='Jabber Identifier'/>For historical reasons, the native address of an XMPP entity is called a JABBER IDENTIFIER or JID.  A valid JID contains a set of ordered elements formed of an XMPP node identifier, domain identifier, and resource identifier.</t>
+      <t><iref item='Entity'/>An ENTITY is anything that is network-addressable and that can communicate using XMPP.  <iref item='Jabber Identifier'/>For historical reasons, the native address of an XMPP entity is called a JABBER IDENTIFIER or JID.  A valid JID contains a set of ordered elements formed of an XMPP localpart, domain identifier, and resource identifier.</t>
       <t>The syntax for a JID is defined as follows using the Augmented Backus-Naur Form as specified in <xref target="ABNF"/>.</t>
       <figure>
         <artwork><![CDATA[
-   jid             = [ node "@" ] domain [ "/" resource ]
-   node            = 1*(nodepoint)
+   jid             = [ localpart "@" ] domain [ "/" resource ]
+   localpart       = 1*(nodepoint)
                      ; a "nodepoint" is a UTF-8 encoded Unicode code
                      ; point that satisfies the Nodeprep profile of
                      ; stringprep
@@ -188,8 +189,8 @@ romeo@example.net           juliet@im.example.com
                      ; profile of stringprep
         ]]></artwork>
       </figure>
-      <t>All JIDs are based on the foregoing structure.  One common use of this structure is to identify a messaging and presence account, the server that hosts the account, and a connected resource (e.g., a specific device) in the form of &lt;node@domain/resource&gt;.  However, node types other than clients are possible; for example, a specific chat room offered by a multi-user conference service (see <xref target='XEP-0045'/>) could be addressed as &lt;room@service&gt; (where "room" is the name of the chat room and "service" is the hostname of the multi-user conference service) and a specific occupant of such a room could be addressed as &lt;room@service/nick&gt; (where "nick" is the occupant's room nickname).  Many other JID types are possible (e.g., &lt;domain/resource&gt; could be a server-side script or service).</t>
-      <t>Each allowable portion of a JID (node identifier, domain identifier, and resource identifier) MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
+      <t>All JIDs are based on the foregoing structure.  One common use of this structure is to identify a messaging and presence account, the server that hosts the account, and a connected resource (e.g., a specific device) in the form of &lt;localpart@domain/resource&gt;.  However, localparts other than clients are possible; for example, a specific chat room offered by a multi-user conference service (see <xref target='XEP-0045'/>) could be addressed as &lt;room@service&gt; (where "room" is the name of the chat room and "service" is the hostname of the multi-user conference service) and a specific occupant of such a room could be addressed as &lt;room@service/nick&gt; (where "nick" is the occupant's room nickname).  Many other JID types are possible (e.g., &lt;domain/resource&gt; could be a server-side script or service).</t>
+      <t>Each allowable portion of a JID (localpart, domain identifier, and resource identifier) MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
       <t><list style='empty'><t>Note: While the format of a JID is consistent with <xref target="URI"/>, an entity's address on an XMPP network MUST be represented as a JID (without a URI scheme) and not a <xref target="URI"/> or <xref target="IRI"/> as specified in <xref target="XMPP-URI"/>; the latter specification is provided only for identification and interaction outside the context of the XMPP wire protocol itself.</t></list></t>
     </section>
 
@@ -202,26 +203,26 @@ romeo@example.net           juliet@im.example.com
       <t><list style='empty'><t>Note: The ToASCII operation includes application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> and encoding using the algorithm specified in <xref target='PUNYCODE'/>; for details, see <xref target='IDNA'/>.  Although the output of the ToASCII operation is not used in XMPP, it MUST be possible to apply that operation without failing.</t></list></t>
     </section>
 
-    <section title='Node Identifier' anchor='addressing-node'>
-      <t><iref item='Node Identifier'/>The NODE IDENTIFIER portion of a JID is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  Typically a node identifier uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user conference service).  The entity represented by an XMPP node identifier is addressed within the context of a specific domain.</t>
-      <t>A node identifier MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
-      <t>A node identifier MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two node identifiers, an application MUST first ensure that the Nodeprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
+    <section title='Localpart' anchor='addressing-localpart'>
+      <t><iref item='Localpart'/>The LOCALPART of a JID is an optional secondary identifier placed before the domain identifier and separated from the latter by the '@' character.  Typically a localpart uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user conference service).  The entity represented by an XMPP localpart is addressed within the context of a specific domain.</t>
+      <t>A localpart MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
+      <t>A localpart MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two localparts, an application MUST first ensure that the Nodeprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
     </section>
 
     <section title="Resource Identifier" anchor="addressing-resource">
-      <t><iref item='Resource Identifier'/>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier can modify either a &lt;node@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resource identifier uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP node identifier at a local domain.</t>
-      <t><iref item='Bare JID'/>When an XMPP address does not include a resource identifier (i.e., when it is of the form &lt;domain&gt; or &lt;node@domain&gt;), it is referred to as a BARE JID.  <iref item='Full JID'/>When an XMPP address includes a resource identifier (i.e., when it is of the form &lt;domain/resource&gt; or &lt;node@domain/resource&gt;), is referred to as a FULL JID.</t>
+      <t><iref item='Resource Identifier'/>The RESOURCE IDENTIFIER portion of a JID is an optional tertiary identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier can modify either a &lt;localpart@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resource identifier uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP localpart at a local domain.</t>
+      <t><iref item='Bare JID'/>When an XMPP address does not include a resource identifier (i.e., when it is of the form &lt;domain&gt; or &lt;localpart@domain&gt;), it is referred to as a BARE JID.  <iref item='Full JID'/>When an XMPP address includes a resource identifier (i.e., when it is of the form &lt;domain/resource&gt; or &lt;localpart@domain/resource&gt;), is referred to as a FULL JID.</t>
       <t>A resource identifier MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
       <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, an application MUST first ensure that the Resourceprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
       <t><list style='empty'><t>Note: For historical reasons, the term "resource identifier" is used in XMPP to refer to the optional portion of an XMPP address that follows the domain identifier and the "/" separator character; this use of the term "resource identifier" is not to be confused with the meanings of "resource" and "identifier" provided in Section 1.1 of <xref target="URI"/>.</t></list></t>
-      <t>XMPP entities SHOULD consider resource identifiers to be opaque strings and SHOULD NOT impute meaning to any given resource identifier.  In paticular, the use of the '/' character as a separator between the domain identifier and the resource identifier does not imply that resource identifiers are hierarchical in the way that, say, HTTP addresses are hierarchical; thus for example an XMPP address of the form &lt;node@domain/foo/bar&gt; does not identify a resource "bar" that exists below a resource "foo" in a hierarchy of resources associated with the entity "node@domain".</t>
+      <t>XMPP entities SHOULD consider resource identifiers to be opaque strings and SHOULD NOT impute meaning to any given resource identifier.  In paticular, the use of the '/' character as a separator between the domain identifier and the resource identifier does not imply that resource identifiers are hierarchical in the way that, say, HTTP addresses are hierarchical; thus for example an XMPP address of the form &lt;localpart@domain/foo/bar&gt; does not identify a resource "bar" that exists below a resource "foo" in a hierarchy of resources associated with the entity "localpart@domain".</t>
     </section>
 
     <section title="Determination of Addresses" anchor="addressing-determination">
       <t>After the parties to an XML stream have completed the appropriate aspects of stream negotiation (typically <xref target='sasl'>SASL negotiation</xref> and, if appropriate, <xref target="bind">resource binding</xref>) the receiving entity for a stream MUST determine the initiating entity's JID.</t>
       <t>For server-to-server communication, the initiating server's JID MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating server during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the receiving server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  (For information about the determination of addresses in the absence of SASL negotiation when the older server dialback protocol is used, see <xref target='XEP-0220'/>.)</t>
-      <t>For client-to-server communication, the client's bare JID (&lt;node@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resource identifier portion of the full JID (&lt;node@domain/resource&gt;) MUST be the resource identifier negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
-      <t>The receiving entity MUST ensure that the resulting JID (including node identifier, domain identifier, resource identifier, and separator characters) conforms to the rules and formats defined earlier in this section; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
+      <t>For client-to-server communication, the client's bare JID (&lt;localpart@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resource identifier portion of the full JID (&lt;localpart@domain/resource&gt;) MUST be the resource identifier negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
+      <t>The receiving entity MUST ensure that the resulting JID (including localpart, domain identifier, resource identifier, and separator characters) conforms to the rules and formats defined earlier in this section; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
     </section>
 
   </section>
@@ -319,7 +320,7 @@ romeo@example.net           juliet@im.example.com
       <section title='from' anchor='streams-attr-from'>
         <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
         <t><list style='empty'><t>Note: It is possible for an entity to have more than one XMPP identity (e.g., in the case of a server that provides virtual hosting).  It is also possible that an entity does not know the XMPP identity of the principal controlling the entity (e.g., because the XMPP identity is assigned at a level other than the XMPP application layer, as in the General Security Service Application Program Interface <xref target='GSS-API'/>).</t></list></t>
-        <t>For initial stream headers in client-to-server communication, if the client knows the XMPP identity of the principal controlling the client (typically an account name of the form &lt;node@domain&gt;), then it MAY include the 'from' attribute and set its value to that identity; if not, then it MUST NOT include the 'from' attribute.  Note: Including the XMPP identity before the stream is protected via TLS can expose that identity to eavesdroppers.</t>
+        <t>For initial stream headers in client-to-server communication, if the client knows the XMPP identity of the principal controlling the client (typically an account name of the form &lt;localpart@domain&gt;), then it MAY include the 'from' attribute and set its value to that identity; if not, then it MUST NOT include the 'from' attribute.  Note: Including the XMPP identity before the stream is protected via TLS can expose that identity to eavesdroppers.</t>
         <figure>
           <artwork><![CDATA[
 I: <?xml version='1.0'?>
@@ -592,7 +593,7 @@ S: </stream:stream>
       </section>
       <section title="Handling of Idle Streams" anchor="streams-close-idle">
         <t>An XML stream can become idle, i.e., neither entity has sent XMPP traffic over the stream for some period of time.  The idle timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communications over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='xmpp-im'/>; therefore it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established every 24 to 48 hours if they are timed out.</t> 
-        <t>An XML stream can appear idle at the XMPP level because the underlying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a space character (U+0020) over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  <iref item='Whitespace Ping'/>The sending of such a space character is called a WHITESPACE PING.  The time between such whitespace pings (or other connection-testing methods) is a matter of implementation and local service policy; however, it is RECOMMENDED that these pings be sent not more than once every 60 seconds.</t>
+        <t>An XML stream can appear idle at the XMPP level because the underlying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a space character (U+0020) over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  <iref item='Whitespace Keepalive'/>The sending of such a space character is properly called a WHITESPACE KEEPALIVE (although the term "whitespace ping" is in common use, in fact it is not a ping since no "pong" is possible).  The time between such whitespace keepalives (or other connection-testing methods) is a matter of implementation and local service policy; however, it is RECOMMENDED that any such test be performed not more than once every 60 seconds.</t>
         <t>To close an idle stream with a local client or remote server, a server MUST close the stream without error as explained under <xref target="streams-close-withouterror"/>.</t>
       </section>
     </section>
@@ -680,6 +681,9 @@ S: <?xml version='1.0'?>
    </stream:stream>
             ]]></artwork>
           </figure>
+        </section>
+        <section title="Where Stream Errors Are Sent" anchor="streams-error-rules-where">
+          <t>When two XML streams are used between the initiating entity and the receiving entity (one in each direction) rather than using a single bidirectional stream, stanza errors triggered by stanzas sent over the outbound stream are returned on the inbound stream (since they are inbound stanzas from the perspective of the entity that sent the triggering stanza), whereas stream errors related to the outbound stream are returned on the outbound stream (since they are not inbound stanzas from the perspective of the entity that sent the triggering stanza but strictly related to the outbound stream itself); the same is true, naturally, of any stream errors that are related to the outbound stream but not triggered by an outbound stanza.</t>
         </section>
       </section>
       <section title="Syntax" anchor="streams-error-syntax">
@@ -1123,7 +1127,7 @@ S: <?xml version='1.0'?>
    <stream:error>
      <see-other-host 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'>
-       im.example.com:9090
+       [2001:41D0:1:A49b::1]:9222
      </see-other-host>
    </stream:error>
    </stream:stream>
@@ -1600,13 +1604,13 @@ R: <stream:features>
         <t>It is possible that provision of a "simple username" is supported by the selected SASL mechanism (e.g., this is supported by the DIGEST-MD5 and CRAM-MD5 mechanisms but not by the EXTERNAL and GSSAPI mechanisms).  The simple username provided during authentication MUST be as follows:</t>
         <t>
           <list style='hanging'>
-            <t hangText="Client-to-server communication:">The initiating entity's registered account name, i.e., a user name or node name as described under <xref target='addressing-node'/> (this is not a bare JID of the form &lt;node@domain&gt; but only the node portion of the JID).  The simple username MUST adhere to the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/>.</t>
+            <t hangText="Client-to-server communication:">The initiating entity's registered account name, i.e., a user name as described under <xref target='addressing-localpart'/> (this is not a bare JID of the form &lt;localpart@domain&gt; but only the localpart of the JID).  The simple username MUST adhere to the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/>.</t>
             <t hangText="Server-to-server communication:">The initiating entity's sending domain, i.e., IP address or fully qualified domain name as contained in an XMPP domain identifier.  The simple username MUST adhere to the <xref target="NAMEPREP"/> profile of <xref target="STRINGPREP"/>.</t>
           </list>
         </t>
       </section>
       <section title="Authorization Identities" anchor="sasl-rules-authzid">
-        <t>If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be a bare JID of the form &lt;domain&gt; (i.e., an XMPP domain identifier only) for servers and a bare JID of the form &lt;node@domain&gt; (i.e., node identifier and domain identifier) for clients.</t>
+        <t>An authorization identity is an optional identity specified by the initiating entity, which is typically used by an administrator to perform some management task on behalf of another user.  If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be a bare JID of the form &lt;domain&gt; (i.e., an XMPP domain identifier only) for servers and a bare JID of the form &lt;localpart@domain&gt; (i.e., localpart and domain identifier) for clients.</t>
         <t><list style='empty'><t>Note: The authorization identity communited during SASL negotiation is used to determine the canonical address for the initiating client or server according to the receiving server, as described under <xref target='addressing-determination'/>.</t></list></t>
       </section>
       <section title="Realms" anchor="sasl-rules-realms">
@@ -1973,14 +1977,14 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
         <t hangText="initiation sequence:">After the initiating entity provides an opening XML stream header and the receiving entity replies in kind, the receiving entity provides a list of acceptable authentication methods.  The initiating entity chooses one method from the list and sends it to the receiving entity as the value of the 'mechanism' attribute possessed by an &lt;auth/&gt; element, optionally including an initial response to avoid a round trip.</t>
         <t hangText="exchange sequence:">Challenges and responses are carried through the exchange of &lt;challenge/&gt; elements from receiving entity to initiating entity and &lt;response/&gt; elements from initiating entity to receiving entity.  The receiving entity reports failure by sending a &lt;failure/&gt; element and success by sending a &lt;success/&gt; element; the initiating entity aborts the exchange by sending an &lt;abort/&gt; element.  Upon successful negotiation, both sides consider the original XML stream to be closed and new stream headers are sent by both entities.</t>
         <t hangText="security layer negotiation:">The security layer takes effect immediately after sending the closing '&gt;' character of the &lt;success/&gt; element for the receiving entity, and immediately after receiving the closing '&gt;' character of the &lt;success/&gt; element for the initiating entity.  The order of layers is first <xref target="TCP"/>, then <xref target="TLS"/>, then <xref target="SASL"/>, then XMPP.</t>
-        <t hangText="use of the authorization identity:">The authorization identity can be used in XMPP to denote the non-default &lt;node@domain&gt; of a client or the sending &lt;domain&gt; of a server; an empty string is equivalent to an absent authorization identity.</t>
+        <t hangText="use of the authorization identity:">The authorization identity can be used in XMPP to denote the non-default &lt;localpart@domain&gt; of a client or the sending &lt;domain&gt; of a server; an empty string is equivalent to an absent authorization identity.</t>
       </list></t>
     </section>
   </section>
 
   <section title="Resource Binding" anchor="bind">
     <section title="Overview" anchor="bind-overview">
-      <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing"/>).  That is, there MUST be an XMPP resource identifier associated with the bare JID (&lt;node@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;node@domain/resource&gt;.  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client (see <xref target="rules"/>).</t>
+      <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing"/>).  That is, there MUST be an XMPP resource identifier associated with the bare JID (&lt;localpart@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;localpart@domain/resource&gt;.  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client in relation to entities other than the server itself, as explained under <xref target="rules"/> (the client could exchange stanzas with the server itself before binding a resource since the full JID is needed only for addressing outside the context of the stream negotiated between the client and the server, but this is not commonly done).</t>
       <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resource identifier; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
       <t>If, before completing the resource binding step, the client attempts to send an outbound XML stanza (i.e., a stanza not directed to the server itself or to the client's own account), the server MUST NOT process the stanza and MUST either ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
       <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
@@ -2009,7 +2013,7 @@ S: <stream:features>
       <t>Upon being so informed that resource binding is required, the client MUST bind a resource to the stream as described in the following sections.</t>
     </section>
     <section title="Generation of Resource Identifiers" anchor="bind-generation">
-      <t>A resource identifier MUST at a minimum be unique among the connected resources for that &lt;node@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
+      <t>A resource identifier MUST at a minimum be unique among the connected resources for that &lt;localpart@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
       <t>A resource identifier can be security-critical.  For example, if a malicious entity can guess a client's resource identifier then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leak'/>.  To prevent that possibility, a client can either (1) generate a random resource identifier on its own or (2) ask the server to generate a resource identifier on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resource identifier, it is RECOMMENDED that the resource identifier be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t>
     </section>
     <section title="Server-Generated Resource Identifier" anchor="bind-servergen">
@@ -2212,9 +2216,9 @@ S: <iq id='bind_2' type='error'>
           <t>The following rules apply to the 'from' attribute in the context of XML streams qualified by the 'jabber:client' namespace (i.e., client-to-server streams).</t>
           <t>
             <list style='numbers'>
-              <t>When the server receives an XML stanza from a client and the stanza does not include a 'from' attribute, the server MUST add a 'from' attribute to the stanza, where the value of the 'from' attribute is the full JID (&lt;node@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination"/>), or the bare JID (&lt;node@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='xmpp-im'/>).</t>
+              <t>When the server receives an XML stanza from a client and the stanza does not include a 'from' attribute, the server MUST add a 'from' attribute to the stanza, where the value of the 'from' attribute is the full JID (&lt;localpart@domain/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="addressing-determination"/>), or the bare JID (&lt;localpart@domain&gt;) in the case of subscription-related presence stanzas (see <xref target='xmpp-im'/>).</t>
               <t>When the server receives an XML stanza from a client and the stanza includes a 'from' attribute, the server MUST either (a) validate that the value of the 'from' attribute provided by the client is that of a connected resource for the associated entity or (b) override the provided 'from' attribute by adding a 'from' attribute as specified under Rule #1.</t>
-              <t>When the server generates a stanza from the server for delivery to the client on behalf of the account of the connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (a) not include a 'from' attribute or (b) include a 'from' attribute whose value is the account's bare JID (&lt;node@domain&gt;).</t>
+              <t>When the server generates a stanza from the server for delivery to the client on behalf of the account of the connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (a) not include a 'from' attribute or (b) include a 'from' attribute whose value is the account's bare JID (&lt;localpart@domain&gt;).</t>
               <t>When the server generates a stanza from the server itself for delivery to the client, the stanza MUST include a 'from' attribute whose value is the bare JID (i.e., &lt;domain&gt;) of the server.</t>
               <t>A server MUST NOT send to the client a stanza without a 'from' attribute if the stanza was not generated by the server (e.g., if it was generated by another client or another server); therefore, when a client receives a stanza that does not include a 'from' attribute, it MUST assume that the stanza is from the server to which the client is connected.</t>
             </list>
@@ -3398,7 +3402,7 @@ S2: </stream:stream>
         <t>If the stanza possesses no 'to' attribute, the server MUST handle it directly on behalf of the entity that sent it, where the meaning of "handle it directly" depends on whether the stanza is message, presence, or IQ.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a local entity (such as a client) that is connected to the server.</t>
       </section>
       <section title="Message" anchor="rules-noto-message">
-        <t>If the server receives a message stanza with no 'to' attribute, it MUST treat the message as if the 'to' address were the bare JID &lt;node@domain&gt; of the sending entity.</t>
+        <t>If the server receives a message stanza with no 'to' attribute, it MUST treat the message as if the 'to' address were the bare JID &lt;localpart@domain&gt; of the sending entity.</t>
       </section>
       <section title="Presence" anchor="rules-noto-presence">
         <t>If the server receives a presence stanza with no 'to' attribute, it MUST broadcast it to the entities that are subscribed to the sending entity's presence, if applicable (<xref target="xmpp-im"/> defines the semantics of such broadcasting for presence applications).</t>
@@ -3422,10 +3426,10 @@ S2: </stream:stream>
       <section title="Domain with Resource" anchor="rules-local-domainresource">
         <t>If the JID contained in the 'to' attribute is of the form &lt;domain/resource&gt;, then the server MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
       </section>
-      <section title="Node at Domain" anchor="rules-local-node">
+      <section title="Localpart at Domain" anchor="rules-local-localpart">
         <t><list style='empty'><t>Note: For addresses of this type, more detailed rules in the context of instant messaging and presence applications are provided in <xref target='xmpp-im'/>.</t></list></t>
-        <section title="No Such User" anchor="rules-local-node-nosuchuser">
-          <t>If there is no local account associated with the &lt;node@domain&gt;, how the stanza shall be processed depends on the stanza type.</t>
+        <section title="No Such User" anchor="rules-local-localpart-nosuchuser">
+          <t>If there is no local account associated with the &lt;localpart@domain&gt;, how the stanza shall be processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
               <t>For a message stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
@@ -3434,19 +3438,19 @@ S2: </stream:stream>
             </list>
           </t>
         </section>
-        <section title="Bare JID" anchor="rules-local-node-barejid">
-          <t>If the JID contained in the 'to' attribute is of the form &lt;node@domain&gt;, how the stanza shall be processed depends on the stanza type.</t>
+        <section title="Bare JID" anchor="rules-local-localpart-barejid">
+          <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domain&gt;, how the stanza shall be processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
-              <t>For a message stanza, if there exists at least one connected resource for the node the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST either return an error or store the message offline for delivery when the account next has a connected resource.</t>
-              <t>For a presence stanza, if there exists at least one connected resource for the node the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST silently discard the stanza.</t>
+              <t>For a message stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST either return an error or store the message offline for delivery when the account next has a connected resource.</t>
+              <t>For a presence stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST silently discard the stanza.</t>
               <t>For an IQ stanza, the server MUST handle it directly on behalf of the intended recipient.</t>
             </list>
           </t>
         </section>
-        <section title="Full JID" anchor="rules-local-node-fulljid">
-          <t>If the JID contained in the 'to' attribute is of the form &lt;node@domain/resource&gt; and there is no connected resource that exactly matches the full JID, the stanza shall be processed as if the JID were of the form &lt;node@domain&gt;.</t>
-          <t>If the JID contained in the 'to' attribute is of the form &lt;node@domain/resource&gt; and there is a connected resource that exactly matches the full JID, the server SHOULD deliver the stanza to that connected resource.</t>
+        <section title="Full JID" anchor="rules-local-localpart-fulljid">
+          <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domain/resource&gt; and there is no connected resource that exactly matches the full JID, the stanza shall be processed as if the JID were of the form &lt;localpart@domain&gt;.</t>
+          <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domain/resource&gt; and there is a connected resource that exactly matches the full JID, the server SHOULD deliver the stanza to that connected resource.</t>
         </section>
       </section>
     </section>
@@ -3612,7 +3616,7 @@ S2: </stream:stream>
     <section title="Servers" anchor="compliance-server">
       <t>A server MUST support the following core protocols in order to be considered compliant:</t>
       <t><list style='symbols'>
-        <t>Conformance with <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for node identifiers, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers, as well as enforcement thereof for clients that authenticate with the server</t>
+        <t>Conformance with <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for localparts, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers, as well as enforcement thereof for clients that authenticate with the server</t>
         <t><xref target='streams'>XML streams</xref>, including <xref target='tls'>TLS negotiation</xref>, <xref target='sasl'>SASL negotiation</xref>, <xref target='streams-features'>stream features</xref>, and <xref target="bind">Resource Binding</xref></t>
         <t>The basic semantics of the three defined stanza types (i.e., &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt;)</t>
         <t>Generation (and, where appropriate, handling) of error syntax and semantics related to streams, TLS, SASL, and XML stanzas</t>
@@ -3628,7 +3632,7 @@ S2: </stream:stream>
       </list></t>
       <t>In addition, a client SHOULD support the following core protocols:</t>
       <t><list style='symbols'>
-        <t>Conformance with <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for node identifiers, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers.</t>
+        <t>Conformance with <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for localparts, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers.</t>
       </list></t>
     </section>
   </section>
@@ -3636,12 +3640,12 @@ S2: </stream:stream>
   <section title="Internationalization Considerations" anchor="i18n">
     <t>As specified under <xref target="xml-encoding"/>, XML streams MUST be encoded in UTF-8.</t>
     <t>As specified under <xref target="streams-attr"/>, an XML stream SHOULD include an 'xml:lang' attribute specifying the default language for any XML character data that is intended to be presented to a human user.  As specified under <xref target="stanzas-attributes-lang"/>, an XML stanza SHOULD include an 'xml:lang' attribute if the stanza contains XML character data that is intended to be presented to a human user.  A server SHOULD apply the default 'xml:lang' attribute to stanzas it routes or delivers on behalf of connected entities, and MUST NOT modify or delete 'xml:lang' attributes on stanzas it receives from other entities.</t>
-    <t>As specified under <xref target='addressing'/>, a server MUST support and enforce <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for node identifiers, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers; this enables XMPP addresses to include a wide variety of Unicode characters outside the US-ASCII range.</t>
+    <t>As specified under <xref target='addressing'/>, a server MUST support and enforce <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for localparts, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers; this enables XMPP addresses to include a wide variety of Unicode characters outside the US-ASCII range.</t>
   </section>
 
   <section title="Security Considerations" anchor="security">
     <section title="High Security" anchor="security-high">
-      <t>For the purposes of XMPP communication (client-to-server and server-to-server), the term "high security" refers to the use of security technologies that provide both mutual authentication and integrity checking; in particular, when using certificate-based authentication to provide high security, a chain-of-trust SHOULD be established out-of-band, although a shared certification authority signing certificates could allow a previously unknown certificate to establish trust in-band.  See <xref target="security-certificates"/> regarding certificate validation procedures.</t>
+      <t>For the purposes of XMPP communication (client-to-server and server-to-server), the term "high security" refers to the use of security technologies that provide both mutual authentication and integrity checking; in particular, when using certificate-based authentication to provide high security, a trust chain SHOULD be established out-of-band, although a shared certification authority signing certificates could allow a previously unknown certificate to establish trust in-band.  See <xref target="security-certificates"/> regarding certificate validation procedures.</t>
       <t>Implementations MUST support high security.  Service provisioning SHOULD use high security, subject to local security policies.</t>
     </section>
     <section title="Certificates" anchor="security-certificates">
@@ -3747,7 +3751,7 @@ XmppAddr ::= UTF8String
             <t>
               <list style='hanging'>
                 <t hangText='Sub-Case #1:'>The entity finds at least one SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect; the entity MUST use this represented domain identifier as the validated identity of the XMPP server.  The server certificate MUST be checked against the hostname as provided by the entity (client or server), not the hostname as resolved via the Domain Name System; e.g., if a user specifies a hostname of "example.net" but a <xref target="DNS-SRV"/> lookup returns "x1.example.net", the certificate MUST be checked as "example.net".  A user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a hostname to be checked for connection purposes.</t>
-                <t hangText='Sub-Case #2:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt; the entity MUST NOT use the represented domain identifier (if any) as the validated identity of the XMPP server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash) and in future connection attempts behave as in Sub-Case #3.  (It is the resposibility of the human user to verify the hash or fingerprint of the certificate with the peer over a trusted communication layer.)  If the connecting entity is an XMPP server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; an XMPP server or automated client MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
+                <t hangText='Sub-Case #2:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt; the entity MUST NOT use the represented domain identifier (if any) as the validated identity of the XMPP server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts behave as in Sub-Case #3.  (It is the resposibility of the human user to verify the hash value or fingerprint of the certificate with the peer over a trusted communication layer.)  If the connecting entity is an XMPP server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; an XMPP server or automated client MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
                 <t hangText='Sub-Case #3:'>The entity finds no SRVName, dNSName, or XmppAddr that matches the hostname to which it attempted to connect but a human user has permanently accepted the certificate during a previous connection attempt; the entity MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed.</t>
               </list>
             </t>
@@ -3785,7 +3789,7 @@ XmppAddr ::= UTF8String
     </section>
     <section title="Client-to-Server Communication" anchor="security-client">
       <t>A compliant client implementation MUST support both TLS and SASL for connections to a server.</t>
-      <t>The TLS protocol for encrypting XML streams (defined under <xref target='tls'/>) provides a reliable mechanism for helping to ensure the confidentiality and data integrity of data exchanged between two entities.</t>
+      <t>The TLS protocol for encrypting XML streams (defined under <xref target='tls'/>) provides a reliable mechanism for helping to ensure the confidentiality and integrity of data exchanged between two entities.</t>
       <t>The SASL protocol for authenticating XML streams (defined under <xref target='sasl'/>) provides a reliable mechanism for validating that a client connecting to a server is who it claims to be.</t>
       <t>Client-to-server communication MUST NOT proceed until the DNS hostname asserted by the server has been resolved as specified under <xref target='tcp'/>.  If there is a mismatch between the hostname to which a client attempted to connect (e.g., "example.net") and the hostname to which the client actually connects (e.g., "x1.example.net"), the client MUST warn a human user about the mismatch and the human user MUST approve the connection before the client proceeds; however, the client MAY also allow the user to add the presented hostname to a configured set of accepted hostnames to expedite future connections.</t>
       <t>A client's IP address and method of access MUST NOT be made public by a server, nor are any connections other than the original server connection required.  This helps to protect the client's server from direct attack or identification by third parties.</t>
@@ -3829,9 +3833,9 @@ XmppAddr ::= UTF8String
     </section>
     <section title="Stringprep Profiles" anchor="security-stringprep">
       <t>XMPP makes use of the <xref target="NAMEPREP"/> profile of <xref target="STRINGPREP"/> for processing of domain identifiers; for security considerations related to Nameprep, refer to the appropriate section of <xref target="NAMEPREP"/>.</t>
-      <t>In addition, XMPP defines two profiles of <xref target="STRINGPREP"/>: <xref target="nodeprep">Nodeprep</xref> for node identifiers and <xref target="resourceprep">Resourceprep</xref> for resource identifiers.</t>
+      <t>In addition, XMPP defines two profiles of <xref target="STRINGPREP"/>: <xref target="nodeprep">Nodeprep</xref> for localparts and <xref target="resourceprep">Resourceprep</xref> for resource identifiers.</t>
       <t>The Unicode and ISO/IEC 10646 repertoires have many characters that look similar.  In many cases, users of security protocols might perform visual matching, such as when comparing the names of trusted third parties.  Because it is impossible to map similar-looking characters without a great deal of context (such as knowing the fonts used), stringprep does nothing to map similar-looking characters together, nor to prohibit some characters because they look like others.</t>
-      <t>A node identifier can be employed as one part of an entity's address in XMPP.  One common usage is as the username of an instant messaging user; another is as the name of a multi-user conference room; and many other kinds of entities could use node identifiers as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized node identifier; for example, a user entering a single internationalized node identifier could access another user's account information, or a user could gain access to a hidden or otherwise restricted chat room or service.</t>
+      <t>A localpart can be employed as one part of an entity's address in XMPP.  One common usage is as the username of an instant messaging user; another is as the name of a multi-user conference room; and many other kinds of entities could use localparts as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized localpart; for example, a user entering a single internationalized localpart could access another user's account information, or a user could gain access to a hidden or otherwise restricted chat room or service.</t>
       <t>A resource identifier can be employed as one part of an entity's address in XMPP.  One common usage is as the name for an instant messaging user's connected resource; another is as the nickname of a user in a multi-user conference room; and many other kinds of entities could use resource identifiers as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized resource identifier; for example, a user could attempt to initiate multiple connections with the same name, or a user could send a message to someone other than the intended recipient in a multi-user conference room.</t>
     </section>
     <section title="Address Spoofing" anchor="security-spoofing">
@@ -3839,9 +3843,10 @@ XmppAddr ::= UTF8String
       <section title="Address Forging" anchor="security-forging">
         <t>In the context of XMPP technologies, address forging occurs when an entity is able to generate an XML stanza whose 'from' address does not correspond to the account credentials with which the entity authenticated onto the network (or an authorization identity provided during <xref target='sasl'>SASL negotiation</xref>).  For example, address forging occurs if an entity that authenticated as "juliet@im.example.com" is able to send XML stanzas from "nurse@im.example.com" or "romeo@example.net".</t>
         <t>Address forging is difficult in XMPP systems, given the requirement for sending servers to stamp 'from' addresses and for receiving servers to verify sending domains via server-to-server authentication.  However, address forging is not impossible, since a rogue server could forge JIDs at the sending domain by ignoring the stamping requirement.  A rogue server could even forge JIDs at other domains by means of a DNS poisoning attack if <xref target='DNSSEC'/> is not used.  This specification does not define methods for discovering or counteracting such rogue servers.</t>
+        <t>Note: An entity outside the security perimeter of a particular server cannot reliably distinguish between bare JIDs of the form &lt;localpart@domain&gt; at that server, since the server could forge any such JID; therefore only the domain identifier can be authenticated or authorized with any level of assurance.</t>
       </section>
       <section title="Address Mimicking" anchor="security-mimicking">
-        <t>Address mimicking occus when an entity provides legitimate authentication credentials for and sends XML stanzas from an account whose JID appears to a human user to be the same as another JID.  For example, in some XMPP clients the address "paypa1@example.org" (spelled with the number one as the final character of the node identifier) might appear to be the same as "paypal@example.org (spelled with the lower-case version of the letter "L"), especially on casual visual inspection; this phenomenon is sometimes called "typejacking".  A more sophisticated example of address mimicking might involve the use of characters from outside the US-ASCII range, such as the Cherokee characters U+13DA U+13A2 U+13B5 U+13AC U+13A2 U+13AC U+13D2 instead of the US-ASCII characters "STPETER".</t>
+        <t>Address mimicking occus when an entity provides legitimate authentication credentials for and sends XML stanzas from an account whose JID appears to a human user to be the same as another JID.  For example, in some XMPP clients the address "paypa1@example.org" (spelled with the number one as the final character of the localpart) might appear to be the same as "paypal@example.org (spelled with the lower-case version of the letter "L"), especially on casual visual inspection; this phenomenon is sometimes called "typejacking".  A more sophisticated example of address mimicking might involve the use of characters from outside the US-ASCII range, such as the Cherokee characters U+13DA U+13A2 U+13B5 U+13AC U+13A2 U+13AC U+13D2 instead of the US-ASCII characters "STPETER".</t>
         <t>In some examples of address mimicking, it is unlikely that the average user could tell the difference between the real JID and the fake JID.  (Naturally, there is no way to distinguish with full certainty which is the fake JID and which is the real JID; in some communication contexts, the JID with Cherokee characters might be the real JID and the JID with US-ASCII characters might thus appear to be the fake JID.)  Because JIDs can contain almost any Unicode character, it can be relatively easy to mimic some JIDs in XMPP systems.  The possibility of address mimicking introduces security vulnerabilities of the kind that have also plagued the World Wide Web, specifically the phenomenon known as phishing.</t>
         <t>Mimicked addresses that involve characters from only one character set or from the character set typically employed by a particular user are not easy to combat (e.g., the simple typejacking attack previously described, which relies on a surface similarity between the characters "1" and "l" in some presentations).  However, mimicked addresses that involve characters from more than one character set, or from a character set not typically employed by a particular user, can be mitigated somewhat through intelligent presentation.  In particular, every human user of an XMPP technology presumably has a preferred language (or, in some cases, a small set of preferred languages), which an XMPP application SHOULD gather either explicitly from the user or implicitly via the operating system of the user's device.  Furthermore, every language has a range (or a small set of ranges) of characters normally used to represent that language in textual form.  Therefore, an XMPP application SHOULD warn the user when presenting a JID that uses characters outside the normal range of the user's preferred language(s).  This recommendation is not intended to discourage communication across language communities; instead, it recognizes the existence of such language communities and encourages due caution when presenting unfamiliar character sets to human users.</t>
         <t>For more detailed recommendations regarding prevention of address mimicking in XMPP systems, refer to <xref target='XEP-0165'/>.</t>
@@ -3875,10 +3880,10 @@ XmppAddr ::= UTF8String
     </section>
     <section title="Presence Leaks" anchor="security-leak">
       <t>One of the core aspects of XMPP is presence: information about the network availability of an XMPP entity (i.e., whether the entity is currently online or offline).  A PRESENCE LEAK occurs when an entity's network availability is inadvertently and involuntarily revealed to a second entity that is not authorized to know the first entity's network availability.</t>
-      <t>Although presence is discussed more fully in <xref target='xmpp-im'/>, it is important to note that an XMPP server MUST NOT leak presence.  In particular at the core XMPP level, real-time addressing and network availability is associated with a specific connected resource; therefore, any disclosure of a connected resource's full JID comprises a presence leak.  To help prevent such a presence leak, a server MUST NOT return different stanza errors if a potential attacker sends XML stanzas to the entity's bare JID (&lt;node@domain&gt;) or full JID (&lt;node@domain/resource&gt;).</t>
+      <t>Although presence is discussed more fully in <xref target='xmpp-im'/>, it is important to note that an XMPP server MUST NOT leak presence.  In particular at the core XMPP level, real-time addressing and network availability is associated with a specific connected resource; therefore, any disclosure of a connected resource's full JID comprises a presence leak.  To help prevent such a presence leak, a server MUST NOT return different stanza errors if a potential attacker sends XML stanzas to the entity's bare JID (&lt;localpart@domain&gt;) or full JID (&lt;localpart@domain/resource&gt;).</t>
     </section>
     <section title="Directory Harvesting" anchor="security-harvesting">
-      <t>To help prevent directory harvesting attacks, a server MUST NOT return different stanza errors if a potential attacker sends XML stanzas to an existing entity or a nonexistent entity.</t>
+      <t>When a server generates an error stanza in response to receiving a stanza for a user account that does not exist, the use of the &lt;service-unavailable/&gt; stanza error condition can help protect against dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.  However, subtle differences in the exact XML of error stanzas, as well as in the timing with which such errors are returned, can enable an attacker to determine the network presence of a user when more advanced blocking technologies are not used (see for instance <xref target='XEP-0016'/> and <xref target='XEP-0191'/>).</t>
     </section>
   </section>
 
@@ -4663,6 +4668,20 @@ specifications of each URI scheme.
 <format type='TXT' octets='229418' target='ftp://ftp.isi.edu/in-notes/rfc2743.txt' />
 </reference>
 
+<reference anchor='HASHES'>
+<front>
+<title>Attacks on Cryptographic Hashes in Internet Protocols</title>
+<author initials='P.' surname='Hoffman' fullname='P. Hoffman'>
+<organization /></author>
+<author initials='B.' surname='Schneier' fullname='B. Schneier'>
+<organization /></author>
+<date year='2005' month='November' />
+<abstract>
+<t>Recent announcements of better-than-expected collision attacks in popular hash algorithms have caused some people to question whether common Internet protocols need to be changed, and if so, how.  This document summarizes the use of hashes in many protocols, discusses how the collision attacks affect and do not affect the protocols, shows how to thwart known attacks on digital certificates, and discusses future directions for protocol designers.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='4270' />
+<format type='TXT' octets='26641' target='ftp://ftp.isi.edu/in-notes/rfc4270.txt' />
+</reference>
+
 <reference anchor='HTTP'>
 <front>
 <title abbrev='HTTP/1.1'>Hypertext Transfer Protocol -- HTTP/1.1</title>
@@ -4974,18 +4993,16 @@ specifications of each URI scheme.
 <format type='XML' octets='234468' target='http://xml.resource.org/public/rfc/xml/rfc3921.xml' />
 </reference>
 
-<reference anchor="xmpp-im">
+<reference anchor='SECTERMS'>
 <front>
-<title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and  Presence</title>
-<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
-    <organization />
-</author>
-<date month='June' day='1' year='2009' />
-<abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
-</front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-00' />
-<format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-00.txt' />
+<title>Internet Security Glossary, Version 2</title>
+<author initials='R.' surname='Shirey' fullname='R. Shirey'>
+<organization /></author>
+<date year='2007' month='August' />
+<abstract>
+<t>This Glossary provides definitions, abbreviations, and explanations of terminology for information system security.  The 334 pages of entries offer recommendations to improve the comprehensibility of written material that is generated in the Internet Standards Process (RFC 2026).  The recommendations follow the principles that such writing should (a) use the same term or definition whenever the same concept is mentioned; (b) use terms in their plainest, dictionary sense; (c) use terms that are already well-established in open publications; and (d) avoid terms that either favor a particular vendor or favor a particular technology or mechanism over other, competing techniques that already exist or could be developed.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='4949' />
+<format type='TXT' octets='867626' target='ftp://ftp.isi.edu/in-notes/rfc4949.txt' />
 </reference>
 
 <reference anchor='SMTP'>
@@ -5041,6 +5058,58 @@ specifications of each URI scheme.
   </front>
   <seriesInfo name="XSF XEP" value="0001"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0001.html"/>
+</reference>
+
+<reference anchor="XEP-0016">
+  <front>
+    <title>Privacy Lists</title>
+    <author initials="P." surname="Millard" fullname="Peter Millard">
+      <organization/>
+      <address/>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="15" month="February" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0016"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0016.html"/>
+</reference>
+
+<reference anchor="XEP-0030">
+  <front>
+    <title>Service Discovery</title>
+    <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+      <organization/>
+      <address>
+        <email>jhildebrand@jabber.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Millard" fullname="Peter Millard">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="R." surname="Eatmon" fullname="Ryan Eatmon">
+      <organization/>
+      <address>
+        <email>reatmon@jabber.org</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="06" month="June" year="2008"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0030"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0030.html"/>
 </reference>
 
 <reference anchor="XEP-0045">
@@ -5229,6 +5298,21 @@ specifications of each URI scheme.
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0178.html"/>
 </reference>
 
+<reference anchor="XEP-0191">
+  <front>
+    <title>Simple Communications Blocking</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="15" month="February" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0191"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0191.html"/>
+</reference>
+
 <reference anchor="XEP-0205">
   <front>
     <title>Best Practices to Discourage Denial of Service Attacks</title>
@@ -5280,6 +5364,21 @@ specifications of each URI scheme.
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0220.html"/>
 </reference>
 
+<reference anchor="XEP-0271">
+  <front>
+    <title>XMPP Nodes</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="26" month="June" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0271"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0271.html"/>
+</reference>
+
 <reference anchor='XML-FRAG'
            target='http://www.w3.org/TR/2001/CR-xml-fragment-20010212'>
 <front>
@@ -5329,6 +5428,20 @@ specifications of each URI scheme.
 <format type='HTML' target='http://www.w3.org/TR/2004/REC-xmlschema-1-20041028' />
 </reference>
 
+<reference anchor="xmpp-im">
+<front>
+<title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and  Presence</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization />
+</author>
+<date month='June' day='1' year='2009' />
+<abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-00.txt' />
+</reference>
+
 <reference anchor='XMPP-URI'>
 <front>
 <title>Internationalized Resource Identifiers (IRIs) and Uniform Resource Identifiers (URIs) for the Extensible Messaging and Presence Protocol (XMPP)</title>
@@ -5345,10 +5458,10 @@ specifications of each URI scheme.
 
     <section title="Nodeprep" anchor="nodeprep">
       <section title="Introduction" anchor="nodeprep-intro">
-        <t>This appendix defines the "Nodeprep" profile of stringprep.  As such, it specifies processing rules that will enable users to enter internationalized node identifiers in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP node identifier is the optional portion of an XMPP address that precedes an XMPP domain identifier and the '@' separator; it is often but not exclusively associated with an instant messaging username.)  These processing rules are intended only for XMPP node identifiers and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
+        <t>This appendix defines the "Nodeprep" profile of stringprep.  As such, it specifies processing rules that will enable users to enter internationalized localparts in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP localpart is the optional portion of an XMPP address that precedes an XMPP domain identifier and the '@' separator; it is often but not exclusively associated with an instant messaging username.)  These processing rules are intended only for XMPP localparts and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
         <t>This profile defines the following, as required by <xref target="STRINGPREP"/>:</t>
         <t><list style="symbols">
-          <t>The intended applicability of the profile: internationalized node identifiers within XMPP</t>
+          <t>The intended applicability of the profile: internationalized localparts within XMPP</t>
           <t>The character repertoire that is the input and output to stringprep: Unicode 3.2, specified in Section 2 of this Appendix</t>
           <t>The mappings used: specified in Section 3</t>
           <t>The Unicode normalization used: specified in Section 4</t>
@@ -5907,7 +6020,8 @@ specifications of each URI scheme.
       <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920.</t>
       <t>
         <list style='symbols'>
-          <t>Corrected the ABNF syntax for JIDs to prevent zero-length node identifiers, domain identifiers, and resource identifiers.</t>
+          <t>Corrected the ABNF syntax for JIDs to prevent zero-length localparts, domain identifiers, and resource identifiers.</t>
+          <t>To avoid confusion with the term "node" as used in <xref target="XEP-0030"/> and <xref target="XEP-0060"/> (see also <xref target="XEP-0271"/>), changed the term "node identifier" to "localpart" (but retained the name "Nodeprep" for backward compatibility).</t>
           <t>Corrected the nameprep processing rules to require use of the UseSTD3ASCIIRules flag.</t>
           <t>Recommended or mandated use of the 'from' and 'to' attributes on stream headers.</t>
           <t>More fully specified stream closing handshake.</t>
@@ -5915,7 +6029,6 @@ specifications of each URI scheme.
           <t>Specified return of &lt;restricted-xml/&gt; stream error in response to receipt of prohibited XML features.</t> 
           <t>Specified that TLS plus SASL PLAIN is a mandatory-to-implement technology for client-to-server connections, since implementation of SASL EXTERNAL is uncommon in XMPP clients, in part because underlying security features such as end-user X.509 certificates are not yet widely deployed.</t>
           <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
-          <t>More fully specified binding of multiple resources to the same stream.</t>
           <t>Added the &lt;not-modified/&gt; stanza error condition to enable potential ETags usage.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified process of DNS SRV lookups and fallbacks.</t>
