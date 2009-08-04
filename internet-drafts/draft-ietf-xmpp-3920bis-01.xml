@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="July" day="31"/>
+    <date year="2009" month="August" day="3"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -593,7 +593,7 @@ S: </stream:stream>
       </section>
       <section title="Handling of Idle Streams" anchor="streams-close-idle">
         <t>An XML stream can become idle, i.e., neither entity has sent XMPP traffic over the stream for some period of time.  The idle timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communications over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='xmpp-im'/>; therefore it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established every 24 to 48 hours if they are timed out.</t> 
-        <t>An XML stream can appear idle at the XMPP level because the underlying TCP connection has become idle (e.g., a client's network connection has been lost).  The typical method for detecting an idle TCP connection is to send a space character (U+0020) over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>.  <iref item='Whitespace Keepalive'/>The sending of such a space character is properly called a WHITESPACE KEEPALIVE (although the term "whitespace ping" is in common use, in fact it is not a ping since no "pong" is possible).  The time between such whitespace keepalives (or other connection-testing methods) is a matter of implementation and local service policy; however, it is RECOMMENDED that any such test be performed not more than once every 60 seconds.</t>
+        <t>An XML stream can appear idle at the XMPP level because the underlying TCP connection has become idle (e.g., a client's network connection has been lost).  One common method for detecting an idle TCP connection is to send a space character (U+0020) over the TCP connection between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>; <iref item='Whitespace Keepalive'/>the sending of such a space character is properly called a WHITESPACE KEEPALIVE (although the term "whitespace ping" is often used, in fact it is not a ping since no "pong" is possible).  Other connection-testing methods include the application-level pings described in <xref target="XEP-0199"/> and the more comprehensive stream management protocol described in <xref target="XEP-0198"/>.  Implementers are advised to support whichever connection-testing methods they deem appropriate, but to carefully weigh the network impact of such methods against the benefits of discovering idle streams in a timely manner.  The length of time between the use of any particular connection test is a matter of implementation and local service policy; however, it is RECOMMENDED that any such test be performed not more than once every 60 seconds.</t>
         <t>To close an idle stream with a local client or remote server, a server MUST close the stream without error as explained under <xref target="streams-close-withouterror"/>.</t>
       </section>
     </section>
@@ -3819,6 +3819,9 @@ XmppAddr ::= UTF8String
       <t>Naturally, implementations MAY support other ciphers with TLS and MAY support other SASL mechanisms.</t>
       <t><list style='empty'><t>Note: The use of TLS plus SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication.  For backward-compatibility, implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>.  Refer to <xref target='PLAIN'/> for important security considerations related to the SASL PLAIN mechanism.</t></list></t>
     </section>
+    <section title="Hash Function Agility" anchor="security-hash">
+      <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
+    </section>
     <section title="SASL Downgrade Attacks" anchor="security-downgrade">
       <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
     </section>
@@ -5313,6 +5316,39 @@ specifications of each URI scheme.
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0191.html"/>
 </reference>
 
+<reference anchor="XEP-0198">
+  <front>
+    <title>Stream Management</title>
+    <author initials="J." surname="Karneges" fullname="Justin Karneges">
+      <organization/>
+      <address>
+        <email>justin@affinix.com</email>
+      </address>
+    </author>
+    <author initials="J." surname="Hildebrand" fullname="Joe Hildebrand">
+      <organization/>
+      <address>
+        <email>jhildebr@cisco.com</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="F." surname="Forno" fullname="Fabio Forno">
+      <organization/>
+      <address>
+        <email>fabio.forno@gmail.com</email>
+      </address>
+    </author>
+    <date day="17" month="June" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0198"/>
+  <format type="HTML" target="http://xmpp.org/extensions/xep-0198.html"/>
+</reference>
+
 <reference anchor="XEP-0205">
   <front>
     <title>Best Practices to Discourage Denial of Service Attacks</title>
@@ -5326,6 +5362,21 @@ specifications of each URI scheme.
   </front>
   <seriesInfo name="XSF XEP" value="0205"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0205.html"/>
+</reference>
+
+<reference anchor="XEP-0199">
+  <front>
+    <title>XMPP Ping</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <date day="03" month="June" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0199"/>
+  <format type="HTML" target="http://xmpp.org/extensions/xep-0199.html"/>
 </reference>
 
 <reference anchor="XEP-0206">
@@ -5434,12 +5485,12 @@ specifications of each URI scheme.
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='June' day='1' year='2009' />
+<date month='August' day='3' year='2009' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-01' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-01.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>

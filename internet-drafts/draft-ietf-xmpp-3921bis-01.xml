@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="July" day="31"/>
+    <date year="2009" month="August" day="3"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -1034,7 +1034,7 @@ CS: <iq id='a78b4q6ha468'
           ]]></artwork>
         </figure>
         <t>The contact's server SHOULD also send a presence stanza of type "unsubscribed" and a presence stanza of type "unavailable" to the user.  However, the user's client MUST NOT depend on receiving these presence stanzas, since it MUST consider its presence subscription to the contact, and its presence information about the contact, to be null and void when it sends the presence stanza of type "unusbscribe" or when receives the roster push triggered by the unsubscribe request.</t>
-        <t>Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.  However, if the contact's server is keeping track of an inbound presence subscription request from the user to the contact without having added the user to the contact's roster because the contact has not yet approved or denied the subscription request (equivalent to a roster state of "None + Pending In"), then the contact's server MUST simply remove any record of the inbound presence subscription request (it cannot remove the user from the contact's roster because the user was never added to the contact's roster).</t>
+        <t>Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.  However, if the contact's server is keeping track of an inbound presence subscription request from the user to the contact but the user is not in the contact's roster (functionally equivalent to a subscription state of "None + Pending In" where the contact never added the user to the contact's roster), then the contact's server MUST simply remove any record of the inbound presence subscription request (it cannot remove the user from the contact's roster because the user was never added to the contact's roster).</t>
       </section>
     </section>
   </section>
@@ -2167,12 +2167,12 @@ US: </stream:stream>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='June' day='1' year='2009' />
+<date month='August' day='3' year='2009' />
 <abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network- aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities. This document also specifies the format for XMPP addresses, which are fully internationalizable. This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-01' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-01.txt' />
 </reference>
 
 <reference anchor='SRV'>
@@ -2797,7 +2797,7 @@ US: </stream:stream>
       <t><list style='numbers'>
         <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the user's roster by subscription='none'</t>
         <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
-        <t>"None + Pending In" = contact and user are not subscribed to each other, and contact has sent user a subscription request but user has not replied yet; in fact, the user's server MUST NOT add the contact to the user's roster or and MUST NOT push or deliver roster items to the user in this state, but instead MUST simply note the existence of the inbound presence subscription request and wait until the user has approved the subscription request before adding the contact to the user's roster.</t>
+        <t>"None + Pending In" = contact and user are not subscribed to each other, and contact has sent user a subscription request but user has not replied yet; this state might or might not be reflected in the user's roster, as follows: if the user has created a roster item for the contact then the server MUST maintain that roster item and also note the existence of the inbound presence subscription request, whereas if the user has not created a roster item for the contact then the user's server MUST note the existence of the inbound presence subscription request but MUST NOT create a roster item for the contact (instead, the server MUST wait until the user has approved the subscription request before adding the contact to the user's roster).</t>
         <t>"None + Pending Out+In" = contact and user are not subscribed to each other, contact has sent user a subscription request but user has not replied yet, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'</t>
         <t>"To" = user is subscribed to contact (one-way); this is reflected in the user's roster by subscription='to'</t>
         <t>"To + Pending In" = user is subscribed to contact, and contact has sent user a subscription request but user has not replied yet; this is reflected in the user's roster by subscription='to'</t>
@@ -3470,9 +3470,15 @@ US: </stream:stream>
           </xs:restriction>
         </xs:simpleType>
       </xs:attribute>
-      <xs:attribute name='jid' type='xs:string' use='required'/>
-      <xs:attribute name='name' type='xs:string' use='optional'/>
-      <xs:attribute name='subscription' use='optional' default='none'>
+      <xs:attribute name='jid'
+                    type='xs:string'
+                    use='required'/>
+      <xs:attribute name='name'
+                    type='xs:string'
+                    use='optional'/>
+      <xs:attribute name='subscription' 
+                    use='optional'
+                    default='none'>
         <xs:simpleType>
           <xs:restriction base='xs:NCName'>
             <xs:enumeration value='both'/>
