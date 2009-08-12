@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="August" day="3"/>
+    <date year="2009" month="August" day="10"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -692,10 +692,13 @@ S: <iq id='delete_2'
         <t>A user's client generates a subscription request by sending a presence stanza of type "subscribe" and specifying a 'to' address of the potential contact's bare JID &lt;contact@domain&gt;.</t>
         <figure>
           <artwork><![CDATA[
-UC: <presence to='juliet@example.com' type='subscribe'/>
+UC: <presence id='xk3h1v69'
+              to='juliet@example.com'
+              type='subscribe'/>
           ]]></artwork>
         </figure>
         <t>When a user sends a presence subscription request to a potential instant messaging and presence contact, the value of the 'to' attribute MUST be a bare JID &lt;contact@domain&gt; rather a full JID &lt;contact@domain/resource&gt;, since the desired result is for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.  Use of bare JIDs also simplifies subscription processing, presence probes, and presence notifications by the user's server and the contact's server.</t>
+        <t>For tracking purposes, a client SHOULD include an 'id' attribute in a presence subscription request.</t>
         <t><list style='empty'><t>Although many XMPP clients prompt the user for information about the potential contact (e.g., "handle" and desired roster group) when generating an outbound presence subscription request, the client MUST NOT send a roster set before sending the presence subscription request, but instead MUST wait until receiving the initial roster push from the server.  This enables the user's server to enforce any policies relevant to presence subscriptions (e.g., a prohibition on presence subscriptions to full JIDs).</t></list></t>
       </section>
 
@@ -712,8 +715,23 @@ UC: <presence to='juliet@example.com' type='subscribe'/>
         <figure>
           <artwork><![CDATA[
 US: <presence from='romeo@example.net'
+              id='xk3h1v69'
               to='juliet@example.com' 
               type='subscribe'/>
+          ]]></artwork>
+        </figure>
+        <t>If the presence subscription request cannot be locally delivered or remotely routed (e.g., because the request is malformed, the local contact does not exist, the remote server does not exist, an attempt to contact the remote server times out, or any other error determined or experienced by the user's server), then the user's server MUST return an appropriate error stanza to the user.  An example follows.</t>
+        <figure>
+          <artwork><![CDATA[
+US: <presence from='juliet@example.com' 
+              id='xk3h1v69'
+              to='romeo@example.net'
+              type='error'>
+      <error type='modify'>
+        <remote-server-not-found 
+            xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+      </error>
+    </presence>
           ]]></artwork>
         </figure>
         <t>After locally delivering or remotely routing the presence subscription request, the user's server MUST then send a roster push to all of the user's interested resources, containing the potential contact with a subscription state of "none" and with notation that the subscription is pending (via an 'ask' attribute whose value is "subscribe").</t>
@@ -754,14 +772,24 @@ US: <iq id='b89c5r7ib575'
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='juliet@example.com' 
+              id='xk3h1v69'
               to='romeo@example.net' 
               type='unsubscribed'/>
                 ]]></artwork>
               </figure>
             </t>
-            <t>If the contact exists and the user already has a subscription to the contact's presence, then the contact's server MUST auto-reply on behalf of the contact by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.  If the contact previously sent a presence stanza of type "subscribed" and the contact's server treated that as indicating "pre-approval" for the user's presence subscription (see <xref target='substates'/>), then the contact's server SHOULD also auto-reply on behalf of the contact.</t>
-            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one available resource associated with the contact when the subscription request is received by the contact's server, then the contact's server MUST broadcast that subscription request to all available resources in accordance with <xref target="rules"/>.</t>
-            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no available resources when the subscription request is received by the contact's server, then the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an available resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an available resource, until the contact either approves or denies the request.  (The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an available resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an available resource; this helps to prevent "subscription request spam".)</t>
+            <t>If the contact exists and the user already has a subscription to the contact's presence, then the contact's server MUST auto-reply on behalf of the contact by sending a presence stanza of type "subscribed" from the contact's bare JID to the user's bare JID.  If the contact previously sent a presence stanza of type "subscribed" and the contact's server treated that as indicating "pre-approval" for the user's presence subscription (see <xref target='substates'/>), then the contact's server SHOULD also auto-reply on behalf of the contact.
+              <figure>
+                <artwork><![CDATA[
+CS: <presence from='juliet@example.com' 
+              id='xk3h1v69'
+              to='romeo@example.net' 
+              type='subscribed'/>
+                ]]></artwork>
+              </figure>
+            </t>
+            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and there is at least one available resource associated with the contact when the subscription request is received by the contact's server, then the contact's server MUST broadcast that subscription request to all available resources in accordance with <xref target="rules"/>.  As a way of acknowledging receipt of the presence subscription request, the contact's server MAY send a presence stanza of type "unavailable" from the bare JID of the contact to the bare JID of the user.</t>
+            <t>If the contact exists, the user does not already have a subscription to the contact's presence, and the contact has no available resources when the subscription request is received by the contact's server, then the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an available resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an available resource, until the contact either approves or denies the request.  (The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an available resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an available resource; this helps to prevent "subscription request spam".)  As a way of acknowledging receipt of the presence subscription request, the contact's server MAY send a presence stanza of type "unavailable" from the bare JID of the contact to the bare JID of the user.</t>
           </list>
         </t>
         <t><list style='empty'><t>Note: Until and unless the contact approves the subscription request as described under <xref target='sub-request-handle'/>, the contact's server MUST NOT add an item for the user to the contact's roster.</t></list></t>
@@ -1369,7 +1397,7 @@ CS: <presence from='juliet@example.com/balcony'
             <t>Otherwise, the client MUST ignore the unavailable presence information and not display it to the contact.</t>
           </list>
         </t>
-        <t>Typically, presence is presence about a particular connected resource.  However, it is possible for the contact to receive an unavailable presence notification from the bare JID of the user.  In this case, the presence notificatio SHOULD be treated as related to a resource identifier of zero length, which does not overshadow other resources associated with the same bare JID.</t>
+        <t>Typically, presence is presence about a particular connected resource.  However, it is possible for the contact to receive an unavailable presence notification from the bare JID of the user.  In this case, the presence notificatio SHOULD be treated as related to a resource identifier of zero length, which does not supersede or overshadow other resources associated with the same bare JID.</t>
       </section>
     </section>
 
@@ -1523,8 +1551,9 @@ CS: <presence from='juliet@example.com/balcony'
     <section title="One-to-One Chat Sessions" anchor="message-chat">
       <t>In practice, instant messaging activity between human users tends to occur in form of a conversational burst that we call <iref item='Chat Session'/> a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
       <t>When a human user intends to engage in such a chat session with a contact (rather than sending a single message to which no reply is expected), the user's client SHOULD send a message of type "chat" and the contact's client SHOULD preserve that message type in subsequent replies.   The user's client also SHOULD include a &lt;thread/&gt; element with its initial message, which the contact's client SHOULD also preserve during the life of the chat session.</t>
-      <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt;).  Until and unless the user's client receives a reply from the contact, it MUST continue sending any further messages to the contact's bare JID.  The contact's client SHOULD address its subsequent replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies.</t>
-      <t>When two parties engage in a chat session but do not share presence with each other based on a presence subscription, they SHOULD send directed presence to each other so that either party can easily discover if the other party changes its availability or goes offline during the course of the chat session.  However, a client MUST provide a way for a user to disable such presence sharing globally or to enable it only with particular entities.  Furthermore, a party SHOULD send directed unavailable to the other party when it has reason to believe that the chat session is over (e.g., if, after some reasonable amount of time, no subsequent messages have been exchanged between the parties).</t>
+      <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; of the contact (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt; based on the &lt;show/&gt;, &lt;status/&gt;, or &lt;priority/&gt; value of any presence notifications it has received from the contact).  Until and unless the user's client receives a reply from the contact, it MUST continue sending any further messages to the contact's bare JID.  The contact's client SHOULD address its subsequent replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies, thus "locking in" on that full JID.</t>
+      <t>When two parties engage in a chat session but do not share presence with each other based on a presence subscription, they SHOULD send directed presence to each other so that either party can easily discover if the peer changes its availability or goes offline during the course of the chat session.  However, a client MUST provide a way for a user to disable such presence sharing globally or to enable it only with particular entities.  Furthermore, a party SHOULD send directed unavailable to the peer when it has reason to believe that the chat session is over (e.g., if, after some reasonable amount of time, no subsequent messages have been exchanged between the parties).</t>
+      <t>If a party receives a presence change from the peer during a one-to-one chat session (e.g., a new resource comes online or the existing resource sends modified presence), then it SHOULD address its next message(s) in the chat session to the bare JID of the peer (thus "unlocking" the previous "lock") until it receives a message from one of the peer's full JIDs.</t>
       <t>An example of a chat session is provided under <xref target='session'/>.</t>
     </section>
     <section title="Message Syntax" anchor="message-syntax">
