@@ -7,10 +7,10 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="std" docName="draft-saintandre-tls-server-id-check-00" ipr="trust200902">
+<rfc category="std" docName="draft-saintandre-tls-server-id-check-01" ipr="trust200902">
 
   <front>
-    <title abbrev="TLS Server Identities">Best Practices for Checking of Server Identities in the Context of Transport Layer Security (TLS)</title>
+    <title abbrev="Server Identity Verification">Server Identity Verification in Application Protocols</title>
 
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
       <organization>Cisco</organization>
@@ -27,7 +27,7 @@
     </author>
 
     <author initials="J." surname="Hodges" fullname="Jeff Hodges">
-      <organization abbrev="NeuStar">NeuStar</organization>
+      <organization>PayPal</organization>
       <address>
         <email>Jeff.Hodges@KingsMountain.com</email>
       </address>
@@ -40,56 +40,97 @@
       </address>
     </author>
 
-    <date day="3" month="June" year="2009"/>
+    <date day="27" month="August" year="2009"/>
     <area>Applications</area>
     <workgroup>None</workgroup>
     <keyword>Internet-Draft</keyword>
 
     <abstract>
-      <t>This document specifies the how an entity establishing a TLS connection, or other PKI-based interaction, with a server should verify the server identity.</t>
+      <t>Technologies such as Transport Layer Security (TLS) and IPsec enable a secure connection between two entities (a "client" and a "server") using the Public Key Infrastructure (PKI).  This document specifies recommended procedures for checking the identity of the server in such an interaction.</t>
     </abstract>
   </front>
 
   <middle>
-    <section anchor="sctn-intro" title="Introduction">
-      <t>Establishing a TLS-based connection <xref target='TLS'/> with a server, or any other sort of client-server PKI-based interaction, entails, on the part of the client, verifying the &quot;server&apos;s identity&quot; based upon information presented by the server in its certificate correlated with the information about the server ensconced in the Domain Name System (DNS).</t>
-      <t>Presently, various Internet-Drafts utilizing TLS or prescribing PKI-based interactions, either prescribe their own server identity check, or reference <xref target="LDAP-AUTH"/> or its predecesor <xref target="LDAP-TLS"/>. [there may be other I-Ds referencing other specs that describe the equivalent of server identity checks]</t>
-      <t>Converging our present understanding of this critical aspect of PKI-based interactions is desirable in that it will hopefully encourage more coherence in specifications and actual implementations thereof, as well as ease the burden of crafting new specifications because this aspect has been factored out and separately standardized.</t>
-      <t>This document extracts the &quot;server identity check&quot; section from <xref target="LDAP-AUTH"/>, with the goal of becoming a stand-alone BCP document appropriately referenceable by I-Ds and thus RFCs.</t>
+
+    <section title="Introduction" anchor="intro">
+      <t>Technologies such as Transport Layer Security <xref target='TLS'/> and <xref target="IPsec"/> enable a secure connection between two entities using the Internet X.509 Public Key Infrastructure (PKI) as described in <xref target="X509"/>.  In such interactions, the entity that initiates the connection is called a "client" and the entity that receives the connection is called a "server".</t>
+      <t><list style='empty'><t>Note: The terms "client" and "server" as used here refer to security roles, not application roles; a server in the context of TLS or IPSec might be a "client" (i.e., a user agent) in the context of an application protocol as deployed on the Internet.</t></list></t>
+      <t>If a client wishes to connect to a server securely, it needs to check the identity of the server so that it can determine if the server is what it claims to be, verify that there is no attacker in the middle, etc.  Typically this is done by correlating the information presented in the server's certificate with information available about the server contained in the Domain Name System (DNS).</t>
+      <t>Different application protocols that make use of the client-server pattern for security purposes have traditionally specified their own procedures for checking server identities.  Examples include but are not limited to:</t>
+      <t>
+        <list style="symbols">
+          <t>The Hypertext Transfer Protocol <xref target="HTTP"/>, for which see also <xref target="HTTP-TLS"/></t>
+          <t>The Internet Message Access Protocol <xref target="IMAP"/> and Post Office Protocol <xref target="POP3"/>, for which see also <xref target="USINGTLS"/></t>
+          <t>The Lightweight Directory Access Protocol <xref target="LDAP"/>, for which see also <xref target="LDAP-AUTH"/> and its predecesor <xref target="LDAP-TLS"/></t>
+          <t>The Session Initiation Protocol <xref target="SIP"/>, for which see also <xref target="SIP-CERTS"/></t>
+          <t>The Extensible Messaging and Presence Protocol <xref target="XMPP"/>, for which see also <xref target="XMPPBIS"/></t>
+        </list>
+      </t>
+      <t>Unfortunately, this divergence of approaches has caused some confusion among developers and protocol designers.  Therefore this document specifies recommended identity checking procedures for application protocols produced within the Internet Standards Process, for the purpose of codifying secure authentication practices.</t>
     </section>
 
-    <section anchor="sctn-terms" title="Terminology">
-      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="TERMS"/>.</t>
+    <section title="Conventions" anchor="conventions">
+      <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
+      <t>Most security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".</t>
+      <t>In addition, we define the following terms to assist in understanding the process of verifying identity:</t>
+      <t>
+        <list style="hanging">
+          <t hangText="identity set:">The set of identities that are presented by the server to the client (in the form of the server's X.509 certificate) when the client is attempts to establish a secure connection to the server.</t>
+          <t hangText="identity type:">The natural kind of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, an email address, a SIP address, a JabberID, or some other type (this specification does not provide a complete taxonomy of identity types).</t>
+          <t hangText="presented identity:">A single member of the identity set.</t>
+          <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection to the server; this is the identity that the client expects the server to present and to which the client makes reference to when attempting to verify the server's identity.</t>
+        </list>
+      </t>
     </section>
 
-    <section anchor="sctn-server-ident-check" title="Server Identity Check">
-      <t>In order to prevent man-in-the-middle attacks, the client MUST verify the server's identity (as presented in the server's Certificate message).  In this section, the client's understanding of the server's identity (typically the identity used to establish the transport connection) is called the "reference identity".</t>
-      <t>The client determines the type (e.g., DNS name or IP address) of the reference identity and performs a comparison between the reference identity and each subjectAltName value of the corresponding type until a match is produced.  Once a match is produced, the server's identity has been verified, and the server identity check is complete.  Different subjectAltName types are matched in different ways.  Sections 3.1.3.1 - 3.1.3.3 explain how to compare values of various subjectAltName types.</t>
-      <t>The client may map the reference identity to a different type prior to performing a comparison.  Mappings may be performed for all available subjectAltName types to which the reference identity can be mapped; however, the reference identity should only be mapped to types for which the mapping is either inherently secure (e.g., extracting the DNS name from a URI to compare with a subjectAltName of type dNSName) or for which the mapping is performed in a secure manner (e.g., using DNSSEC, or using user- or admin-configured host- to-address/address-to-host lookup tables).</t>
-      <t>The server's identity may also be verified by comparing the reference identity to the Common Name (CN) <xref target='LDAP-SCHEMA'/> value in the leaf Relative Distinguished Name (RDN) of the subjectName field of the server's certificate.  This comparison is performed using the rules for comparison of DNS names in Section 3.1.3.1, below, with the exception that no wildcard matching is allowed.  Although the use of the Common Name value is existing practice, it is deprecated, and Certification Authorities are encouraged to provide subjectAltName values instead.  Note that the TLS implementation may represent DNs in certificates according to X.500 or other conventions.  For example, some X.500 implementations order the RDNs in a DN using a left-to-right (most significant to least significant) convention instead of LDAP's right-to-left convention.</t>
-      <t>If the server identity check fails, user-oriented clients SHOULD either notify the user (clients may give the user the opportunity to continue with the LDAP session in this case) or close the transport connection and indicate that the server's identity is suspect.  Automated clients SHOULD close the transport connection and then return or log an error indicating that the server's identity is suspect or both.</t>
-      <t>Beyond the server identity check described in this section, clients should be prepared to do further checking to ensure that the server is authorized to provide the service it is requested to provide.  The client may need to make use of local policy information in making this determination.</t>
-
-      <section anchor="sctn-comp-dns-names" title="Comparison of DNS Names">
-        <t>If the reference identity is an internationalized domain name, conforming implementations MUST convert it to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of <xref target='IDNA'/> before comparison with subjectAltName values of type dNSName.  Specifically, conforming implementations MUST perform the conversion operation specified in Section 4 of RFC 3490 as follows:</t>
+    <section title="Verification Process" anchor="verify">
+      <t>When a client connects to a server, it MUST verify the server's identity (in order to prevent passive and active attacks against the connection).  By "verify identity" we mean that the client needs to establish that at least one of the identities in the identity set matches the reference identity.</t>
+      <section title="Overview" anchor="verify-overview">
+        <t>At a high level, the client verifies the server identity as follows:</t>
         <t>
-          <list style="symbols">
-            <t>in step 1, the domain name SHALL be considered a "stored string";</t>
-            <t>in step 3, set the flag called "UseSTD3ASCIIRules";</t>
-            <t>in step 4, process each label with the "ToASCII" operation; and</t>
-            <t>in step 5, change all label separators to U+002E (full stop).</t>
+          <list style="numbers">
+            <t>Before connecting to the server, the client determines the identity type of the reference identity.</t>
+            <t>During the process of attempting to establish a secure connection, the server MUST present its identity set to the client in the form of an X.509 certificate <xref target="X509"/>.</t>
+            <t>Upon being presented with the server's identity set, the client MUST check each presented identity against the reference identity for the purpose of finding a match.</t>
+            <t>Before attempting to find a match in relation to a particular presented identity, the client MAY map the reference identity to a different identity type.  Such a mapping MAY be performed for any available subjectAltName type to which the reference identity can be mapped; however, the reference identity SHOULD be mapped only to types for which the mapping is either inherently secure (e.g., extracting the DNS name from a URI to compare with a subjectAltName of type dNSName) or for which the mapping is performed in a secure manner (e.g., using DNSSEC, or using user-configured or admin-configured host-to-address/address-to-host lookup tables).</t>
+            <t>To find a match, the client iterates through all of the subjectAltName extensions it recognizes in the server's certificate (potentially in an application-specific preference order) and compares the value of each extension against the reference identity until it has either produced a match or exhausted the identities in the identity set (comparison rules for matching particular subjectAltName extensions are provided under <xref target="verify-rules"/>).  The client MAY also check the subjectName field as described under <xref target="verify-rules-cn"/>.</t>
           </list>
-        </t> 
-        <t>After performing the "to-ASCII" conversion, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of RFC3490.</t>
-        <t>The '*' (ASCII 42) wildcard character is allowed in subjectAltName values of type dNSName, and then only as the left-most (least significant) DNS label in that value.  This wildcard matches any left-most DNS label in the server name.  That is, the subject *.example.com matches the server names a.example.com and b.example.com, but does not match example.com or a.b.example.com.</t>
+        </t>
+        <t><list style='empty'><t>Note: Beyond the server identity check described in this section, clients might complete further checking to ensure that the server is authorized to provide the service it is requested to provide.  The client might need to make use of local policy information in making this determination.</t></list></t>
       </section>
-
-      <section anchor="sctn-comp-ip-addrs" title="Comparison of IP Addresses">
-        <t>When the reference identity is an IP address, the identity MUST be converted to the "network byte order" octet string representation <xref target='IP'/> <xref target='IPv6'/>.  For IP Version 4, as specified in RFC 791, the octet string will contain exactly four octets.  For IP Version 6, as specified in RFC 2460, the octet string will contain exactly sixteen octets.  This octet string is then compared against subjectAltName values of type iPAddress.  A match occurs if the reference identity octet string and value octet strings are identical.</t>
+      <section title="Comparison Rules" anchor="verify-rules">
+        <section title="Comparison of DNS Names" anchor="verify-rules-dnsname">
+          <t>If the reference identity is an internationalized domain name, conforming implementations MUST convert it to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of <xref target='IDNA'/> before comparison with subjectAltName values of type dNSName.  Specifically, conforming implementations MUST perform the conversion operation specified in Section 4 of RFC 3490 as follows:</t>
+          <t>
+            <list style="symbols">
+              <t>in step 1, the domain name SHALL be considered a "stored string";</t>
+              <t>in step 3, set the flag called "UseSTD3ASCIIRules";</t>
+              <t>in step 4, process each label with the "ToASCII" operation; and</t>
+              <t>in step 5, change all label separators to U+002E (full stop).</t>
+            </list>
+          </t> 
+          <t>After performing the "to-ASCII" conversion, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of RFC3490.</t>
+          <t>The '*' (ASCII 42) wildcard character is allowed in subjectAltName values of type dNSName, and then only as the left-most (least significant) DNS label in that value.  This wildcard matches any left-most DNS label in the server name.  That is, the subject *.example.com matches the server names a.example.com and b.example.com, but does not match example.com or a.b.example.com.</t>
+        </section>
+        <section title="Comparison of IP Addresses" anchor="verify-rules-ipaddress">
+          <t>When the reference identity is an IP address, the identity MUST be converted to the "network byte order" octet string representation (see <xref target='IP'/> and <xref target='IPv6'/>).  For IP Version 4, as specified in <xref target='IP'/>, the octet string will contain exactly four octets.  For IP Version 6, as specified in <xref target='IPv6'/>, the octet string will contain exactly sixteen octets.  This octet string is then compared against subjectAltName values of type iPAddress.  A match occurs if the reference identity octet string and value octet strings are identical.</t>
+        </section>
+        <section title="Comparison of Common Name" anchor="verify-rules-cn">
+          <t>In addition to checking the subjectAltName extensions, the client MAY check the Common Name (CN) <xref target='LDAP-SCHEMA'/> value in the leaf Relative Distinguished Name (RDN) of the subjectName field of the server's certificate.  This comparison is performed using the rules for comparison of DNS names in Section 3.1.3.1, below, with the exception that no wildcard matching is allowed.  Although the use of the Common Name value is existing practice, it is deprecated, and Certification Authorities are encouraged to provide subjectAltName values instead.  Note that the TLS implementation may represent DNs in certificates according to X.500 or other conventions.  For example, some X.500 implementations order the RDNs in a DN using a left-to-right (most significant to least significant) convention instead of LDAP's right-to-left convention.</t>
+        </section>
+        <section title="Comparison of Other subjectName Types" anchor="verify-rules-other">
+          <t>Client implementations MAY support matching against subjectAltName values of other types as described in other documents.</t>
+        </section>
       </section>
-
-      <section anchor="sctn-comp-other-subjname" title="Comparison of Other subjectName Types">
-        <t>Client implementations MAY support matching against subjectAltName values of other types as described in other documents.</t>
+      <section title="Outcome" anchor="verify-outcome">
+        <t>The outcome of the checking procedure is one of the following:</t>
+        <t>
+          <list style='hanging'>
+            <t hangText='Case #1:'>The client finds at least one presented identity that matches the reference identity; the entity MUST use this as the validated identity of the server.</t>
+            <t hangText='Case #2:'>The client finds no subjectAltName that matches the reference identity but a human user has permanently accepted the certificate during a previous connection attempt; the client MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed since the last time that a secure connection was successfully negotiated.</t>
+            <t hangText='Case #3:'>The client finds no subjectAltName that matches the reference identity and a human user has not permanently accepted the certificate during a previous connection attempt; the client MUST NOT use the presented identity (if any) as the validated identity of the server and instead MUST proceed as described in the next section.  Instead, if the client is a user-oriented application, then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts behave as in Case #2.  (It is the resposibility of the human user to verify the hash value or fingerprint of the certificate with the peer over a trusted communication layer.)  If the client is an automated application, then it SHOULD terminate the connection with a bad certificate error and log the error to an appropriate audit log; an automated application MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
+          </list>
+        </t>
       </section>
     </section>
 
@@ -177,30 +218,6 @@
 <format type='XML' octets='93343' target='http://xml.resource.org/public/rfc/xml/rfc2460.xml' />
 </reference>
 
-<reference anchor='LDAP-AUTH'>
-<front>
-<title>Lightweight Directory Access Protocol (LDAP): Authentication Methods and Security Mechanisms</title>
-<author initials='R.' surname='Harrison' fullname='R. Harrison'>
-<organization /></author>
-<date year='2006' month='June' />
-<abstract>
-<t>This document describes authentication methods and security mechanisms of the Lightweight Directory Access Protocol (LDAP). This document details establishment of Transport Layer Security (TLS) using the StartTLS operation.&lt;/t>&lt;t> This document details the simple Bind authentication method including anonymous, unauthenticated, and name/password mechanisms and the Simple Authentication and Security Layer (SASL) Bind authentication method including the EXTERNAL mechanism.&lt;/t>&lt;t> This document discusses various authentication and authorization states through which a session to an LDAP server may pass and the actions that trigger these state changes.&lt;/t>&lt;t> This document, together with other documents in the LDAP Technical Specification (see Section 1 of the specification's road map), obsoletes RFC 2251, RFC 2829, and RFC 2830. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='4513' />
-<format type='TXT' octets='80546' target='ftp://ftp.isi.edu/in-notes/rfc4513.txt' />
-</reference>
-
-<reference anchor='LDAP-SCHEMA'>
-<front>
-<title>Lightweight Directory Access Protocol (LDAP): Schema for User Applications</title>
-<author initials='A.' surname='Sciberras' fullname='A. Sciberras'>
-<organization /></author>
-<date year='2006' month='June' />
-<abstract>
-<t>This document is an integral part of the Lightweight Directory Access Protocol (LDAP) technical specification.  It provides a technical specification of attribute types and object classes intended for use by LDAP directory clients for many directory services, such as White Pages.  These objects are widely used as a basis for the schema in many LDAP directories.  This document does not cover attributes used for the administration of directory servers, nor does it include directory objects defined for specific uses in other documents. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='4519' />
-<format type='TXT' octets='64996' target='ftp://ftp.isi.edu/in-notes/rfc4519.txt' />
-</reference>
-
 <reference anchor='TERMS'>
 <front>
 <title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
@@ -242,23 +259,181 @@
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
 </reference>
 
-<reference anchor='TLS'>
-<front>
-<title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
-<author initials='T.' surname='Dierks' fullname='T. Dierks'>
-<organization /></author>
-<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
-<organization /></author>
-<date year='2008' month='August' />
-<abstract>
-<t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='5246' />
-<format type='TXT' octets='222395' target='ftp://ftp.isi.edu/in-notes/rfc5246.txt' />
-</reference>
-
     </references>
 
     <references title="Informative References">
+
+<reference anchor='HTTP'>
+<front>
+<title abbrev='HTTP/1.1'>Hypertext Transfer Protocol -- HTTP/1.1</title>
+<author initials='R.' surname='Fielding' fullname='Roy T.  Fielding'>
+<organization abbrev='UC Irvine'>Department of Information and Computer Science</organization>
+<address>
+<postal>
+<street>University of California, Irvine</street>
+<city>Irvine</city>
+<region>CA</region>
+<code>92697-3425</code></postal>
+<facsimile>+1(949)824-1715</facsimile>
+<email>fielding@ics.uci.edu</email></address></author>
+<author initials='J.' surname='Gettys' fullname='James Gettys'>
+<organization abbrev='Compaq/W3C'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>jg@w3.org</email></address></author>
+<author initials='J.' surname='Mogul' fullname='Jeffrey C.  Mogul'>
+<organization abbrev='Compaq'>Compaq Computer Corporation</organization>
+<address>
+<postal>
+<street>Western Research Laboratory</street>
+<street>250 University Avenue</street>
+<city>Palo Alto</city>
+<region>CA</region>
+<code>94305</code></postal>
+<email>mogul@wrl.dec.com</email></address></author>
+<author initials='H.' surname='Frystyk' fullname='Henrik Frystyk Nielsen'>
+<organization abbrev='MIT/LCS'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>frystyk@w3.org</email></address></author>
+<author initials='L.' surname='Masinter' fullname='Larry Masinter'>
+<organization abbrev='Xerox'>Xerox Corporation</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>3333 Coyote Hill Road</street>
+<city>Palo Alto</city>
+<region>CA</region>
+<code>94034</code></postal>
+<email>masinter@parc.xerox.com</email></address></author>
+<author initials='P.' surname='Leach' fullname='Paul J.  Leach'>
+<organization abbrev='Microsoft'>Microsoft Corporation</organization>
+<address>
+<postal>
+<street>1 Microsoft Way</street>
+<city>Redmond</city>
+<region>WA</region>
+<code>98052</code></postal>
+<email>paulle@microsoft.com</email></address></author>
+<author initials='T.' surname='Berners-Lee' fullname='Tim Berners-Lee'>
+<organization abbrev='MIT/LCS'>World Wide Web Consortium</organization>
+<address>
+<postal>
+<street>MIT Laboratory for Computer Science, NE43-356</street>
+<street>545 Technology Square</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02139</code></postal>
+<facsimile>+1(617)258-8682</facsimile>
+<email>timbl@w3.org</email></address></author>
+<date month='June' year='1999' />
+<abstract>
+<t>
+   The Hypertext Transfer Protocol (HTTP) is an application-level
+   protocol for distributed, collaborative, hypermedia information
+   systems.  It is a generic, stateless, protocol which can be used for
+   many tasks beyond its use for hypertext, such as name servers and
+   distributed object management systems, through extension of its
+   request methods, error codes and headers .  A feature of HTTP is
+   the typing and negotiation of data representation, allowing systems
+   to be built independently of the data being transferred.
+</t>
+<t>
+   HTTP has been in use by the World-Wide Web global information
+   initiative since 1990.  This specification defines the protocol
+   referred to as "HTTP/1.1", and is an update to RFC 2068 .
+</t></abstract></front>
+<seriesInfo name='RFC' value='2616' />
+<format type='TXT' octets='422317' target='ftp://ftp.isi.edu/in-notes/rfc2616.txt' />
+<format type='PS' octets='5529857' target='ftp://ftp.isi.edu/in-notes/rfc2616.ps' />
+<format type='PDF' octets='550558' target='ftp://ftp.isi.edu/in-notes/rfc2616.pdf' />
+<format type='HTML' octets='498891' target='http://xml.resource.org/public/rfc/html/rfc2616.html' />
+<format type='XML' octets='471630' target='http://xml.resource.org/public/rfc/xml/rfc2616.xml' />
+</reference>
+
+<reference anchor='HTTP-TLS'>
+<front>
+<title>HTTP Over TLS</title>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<date year='2000' month='May' />
+<abstract>
+<t>This memo describes how to use Transport Layer Security (TLS) to secure Hypertext Transfer Protocol (HTTP) connections over the Internet.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='2818' />
+<format type='TXT' octets='15170' target='ftp://ftp.isi.edu/in-notes/rfc2818.txt' />
+</reference>
+
+<reference anchor='IMAP'>
+<front>
+<title>INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1</title>
+<author initials='M.' surname='Crispin' fullname='M. Crispin'>
+<organization /></author>
+<date year='2003' month='March' /></front>
+<seriesInfo name='RFC' value='3501' />
+<format type='TXT' octets='227640' target='ftp://ftp.isi.edu/in-notes/rfc3501.txt' />
+</reference>
+
+<reference anchor='IPsec'>
+<front>
+<title>Security Architecture for the Internet Protocol</title>
+<author initials='S.' surname='Kent' fullname='S. Kent'>
+<organization /></author>
+<author initials='K.' surname='Seo' fullname='K. Seo'>
+<organization /></author>
+<date year='2005' month='December' />
+<abstract>
+<t>This document describes an updated version of the "Security Architecture for IP", which is designed to provide security services for traffic at the IP layer.  This document obsoletes RFC 2401 (November 1998). [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4301' />
+<format type='TXT' octets='262123' target='ftp://ftp.isi.edu/in-notes/rfc4301.txt' />
+</reference>
+
+<reference anchor='LDAP'>
+<front>
+<title>Lightweight Directory Access Protocol (LDAP): The Protocol</title>
+<author initials='J.' surname='Sermersheim' fullname='J. Sermersheim'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>This document describes the protocol elements, along with their semantics and encodings, of the Lightweight Directory Access Protocol (LDAP).  LDAP provides access to distributed directory services that act in accordance with X.500 data and service models.  These protocol elements are based on those described in the X.500 Directory Access Protocol (DAP). [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4511' />
+<format type='TXT' octets='150116' target='ftp://ftp.isi.edu/in-notes/rfc4511.txt' />
+</reference>
+
+<reference anchor='LDAP-AUTH'>
+<front>
+<title>Lightweight Directory Access Protocol (LDAP): Authentication Methods and Security Mechanisms</title>
+<author initials='R.' surname='Harrison' fullname='R. Harrison'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>This document describes authentication methods and security mechanisms of the Lightweight Directory Access Protocol (LDAP). This document details establishment of Transport Layer Security (TLS) using the StartTLS operation.&lt;/t>&lt;t> This document details the simple Bind authentication method including anonymous, unauthenticated, and name/password mechanisms and the Simple Authentication and Security Layer (SASL) Bind authentication method including the EXTERNAL mechanism.&lt;/t>&lt;t> This document discusses various authentication and authorization states through which a session to an LDAP server may pass and the actions that trigger these state changes.&lt;/t>&lt;t> This document, together with other documents in the LDAP Technical Specification (see Section 1 of the specification's road map), obsoletes RFC 2251, RFC 2829, and RFC 2830. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4513' />
+<format type='TXT' octets='80546' target='ftp://ftp.isi.edu/in-notes/rfc4513.txt' />
+</reference>
+
+<reference anchor='LDAP-SCHEMA'>
+<front>
+<title>Lightweight Directory Access Protocol (LDAP): Schema for User Applications</title>
+<author initials='A.' surname='Sciberras' fullname='A. Sciberras'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>This document is an integral part of the Lightweight Directory Access Protocol (LDAP) technical specification.  It provides a technical specification of attribute types and object classes intended for use by LDAP directory clients for many directory services, such as White Pages.  These objects are widely used as a basis for the schema in many LDAP directories.  This document does not cover attributes used for the administration of directory servers, nor does it include directory objects defined for specific uses in other documents. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4519' />
+<format type='TXT' octets='64996' target='ftp://ftp.isi.edu/in-notes/rfc4519.txt' />
+</reference>
 
 <reference anchor='LDAP-TLS'>
 <front>
@@ -274,6 +449,191 @@
 <t>This document defines the "Start Transport Layer Security (TLS) Operation" for LDAP. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='2830' />
 <format type='TXT' octets='24469' target='ftp://ftp.isi.edu/in-notes/rfc2830.txt' />
+</reference>
+
+<reference anchor='POP3'>
+<front>
+<title abbrev='POP3'>Post Office Protocol - Version 3</title>
+<author initials='J.G.' surname='Myers' fullname='John G.  Myers'>
+<organization>Carnegie-Mellon University</organization>
+<address>
+<postal>
+<street>5000 Forbes Ave</street>
+<city>Pittsburgh</city>
+<region>PA</region>
+<code>15213</code>
+<country>US</country></postal>
+<email>jgm+@cmu.edu</email></address></author>
+<author initials='M.T.' surname='Rose' fullname='Marshall T.  Rose'>
+<organization>Dover Beach Consulting, Inc.</organization>
+<address>
+<postal>
+<street>420 Whisman Court</street>
+<city>Mountain View</city>
+<region>CA</region>
+<code>94043-2186</code>
+<country>US</country></postal>
+<email>mrose@dbc.mtview.ca.us</email></address></author>
+<date month='May' year='1996' /></front>
+<seriesInfo name='STD' value='53' />
+<seriesInfo name='RFC' value='1939' />
+<format type='TXT' octets='47018' target='ftp://ftp.isi.edu/in-notes/rfc1939.txt' />
+</reference>
+
+<reference anchor='SECTERMS'>
+<front>
+<title>Internet Security Glossary, Version 2</title>
+<author initials='R.' surname='Shirey' fullname='R. Shirey'>
+<organization /></author>
+<date year='2007' month='August' />
+<abstract>
+<t>This Glossary provides definitions, abbreviations, and explanations of terminology for information system security.  The 334 pages of entries offer recommendations to improve the comprehensibility of written material that is generated in the Internet Standards Process (RFC 2026).  The recommendations follow the principles that such writing should (a) use the same term or definition whenever the same concept is mentioned; (b) use terms in their plainest, dictionary sense; (c) use terms that are already well-established in open publications; and (d) avoid terms that either favor a particular vendor or favor a particular technology or mechanism over other, competing techniques that already exist or could be developed.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='4949' />
+<format type='TXT' octets='867626' target='ftp://ftp.isi.edu/in-notes/rfc4949.txt' />
+</reference>
+
+<reference anchor='SIP'>
+<front>
+<title>SIP: Session Initiation Protocol</title>
+<author initials='J.' surname='Rosenberg' fullname='J. Rosenberg'>
+<organization /></author>
+<author initials='H.' surname='Schulzrinne' fullname='H. Schulzrinne'>
+<organization /></author>
+<author initials='G.' surname='Camarillo' fullname='G. Camarillo'>
+<organization /></author>
+<author initials='A.' surname='Johnston' fullname='A. Johnston'>
+<organization /></author>
+<author initials='J.' surname='Peterson' fullname='J. Peterson'>
+<organization /></author>
+<author initials='R.' surname='Sparks' fullname='R. Sparks'>
+<organization /></author>
+<author initials='M.' surname='Handley' fullname='M. Handley'>
+<organization /></author>
+<author initials='E.' surname='Schooler' fullname='E. Schooler'>
+<organization /></author>
+<date year='2002' month='June' />
+<abstract>
+<t>This document describes Session Initiation Protocol (SIP), an application-layer control (signaling) protocol for creating, modifying, and terminating sessions with one or more participants.  These sessions include Internet telephone calls, multimedia distribution, and multimedia conferences. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='3261' />
+<format type='TXT' octets='647976' target='ftp://ftp.isi.edu/in-notes/rfc3261.txt' />
+</reference>
+
+<reference anchor='SIP-CERTS'>
+<front>
+<title>Domain Certificates in the Session Initiation Protocol (SIP)</title>
+<author initials='V' surname='Gurbani' fullname='Vijay  Gurbani'>
+    <organization />
+</author>
+<author initials='S' surname='Lawrence' fullname='Scott Lawrence'>
+    <organization />
+</author>
+<author initials='B' surname='Laboratories' fullname='Bell Laboratories'>
+    <organization />
+</author>
+<date month='May' day='18' year='2009' />
+<abstract><t>This document describes how to construct and interpret certain information in a X.509 PKIX-compliant certificate for use in a Session Initiation Protocol (SIP) over Transport Layer Security (TLS) connection.  More specifically, this document describes how to encode and extract the identity of a SIP domain in a certificate and how to use that identity for SIP domain authentication.  As such, this document is relevant both to implementors of SIP and to issuers of cetificates.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-sip-domain-certs-04' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-sip-domain-certs-04.txt' />
+</reference>
+
+<reference anchor='TLS'>
+<front>
+<title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
+<author initials='T.' surname='Dierks' fullname='T. Dierks'>
+<organization /></author>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<date year='2008' month='August' />
+<abstract>
+<t>This document specifies Version 1.2 of the Transport Layer Security (TLS) protocol.  The TLS protocol provides communications security over the Internet.  The protocol allows client/server applications to communicate in a way that is designed to prevent eavesdropping, tampering, or message forgery. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5246' />
+<format type='TXT' octets='222395' target='ftp://ftp.isi.edu/in-notes/rfc5246.txt' />
+</reference>
+
+<reference anchor="USINGTLS">
+<front>
+<title>Using TLS with IMAP, POP3 and ACAP</title>
+<author initials='C.' surname='Newman' fullname='Chris Newman'>
+<organization>Innosoft International, Inc.</organization>
+<address>
+<postal>
+<street>1050 Lakes Drive</street>
+<city>West Covina</city>
+<region>CA</region>
+<code>91790</code>
+<country>US</country></postal>
+<email>chris.newman@innosoft.com</email></address></author>
+<date month='June' year='1999' /></front>
+<seriesInfo name='RFC' value='2595' />
+<format type='TXT' octets='32440' target='ftp://ftp.isi.edu/in-notes/rfc2595.txt' />
+</reference>
+
+<reference anchor='X509'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+<author initials='D.' surname='Cooper' fullname='D. Cooper'>
+<organization /></author>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'>
+<organization /></author>
+<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
+<organization /></author>
+<author initials='R.' surname='Housley' fullname='R. Housley'>
+<organization /></author>
+<author initials='W.' surname='Polk' fullname='W. Polk'>
+<organization /></author>
+<date year='2008' month='May' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5280' />
+<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
+</reference>
+
+<reference anchor='XMPP'>
+<front>
+<title abbrev='XMPP Core'>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre' role='editor'>
+<organization>Jabber Software Foundation</organization>
+<address>
+<email>stpeter@jabber.org</email></address></author>
+<date year='2004' month='October' />
+<area>Applications</area>
+<workgroup>XMPP Working Group</workgroup>
+<keyword>RFC</keyword>
+<keyword>Request for Comments</keyword>
+<keyword>I-D</keyword>
+<keyword>Internet-Draft</keyword>
+<keyword>XMPP</keyword>
+<keyword>Extensible Messaging and Presence Protocol</keyword>
+<keyword>Jabber</keyword>
+<keyword>IM</keyword>
+<keyword>Instant Messaging</keyword>
+<keyword>Presence</keyword>
+<keyword>XML</keyword>
+<keyword>Extensible Markup Language</keyword>
+<abstract>
+<t>This memo defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a protocol for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two network endpoints.  While XMPP provides a generalized, extensible framework for exchanging XML data, it is used mainly for the purpose of building instant messaging and presence applications that meet the requirements of RFC 2779.</t></abstract></front>
+<seriesInfo name='RFC' value='3920' />
+<format type='TXT' octets='194313' target='ftp://ftp.isi.edu/in-notes/rfc3920.txt' />
+<format type='HTML' octets='237435' target='http://xml.resource.org/public/rfc/html/rfc3920.html' />
+<format type='XML' octets='234474' target='http://xml.resource.org/public/rfc/xml/rfc3920.xml' />
+</reference>
+
+<reference anchor='XMPPBIS'>
+<front>
+<title>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization />
+</author>
+<date month='August' day='14' year='2009' />
+<abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.  This document also specifies the format for XMPP addresses, which are fully internationalizable.  This document obsoletes RFC 3920.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-01' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-01.txt' />
 </reference>
 
     </references>
