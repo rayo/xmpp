@@ -40,33 +40,38 @@
       </address>
     </author>
 
-    <date day="27" month="August" year="2009"/>
+    <date day="31" month="August" year="2009"/>
     <area>Applications</area>
     <workgroup>None</workgroup>
     <keyword>Internet-Draft</keyword>
 
     <abstract>
-      <t>Technologies such as Transport Layer Security (TLS) and IPsec enable a secure connection between two entities (a "client" and a "server") using the Public Key Infrastructure (PKI).  This document specifies recommended procedures for checking the identity of the server in such an interaction.</t>
+      <t>Technologies such as Transport Layer Security (TLS) and IPsec enable a secure connection between two entities (a "client" and a "server") using X.509 certificates.  This document specifies recommended procedures for checking the identity of the server in such an interaction.</t>
     </abstract>
   </front>
 
   <middle>
 
     <section title="Introduction" anchor="intro">
-      <t>Technologies such as Transport Layer Security <xref target='TLS'/> and <xref target="IPsec"/> enable a secure connection between two entities using the Internet X.509 Public Key Infrastructure (PKI) as described in <xref target="X509"/>.  In such interactions, the entity that initiates the connection is called a "client" and the entity that receives the connection is called a "server".</t>
+      <t>Technologies such as Transport Layer Security <xref target='TLS'/> and <xref target="IPSEC"/> enable a secure connection between two entities using the Internet X.509 Public Key Infrastructure (PKI) as described in <xref target="X509"/>.  In such interactions, the entity that initiates the connection is called a "client" and the entity that receives the connection is called a "server".</t>
       <t><list style='empty'><t>Note: The terms "client" and "server" as used here refer to security roles, not application roles; a server in the context of TLS or IPSec might be a "client" (i.e., a user agent) in the context of an application protocol as deployed on the Internet.</t></list></t>
       <t>If a client wishes to connect to a server securely, it needs to check the identity of the server so that it can determine if the server is what it claims to be, verify that there is no attacker in the middle, etc.  Typically this is done by correlating the information presented in the server's certificate with information available about the server contained in the Domain Name System (DNS).</t>
       <t>Different application protocols that make use of the client-server pattern for security purposes have traditionally specified their own procedures for checking server identities.  Examples include but are not limited to:</t>
       <t>
         <list style="symbols">
           <t>The Hypertext Transfer Protocol <xref target="HTTP"/>, for which see also <xref target="HTTP-TLS"/></t>
-          <t>The Internet Message Access Protocol <xref target="IMAP"/> and Post Office Protocol <xref target="POP3"/>, for which see also <xref target="USINGTLS"/></t>
+          <t>The Internet Message Access Protocol <xref target="IMAP"/> and the Post Office Protocol <xref target="POP3"/>, for which see also <xref target="USINGTLS"/></t>
           <t>The Lightweight Directory Access Protocol <xref target="LDAP"/>, for which see also <xref target="LDAP-AUTH"/> and its predecesor <xref target="LDAP-TLS"/></t>
+          <t>The NETCONF Configuration Protocol <xref target="NETCONF"/>, for which see also <xref target="NETCONF-SSH"/> and <xref target="NETCONF-TLS"/></t>
+          <t>The Network News Transfer Protocol <xref target="NNTP"/>, for which see also <xref target="NNTP-TLS"/></t>
           <t>The Session Initiation Protocol <xref target="SIP"/>, for which see also <xref target="SIP-CERTS"/></t>
+          <t>The Simple Mail Transfer Protocol <xref target="SMTP"/>, for which see also <xref target="SMTP-AUTH"/> and <xref target="SMTP-TLS"/></t>
+          <t>The Syslog Protocol <xref target="SYSLOG"/>, for which see also <xref target="SYSLOG-TLS"/></t>
           <t>The Extensible Messaging and Presence Protocol <xref target="XMPP"/>, for which see also <xref target="XMPPBIS"/></t>
         </list>
       </t>
       <t>Unfortunately, this divergence of approaches has caused some confusion among developers and protocol designers.  Therefore this document specifies recommended identity checking procedures for application protocols produced within the Internet Standards Process, for the purpose of codifying secure authentication practices.</t>
+      <t>Note: This document is currently limited in scope to the presentation of identities in X.509 certificates as issued in the context of the Public Key Infrastructure (PKI) and as applied to Transport Layer Security <xref target='TLS'/>; a future version of this document might address X.509 certificates as issued outside the context of the PKI, non-X.509 public keys such as OpenPGP keys, presentation of identities in ways other than in the certificate itself (e.g., certificate fingerprints for Secure Shell as described in <xref target='SSH'/> or for Datagram Transport Layer Security DTLS and Secure Real-time Transport Protocol as described in <xref target='DTLS-SRTP'/>), and applications other than TLS.</t>
     </section>
 
     <section title="Conventions" anchor="conventions">
@@ -76,9 +81,9 @@
       <t>
         <list style="hanging">
           <t hangText="identity set:">The set of identities that are presented by the server to the client (in the form of the server's X.509 certificate) when the client is attempts to establish a secure connection to the server.</t>
-          <t hangText="identity type:">The natural kind of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, an email address, a SIP address, a JabberID, or some other type (this specification does not provide a complete taxonomy of identity types).</t>
+          <t hangText="identity type:">The "natural kind" of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, an email address, a SIP address, a JabberID, or some other type (this specification does not yet provide a complete taxonomy of identity types).  In the case of domain names, the reference identity MUST NOT contain the wildcard character '*' (ASCII 42) in the left-most (least significant) domain name component or component fragment.</t>
           <t hangText="presented identity:">A single member of the identity set.</t>
-          <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection to the server; this is the identity that the client expects the server to present and to which the client makes reference to when attempting to verify the server's identity.</t>
+          <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection to the server; this is the identity that the client expects the server to present and to which the client makes reference when attempting to verify the server's identity.</t>
         </list>
       </t>
     </section>
@@ -86,40 +91,56 @@
     <section title="Verification Process" anchor="verify">
       <t>When a client connects to a server, it MUST verify the server's identity (in order to prevent passive and active attacks against the connection).  By "verify identity" we mean that the client needs to establish that at least one of the identities in the identity set matches the reference identity.</t>
       <section title="Overview" anchor="verify-overview">
-        <t>At a high level, the client verifies the server identity as follows:</t>
+        <t>At a high level, the client verifies the server identity in accordance with the following rules:</t>
         <t>
           <list style="numbers">
             <t>Before connecting to the server, the client determines the identity type of the reference identity.</t>
             <t>During the process of attempting to establish a secure connection, the server MUST present its identity set to the client in the form of an X.509 certificate <xref target="X509"/>.</t>
-            <t>Upon being presented with the server's identity set, the client MUST check each presented identity against the reference identity for the purpose of finding a match.</t>
+            <t>Upon being presented with the server's identity set, the client MUST check the reference identity against the presented identities for the purpose of finding a match.  To do so, the client iterates through all of the subjectAltName extensions it recognizes in the server's certificate (potentially in an application-specific preference order) and compares the value of each extension against the reference identity until it has either produced a match or exhausted the identities in the identity set (comparison rules for matching particular identity types are provided under <xref target="verify-rules"/>, including fallbacks to several subjectName fields).</t>
             <t>Before attempting to find a match in relation to a particular presented identity, the client MAY map the reference identity to a different identity type.  Such a mapping MAY be performed for any available subjectAltName type to which the reference identity can be mapped; however, the reference identity SHOULD be mapped only to types for which the mapping is either inherently secure (e.g., extracting the DNS name from a URI to compare with a subjectAltName of type dNSName) or for which the mapping is performed in a secure manner (e.g., using DNSSEC, or using user-configured or admin-configured host-to-address/address-to-host lookup tables).</t>
-            <t>To find a match, the client iterates through all of the subjectAltName extensions it recognizes in the server's certificate (potentially in an application-specific preference order) and compares the value of each extension against the reference identity until it has either produced a match or exhausted the identities in the identity set (comparison rules for matching particular subjectAltName extensions are provided under <xref target="verify-rules"/>).  The client MAY also check the subjectName field as described under <xref target="verify-rules-cn"/>.</t>
+            <t>If the identity set has more than one member, a match with any of the presented identities is acceptable.</t>
           </list>
         </t>
         <t><list style='empty'><t>Note: Beyond the server identity check described in this section, clients might complete further checking to ensure that the server is authorized to provide the service it is requested to provide.  The client might need to make use of local policy information in making this determination.</t></list></t>
       </section>
       <section title="Comparison Rules" anchor="verify-rules">
-        <section title="Comparison of DNS Names" anchor="verify-rules-dnsname">
-          <t>If the reference identity is an internationalized domain name, conforming implementations MUST convert it to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of <xref target='IDNA'/> before comparison with subjectAltName values of type dNSName.  Specifically, conforming implementations MUST perform the conversion operation specified in Section 4 of RFC 3490 as follows:</t>
+        <section title="Domain Names" anchor="verify-rules-domain">
+          <t>If the reference identity is a domain name as defined by <xref target='RFC1034'/> and <xref target='RFC1035'/> for "traditional" domain names or by <xref target='IDNA'/> for internationalized domain names, then the client can match the reference identity against subjectAltName extensions of type dNSName and SRVName <xref target='SRVNAME'/> according to the following rules.</t> 
+          <t>If the reference identity is a "traditional" domain name, then matching of reference identity against the presented identity is performed by comparing the set of domain components using a case-insensitive ASCII comparison.</t>
+          <t>If the reference identity is an internationalized domain name, then an implementation MUST convert the reference identity to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of <xref target='IDNA'/> before comparison with subjectAltName values of type dNSName; specifically, the conversion operation specified in Section 4 of <xref target='IDNA'/> MUST be performed as follows:</t>
           <t>
             <list style="symbols">
-              <t>in step 1, the domain name SHALL be considered a "stored string";</t>
-              <t>in step 3, set the flag called "UseSTD3ASCIIRules";</t>
-              <t>in step 4, process each label with the "ToASCII" operation; and</t>
-              <t>in step 5, change all label separators to U+002E (full stop).</t>
+              <t>in step 1, the domain name SHALL be considered a "stored string"</t>
+              <t>in step 3, set the flag called "UseSTD3ASCIIRules"</t>
+              <t>in step 4, process each label with the "ToASCII" operation</t>
+              <t>in step 5, change all label separators to U+002E (full stop)</t>
             </list>
           </t> 
-          <t>After performing the "to-ASCII" conversion, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of RFC3490.</t>
-          <t>The '*' (ASCII 42) wildcard character is allowed in subjectAltName values of type dNSName, and then only as the left-most (least significant) DNS label in that value.  This wildcard matches any left-most DNS label in the server name.  That is, the subject *.example.com matches the server names a.example.com and b.example.com, but does not match example.com or a.b.example.com.</t>
+          <t>After performing the "to-ASCII" conversion, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of <xref target='IDNA'/>.</t>
+          <t>A dNSName MAY contain the wildcard character '*' (ASCII 42).  The wildcard character applies only to the left-most (least significant) domain name component or component fragment and matches any single component or component fragment.  For instance, a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself; similarly, a dNSName of baz*.example.net matches baz1.example.net and baz2.example.net but not qux.example.net or example.net itself.</t>
+          <t>In addition to checking the subjectAltName extensions of type dNSName and SRVNAME, the client MAY as a fallback check the value of the Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) as presented in the subjectName component of the server's X.509 certificate.  In existing certificates, the CN is often used for encapsulating a domain name; for example, consider the following subjectName:</t>
+          <figure>
+            <artwork><![CDATA[
+cn=www.example.com, ou=Web Services, c=GB
+            ]]></artwork>
+          </figure>
+          <t>Here the Common Name is "www.example.com" and the client could choose to compare the reference identity against that CN.</t>
+          <t>When comparing the referenced identity against the Common Name, the client MUST follow the comparison rules described above for subjectAltName extensions of type dNSName and SRVName, with the exception that no wildcard matching is allowed.</t>
+          <t>In order to match domain names, a client MUST NOT check Relative Distinguished Names (RDNs) other than the Common Name; in particular, this means that a series of Domain Component (DC) attributes MUST NOT be checked (because the order of Domain Components is not guaranteed, certain attacks are possible if DC attributes are checked).</t>
         </section>
-        <section title="Comparison of IP Addresses" anchor="verify-rules-ipaddress">
-          <t>When the reference identity is an IP address, the identity MUST be converted to the "network byte order" octet string representation (see <xref target='IP'/> and <xref target='IPv6'/>).  For IP Version 4, as specified in <xref target='IP'/>, the octet string will contain exactly four octets.  For IP Version 6, as specified in <xref target='IPv6'/>, the octet string will contain exactly sixteen octets.  This octet string is then compared against subjectAltName values of type iPAddress.  A match occurs if the reference identity octet string and value octet strings are identical.</t>
+        <section title="IP Addresses" anchor="verify-rules-ip">
+          <t>If the reference identity is an IP address as defined by <xref target='IP'/> or <xref target='IPv6'/>, then the client can match the reference identity against subjectAltName extensions of type iPaddress according to the following rules.</t> 
+          <t>The reference identity MUST be converted to the "network byte order" octet string representation; for IP Version 4 the octet string will contain exactly four octets, and for IP Version 6 the octet string will contain exactly sixteen octets.  The client then compares this octet string, where a match occurs if the reference identity and presented identity octet strings are identical.</t>
         </section>
-        <section title="Comparison of Common Name" anchor="verify-rules-cn">
-          <t>In addition to checking the subjectAltName extensions, the client MAY check the Common Name (CN) <xref target='LDAP-SCHEMA'/> value in the leaf Relative Distinguished Name (RDN) of the subjectName field of the server's certificate.  This comparison is performed using the rules for comparison of DNS names in Section 3.1.3.1, below, with the exception that no wildcard matching is allowed.  Although the use of the Common Name value is existing practice, it is deprecated, and Certification Authorities are encouraged to provide subjectAltName values instead.  Note that the TLS implementation may represent DNs in certificates according to X.500 or other conventions.  For example, some X.500 implementations order the RDNs in a DN using a left-to-right (most significant to least significant) convention instead of LDAP's right-to-left convention.</t>
+        <section title="Email Addresses" anchor="verify-rules-email">
+          <t>If the reference identity is an email address as defined by <xref target='EMAIL'/>, then the client SHOULD compare the reference identity against the value of the "rfc822Name" subjectAltName extension described in <xref target="X509"/>.</t>
+          <t>The client MAY also compare the reference identity against the value of the "E" attribute of the subjectName as described in <xref target="CRMF"/>.</t>
         </section>
-        <section title="Comparison of Other subjectName Types" anchor="verify-rules-other">
-          <t>Client implementations MAY support matching against subjectAltName values of other types as described in other documents.</t>
+        <section title="SIP Addresses" anchor="verify-rules-sip">
+          <t>If the reference identity is a SIP address as defined by <xref target='SIP'/>, then the client SHOULD compare map the reference identity to a domain name or email address and proceed as described for those identity types, or proceed as described in <xref target='SIP-CERTS'/>.</t>
+        </section>
+        <section title="JabberIDs" anchor="verify-rules-jid">
+          <t>If the reference identity is a JabberID as defined by <xref target='XMPP'/>, then the client SHOULD compare the reference identity against the value of the "id-on-xmppAddr" subjectAltName extension of type otherName described in <xref target="XMPP"/>, or proceed as described in <xref target='XMPPBIS'/>.</t>
         </section>
       </section>
       <section title="Outcome" anchor="verify-outcome">
@@ -134,8 +155,12 @@
       </section>
     </section>
 
-    <section anchor="security" title="Security Considerations">
+    <section title="Security Considerations" anchor="security">
       <t>To follow.</t>
+    </section>
+
+    <section title="IANA Considerations" anchor="iana">
+      <t>This document has no actions for the IANA.</t>
     </section>
 
   </middle>
@@ -259,9 +284,98 @@
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
 </reference>
 
+<reference anchor='X509'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+<author initials='D.' surname='Cooper' fullname='D. Cooper'>
+<organization /></author>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'>
+<organization /></author>
+<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
+<organization /></author>
+<author initials='R.' surname='Housley' fullname='R. Housley'>
+<organization /></author>
+<author initials='W.' surname='Polk' fullname='W. Polk'>
+<organization /></author>
+<date year='2008' month='May' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5280' />
+<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
+</reference>
+
     </references>
 
     <references title="Informative References">
+
+<reference anchor='CRMF'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Certificate Request Message Format (CRMF)</title>
+<author initials='J.' surname='Schaad' fullname='J. Schaad'>
+<organization /></author>
+<date year='2005' month='September' />
+<abstract>
+<t>This document describes the Certificate Request Message Format (CRMF) syntax and semantics.  This syntax is used to convey a request for a certificate to a Certification Authority (CA), possibly via a Registration Authority (RA), for the purposes of X.509 certificate production.  The request will typically include a public key and the associated registration information.  This document does not define a certificate request protocol. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4211' />
+<format type='TXT' octets='86136' target='ftp://ftp.isi.edu/in-notes/rfc4211.txt' />
+</reference>
+
+<reference anchor='DTLS-SRTP'>
+<front>
+<title>Datagram Transport Layer Security (DTLS) Extension to Establish Keys for  Secure Real-time Transport Protocol (SRTP)</title>
+
+<author initials='D' surname='McGrew' fullname='David McGrew'>
+    <organization />
+</author>
+
+<author initials='E' surname='Rescorla' fullname='Eric Rescorla'>
+    <organization />
+</author>
+<date month='February' day='28' year='2009' />
+<abstract><t>This document describes a Datagram Transport Layer Security (DTLS) extension to establish keys for secure RTP (SRTP) and secure RTP Control Protocol (SRTCP) flows.  DTLS keying happens on the media path, independent of any out-of-band signalling channel present.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-avt-dtls-srtp-07' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-avt-dtls-srtp-07.txt' />
+</reference>
+
+<reference anchor='EMAIL'>
+<front>
+<title>Internet Message Format</title>
+<author initials='P.' surname='Resnick' fullname='Peter W. 
+Resnick' role='editor'>
+<organization>Qualcomm Incorporated</organization>
+<address>
+<postal>
+<street>5775 Morehouse Drive</street>
+<city>San Diego</city>
+<region>CA</region>
+<code>92121-1714</code>
+<country>US</country></postal>
+<phone>+1 858 651 4478</phone>
+<email>presnick@qualcomm.com</email>
+<uri>http://www.qualcomm.com/~presnick/</uri></address></author>
+<date year='2008' month='October' />
+<abstract>
+<t>This document specifies the Internet 
+Message Format (IMF), a syntax for text messages
+			that are sent between computer users, within 
+the framework of "electronic mail"
+			messages. This specification is a revision of 
+Request For Comments (RFC) 2822, which
+			itself superseded Request For Comments (RFC) 
+822, "Standard for the Format of ARPA
+			Internet Text Messages", updating it to 
+reflect current practice and incorporating
+			incremental changes that were specified in 
+other RFCs.</t></abstract></front>
+<seriesInfo name='RFC' value='5322' />
+<format type='TXT' octets='122322' target='ftp://ftp.isi.edu/in-notes/rfc5322.txt' />
+<format type='HTML' octets='213342' target='http://xml.resource.org/public/rfc/html/rfc5322.html' />
+<format type='XML' octets='174183' target='http://xml.resource.org/public/rfc/xml/rfc5322.xml' />
+</reference>
 
 <reference anchor='HTTP'>
 <front>
@@ -385,7 +499,7 @@
 <format type='TXT' octets='227640' target='ftp://ftp.isi.edu/in-notes/rfc3501.txt' />
 </reference>
 
-<reference anchor='IPsec'>
+<reference anchor='IPSEC'>
 <front>
 <title>Security Architecture for the Internet Protocol</title>
 <author initials='S.' surname='Kent' fullname='S. Kent'>
@@ -451,6 +565,72 @@
 <format type='TXT' octets='24469' target='ftp://ftp.isi.edu/in-notes/rfc2830.txt' />
 </reference>
 
+<reference anchor='NETCONF'>
+<front>
+<title>NETCONF Configuration Protocol</title>
+<author initials='R.' surname='Enns' fullname='R. Enns'>
+<organization /></author>
+<date year='2006' month='December' />
+<abstract>
+<t>The Network Configuration Protocol (NETCONF) defined in this document provides mechanisms to install, manipulate, and delete the configuration of network devices.  It uses an Extensible Markup Language (XML)-based data encoding for the configuration data as well as the protocol messages.  The NETCONF protocol operations are realized on top of a simple Remote Procedure Call (RPC) layer. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4741' />
+<format type='TXT' octets='173914' target='ftp://ftp.isi.edu/in-notes/rfc4741.txt' />
+</reference>
+
+<reference anchor='NETCONF-SSH'>
+<front>
+<title>Using the NETCONF Configuration Protocol over Secure SHell (SSH)</title>
+<author initials='M.' surname='Wasserman' fullname='M. Wasserman'>
+<organization /></author>
+<author initials='T.' surname='Goddard' fullname='T. Goddard'>
+<organization /></author>
+<date year='2006' month='December' />
+<abstract>
+<t>This document describes a method for invoking and running the Network Configuration Protocol (NETCONF) within a Secure Shell (SSH) session as an SSH subsystem. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4742' />
+<format type='TXT' octets='17807' target='ftp://ftp.isi.edu/in-notes/rfc4742.txt' />
+</reference>
+
+<reference anchor='NETCONF-TLS'>
+<front>
+<title>NETCONF over Transport Layer Security (TLS)</title>
+<author initials='M.' surname='Badra' fullname='M. Badra'>
+<organization /></author>
+<date year='2009' month='May' />
+<abstract>
+<t>The Network Configuration Protocol (NETCONF) provides mechanisms to install, manipulate, and delete the configuration of network devices.  This document describes how to use the Transport Layer Security (TLS) protocol to secure NETCONF exchanges. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5539' />
+<format type='TXT' octets='16073' target='ftp://ftp.isi.edu/in-notes/rfc5539.txt' />
+</reference>
+
+<reference anchor='NNTP'>
+<front>
+<title>Network News Transfer Protocol (NNTP)</title>
+<author initials='C.' surname='Feather' fullname='C. Feather'>
+<organization /></author>
+<date year='2006' month='October' />
+<abstract>
+<t>The Network News Transfer Protocol (NNTP) has been in use in the Internet for a decade, and remains one of the most popular protocols (by volume) in use today.  This document is a replacement for RFC 977, and officially updates the protocol specification.  It clarifies some vagueness in RFC 977, includes some new base functionality, and provides a specific mechanism to add standardized extensions to NNTP. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='3977' />
+<format type='TXT' octets='247440' target='ftp://ftp.isi.edu/in-notes/rfc3977.txt' />
+</reference>
+
+<reference anchor='NNTP-TLS'>
+<front>
+<title>Using Transport Layer Security (TLS) with Network News Transfer Protocol (NNTP)</title>
+<author initials='K.' surname='Murchison' fullname='K. Murchison'>
+<organization /></author>
+<author initials='J.' surname='Vinocur' fullname='J. Vinocur'>
+<organization /></author>
+<author initials='C.' surname='Newman' fullname='C. Newman'>
+<organization /></author>
+<date year='2006' month='October' />
+<abstract>
+<t>This memo defines an extension to the Network News Transfer Protocol (NNTP) that allows an NNTP client and server to use Transport Layer Security (TLS).  The primary goal is to provide encryption for single-link confidentiality purposes, but data integrity, (optional) certificate-based peer entity authentication, and (optional) data compression are also possible. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4642' />
+<format type='TXT' octets='29366' target='ftp://ftp.isi.edu/in-notes/rfc4642.txt' />
+</reference>
+
 <reference anchor='POP3'>
 <front>
 <title abbrev='POP3'>Post Office Protocol - Version 3</title>
@@ -478,6 +658,36 @@
 <seriesInfo name='STD' value='53' />
 <seriesInfo name='RFC' value='1939' />
 <format type='TXT' octets='47018' target='ftp://ftp.isi.edu/in-notes/rfc1939.txt' />
+</reference>
+
+<reference anchor='RFC1034'>
+<front>
+<title abbrev='Domain Concepts and Facilities'>Domain names - concepts and facilities</title>
+<author initials='P.' surname='Mockapetris' fullname='P. Mockapetris'>
+<organization>Information Sciences Institute (ISI)</organization></author>
+<date year='1987' day='1' month='November' /></front>
+<seriesInfo name='STD' value='13' />
+<seriesInfo name='RFC' value='1034' />
+<format type='TXT' octets='129180' target='ftp://ftp.isi.edu/in-notes/rfc1034.txt' />
+</reference>
+
+<reference anchor='RFC1035'>
+<front>
+<title abbrev='Domain Implementation and Specification'>Domain names - implementation and specification</title>
+<author initials='P.' surname='Mockapetris' fullname='P. Mockapetris'>
+<organization>USC/ISI</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<city>Marina del Rey</city>
+<region>CA</region>
+<code>90291</code>
+<country>US</country></postal>
+<phone>+1 213 822 1511</phone></address></author>
+<date year='1987' day='1' month='November' /></front>
+<seriesInfo name='STD' value='13' />
+<seriesInfo name='RFC' value='1035' />
+<format type='TXT' octets='125626' target='ftp://ftp.isi.edu/in-notes/rfc1035.txt' />
 </reference>
 
 <reference anchor='SECTERMS'>
@@ -538,6 +748,98 @@
         target='http://www.ietf.org/internet-drafts/draft-ietf-sip-domain-certs-04.txt' />
 </reference>
 
+<reference anchor='SMTP'>
+<front>
+<title>Simple Mail Transfer Protocol</title>
+<author initials='J.' surname='Klensin' fullname='J. Klensin'>
+<organization /></author>
+<date year='2008' month='October' />
+<abstract>
+<t>This document is a specification of the basic protocol for Internet electronic mail transport.  It consolidates, updates, and clarifies several previous documents, making all or parts of most of them obsolete.  It covers the SMTP extension mechanisms and best practices for the contemporary Internet, but does not provide details about particular extensions.  Although SMTP was designed as a mail transport and delivery protocol, this specification also contains information that is important to its use as a "mail submission" protocol for "split-UA" (User Agent) mail reading systems and mobile environments. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5321' />
+<format type='TXT' octets='225929' target='ftp://ftp.isi.edu/in-notes/rfc5321.txt' />
+</reference>
+
+<reference anchor='SMTP-AUTH'>
+<front>
+<title>SMTP Service Extension for Authentication</title>
+<author initials='R.' surname='Siemborski' fullname='R. Siemborski'>
+<organization /></author>
+<author initials='A.' surname='Melnikov' fullname='A. Melnikov'>
+<organization /></author>
+<date year='2007' month='July' />
+<abstract>
+<t>This document defines a Simple Mail Transport Protocol (SMTP) extension whereby an SMTP client may indicate an authentication mechanism to the server, perform an authentication protocol exchange, and optionally negotiate a security layer for subsequent protocol interactions during this session. This extension includes a profile of the Simple Authentication and Security Layer (SASL) for SMTP.&lt;/t>&lt;t> This document obsoletes RFC 2554. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4954' />
+<format type='TXT' octets='43493' target='ftp://ftp.isi.edu/in-notes/rfc4954.txt' />
+</reference>
+
+<reference anchor='SMTP-TLS'>
+<front>
+<title>SMTP Service Extension for Secure SMTP over Transport Layer Security</title>
+<author initials='P.' surname='Hoffman' fullname='P. Hoffman'>
+<organization /></author>
+<date year='2002' month='February' />
+<abstract>
+<t>This document describes an extension to the SMTP (Simple Mail Transfer Protocol) service that allows an SMTP server and client to use TLS (Transport Layer Security) to provide private, authenticated communication over the Internet.  This gives SMTP agents the ability to protect some or all of their communications from eavesdroppers and attackers. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='3207' />
+<format type='TXT' octets='18679' target='ftp://ftp.isi.edu/in-notes/rfc3207.txt' />
+</reference>
+
+<reference anchor='SRVNAME'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Subject Alternative Name for Expression of Service Name</title>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<date year='2007' month='August' />
+<abstract>
+<t>This document defines a new name form for inclusion in the otherName field of an X.509 Subject Alternative Name extension that allows a certificate subject to be associated with the service name and domain name components of a DNS Service Resource Record. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4985' />
+<format type='TXT' octets='17868' target='ftp://ftp.isi.edu/in-notes/rfc4985.txt' />
+</reference>
+
+<reference anchor='SSH'>
+<front>
+<title>The Secure Shell (SSH) Protocol Architecture</title>
+<author initials='T.' surname='Ylonen' fullname='T. Ylonen'>
+<organization /></author>
+<author initials='C.' surname='Lonvick' fullname='C. Lonvick'>
+<organization /></author>
+<date year='2006' month='January' />
+<abstract>
+<t>The Secure Shell (SSH) Protocol is a protocol for secure remote login and other secure network services over an insecure network.  This document describes the architecture of the SSH protocol, as well as the notation and terminology used in SSH protocol documents.  It also discusses the SSH algorithm naming system that allows local extensions.  The SSH protocol consists of three major components: The Transport Layer Protocol provides server authentication, confidentiality, and integrity with perfect forward secrecy.  The User Authentication Protocol authenticates the client to the server.  The Connection Protocol multiplexes the encrypted tunnel into several logical channels.  Details of these protocols are described in separate documents. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4251' />
+<format type='TXT' octets='71750' target='ftp://ftp.isi.edu/in-notes/rfc4251.txt' />
+</reference>
+
+<reference anchor='SYSLOG'>
+<front>
+<title>The Syslog Protocol</title>
+<author initials='R.' surname='Gerhards' fullname='R. Gerhards'>
+<organization /></author>
+<date year='2009' month='March' />
+<abstract>
+<t>This document describes the syslog protocol, which is used to convey event notification messages. This protocol utilizes a layered architecture, which allows the use of any number of transport protocols for transmission of syslog messages. It also provides a message format that allows vendor-specific extensions to be provided in a structured way.&lt;/t>&lt;t> This document has been written with the original design goals for traditional syslog in mind. The need for a new layered specification has arisen because standardization efforts for reliable and secure syslog extensions suffer from the lack of a Standards-Track and transport-independent RFC. Without this document, each other standard needs to define its own syslog packet format and transport mechanism, which over time will introduce subtle compatibility issues. This document tries to provide a foundation that syslog extensions can build on. This layered architecture approach also provides a solid basis that allows code to be written once for each syslog feature rather than once for each transport. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5424' />
+<format type='TXT' octets='85162' target='ftp://ftp.isi.edu/in-notes/rfc5424.txt' />
+</reference>
+
+<reference anchor='SYSLOG-TLS'>
+<front>
+<title>Transport Layer Security (TLS) Transport Mapping for Syslog</title>
+<author initials='F.' surname='Miao' fullname='F. Miao'>
+<organization /></author>
+<author initials='Y.' surname='Ma' fullname='Y. Ma'>
+<organization /></author>
+<author initials='J.' surname='Salowey' fullname='J. Salowey'>
+<organization /></author>
+<date year='2009' month='March' />
+<abstract>
+<t>This document describes the use of Transport Layer Security (TLS) to provide a secure connection for the transport of syslog messages.  This document describes the security threats to syslog and how TLS can be used to counter such threats. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5425' />
+<format type='TXT' octets='28159' target='ftp://ftp.isi.edu/in-notes/rfc5425.txt' />
+</reference>
+
 <reference anchor='TLS'>
 <front>
 <title>The Transport Layer Security (TLS) Protocol Version 1.2</title>
@@ -568,28 +870,6 @@
 <date month='June' year='1999' /></front>
 <seriesInfo name='RFC' value='2595' />
 <format type='TXT' octets='32440' target='ftp://ftp.isi.edu/in-notes/rfc2595.txt' />
-</reference>
-
-<reference anchor='X509'>
-<front>
-<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
-<author initials='D.' surname='Cooper' fullname='D. Cooper'>
-<organization /></author>
-<author initials='S.' surname='Santesson' fullname='S. Santesson'>
-<organization /></author>
-<author initials='S.' surname='Farrell' fullname='S. Farrell'>
-<organization /></author>
-<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
-<organization /></author>
-<author initials='R.' surname='Housley' fullname='R. Housley'>
-<organization /></author>
-<author initials='W.' surname='Polk' fullname='W. Polk'>
-<organization /></author>
-<date year='2008' month='May' />
-<abstract>
-<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='5280' />
-<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
 </reference>
 
 <reference anchor='XMPP'>
