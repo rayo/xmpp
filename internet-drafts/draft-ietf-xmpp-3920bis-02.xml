@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3920bis-01" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-ietf-xmpp-3920bis-02" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="August" day="14"/>
+    <date year="2009" month="September" day="1"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -108,22 +108,26 @@
       <t>The editor of this document finds it impossible to appropriately acknowledge the many individuals who have provided comments regarding the protocols defined herein.  However, thanks are due to those who have who have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since the publication of the RFC this document supersedes.  The editor has endeavored to address all such feedback, but is solely responsible for any remaining errors and ambiguities.</t>
     </section>
     <section title="Discussion Venue" anchor="intro-discuss">
-      <t>The document editor and the broader XMPP developer community welcome discussion and comments related to the topics presented in this document.  The preferred forum is the &lt;standards@xmpp.org&gt; mailing list, for which archives and subscription information are available at <eref target='http://mail.jabber.org/mailman/listinfo/standards'/>.</t>
+      <t>The document editor and the broader XMPP developer community welcome discussion and comments related to the topics presented in this document.  The primary and preferred venue is the &lt;xmpp@ietf.org&gt; mailing list, for which archives and subscription information are available at <eref target='https://www.ietf.org/mailman/listinfo/xmpp'/>.  Related discussions often occur on the &lt;standards@xmpp.org&gt; mailing list, for which archives and subscription information are available at <eref target='http://mail.jabber.org/mailman/listinfo/standards'/>.</t>
     </section>
   </section>
 
   <section title="Architecture" anchor="arch">
-    <section title="Overview" anchor="arch-overview">
-      <t>XMPP assumes a client-server architecture, wherein a client utilizing XMPP accesses a server (normally over a <xref target="TCP"/> connection) and servers can also communicate with each other over TCP connections.</t>
-      <t>A simplified architectural diagram for a typical deployment is shown here, where the entities have the following significance:</t>
-      <t>
-        <list style='symbols'>
-          <t>romeo@example.net -- an XMPP user.</t>
-          <t>example.net -- an XMPP server.</t>
-          <t>im.example.com -- an XMPP server.</t>
-          <t>juliet@im.example.com -- an XMPP user.</t>
-        </list>
-      </t>
+    <t>XMPP provides a technology for the asynchronous, end-to-end exchange of structured data by means of direct, persistent XML streams among a distributed network of globally-addressable, presence-aware clients and servers.  Because this architectural style involves ubiquitous knowledge of network availability and a conceptually unlimited number of concurrent information transactions in the context of a given client-to-server or server-to-server session, we label it "Availability for Concurrent Transactions" (ACT) to distinguish it from the "Representational State Transfer" <xref target="REST"/> architectural style familiar from the World Wide Web.  Although the architecture of XMPP is similar in important ways to that of the email network (see <xref target='EMAIL-ARCH'/>), it introduces several modifications to facilitate near-real-time communication.  The salient features of this ACTive architectural style are as follows.</t>
+    <section title="Global Addresses" anchor="arch-addresses">
+      <t>As with email, XMPP uses globally-unique addresses (based on the Domain Name System) in order to route and deliver messages over the network.  All XMPP entities are addressable on the network, most particularly clients and servers but also various additional services that can be accessed by clients and servers.  In general, server addresses are of the form "domain.tld" (e.g., "im.example.com"), accounts hosted at a server are of the form "localpart@domain.tld" (e.g., "juliet@im.example.com"), and a particular connected device or resource that is currently authorized for interaction on behalf of an account is of the form "localpart@domain.tld/resource" (e.g., "juliet@im.example.com/balcony").  XMPP addresses are defined under <xref target="addressing"/>.</t>
+    </section>
+    <section title="Presence" anchor="arch-presence">
+      <t>XMPP includes the ability for an entity to advertise its network availability or "presence" to other entities.  Such availability for communication is signalled end-to-end via dedicated communication primitives in XMPP (the &lt;presence/&gt; stanza).  Although knowledge of network availability is not strictly necessary for the exchange of XMPP messages, it facilitates real-time interaction because the originator of a message can know before initiating communication that the intended recipient is online and available.  XMPP presence is defined in <xref target="xmpp-im"/>.</t>
+    </section>
+    <section title="Persistent Streams" anchor="arch-streams">
+      <t>Availability for communication is also built into point-to-point connections (e.g., a discrete client-to-server or server-to-server connection) through the use of direct, persistent XML streams between the entity that initiated the connection (either a client or a server) and the entity that received the connection (a server).  Thus either party to a stream knows that it can immediately push data to the other party for immediate routing or delivery.  XML streams are defined under <xref target="streams"/>.</t>
+    </section>
+    <section title="Structured Data" anchor="arch-data">
+      <t>The basic unit of meaning in XMPP is not an XML stream (which simply provides the transport for point-to-point communication) but an XML "stanza", which is essentially a fragment of XML that is sent over a stream.  The root element of a stanza includes routing attributes (such as "from" and "to" addresses) and the child elements of the stanza contain a payload for delivery to the intended recipient.  XML stanzas are defined under <xref target="stanzas"/>.</t>
+    </section>
+    <section title="Distributed Network" anchor="arch-network">
+      <t>In practice, XMPP consists of a network of clients and servers that inter-communicate (however, communication between any two given deployed servers is strictly OPTIONAL).  Thus, for example, the user &lt;juliet@im.example.com&gt; associated with the server &lt;im.example.com&gt; might be able to exchange messages, presence, and other structured data with the user &lt;romeo@example.net&gt; associated with the server &lt;example.net&gt;.  This pattern is familiar from messaging protocols that make use of global addresses, such as the email network (see <xref target="SMTP"/> and <xref target="EMAIL-ARCH"/>).  As a result, end-to-end communication in XMPP is logically peer-to-peer but physically client-to-server-to-server-to-client, as illustrated in the following diagram.</t>
       <figure>
         <artwork><![CDATA[
   example.net ---------------- im.example.com
@@ -133,15 +137,14 @@ romeo@example.net           juliet@im.example.com
 
         ]]></artwork>
       </figure>
-      <t><list style='empty'><t>Note: Architectures that employ <xref target='streams'>XML streams</xref> and <xref target="stanzas">XML stanzas</xref> but that establish peer-to-peer connections directly between clients using technologies based on <xref target='LINKLOCAL'/> have been deployed, but such architectures are not XMPP and are best described as "XMPP-like"; for details, see <xref target='XEP-0174'/>.  In addition, XML streams can be established end-to-end over any reliable transport, including extensions to XMPP itself; however, such methods are out of scope for this specification.</t></list></t>
+      <t><list style='empty'><t>Note: Architectures that employ <xref target='streams'>XML streams</xref> and <xref target="stanzas">XML stanzas</xref> but that establish peer-to-peer connections directly between clients using technologies based on <xref target='LINKLOCAL'/> have been deployed, but such architectures are not described in this specification and are best described as "XMPP-like"; for details, see <xref target='XEP-0174'/>.  In addition, XML streams can be established end-to-end over any reliable transport, including extensions to XMPP itself; however, such methods are out of scope for this specification.</t></list></t>
     </section>
-
     <section title="Server" anchor="arch-server">
       <t>A SERVER is an entity whose primary responsibilities are to:</t>
       <t>
         <list style='symbols'>
-          <t>Manage <xref target="streams">XML streams</xref> with local clients and deliver <xref target="stanzas">XML stanzas</xref> to those clients over the negotiated XML streams.</t>
-          <t>Subject to local service policies on server-to-server communication, manage <xref target="streams">XML streams</xref> with foreign servers and route <xref target="stanzas">XML stanzas</xref> to those servers over the negotiated XML streams.</t>
+          <t>Manage <xref target="streams">XML streams</xref> with local clients and deliver <xref target="stanzas">XML stanzas</xref> to those clients over the negotiated streams.</t>
+          <t>Subject to local service policies on server-to-server communication, manage <xref target="streams">XML streams</xref> with foreign servers and route <xref target="stanzas">XML stanzas</xref> to those servers over the negotiated streams.</t>
         </list>
       </t>
       <t>Depending on the application, the secondary responsibilities of an XMPP server can include:</t>
@@ -152,13 +155,8 @@ romeo@example.net           juliet@im.example.com
         </list>
       </t>
     </section>
-
     <section title="Client" anchor="arch-client">
-      <t>A CLIENT is an entity that establishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas via the server to the client.  A client then uses XMPP to communicate with its server, other clients, and any other accessible entities on a network.  Multiple clients can connect simultaneously to a server on behalf of a local account, where each client is differentiated by the resource identifier portion of an XMPP address (e.g., &lt;localpart@domain/home&gt; vs. &lt;localpart@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.  The RECOMMENDED port for TCP connections between a client and a server is 5222, as registered with the IANA (see <xref target="iana-ports"/>).</t>
-    </section>
-
-    <section title="Network" anchor="arch-network">
-      <t>Because each server is identified by a network address and because server-to-server communication is a straightforward extension of the client-to-server protocol, in practice the system consists of a network of servers that inter-communicate.  Thus, for example, &lt;juliet@im.example.com&gt; is able to exchange messages, presence, and other information with &lt;romeo@example.net&gt;.  This pattern is familiar from messaging protocols (such as <xref target="SMTP"/>) that make use of network addressing standards.  Communication between any two servers is OPTIONAL.  The RECOMMENDED port for TCP connections between servers is 5269, as registered with the IANA (see <xref target="iana-ports"/>).</t>
+      <t>A CLIENT is an entity that establishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas via the server to the client.  A client then uses XMPP to communicate with its server, other clients, and any other accessible entities on a network.  Multiple clients can connect simultaneously to a server on behalf of a local account, where each client is differentiated by the resource identifier portion of an XMPP address (e.g., &lt;localpart@domain/home&gt; vs. &lt;localpart@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.</t>
     </section>
   </section>
 
@@ -4656,6 +4654,18 @@ specifications of each URI scheme.
 <format type='TXT' octets='91844' target='ftp://ftp.isi.edu/in-notes/rfc4732.txt' />
 </reference>
 
+<reference anchor='EMAIL-ARCH'>
+<front>
+<title>Internet Mail Architecture</title>
+<author initials='D.' surname='Crocker' fullname='D. Crocker'>
+<organization /></author>
+<date year='2009' month='July' />
+<abstract>
+<t>Over its thirty-five-year history, Internet Mail has changed significantly in scale and complexity, as it has become a global infrastructure service.  These changes have been evolutionary, rather than revolutionary, reflecting a strong desire to preserve both its installed base and its usefulness.  To collaborate productively on this large and complex system, all participants need to work from a common view of it and use a common language to describe its components and the interactions among them.  But the many differences in perspective currently make it difficult to know exactly what another participant means.  To serve as the necessary common frame of reference, this document describes the enhanced Internet Mail architecture, reflecting the current service.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='5598' />
+<format type='TXT' octets='115741' target='ftp://ftp.isi.edu/in-notes/rfc5598.txt' />
+</reference>
+
 <reference anchor='GSS-API'>
 <front>
 <title abbrev='GSS-API'>Generic Security Service Application Program Interface Version 2, Update 1</title>
@@ -4944,6 +4954,17 @@ specifications of each URI scheme.
 <seriesInfo name='RFC' value='3492' />
 <format type='TXT' octets='67439' target='ftp://ftp.isi.edu/in-notes/rfc3492.txt' />
 </reference>
+
+<reference anchor="REST">
+<front>
+<title>Architectural Styles and the Design of Network-based Software Architectures</title>
+<author initials="R." surname="Fielding" fullname="Roy Thomas Fielding">
+  <organization>University of California, Irvine</organization>
+</author>
+</front>
+<seriesInfo name="" value="200" />
+<format type="PDF" target="http://www.ics.uci.edu/~fielding/pubs/dissertation/fielding_dissertation.pdf"/>
+</reference> 
 
 <reference anchor='RFC3920'>
 <front>
