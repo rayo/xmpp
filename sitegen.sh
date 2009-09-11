@@ -29,6 +29,7 @@ cp non-free/*.gif $basepath/images/
 cp non-free/*.jpg $basepath/images/
 cp non-free/*.png $basepath/images/
 cp robots.txt $basepath/
+cp protocols/*.shtml $basepath/protocols/
 cp schemas/*.* $basepath/schemas/
 cp services/*.* $basepath/services/
 cp sitemap.xml $basepath/
