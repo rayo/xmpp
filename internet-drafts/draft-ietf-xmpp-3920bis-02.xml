@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="September" day="1"/>
+    <date year="2009" month="September" day="11"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -224,7 +224,7 @@ romeo@example.net           juliet@im.example.com
 
   <section title="TCP Binding" anchor="tcp">
     <section title="Scope" anchor="tcp-scope">
-      <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a Transmission Control Protocol <xref target='TCP'/> connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  The rules specified in the following sections apply to the TCP binding.</t>
+      <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a Transmission Control Protocol <xref target='TCP'/> connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  The parties then maintain that TCP connection for as long as the XML streams are in use.  The rules specified in the following sections apply to the TCP binding.</t>
     </section>
     <section title="Hostname Resolution" anchor="tcp-resolution">
       <t>Before opening the TCP connection, the initiating entity first MUST resolve the Domain Name System (DNS) hostname associated with the receiving entity and determine the appropriate TCP port for communication with the receiving entity.  The process is:</t>
@@ -255,6 +255,9 @@ romeo@example.net           juliet@im.example.com
         </list>
       </t>
       <t><list style='empty'><t>Note: Because it is possible that a disconnected entity cannot determine the cause of disconnection (e.g., because there was no explicit stream error) or does not require a new stream for immediate communication (e.g., because the stream was idle and therefore timed out), it SHOULD NOT assume that is needs to reconnect immediately.</t></list></t>
+    </section>
+    <section title="Reliability" anchor="streams-reliability">
+      <t>The use of long-lived TCP connections in XMPP implies that the sending of XML stanzas over XML streams can be unreliable, since the parties to a long-lived TCP connection might not discover a connectivity disruption in a timely manner.  At the XMPP application layer, long connectivity disruptions can result in undelivered stanzas.  Although the core XMPP technology defined in this specification does not contain features to overcome this lack of reliability, there exist XMPP extensions for doing so (e.g., <xref target='XEP-0198'/>).</t>
     </section>
     <section title="Other Bindings" anchor="tcp-other">
       <t>There is no necessary coupling of an XML stream to a TCP connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  Although this specification neither encourages nor discourages other bindings, it defines only a binding of XMPP to TCP.</t>
@@ -3596,8 +3599,8 @@ S2: </stream:stream>
       <t><list style='empty'><t>Note: The terms "valid" and "well-formed" are distinct in XML.</t></list></t>
     </section>
 
-    <section title="Inclusion of Text Declaration" anchor="xml-declaration">
-      <t>Implementations SHOULD send a text declaration before sending a stream header.  Applications MUST follow the rules provided in <xref target="XML"/> regarding the circumstances under which a text declaration is included.</t>
+    <section title="Inclusion of XML Declaration" anchor="xml-declaration">
+      <t>Before sending a stream header, an implementation SHOULD send an XML declaration (matching production [23] content of <xref target='XML'/>).  Applications MUST follow the rules provided in <xref target="XML"/> regarding the format of the XML declaration and the circumstances under which the XML declaration is included.</t>
     </section>
 
     <section title="Character Encoding" anchor="xml-encoding">
@@ -3663,7 +3666,7 @@ S2: </stream:stream>
           </section>
           <section title="dNSName" anchor="security-certificates-generation-server-dnsname">
             <t>A server's domain identifier SHOULD be represented as a dNSName, i.e., as a subjectAltName extension of type dNSName.</t>
-            <t>The dNSName MAY contain the wildcard character '*'.  The wildcard character applies only to the left-most domain name component or component fragment and matches any single component or component fragment.  For instance, a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself; similarly, a dNSName of im*.example.net matches im1.example.net and im2.example.net but not chat.example.net or example.net itself.</t>
+            <t>The dNSName MAY contain the wildcard character '*'.  The wildcard character applies only to the left-most domain name component and matches any single component (thus a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself).  The wildcard character is not allowed in component fragments (thus a dNSName of im*.example.net is not allowed and shall not be taken to match im1.example.net and im2.example.net).</t>
           </section>
           <section title="XmppAddr" anchor="security-certificates-generation-server-xmppaddr">
             <t>A server's domain identifier MAY be represented as an XmppAddr, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.  In server certificates, this representation is included only for the sake of backward-compatibility.</t>
@@ -5040,9 +5043,11 @@ specifications of each URI scheme.
 <title>Simple Mail Transfer Protocol</title>
 <author initials='J.' surname='Klensin' fullname='J. Klensin'>
 <organization /></author>
-<date month='April' year='2001' /></front>
-<seriesInfo name='RFC' value='2821' />
-<format type='TXT' octets='192504' target='ftp://ftp.isi.edu/in-notes/rfc2821.txt' />
+<date year='2008' month='October' />
+<abstract>
+<t>This document is a specification of the basic protocol for Internet electronic mail transport.  It consolidates, updates, and clarifies several previous documents, making all or parts of most of them obsolete.  It covers the SMTP extension mechanisms and best practices for the contemporary Internet, but does not provide details about particular extensions.  Although SMTP was designed as a mail transport and delivery protocol, this specification also contains information that is important to its use as a "mail submission" protocol for "split-UA" (User Agent) mail reading systems and mobile environments. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5321' />
+<format type='TXT' octets='225929' target='ftp://ftp.isi.edu/in-notes/rfc5321.txt' />
 </reference>
 
 <reference anchor='URN-OID'>
@@ -5376,21 +5381,6 @@ specifications of each URI scheme.
   <format type="HTML" target="http://xmpp.org/extensions/xep-0198.html"/>
 </reference>
 
-<reference anchor="XEP-0205">
-  <front>
-    <title>Best Practices to Discourage Denial of Service Attacks</title>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email>stpeter@jabber.org</email>
-      </address>
-    </author>
-    <date day="7" month="January" year="2009"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0205"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0205.html"/>
-</reference>
-
 <reference anchor="XEP-0199">
   <front>
     <title>XMPP Ping</title>
@@ -5404,6 +5394,21 @@ specifications of each URI scheme.
   </front>
   <seriesInfo name="XSF XEP" value="0199"/>
   <format type="HTML" target="http://xmpp.org/extensions/xep-0199.html"/>
+</reference>
+
+<reference anchor="XEP-0205">
+  <front>
+    <title>Best Practices to Discourage Denial of Service Attacks</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="7" month="January" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0205"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0205.html"/>
 </reference>
 
 <reference anchor="XEP-0206">
