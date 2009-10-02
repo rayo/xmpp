@@ -7,7 +7,7 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="std" docName="draft-saintandre-tls-server-id-check-01" ipr="trust200902">
+<rfc category="std" docName="draft-saintandre-tls-server-id-check-02" ipr="trust200902">
 
   <front>
     <title abbrev="Server Identity Verification">Server Identity Verification in Application Protocols</title>
@@ -15,7 +15,7 @@
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
       <organization>Cisco</organization>
       <address>
-        <email>psaintan@cisco.com</email>
+        <email>Peter.SaintAndre@WebEx.com</email>
       </address>
     </author>
 
@@ -40,7 +40,7 @@
       </address>
     </author>
 
-    <date day="31" month="August" year="2009"/>
+    <date day="2" month="October" year="2009"/>
     <area>Applications</area>
     <workgroup>None</workgroup>
     <keyword>Internet-Draft</keyword>
@@ -55,13 +55,13 @@
     <section title="Introduction" anchor="intro">
       <t>Technologies such as Transport Layer Security <xref target='TLS'/> and <xref target="IPSEC"/> enable a secure connection between two entities using the Internet X.509 Public Key Infrastructure (PKI) as described in <xref target="X509"/>.  In such interactions, the entity that initiates the connection is called a "client" and the entity that receives the connection is called a "server".</t>
       <t><list style='empty'><t>Note: The terms "client" and "server" as used here refer to security roles, not application roles; a server in the context of TLS or IPSec might be a "client" (i.e., a user agent) in the context of an application protocol as deployed on the Internet.</t></list></t>
-      <t>If a client wishes to connect to a server securely, it needs to check the identity of the server so that it can determine if the server is what it claims to be, verify that there is no attacker in the middle, etc.  Typically this is done by correlating the information presented in the server's certificate with information available about the server contained in the Domain Name System (DNS).</t>
+      <t>If a client wishes to connect to a server securely, it needs to check the identity of the server so that it can determine if the server is what it claims to be, verify that there is no attacker in the middle, and enforce other relevant security considerations.  Typically this checking is done by correlating the information presented in the server's certificate with information available about the server contained in the Domain Name System (DNS) or provided by a human user.</t>
       <t>Different application protocols that make use of the client-server pattern for security purposes have traditionally specified their own procedures for checking server identities.  Examples include but are not limited to:</t>
       <t>
         <list style="symbols">
           <t>The Hypertext Transfer Protocol <xref target="HTTP"/>, for which see also <xref target="HTTP-TLS"/></t>
           <t>The Internet Message Access Protocol <xref target="IMAP"/> and the Post Office Protocol <xref target="POP3"/>, for which see also <xref target="USINGTLS"/></t>
-          <t>The Lightweight Directory Access Protocol <xref target="LDAP"/>, for which see also <xref target="LDAP-AUTH"/> and its predecesor <xref target="LDAP-TLS"/></t>
+          <t>The Lightweight Directory Access Protocol <xref target="LDAP"/>, for which see also <xref target="LDAP-AUTH"/> and its predecessor <xref target="LDAP-TLS"/></t>
           <t>The NETCONF Configuration Protocol <xref target="NETCONF"/>, for which see also <xref target="NETCONF-SSH"/> and <xref target="NETCONF-TLS"/></t>
           <t>The Network News Transfer Protocol <xref target="NNTP"/>, for which see also <xref target="NNTP-TLS"/></t>
           <t>The Session Initiation Protocol <xref target="SIP"/>, for which see also <xref target="SIP-CERTS"/></t>
@@ -71,25 +71,25 @@
         </list>
       </t>
       <t>Unfortunately, this divergence of approaches has caused some confusion among developers and protocol designers.  Therefore this document specifies recommended identity checking procedures for application protocols produced within the Internet Standards Process, for the purpose of codifying secure authentication practices.</t>
-      <t>Note: This document is currently limited in scope to the presentation of identities in X.509 certificates as issued in the context of the Public Key Infrastructure (PKI) and as applied to Transport Layer Security <xref target='TLS'/>; a future version of this document might address X.509 certificates as issued outside the context of the PKI, non-X.509 public keys such as OpenPGP keys, presentation of identities in ways other than in the certificate itself (e.g., certificate fingerprints for Secure Shell as described in <xref target='SSH'/> or for Datagram Transport Layer Security DTLS and Secure Real-time Transport Protocol as described in <xref target='DTLS-SRTP'/>), and applications other than TLS.</t>
+      <t>Note: This document is currently limited in scope to the presentation of identities in X.509 certificates as issued in the context of the Public Key Infrastructure (PKI) and as applied to Transport Layer Security <xref target='TLS'/>; a future version of this document might address X.509 certificates as issued outside the context of the PKI, non-X.509 public keys such as OpenPGP keys, presentation of identities in ways other than in the certificate itself (e.g., certificate fingerprints for Secure Shell as described in <xref target='SSH'/> or for Datagram Transport Layer Security DTLS and Secure Real-time Transport Protocol as described in <xref target='DTLS-SRTP'/>), and applications that use security technologies other than TLS.</t>
     </section>
 
     <section title="Conventions" anchor="conventions">
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>Most security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".</t>
-      <t>In addition, we define the following terms to assist in understanding the process of verifying identity:</t>
+      <t>Most security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "attack", "authentication", "authorization", "certificate", "credential", "fingerprint", "identity", "self-signed certificate", "trust", "trust anchor", "trust chain", "validate", and "verify".</t>
+      <t>In addition, we define the following terms to assist in understanding the process of verifying server identity:</t>
       <t>
         <list style="hanging">
-          <t hangText="identity set:">The set of identities that are presented by the server to the client (in the form of the server's X.509 certificate) when the client is attempts to establish a secure connection to the server.</t>
-          <t hangText="identity type:">The "natural kind" of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, an email address, a SIP address, a JabberID, or some other type (this specification does not yet provide a complete taxonomy of identity types).  In the case of domain names, the reference identity MUST NOT contain the wildcard character '*' (ASCII 42) in the left-most (least significant) domain name component or component fragment.</t>
+          <t hangText="identity set:">The set of identities that are presented by the server to the client (in the form of the server's X.509 certificate) when the client attempts to establish a secure connection to the server.</t>
+          <t hangText="identity type:">The "natural kind" of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, an email address, a SIP address, an XMPP address, or some other type (this specification does not yet provide a complete taxonomy of identity types).  In the case of domain names, the reference identity MUST NOT contain the wildcard character '*' (ASCII 42) in the left-most (least significant) domain name component or component fragment.</t>
           <t hangText="presented identity:">A single member of the identity set.</t>
-          <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection to the server; this is the identity that the client expects the server to present and to which the client makes reference when attempting to verify the server's identity.</t>
+          <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection to the server, i.e. the identity that the client expects the server to present and to which the client makes reference when attempting to verify the server's identity.  It is either the address to which the client connected or the explicit value of the TLS "server_name" extension as specified in <xref target='TLS'/>.   The reference identity might be based on a DNS lookup, user configuration, or some other mechanism.</t>
         </list>
       </t>
     </section>
 
     <section title="Verification Process" anchor="verify">
-      <t>When a client connects to a server, it MUST verify the server's identity (in order to prevent passive and active attacks against the connection).  By "verify identity" we mean that the client needs to establish that at least one of the identities in the identity set matches the reference identity.</t>
+      <t>When a client connects to a server, it MUST verify the server's identity in order to prevent certain passive and active attacks against the connection.  By "verify identity" we mean that the client needs to establish that at least one of the presented identities matches the reference identity.</t>
       <section title="Overview" anchor="verify-overview">
         <t>At a high level, the client verifies the server identity in accordance with the following rules:</t>
         <t>
@@ -97,7 +97,7 @@
             <t>Before connecting to the server, the client determines the identity type of the reference identity.</t>
             <t>During the process of attempting to establish a secure connection, the server MUST present its identity set to the client in the form of an X.509 certificate <xref target="X509"/>.</t>
             <t>Upon being presented with the server's identity set, the client MUST check the reference identity against the presented identities for the purpose of finding a match.  To do so, the client iterates through all of the subjectAltName extensions it recognizes in the server's certificate (potentially in an application-specific preference order) and compares the value of each extension against the reference identity until it has either produced a match or exhausted the identities in the identity set (comparison rules for matching particular identity types are provided under <xref target="verify-rules"/>, including fallbacks to several subjectName fields).</t>
-            <t>Before attempting to find a match in relation to a particular presented identity, the client MAY map the reference identity to a different identity type.  Such a mapping MAY be performed for any available subjectAltName type to which the reference identity can be mapped; however, the reference identity SHOULD be mapped only to types for which the mapping is either inherently secure (e.g., extracting the DNS name from a URI to compare with a subjectAltName of type dNSName) or for which the mapping is performed in a secure manner (e.g., using DNSSEC, or using user-configured or admin-configured host-to-address/address-to-host lookup tables).</t>
+            <t>Before attempting to find a match in relation to a particular presented identity, the client MAY map the reference identity to a different identity type.  Such a mapping MAY be performed for any available subjectAltName type to which the reference identity can be mapped; however, the reference identity SHOULD be mapped only to types for which the mapping is either inherently secure (e.g., extracting the DNS name from a URI to compare with a subjectAltName of type dNSName or SRVName) or for which the mapping is performed in a secure manner (e.g., using <xref target='DNSSEC'/>, or using a user-configured or admin-configured lookup table for host-to-address or address-to-host translations).</t>
             <t>If the identity set has more than one member, a match with any of the presented identities is acceptable.</t>
           </list>
         </t>
@@ -110,14 +110,14 @@
           <t>If the reference identity is an internationalized domain name, then an implementation MUST convert the reference identity to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of <xref target='IDNA'/> before comparison with subjectAltName values of type dNSName; specifically, the conversion operation specified in Section 4 of <xref target='IDNA'/> MUST be performed as follows:</t>
           <t>
             <list style="symbols">
-              <t>in step 1, the domain name SHALL be considered a "stored string"</t>
-              <t>in step 3, set the flag called "UseSTD3ASCIIRules"</t>
-              <t>in step 4, process each label with the "ToASCII" operation</t>
-              <t>in step 5, change all label separators to U+002E (full stop)</t>
+              <t>In step 1, the domain name SHALL be considered a "stored string".</t>
+              <t>In step 3, set the flag called "UseSTD3ASCIIRules".</t>
+              <t>In step 4, process each label with the "ToASCII" operation.</t>
+              <t>In step 5, change all label separators to U+002E (full stop).</t>
             </list>
           </t> 
-          <t>After performing the "to-ASCII" conversion, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of <xref target='IDNA'/>.</t>
-          <t>A dNSName MAY contain the wildcard character '*' (ASCII 42).  The wildcard character applies only to the left-most (least significant) domain name component or component fragment and matches any single component or component fragment.  For instance, a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself; similarly, a dNSName of baz*.example.net matches baz1.example.net and baz2.example.net but not qux.example.net or example.net itself.</t>
+          <t>After performing the "to-ASCII" conversion with regard to an internationalized domain name, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of <xref target='IDNA'/>.</t>
+          <t>Unless otherwise specified by an application protocol, the dNSName MAY contain one instance of the wildcard character '*'.  The wildcard character applies only to the left-most domain name component and matches any single component (thus a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself).  The wildcard character is not allowed in component fragments (thus a dNSName of baz*.example.net is not allowed and shall not be taken to match baz1.example.net and baz2.example.net).</t>
           <t>In addition to checking the subjectAltName extensions of type dNSName and SRVNAME, the client MAY as a fallback check the value of the Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) as presented in the subjectName component of the server's X.509 certificate.  In existing certificates, the CN is often used for encapsulating a domain name; for example, consider the following subjectName:</t>
           <figure>
             <artwork><![CDATA[
@@ -139,8 +139,8 @@ cn=www.example.com, ou=Web Services, c=GB
         <section title="SIP Addresses" anchor="verify-rules-sip">
           <t>If the reference identity is a SIP address as defined by <xref target='SIP'/>, then the client SHOULD compare map the reference identity to a domain name or email address and proceed as described for those identity types, or proceed as described in <xref target='SIP-CERTS'/>.</t>
         </section>
-        <section title="JabberIDs" anchor="verify-rules-jid">
-          <t>If the reference identity is a JabberID as defined by <xref target='XMPP'/>, then the client SHOULD compare the reference identity against the value of the "id-on-xmppAddr" subjectAltName extension of type otherName described in <xref target="XMPP"/>, or proceed as described in <xref target='XMPPBIS'/>.</t>
+        <section title="XMPP Addresses" anchor="verify-rules-xmpp">
+          <t>If the reference identity is an XMPP address ("JabberID") as defined by <xref target='XMPP'/>, then the client SHOULD compare the reference identity against the value of the following subjectAltName extensions, in this order: SRVName, dNSName, and (as defined in <xref target="XMPP"/>) "id-on-xmppAddr".</t>
         </section>
       </section>
       <section title="Outcome" anchor="verify-outcome">
@@ -156,7 +156,7 @@ cn=www.example.com, ou=Web Services, c=GB
     </section>
 
     <section title="Security Considerations" anchor="security">
-      <t>To follow.</t>
+      <t>This entire document discusses security.</t>
     </section>
 
     <section title="IANA Considerations" anchor="iana">
@@ -320,6 +320,26 @@ cn=www.example.com, ou=Web Services, c=GB
 <t>This document describes the Certificate Request Message Format (CRMF) syntax and semantics.  This syntax is used to convey a request for a certificate to a Certification Authority (CA), possibly via a Registration Authority (RA), for the purposes of X.509 certificate production.  The request will typically include a public key and the associated registration information.  This document does not define a certificate request protocol. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='4211' />
 <format type='TXT' octets='86136' target='ftp://ftp.isi.edu/in-notes/rfc4211.txt' />
+</reference>
+
+<reference anchor='DNSSEC'>
+<front>
+<title>DNS Security Introduction and Requirements</title>
+<author initials='R.' surname='Arends' fullname='R. Arends'>
+<organization /></author>
+<author initials='R.' surname='Austein' fullname='R. Austein'>
+<organization /></author>
+<author initials='M.' surname='Larson' fullname='M. Larson'>
+<organization /></author>
+<author initials='D.' surname='Massey' fullname='D. Massey'>
+<organization /></author>
+<author initials='S.' surname='Rose' fullname='S. Rose'>
+<organization /></author>
+<date year='2005' month='March' />
+<abstract>
+<t>The Domain Name System Security Extensions (DNSSEC) add data origin authentication and data integrity to the Domain Name System. This document introduces these extensions and describes their capabilities and limitations. This document also discusses the services that the DNS security extensions do and do not provide. Last, this document describes the interrelationships between the documents that collectively describe DNSSEC. [STANDARDS TRACK] </t></abstract></front>
+<seriesInfo name='RFC' value='4033' />
+<format type='TXT' octets='52445' target='ftp://ftp.isi.edu/in-notes/rfc4033.txt' />
 </reference>
 
 <reference anchor='DTLS-SRTP'>
@@ -690,6 +710,60 @@ other RFCs.</t></abstract></front>
 <format type='TXT' octets='125626' target='ftp://ftp.isi.edu/in-notes/rfc1035.txt' />
 </reference>
 
+<reference anchor='RFC2459'>
+<front>
+<title abbrev='Internet X.509 Public Key Infrastructure'>Internet X.509 Public Key Infrastructure Certificate and CRL Profile</title>
+<author initials='R.' surname='Housley' fullname='Russell Housley'>
+<organization>SPYRUS</organization>
+<address>
+<postal>
+<street>381 Elden Street</street>
+<street>Suite 1120</street>
+<city>Herndon</city>
+<region>VA</region>
+<code>20170</code>
+<country>US</country></postal>
+<email>housley@spyrus.com</email></address></author>
+<author initials='W.' surname='Ford' fullname='Warwick Ford'>
+<organization>VeriSign, Inc.</organization>
+<address>
+<postal>
+<street>One Alewife Center</street>
+<city>Cambridge</city>
+<region>MA</region>
+<code>02140</code>
+<country>US</country></postal>
+<email>wford@verisign.com</email></address></author>
+<author initials='T.' surname='Polk' fullname='Tim Polk'>
+<organization>NIST</organization>
+<address>
+<postal>
+<street />
+<city>Gaithersburg</city>
+<region>MD</region>
+<code>20899</code>
+<country>US</country></postal>
+<email>wpolk@nist.gov</email></address></author>
+<author initials='D.' surname='Solo' fullname='David Solo'>
+<organization>Citicorp</organization>
+<address>
+<postal>
+<street>666 Fifth Ave</street>
+<street>3rd Floor</street>
+<city>New York</city>
+<region>NY</region>
+<code>10103</code>
+<country>US</country></postal>
+<email>david.solo@citicorp.com</email></address></author>
+<date year='1999' month='January' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and  X.509 v2 CRL for use in the Internet.  An overview of the approach and model are provided  as an introduction.  The .509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms (e.g., IP addresses).  Standard certificate extensions are described and one new Internet-specific extension is defined.  A required set of certificate extensions is specified.  The X.509 v2 CRL format is described and a required extension set is defined as well.  An algorithm for X.509 certificate path validation is described. Supplemental information is provided describing the format of public keys and digital signatures in X.509 certificates for common Internet public key encryption algorithms (i.e., RSA, DSA, and Diffie-Hellman).  ASN.1 modules and examples are provided in the appendices.</t>
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",  "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119.</t>
+<t>Please send comments on this document to the ietf-pkix@imc.org mail list.</t></abstract></front>
+<seriesInfo name='RFC' value='2459' />
+<format type='TXT' octets='278438' target='ftp://ftp.isi.edu/in-notes/rfc2459.txt' />
+</reference>
+
 <reference anchor='SECTERMS'>
 <front>
 <title>Internet Security Glossary, Version 2</title>
@@ -908,15 +982,209 @@ other RFCs.</t></abstract></front>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='August' day='14' year='2009' />
+<date month='September' day='11' year='2009' />
 <abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.  This document also specifies the format for XMPP addresses, which are fully internationalizable.  This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-01' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-02' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-01.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-02.txt' />
 </reference>
 
     </references>
+
+    <section title="Prior Art" anchor="prior">
+      <t>This section is non-normative.</t>
+      <t>The recommendations in this document are an abstraction from recommendations in specifications for a wide range of application protocols.  For the purpose of comparison and to delineate the history of thinking about server identity verification within the IETF, this informative section gathers together prior art by including the exact text from various RFCs (the only modifications are changes to the names of several references to maintain coherence with the main body of this document, and the elision of irrelevant text as marked by the characters "[...]").</t>
+      <section title="IMAP, POP3, and ACAP (1999)" anchor="prior-imap">
+        <t>In 1999, <xref target='USINGTLS'/> specified the following text regarding server identity verification in IMAP, POP3, and ACAP:</t>
+        <t>######</t>
+        <t>2.4. Server Identity Check</t>
+        <t>During the TLS negotiation, the client MUST check its understanding of the server hostname against the server's identity as presented in the server Certificate message, in order to prevent man-in-the-middle attacks.  Matching is performed according to these rules:</t>
+        <t>
+          <list style='symbols'>
+            <t>The client MUST use the server hostname it used to open the connection as the value to compare against the server name as expressed in the server certificate.  The client MUST NOT use any form of the server hostname derived from an insecure remote source (e.g., insecure DNS lookup).  CNAME canonicalization is not done.</t>
+            <t>If a subjectAltName extension of type dNSName is present in the certificate, it SHOULD be used as the source of the server's identity.</t>
+            <t>Matching is case-insensitive.</t>
+            <t>A "*" wildcard character MAY be used as the left-most name component in the certificate.  For example, *.example.com would match a.example.com, foo.example.com, etc. but would not match example.com.</t>
+            <t>If the certificate contains multiple names (e.g. more than one dNSName field), then a match with any one of the fields is considered acceptable.</t>
+          </list>
+        </t>
+        <t>If the match fails, the client SHOULD either ask for explicit user confirmation, or terminate the connection and indicate the server's identity is suspect.</t>
+        <t>######</t>
+      </section>
+      <section title="HTTP (2000)" anchor="prior-http">
+        <t>In 2000, <xref target='HTTP-TLS'/> specified the following text regarding server identity verification in HTTP:</t>
+        <t>######</t>
+        <t>3.1. Server Identity</t>
+        <t>In general, HTTP/TLS requests are generated by dereferencing a URI.  As a consequence, the hostname for the server is known to the client.  If the hostname is available, the client MUST check it against the server's identity as presented in the server's Certificate message, in order to prevent man-in-the-middle attacks.</t>
+        <t>If the client has external information as to the expected identity of the server, the hostname check MAY be omitted. (For instance, a client may be connecting to a machine whose address and hostname are dynamic but the client knows the certificate that the server will present.) In such cases, it is important to narrow the scope of acceptable certificates as much as possible in order to prevent man in the middle attacks.  In special cases, it may be appropriate for the client to simply ignore the server's identity, but it must be understood that this leaves the connection open to active attack.</t>
+        <t>If a subjectAltName extension of type dNSName is present, that MUST be used as the identity. Otherwise, the (most specific) Common Name field in the Subject field of the certificate MUST be used. Although the use of the Common Name is existing practice, it is deprecated and Certification Authorities are encouraged to use the dNSName instead.</t>
+        <t>Matching is performed using the matching rules specified by <xref target='RFC2459'/>.  If more than one identity of a given type is present in the certificate (e.g., more than one dNSName name, a match in any one of the set is considered acceptable.) Names may contain the wildcard character * which is considered to match any single domain name component or component fragment. E.g., *.a.com matches foo.a.com but not bar.foo.a.com. f*.com matches foo.com but not bar.com.</t>
+        <t>In some cases, the URI is specified as an IP address rather than a hostname. In this case, the iPAddress subjectAltName must be present in the certificate and must exactly match the IP in the URI.</t>
+        <t>If the hostname does not match the identity in the certificate, user oriented clients MUST either notify the user (clients MAY give the user the opportunity to continue with the connection in any case) or terminate the connection with a bad certificate error. Automated clients MUST log the error to an appropriate audit log (if available) and SHOULD terminate the connection (with a bad certificate error).  Automated clients MAY provide a configuration setting that disables this check, but MUST provide a setting which enables it.</t>
+        <t>Note that in many cases the URI itself comes from an untrusted source. The above-described check provides no protection against attacks where this source is compromised. For example, if the URI was obtained by clicking on an HTML page which was itself obtained without using HTTP/TLS, a man in the middle could have replaced the URI.  In order to prevent this form of attack, users should carefully examine the certificate presented by the server to determine if it meets their expectations.</t>
+        <t>######</t>
+      </section>
+      <section title="LDAP (2000/2006)" anchor="prior-ldap">
+        <t>In 2000, <xref target='LDAP-TLS'/> specified the following text regarding server identity verification in LDAP:</t>
+        <t>######</t>
+        <t>3.6. Server Identity Check</t>
+        <t>The client MUST check its understanding of the server's hostname against the server's identity as presented in the server's Certificate message, in order to prevent man-in-the-middle attacks.</t>
+        <t>Matching is performed according to these rules:</t>
+        <t>
+          <list style='symbols'>
+            <t>The client MUST use the server hostname it used to open the LDAP connection as the value to compare against the server name as expressed in the server's certificate.  The client MUST NOT use the server's canonical DNS name or any other derived form of name.</t>
+            <t>If a subjectAltName extension of type dNSName is present in the certificate, it SHOULD be used as the source of the server's identity.</t>
+            <t>Matching is case-insensitive.</t>
+            <t>The "*" wildcard character is allowed.  If present, it applies only to the left-most name component.</t>
+          </list>
+        </t>
+        <t>E.g. *.bar.com would match a.bar.com, b.bar.com, etc. but not bar.com.  If more than one identity of a given type is present in the certificate (e.g. more than one dNSName name), a match in any one of the set is considered acceptable.</t>
+        <t>If the hostname does not match the dNSName-based identity in the certificate per the above check, user-oriented clients SHOULD either notify the user (clients MAY give the user the opportunity to continue with the connection in any case) or terminate the connection and indicate that the server's identity is suspect. Automated clients SHOULD close the connection, returning and/or logging an error indicating that the server's identity is suspect.</t>
+        <t>Beyond the server identity checks described in this section, clients SHOULD be prepared to do further checking to ensure that the server is authorized to provide the service it is observed to provide. The client MAY need to make use of local policy information.</t>
+        <t>######</t>
+        <t>In 2006, <xref target='LDAP-AUTH'/> specified the following text regarding server identity verification in LDAP:</t>
+        <t>######</t>
+        <t>3.1.3. Server Identity Check</t>
+        <t>In order to prevent man-in-the-middle attacks, the client MUST verify the server's identity (as presented in the server's Certificate message).  In this section, the client's understanding of the server's identity (typically the identity used to establish the transport connection) is called the "reference identity".</t>
+        <t>The client determines the type (e.g., DNS name or IP address) of the reference identity and performs a comparison between the reference identity and each subjectAltName value of the corresponding type until a match is produced.  Once a match is produced, the server's identity has been verified, and the server identity check is complete.  Different subjectAltName types are matched in different ways.  Sections 3.1.3.1 - 3.1.3.3 explain how to compare values of various subjectAltName types.</t>
+        <t>The client may map the reference identity to a different type prior to performing a comparison.  Mappings may be performed for all available subjectAltName types to which the reference identity can be mapped; however, the reference identity should only be mapped to types for which the mapping is either inherently secure (e.g., extracting the DNS name from a URI to compare with a subjectAltName of type dNSName) or for which the mapping is performed in a secure manner (e.g., using DNSSEC, or using user- or admin-configured host-to-address/address-to-host lookup tables).</t>
+        <t>The server's identity may also be verified by comparing the reference identity to the Common Name (CN) <xref target='LDAP-SCHEMA'/> value in the leaf Relative Distinguished Name (RDN) of the subjectName field of the server's certificate.  This comparison is performed using the rules for comparison of DNS names in Section 3.1.3.1, below, with the exception that no wildcard matching is allowed.  Although the use of the Common Name value is existing practice, it is deprecated, and Certification Authorities are encouraged to provide subjectAltName values instead.  Note that the TLS implementation may represent DNs in certificates according to X.500 or other conventions.  For example, some X.500 implementations order the RDNs in a DN using a left-to-right (most significant to least significant) convention instead of LDAP's right-to-left convention.</t>
+        <t>If the server identity check fails, user-oriented clients SHOULD either notify the user (clients may give the user the opportunity to continue with the LDAP session in this case) or close the transport connection and indicate that the server's identity is suspect.  Automated clients SHOULD close the transport connection and then return or log an error indicating that the server's identity is suspect or both.</t>
+        <t>Beyond the server identity check described in this section, clients should be prepared to do further checking to ensure that the server is authorized to provide the service it is requested to provide.  The client may need to make use of local policy information in making this determination.</t>
+        <t>3.1.3.1. Comparison of DNS Names</t>
+        <t>If the reference identity is an internationalized domain name, conforming implementations MUST convert it to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of RFC 3490 <xref target='IDNA'/> before comparison with subjectAltName values of type dNSName.  Specifically, conforming implementations MUST perform the conversion operation specified in Section 4 of RFC 3490 as follows:</t>
+        <t>
+          <list style='symbols'>
+            <t>in step 1, the domain name SHALL be considered a "stored string";</t>
+            <t>in step 3, set the flag called "UseSTD3ASCIIRules";</t>
+            <t>in step 4, process each label with the "ToASCII" operation; and</t>
+            <t>in step 5, change all label separators to U+002E (full stop).</t>
+          </list>
+        </t>
+        <t>After performing the "to-ASCII" conversion, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of RFC3490.</t>
+        <t>The '*' (ASCII 42) wildcard character is allowed in subjectAltName values of type dNSName, and then only as the left-most (least significant) DNS label in that value.  This wildcard matches any left-most DNS label in the server name.  That is, the subject *.example.com matches the server names a.example.com and b.example.com, but does not match example.com or a.b.example.com.</t>
+        <t>3.1.3.2. Comparison of IP Addresses</t>
+        <t>When the reference identity is an IP address, the identity MUST be converted to the "network byte order" octet string representation <xref target='IP'/> <xref target='IPv6'/>.  For IP Version 4, as specified in RFC 791, the octet string will contain exactly four octets.  For IP Version 6, as specified in RFC 2460, the octet string will contain exactly sixteen octets.  This octet string is then compared against subjectAltName values of type iPAddress.  A match occurs if the reference identity octet string and value octet strings are identical.</t>
+        <t>3.1.3.3. Comparison of Other subjectName Types</t>
+        <t>Client implementations MAY support matching against subjectAltName values of other types as described in other documents.</t>
+        <t>######</t>
+      </section>
+      <section title="SMTP (2002/2007)" anchor="prior-smtp">
+        <t>In 2002, <xref target='SMTP-TLS'/> specified the following text regarding server identity verification in SMTP:</t>
+        <t>######</t>
+        <t>4.1 Processing After the STARTTLS Command</t>
+        <t>[...]</t>
+        <t>The decision of whether or not to believe the authenticity of the other party in a TLS negotiation is a local matter.  However, some general rules for the decisions are:</t>
+        <t>
+          <list style='symbols'>
+            <t>A SMTP client would probably only want to authenticate an SMTP server whose server certificate has a domain name that is the domain name that the client thought it was connecting to.</t>
+          </list>
+        </t>
+        <t>[...]</t>
+        <t>######</t>
+        <t>In 2006, <xref target='SMTP-AUTH'/> specified the following text regarding server identity verification in SMTP:</t>
+        <t>######</t>
+        <t>14. Additional Requirements When Using SASL PLAIN over TLS</t>
+        <t>[...]</t>
+        <t>After a successful <xref target='TLS'/> negotiation, the client MUST check its understanding of the server hostname against the server's identity as presented in the server Certificate message, in order to prevent man-in-the-middle attacks.  If the match fails, the client MUST NOT attempt to authenticate using the SASL PLAIN mechanism.  Matching is performed according to the following rules:</t>
+        <t>
+          <list style='empty'>
+            <t>The client MUST use the server hostname it used to open the connection as the value to compare against the server name as expressed in the server certificate.  The client MUST NOT use any form of the server hostname derived from an insecure remote source (e.g., insecure DNS lookup).  CNAME canonicalization is not done.</t>
+            <t>If a subjectAltName extension of type dNSName is present in the certificate, it SHOULD be used as the source of the server's identity.</t>
+            <t>Matching is case-insensitive.</t>
+            <t>A "*" wildcard character MAY be used as the leftmost name component in the certificate.  For example, *.example.com would match a.example.com, foo.example.com, etc., but would not match example.com.</t>
+            <t>If the certificate contains multiple names (e.g., more than one dNSName field), then a match with any one of the fields is considered acceptable.</t>
+          </list>
+        </t>
+        <t>######</t>
+      </section>
+      <section title="XMPP (2004)" anchor="prior-xmpp">
+        <t>In 2004, <xref target='XMPP'/> specified the following text regarding server identity verification in XMPP:</t>
+        <t>######</t>
+        <t>14.2. Certificate Validation</t>
+        <t>When an XMPP peer communicates with another peer securely, it MUST validate the peer's certificate.  There are three possible cases:</t>
+        <t>
+          <list style='hanging'>
+            <t hangText='Case #1:'>The peer contains an End Entity certificate which appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>).</t>
+            <t hangText='Case #2:'>The peer certificate is certified by a Certificate Authority not known to the validating peer.</t>
+            <t hangText='Case #3:'>The peer certificate is self-signed.</t>
+          </list>
+        </t>
+        <t>In Case #1, the validating peer MUST do one of two things:
+          <list style="numbers">
+            <t>Verify the peer certificate according to the rules of <xref target="X509"/>.  The certificate SHOULD then be checked against the expected identity of the peer following the rules described in <xref target="HTTP-TLS"/>, except that a subjectAltName extension of type "xmpp" MUST be used as the identity if present.  If one of these checks fails, user-oriented clients MUST either notify the user (clients MAY give the user the opportunity to continue with the connection in any case) or terminate the connection with a bad certificate error.  Automated clients SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log.  Automated clients MAY provide a configuration setting that disables this check, but MUST provide a setting that enables it.</t>
+            <t>The peer SHOULD show the certificate to a user for approval, including the entire certificate chain.  The peer MUST cache the certificate (or some non-forgeable representation such as a hash).  In future connections, the peer MUST verify that the same certificate was presented and MUST notify the user if it has changed.</t>
+          </list>
+        </t>
+        <t>In Case #2 and Case #3, implementations SHOULD act as in (2) above.</t>
+        <t>######</t>
+        <t>As of this writing, <xref target='XMPPBIS'/> specified updated text regarding server identity verification in XMPP.  However, that specification has not yet been approved by the IESG, and the relevant text might be replaced by a reference to this document.</t>
+      </section>
+      <section title="NNTP (2006)" anchor="prior-nntp">
+        <t>In 2006, <xref target='NNTP-TLS'/> specified the following text regarding server identity verification in NNTP:</t>
+        <t>######</t>
+        <t>5. Security Considerations</t>
+        <t>[...]</t>
+        <t>During the TLS negotiation, the client MUST check its understanding of the server hostname against the server's identity as presented in the server Certificate message, in order to prevent man-in-the-middle attacks.  Matching is performed according to these rules:</t>
+        <t>
+          <list style='symbols'>
+            <t>The client MUST use the server hostname it used to open the connection (or the hostname specified in TLS "server_name" extension <xref target='TLS'/>) as the value to compare against the server name as expressed in the server certificate.  The client MUST NOT use any form of the server hostname derived from an insecure remote source (e.g., insecure DNS lookup).  CNAME canonicalization is not done.</t>
+            <t>If a subjectAltName extension of type dNSName is present in the certificate, it SHOULD be used as the source of the server's identity.</t>
+            <t>Matching is case-insensitive.</t>
+            <t>A "*" wildcard character MAY be used as the left-most name component in the certificate.  For example, *.example.com would match a.example.com, foo.example.com, etc., but would not match example.com.</t>
+            <t>If the certificate contains multiple names (e.g., more than one dNSName field), then a match with any one of the fields is considered acceptable.</t>
+          </list>
+        </t>
+        <t>If the match fails, the client SHOULD either ask for explicit user confirmation or terminate the connection with a QUIT command and indicate the server's identity is suspect.</t>
+        <t> Additionally, clients MUST verify the binding between the identity of the servers to which they connect and the public keys presented by those servers.  Clients SHOULD implement the algorithm in Section 6 of <xref target='X509'/> for general certificate validation, but MAY supplement that algorithm with other validation methods that achieve equivalent levels of verification (such as comparing the server certificate against a local store of already-verified certificates and identity bindings).</t>
+        <t>######</t>
+      </section>
+      <section title="NETCONF (2006/2009)" anchor="prior-netconf">
+        <t>In 2006, <xref target='NETCONF-SSH'/> specified the following text regarding server identity verification in NETCONF:</t>
+        <t>######</t>
+        <t>6. Security Considerations</t>
+        <t>The identity of the server MUST be verified and authenticated by the client according to local policy before password-based authentication data or any configuration or state data is sent to or received from the server.  The identity of the client MUST also be verified and authenticated by the server according to local policy to ensure that the incoming client request is legitimate before any configuration or state data is sent to or received from the client.  Neither side should establish a NETCONF over SSH connection with an unknown, unexpected, or incorrect identity on the opposite side.</t>
+        <t>######</t>
+        <t>In 2009, <xref target='NETCONF-TLS'/> specified the following text regarding server identity verification in NETCONF:</t>
+        <t>######</t>
+        <t>3.1. Server Identity</t>
+        <t>During the TLS negotiation, the client MUST carefully examine the certificate presented by the server to determine if it meets the client's expectations.  Particularly, the client MUST check its understanding of the server hostname against the server's identity as presented in the server Certificate message, in order to prevent man- in-the-middle attacks.</t>
+        <t>Matching is performed according to the rules below (following the example of <xref target='NNTP-TLS'/>):</t>
+        <t>
+          <list style='symbols'>
+            <t>The client MUST use the server hostname it used to open the connection (or the hostname specified in the TLS "server_name" extension <xref target='TLS'/>) as the value to compare against the server name as expressed in the server certificate.  The client MUST NOT use any form of the server hostname derived from an insecure remote source (e.g., insecure DNS lookup).  CNAME canonicalization is not done.</t>
+            <t>If a subjectAltName extension of type dNSName is present in the certificate, it MUST be used as the source of the server's identity.</t>
+            <t>Matching is case-insensitive.</t>
+            <t>A "*" wildcard character MAY be used as the leftmost name component in the certificate.  For example, *.example.com would match a.example.com, foo.example.com, etc., but would not match example.com.</t>
+            <t>If the certificate contains multiple names (e.g., more than one dNSName field), then a match with any one of the fields is considered acceptable.</t>
+          </list>
+        </t>
+        <t>If the match fails, the client MUST either ask for explicit user confirmation or terminate the connection and indicate the server's identity is suspect.</t>
+        <t>Additionally, clients MUST verify the binding between the identity of the servers to which they connect and the public keys presented by those servers.  Clients SHOULD implement the algorithm in Section 6 of <xref target='X509'/> for general certificate validation, but MAY supplement that algorithm with other validation methods that achieve equivalent levels of verification (such as comparing the server certificate against a local store of already-verified certificates and identity bindings).</t>
+        <t>If the client has external information as to the expected identity of the server, the hostname check MAY be omitted.</t>
+        <t>######</t>
+      </section>
+      <section title="Syslog (2009)" anchor="prior-syslog">
+        <t>In 2009, <xref target='SYSLOG-TLS'/> specified the following text regarding server identity verification in Syslog:</t>
+        <t>######</t>
+        <t>5.2. Subject Name Authorization</t>
+        <t>Implementations MUST support certification path validation <xref target='X509'/>.  In addition, they MUST support specifying the authorized peers using locally configured host names and matching the name against the certificate as follows.</t>
+        <t>
+          <list style='symbols'>
+            <t>Implementations MUST support matching the locally configured host name against a dNSName in the subjectAltName extension field and SHOULD support checking the name against the common name portion of the subject distinguished name.</t>
+            <t>The '*' (ASCII 42) wildcard character is allowed in the dNSName of the subjectAltName extension (and in common name, if used to store the host name), but only as the left-most (least significant) DNS label in that value.  This wildcard matches any left-most DNS label in the server name.  That is, the subject *.example.com matches the server names a.example.com and b.example.com, but does not match example.com or a.b.example.com.  Implementations MUST support wildcards in certificates as specified above, but MAY provide a configuration option to disable them.</t>
+            <t>Locally configured names MAY contain the wildcard character to match a range of values.  The types of wildcards supported MAY be more flexible than those allowed in subject names, making it possible to support various policies for different environments.  For example, a policy could allow for a trust-root-based authorization where all credentials issued by a particular CA trust root are authorized.</t>
+            <t>If the locally configured name is an internationalized domain name, conforming implementations MUST convert it to the ASCII Compatible Encoding (ACE) format for performing comparisons, as specified in Section 7 of <xref target='X509'/>.</t>
+            <t>Implementations MAY support matching a locally configured IP address against an iPAddress stored in the subjectAltName extension.  In this case, the locally configured IP address is converted to an octet string as specified in <xref target='X509'/>, Section 4.2.1.6.  A match occurs if this octet string is equal to the value of iPAddress in the subjectAltName extension.</t>
+          </list>
+        </t>
+        <t>######</t>
+      </section>
+      <section title="SIP (2009)" anchor="prior-sip">
+        <t>As of this writing, <xref target='SIP-CERTS'/> specified text regarding server identity verification in SIP.  However, that specification has not yet been approved by the IESG, and the relevant text might be replaced by a reference to this document.</t>
+      </section>
+    </section>
 
   </back>
 </rfc>
