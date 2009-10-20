@@ -49,5 +49,9 @@ cp xsf/people/*.* $basepath/xsf/people/
 cp xsf/press/*.* $basepath/xsf/press/
 cp xsf/proposals/*.* $basepath/xsf/proposals/
 cp xsf/sponsors/*.* $basepath/xsf/sponsors/
+cp xsf/teams/*.* $basepath/xsf/teams/
+cp xsf/teams/infrastructure/*.* $basepath/xsf/teams/infrastructure/
+cp xsf/teams/communication/*.* $basepath/xsf/teams/communication/
+cp xsf/teams/techreview/*.* $basepath/xsf/teams/techreview/
 
 # END
