@@ -120,7 +120,15 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 	print "bla"
 	
 def genAllEventsCalendar( cal_file ):
-	print "bla"
+	cal = Calendar()
+	cal.add('prodid', '-//calgen.py//xmpp.org//')
+	cal.add('version', '2.0')
+	for event in allevents:
+		cal.add_component(event)
+	
+	f = open( cal_file , 'wb')
+	f.write(cal.as_string())
+	f.close()
 
 def main(argv):
 	genCalendarFromEventsFile("council/events.xml", CALPATH + "/xsf-council.ics")
