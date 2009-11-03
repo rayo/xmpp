@@ -5,7 +5,6 @@
 # Description: generate various calendar files
 # Last Modified: 2009
 # Author: Tobias Markmann (tm@ayena.de)
-# License: public domain
 # HowTo: ./calgen.py
 
 ## LICENSE ##
@@ -117,7 +116,7 @@ def genExtensionsCalendar( cal_file ):
 	f.close()
 
 def genCalendarFromEventsFile( events_file, cal_file ):
-	print "bla"
+	
 	
 def genAllEventsCalendar( cal_file ):
 	cal = Calendar()
