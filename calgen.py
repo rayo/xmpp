@@ -66,6 +66,12 @@ class XEPInfo:
 		abstract = getText(abstractNode.childNodes)
 		statusNode = (headerNode.getElementsByTagName("status")[0])
 		self.status = getText(statusNode.childNodes)
+		lastcallNode = (headerNode.getElementsByTagName("lastcall"))
+		if lastcallNode:
+			lastcallNode = lastcallNode[0]
+			self.lastcall = getText(lastcallNode.childNodes)
+		else:
+			self.lastcall = False
 		self.type = getText((headerNode.getElementsByTagName("type")[0]).childNodes)
 		revNode = (headerNode.getElementsByTagName("revision")[0])
 		version = getText((revNode.getElementsByTagName("version")[0]).childNodes)
@@ -85,20 +91,61 @@ class XEPInfo:
 	
 	def getDate(self):
 		return self.date
+		
+	def getLastCall(self):
+		return self.lastcall
+
+class SimpleEvents:
+	def __init__(self, filename):
+		self.eventList = []
+		eventfile = parse(filename)
+		eventsNode = (eventfile.getElementsByTagName("events")[0])
+		for event in eventsNode.getElementsByTagName("event"):
+			ev = {}
+			if event.getElementsByTagName("date"):
+				ev['date'] = getText((event.getElementsByTagName("date")[0]).childNodes)
+			
+			if event.getElementsByTagName("duration"):
+				ev['duration'] = getText((event.getElementsByTagName("duration")[0]).childNodes)
+			
+			if event.getElementsByTagName("summary"):
+				ev['summary'] = getText((event.getElementsByTagName("summary")[0]).childNodes)
+			
+			if event.getElementsByTagName("description"):
+				ev['description'] = getText((event.getElementsByTagName("description")[0]).childNodes)
+			
+			if event.getElementsByTagName("url"):
+				ev['url'] = getText((event.getElementsByTagName("url")[0]).childNodes)
+			
+			self.eventList.append(ev)
+		
+	def getEventList(self):
+		return self.eventList
 
 def parseXEP( cal, xep_file ):
 	xep = XEPInfo(xep_file)
+	day = timedelta(days=1)
 	if xep.getStatus() == "Experimental":
 		date = xep.getDate()
 		last_updated = datetime.strptime(xep.getDate(), "%Y-%m-%d")
 		expires = last_updated + timedelta(days=365)
-		day = timedelta(days=1)
 		# print "XEP-" + xep.getNr() + ": " + xep.getTitle() + " expires on " + str(expires)
 		event = Event()
 		event.add('summary', "XEP-" + xep.getNr() + ": " + xep.getTitle() + " expires")
 		event.add('dtstart', expires.date())
 		event.add('dtend', (expires + day).date())
 		event.add("dtstamp", (expires + day).date())
+		event.add("url", "http://xmpp.org/extensions/xep-" + xep.getNr() + ".html")
+		cal.add_component(event)
+		allevents.append(event)
+	elif xep.getLastCall():
+		lastcall_end = datetime.strptime(xep.getLastCall(), "%Y-%m-%d")
+		event = Event()
+		event.add('summary', "Last Call for XEP-" + xep.getNr() + ": " + xep.getTitle() + " ends")
+		event.add('dtstart', lastcall_end.date())
+		event.add('dtend', (lastcall_end + day).date())
+		event.add('dtstamp', (lastcall_end + day).date())
+		event.add('url', "http://xmpp.org/extensions/xep-" + xep.getNr() + ".html")
 		cal.add_component(event)
 		allevents.append(event)
 
@@ -116,7 +163,45 @@ def genExtensionsCalendar( cal_file ):
 	f.close()
 
 def genCalendarFromEventsFile( events_file, cal_file ):
+	events = SimpleEvents( events_file )
+	cal = Calendar()
+	cal.add('prodid', '-//calgen.py//xmpp.org//')
+	cal.add('version', '2.0')
+	day = timedelta(days=1)
 	
+	for ev in events.getEventList():
+		event = Event()
+		event.add('summary', ev["summary"])
+		if "all-day" in ev:
+			start = datetime.strptime(ev["date"], "%Y-%m-%d") # T%H:%M:%S
+			event.add('dtstart', start.date())
+			event.add('dtend', (start + day).date())
+			event.add("dtstamp", (start + day).date())
+			if "summary" in ev:
+				event.add('summary', ev["summary"])
+			if "description" in ev:
+				event.add('description', ev["description"])
+			if "url" in ev:
+				event.add('url', ev["url"])
+		else:
+			start = datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%S")
+			duration = timedelta(minutes=int(ev["duration"]))
+			event.add('dtstart', start.date())
+			event.add('dtend', (start + duration).date())
+			event.add("dtstamp", (start + duration).date())
+			if "summary" in ev:
+				event.add('summary', ev["summary"])
+			if "description" in ev:
+				event.add('description', ev["description"])
+			if "url" in ev:
+				event.add('url', ev["url"])
+			
+		cal.add_component(event)
+		allevents.append(event)
+	
+	f = open( cal_file , 'wb')
+	f.write(cal.as_string())
+	f.close()
 	
 def genAllEventsCalendar( cal_file ):
 	cal = Calendar()
@@ -130,9 +215,10 @@ def genAllEventsCalendar( cal_file ):
 	f.close()
 
 def main(argv):
+	# TODO jabbers anniversary January 4 1999 in the all and XSF calendar 
 	genCalendarFromEventsFile("council/events.xml", CALPATH + "/xsf-council.ics")
-	genCalendarFromEventsFile("xsf/board/events.xml", CALPATH + "/xsf-board.ics")
-	genCalendarFromEventsFile("xsf/events.xml", CALPATH + "/xsf-xsf.ics")
+	#genCalendarFromEventsFile("xsf/board/events.xml", CALPATH + "/xsf-board.ics")
+	#genCalendarFromEventsFile("xsf/events.xml", CALPATH + "/xsf-xsf.ics")
 	genExtensionsCalendar(CALPATH + "/xsf-extensions.ics")
 	genAllEventsCalendar(CALPATH + "/xsf-all.ics")
 	
