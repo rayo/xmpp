@@ -180,9 +180,9 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 			else:
 				start = datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%S")
 				duration = timedelta(minutes=int(ev["duration"]))
-				event.add('dtstart', start.date())
-				event.add('dtend', (start + duration).date())
-				event.add("dtstamp", (start + duration).date())
+				event.add('dtstart', start)
+				event.add('dtend', (start + duration))
+				event.add("dtstamp", (start + duration))
 			
 			if "summary" in ev:
 				event.add('summary', ev["summary"])
