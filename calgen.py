@@ -163,45 +163,48 @@ def genExtensionsCalendar( cal_file ):
 	f.close()
 
 def genCalendarFromEventsFile( events_file, cal_file ):
-	events = SimpleEvents( events_file )
-	cal = Calendar()
-	cal.add('prodid', '-//calgen.py//xmpp.org//')
-	cal.add('version', '2.0')
-	day = timedelta(days=1)
+	try:
+		events = SimpleEvents( events_file )
+		cal = Calendar()
+		cal.add('prodid', '-//calgen.py//xmpp.org//')
+		cal.add('version', '2.0')
+		day = timedelta(days=1)
 	
-	for ev in events.getEventList():
-		event = Event()
-		event.add('summary', ev["summary"])
-		if "all-day" in ev:
-			start = datetime.strptime(ev["date"], "%Y-%m-%d") # T%H:%M:%S
-			event.add('dtstart', start.date())
-			event.add('dtend', (start + day).date())
-			event.add("dtstamp", (start + day).date())
-			if "summary" in ev:
-				event.add('summary', ev["summary"])
-			if "description" in ev:
-				event.add('description', ev["description"])
-			if "url" in ev:
-				event.add('url', ev["url"])
-		else:
-			start = datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%S")
-			duration = timedelta(minutes=int(ev["duration"]))
-			event.add('dtstart', start.date())
-			event.add('dtend', (start + duration).date())
-			event.add("dtstamp", (start + duration).date())
-			if "summary" in ev:
-				event.add('summary', ev["summary"])
-			if "description" in ev:
-				event.add('description', ev["description"])
-			if "url" in ev:
-				event.add('url', ev["url"])
+		for ev in events.getEventList():
+			event = Event()
+			event.add('summary', ev["summary"])
+			if "all-day" in ev:
+				start = datetime.strptime(ev["date"], "%Y-%m-%d") # T%H:%M:%S
+				event.add('dtstart', start.date())
+				event.add('dtend', (start + day).date())
+				event.add("dtstamp", (start + day).date())
+				if "summary" in ev:
+					event.add('summary', ev["summary"])
+				if "description" in ev:
+					event.add('description', ev["description"])
+				if "url" in ev:
+					event.add('url', ev["url"])
+			else:
+				start = datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%S")
+				duration = timedelta(minutes=int(ev["duration"]))
+				event.add('dtstart', start.date())
+				event.add('dtend', (start + duration).date())
+				event.add("dtstamp", (start + duration).date())
+				if "summary" in ev:
+					event.add('summary', ev["summary"])
+				if "description" in ev:
+					event.add('description', ev["description"])
+				if "url" in ev:
+					event.add('url', ev["url"])
 			
-		cal.add_component(event)
-		allevents.append(event)
+			cal.add_component(event)
+			allevents.append(event)
 	
-	f = open( cal_file , 'wb')
-	f.write(cal.as_string())
-	f.close()
+		f = open( cal_file , 'wb')
+		f.write(cal.as_string())
+		f.close()
+	except:
+		print "File not found!"
 	
 def genAllEventsCalendar( cal_file ):
 	cal = Calendar()
@@ -217,8 +220,8 @@ def genAllEventsCalendar( cal_file ):
 def main(argv):
 	# TODO jabbers anniversary January 4 1999 in the all and XSF calendar 
 	genCalendarFromEventsFile("council/events.xml", CALPATH + "/xsf-council.ics")
-	#genCalendarFromEventsFile("xsf/board/events.xml", CALPATH + "/xsf-board.ics")
-	#genCalendarFromEventsFile("xsf/events.xml", CALPATH + "/xsf-xsf.ics")
+	genCalendarFromEventsFile("xsf/board/events.xml", CALPATH + "/xsf-board.ics")
+	genCalendarFromEventsFile("xsf/events.xml", CALPATH + "/xsf-xsf.ics")
 	genExtensionsCalendar(CALPATH + "/xsf-extensions.ics")
 	genAllEventsCalendar(CALPATH + "/xsf-all.ics")
 	
