@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3920bis-03" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-ietf-xmpp-3920bis-04" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -15,7 +15,7 @@
         <email>Peter.SaintAndre@WebEx.com</email>
       </address>
     </author>
-    <date year="2009" month="October" day="23"/>
+    <date year="2009" month="November" day="5"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -319,7 +319,7 @@ romeo@example.net           juliet@im.example.com
     <section title="Stream Negotiation" anchor="streams-negotiation">
       <section title="Overview" anchor="streams-negotiation-overview">
         <t>Because the receiving entity for a stream acts as a gatekeeper to the domains it services, it imposes certain conditions for connecting as a client or as a peer server.  At a minimum, the initiating entity needs to authenticate with the receiving entity before it is allowed to send stanzas to the receiving entity, typically using SASL as described under <xref target='sasl'/>.  However, the receiving entity can consider conditions other than authentication to be mandatory, such as encryption using TLS as described under <xref target='tls'/>.  The receiving entity informs the initiating entity about such conditions by communicating STREAM FEATURES: the set of particular protocol interactions that are mandatory for the initiating entity to complete before the receiving entity will accept XML stanzas from the initiating entity (e.g., authentication), as well as any protocol interactions that are voluntary but that might improve the handling of an XML stream (e.g., establishment of application-layer compression).</t>
-        <t>The existence of conditions for connecting implies that streams need to be negotiated, and the order of layers (TCP, then TLS, then SASL, then XMPP; see <xref target='security-layers'/>) implies that stream negotiation is a well-defined process.  Furthermore, stream features can be either mandatory-to-negotiate or voluntary-to-negotiate; this imposes further structure on the negotiation process.  Finally, for security reasons the parties to a stream need to discard knowledge that they gained during the negotiation process after successfully completing the protocol interactions defined for certain features (e.g., TLS in all cases and SASL in the case when a security layer might be established); this is done by flushing the old stream context and exchanging new stream headers over the existing TCP connection.</t>
+        <t>The existence of conditions for connecting implies that streams need to be negotiated.  The order of layers (TCP, then TLS, then SASL, then XMPP; see <xref target='security-layers'/>) implies that stream negotiation is a multi-stage process.  Further structure is imposed by two factors: (1) a given stream feature might be made available only to certain entities or only after certain other features have been negotiated (e.g., resource binding is made available only after SASL authentication), and (2) stream features can be either mandatory-to-negotiate or voluntary-to-negotiate.  Finally, for security reasons the parties to a stream need to discard knowledge that they gained during the negotiation process after successfully completing the protocol interactions defined for certain features (e.g., TLS in all cases and SASL in the case when a security layer might be established); this is done by flushing the old stream context and exchanging new stream headers over the existing TCP connection.</t>
       </section>
       <section title="Stream Features Format" anchor="streams-negotiation-features">
         <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the streams namespace prefix) to the initiating entity in order to announce any conditions for continuation of the stream negotiation process.  Each condition takes the form of a child element of the &lt;features/&gt; element, qualified by a namespace that is different from the streams namespace and the default namespace.</t>
@@ -1495,7 +1495,7 @@ S: <stream:error>
     </section>
     <section title="Rules" anchor="tls-rules">
       <section title="Mandatory-to-Negotiate" anchor="tls-rules-mtn">
-        <t>If the receiving entity advertises only the STARTTLS feature or if the receiving entity includes the &lt;required/&gt; child element, the parties MUST consider TLS as mandatory-to-negotiate.</t>
+        <t>If the receiving entity advertises only the STARTTLS feature or if the receiving entity includes the &lt;required/&gt; child element, the parties MUST consider TLS as mandatory-to-negotiate.  If TLS is mandatory-to-negotiate, the receiving entity SHOULD NOT advertise support for any stream feature except STARTTLS during the initial stage of the stream negotiation process, because further stream features might depend on prior negotiation of TLS given the order of layers in XMPP (e.g., the particular SASL mechanisms offered by the receiving entity will likely depend on whether TLS has been negotiated).</t>
       </section>
       <section title="Restart" anchor="tls-rules-restart">
         <t>After TLS negotiation, the parties MUST restart the stream.</t>
@@ -3696,7 +3696,6 @@ S2: </stream:stream>
           <t>
             <list style='numbers'>
               <t>The certificate MUST conform to <xref target='X509'/>.</t>
-              <t>The certificate MUST NOT contain a basicConstraints extension with the cA boolean set to TRUE.</t>
               <t>The certificate MUST contain a keyUsage extension with the digitalSignature bit set.</t>
               <t>The subject field MUST NOT be null.</t>
               <t>The hash algorithm for the signature SHOULD be SHA-256 as defined by <xref target='X509-ALGO'/>.</t>
