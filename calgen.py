@@ -102,6 +102,8 @@ class SimpleEvents:
 		eventsNode = (eventfile.getElementsByTagName("events")[0])
 		for event in eventsNode.getElementsByTagName("event"):
 			ev = {}
+			if event.getElementsByTagName("all-day"):
+				ev['all-day'] = True
 			if event.getElementsByTagName("date"):
 				ev['date'] = getText((event.getElementsByTagName("date")[0]).childNodes)
 			
