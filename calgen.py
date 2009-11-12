@@ -181,6 +181,7 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 				event.add("dtstamp", (start + day).date())
 			else:
 				start = datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%S")
+				start = start.replace(tzinfo=UTC)
 				duration = timedelta(minutes=int(ev["duration"]))
 				event.add('dtstart', start)
 				event.add('dtend', (start + duration))
@@ -200,8 +201,8 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 		f.write(cal.as_string())
 		f.close()
 	except:
-		print "File not found!"
-	
+		print "File not found! - " + events_file
+
 def genAllEventsCalendar( cal_file ):
 	cal = Calendar()
 	cal.add('prodid', '-//calgen.py//xmpp.org//')
