@@ -15,7 +15,7 @@
         <email>Peter.SaintAndre@WebEx.com</email>
       </address>
     </author>
-    <date year="2009" month="November" day="5"/>
+    <date year="2009" month="November" day="17"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -140,7 +140,7 @@ romeo@example.net           juliet@im.example.com
       </figure>
       <t><list style='empty'><t>Note: Architectures that employ <xref target='streams'>XML streams</xref> and <xref target="stanzas">XML stanzas</xref> but that establish peer-to-peer connections directly between clients using technologies based on <xref target='LINKLOCAL'/> have been deployed, but such architectures are not described in this specification and are best described as "XMPP-like"; for details, see <xref target='XEP-0174'/>.  In addition, XML streams can be established end-to-end over any reliable transport, including extensions to XMPP itself; however, such methods are out of scope for this specification.</t></list></t>
       <t>The following paragraphs describe the responsibilities of clients and servers on the network.</t>
-      <t>A CLIENT is an entity that establishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas between the server and the client over the negotiated stream.  The client then uses XMPP to communicate with its server, other clients, and any other entities on the network, where the server is responsible for delivering stanzas to local entities or routing them to remote entities.  Multiple clients can connect simultaneously to a server on behalf of the same local account, where each client is differentiated by the resource identifier portion of an XMPP address (e.g., &lt;localpart@domain/home&gt; vs. &lt;localpart@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.</t>
+      <t>A CLIENT is an entity that establishes an XML stream with a server by authenticating using the credentials of a local account and that then completes <xref target='bind'>resource binding</xref> in order to enable delivery of XML stanzas between the server and the client over the negotiated stream.  The client then uses XMPP to communicate with its server, other clients, and any other entities on the network, where the server is responsible for delivering stanzas to local entities or routing them to remote entities.  Multiple clients can connect simultaneously to a server on behalf of the same local account, where each client is differentiated by the resourcepart of an XMPP address (e.g., &lt;localpart@domain/home&gt; vs. &lt;localpart@domain/work&gt;), as defined under <xref target='addressing'/> and <xref target='bind'/>.</t>
       <t>A SERVER is an entity whose primary responsibilities are to:</t>
       <t>
         <list style='symbols'>
@@ -161,7 +161,7 @@ romeo@example.net           juliet@im.example.com
   <section title="Addresses" anchor="addressing">
 
     <section title="Overview" anchor="addressing-overview">
-      <t><iref item='Entity'/>An ENTITY is anything that is network-addressable and that can communicate using XMPP.  <iref item='Jabber Identifier'/>For historical reasons, the native address of an XMPP entity is called a JABBER IDENTIFIER or JID.  A valid JID contains a set of ordered elements formed of an XMPP localpart, domain identifier, and resource identifier.</t>
+      <t><iref item='Entity'/>An ENTITY is anything that is network-addressable and that can communicate using XMPP.  <iref item='Jabber Identifier'/>For historical reasons, the native address of an XMPP entity is called a JABBER IDENTIFIER or JID.  A valid JID contains a set of ordered elements formed of an XMPP localpart, domain identifier, and resourcepart.</t>
       <t>The syntax for a JID is defined as follows using the Augmented Backus-Naur Form as specified in <xref target="ABNF"/>.</t>
       <figure>
         <artwork><![CDATA[
@@ -186,7 +186,7 @@ romeo@example.net           juliet@im.example.com
         ]]></artwork>
       </figure>
       <t>All JIDs are based on the foregoing structure.  One common use of this structure is to identify a messaging and presence account, the server that hosts the account, and a connected resource (e.g., a specific device) in the form of &lt;localpart@domain/resource&gt;.  However, localparts other than clients are possible; for example, a specific chat room offered by a multi-user conference service (see <xref target='XEP-0045'/>) could be addressed as &lt;room@service&gt; (where "room" is the name of the chat room and "service" is the hostname of the multi-user conference service) and a specific occupant of such a room could be addressed as &lt;room@service/nick&gt; (where "nick" is the occupant's room nickname).  Many other JID types are possible (e.g., &lt;domain/resource&gt; could be a server-side script or service).</t>
-      <t>Each allowable portion of a JID (localpart, domain identifier, and resource identifier) MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
+      <t>Each allowable portion of a JID (localpart, domain identifier, and resourcepart) MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
       <t><list style='empty'><t>Note: While the format of a JID is consistent with <xref target="URI"/>, an entity's address on an XMPP network MUST be represented as a JID (without a URI scheme) and not a <xref target="URI"/> or <xref target="IRI"/> as specified in <xref target="XMPP-URI"/>; the latter specification is provided only for identification and interaction outside the context of the XMPP wire protocol itself.</t></list></t>
     </section>
 
@@ -205,20 +205,20 @@ romeo@example.net           juliet@im.example.com
       <t>A localpart MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two localparts, an application MUST first ensure that the Nodeprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
     </section>
 
-    <section title="Resource Identifier" anchor="addressing-resource">
-      <t><iref item='Resource Identifier'/>The RESOURCE IDENTIFIER portion of a JID is an optional identifier placed after the domain identifier and separated from the latter by the '/' character.  A resource identifier can modify either a &lt;localpart@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resource identifier uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP localpart at a local domain.</t>
-      <t><iref item='Bare JID'/>When an XMPP address does not include a resource identifier (i.e., when it is of the form &lt;domain&gt; or &lt;localpart@domain&gt;), it is referred to as a BARE JID.  <iref item='Full JID'/>When an XMPP address includes a resource identifier (i.e., when it is of the form &lt;domain/resource&gt; or &lt;localpart@domain/resource&gt;), is referred to as a FULL JID.</t>
-      <t>A resource identifier MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
-      <t>A resource identifier MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resource identifiers, an application MUST first ensure that the Resourceprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
-      <t><list style='empty'><t>Note: For historical reasons, the term "resource identifier" is used in XMPP to refer to the optional portion of an XMPP address that follows the domain identifier and the "/" separator character; this use of the term "resource identifier" is not to be confused with the meanings of "resource" and "identifier" provided in Section 1.1 of <xref target="URI"/>.</t></list></t>
-      <t>XMPP entities SHOULD consider resource identifiers to be opaque strings and SHOULD NOT impute meaning to any given resource identifier.  In paticular, the use of the '/' character as a separator between the domain identifier and the resource identifier does not imply that resource identifiers are hierarchical in the way that, say, HTTP addresses are hierarchical; thus for example an XMPP address of the form &lt;localpart@domain/foo/bar&gt; does not identify a resource "bar" that exists below a resource "foo" in a hierarchy of resources associated with the entity "localpart@domain".</t>
+    <section title="Resourcepart" anchor="addressing-resource">
+      <t><iref item='Resourcepart'/>The resourcepart of a JID is an optional identifier placed after the domain identifier and separated from the latter by the '/' character.  A resourcepart can modify either a &lt;localpart@domain&gt; address or a mere &lt;domain&gt; address.  Typically a resourcepart uniquely identifies a specific connection (e.g., a device or location) or object (e.g., a participant in a multi-user conference room) belonging to the entity associated with an XMPP localpart at a local domain.</t>
+      <t><iref item='Bare JID'/>When an XMPP address does not include a resourcepart (i.e., when it is of the form &lt;domain&gt; or &lt;localpart@domain&gt;), it is referred to as a BARE JID.  <iref item='Full JID'/>When an XMPP address includes a resourcepart (i.e., when it is of the form &lt;domain/resource&gt; or &lt;localpart@domain/resource&gt;), is referred to as a FULL JID.</t>
+      <t>A resourcepart MUST NOT be zero bytes in length and, as for all portions of a JID, MUST NOT be more than 1023 bytes in length.</t>
+      <t>A resourcepart MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resourceparts, an application MUST first ensure that the Resourceprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
+      <t><list style='empty'><t>Note: For historical reasons, the term "resource identifier" is often used in XMPP to refer to the optional portion of an XMPP address that follows the domain identifier and the "/" separator character; to help prevent confusion between an XMPP "resource identifier" and the meanings of "resource" and "identifier" provided in Section 1.1 of <xref target="URI"/>, this specification typically uses the term "resourcepart" instead of "resource identifier" (as in RFC 3920).</t></list></t>
+      <t>XMPP entities SHOULD consider resourceparts to be opaque strings and SHOULD NOT impute meaning to any given resourcepart.  In particular, the use of the '/' character as a separator between the domain identifier and the resourcepart does not imply that XMPP addresses are hierarchical in the way that, say, HTTP addresses are hierarchical; thus for example an XMPP address of the form &lt;localpart@domain/foo/bar&gt; does not identify a resource "bar" that exists below a resource "foo" in a hierarchy of resources associated with the entity "localpart@domain".</t>
     </section>
 
     <section title="Determination of Addresses" anchor="addressing-determination">
       <t>After the parties to an XML stream have completed the appropriate aspects of stream negotiation (typically <xref target='sasl'>SASL negotiation</xref> and, if appropriate, <xref target="bind">resource binding</xref>) the receiving entity for a stream MUST determine the initiating entity's JID.</t>
       <t>For server-to-server communication, the initiating server's JID MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating server during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the receiving server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  (For information about the determination of addresses in the absence of SASL negotiation when the older server dialback protocol is used, see <xref target='XEP-0220'/>.)</t>
-      <t>For client-to-server communication, the client's bare JID (&lt;localpart@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resource identifier portion of the full JID (&lt;localpart@domain/resource&gt;) MUST be the resource identifier negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
-      <t>The receiving entity MUST ensure that the resulting JID (including localpart, domain identifier, resource identifier, and separator characters) conforms to the rules and formats defined earlier in this section; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
+      <t>For client-to-server communication, the client's bare JID (&lt;localpart@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resourcepart of the full JID (&lt;localpart@domain/resource&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
+      <t>The receiving entity MUST ensure that the resulting JID (including localpart, domain identifier, resourcepart, and separator characters) conforms to the rules and formats defined earlier in this section; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
     </section>
 
   </section>
@@ -1000,7 +1000,7 @@ S: <stream:error>
         </section>
         <section title="invalid-namespace" anchor="streams-error-conditions-invalid-namespace">
           <t>The streams namespace name is something other than "http://etherx.jabber.org/streams" (see <xref target="xml-ns"/>) or the default namespace is not supported (e.g., something other than "jabber:client" or "jabber:server").</t>
-          <t>(In the following example, the client specifies a streams namespace of 'http://wrong.namespace.example.org/'.)</t>
+          <t>(In the following example, the client specifies a namespace of 'http://wrong.namespace.example.org/' for the stream.)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -2049,8 +2049,8 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
 
   <section title="Resource Binding" anchor="bind">
     <section title="Overview" anchor="bind-overview">
-      <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing"/>).  That is, there MUST be an XMPP resource identifier associated with the bare JID (&lt;localpart@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;localpart@domain/resource&gt;.  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client in relation to entities other than the server itself, as explained under <xref target="rules"/> (the client could exchange stanzas with the server itself before binding a resource since the full JID is needed only for addressing outside the context of the stream negotiated between the client and the server, but this is not commonly done).</t>
-      <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resource identifier; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
+      <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client (see <xref target="addressing"/>).  That is, there MUST be an XMPP resource associated with the bare JID (&lt;localpart@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;localpart@domain/resource&gt; (including the resourcepart).  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client in relation to entities other than the server itself, as explained under <xref target="rules"/> (the client could exchange stanzas with the server itself before binding a resource since the full JID is needed only for addressing outside the context of the stream negotiated between the client and the server, but this is not commonly done).</t>
+      <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resourcepart; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
       <t>If, before completing the resource binding step, the client attempts to send an XML stanza to an entity other than the client's account or the server, the server MUST NOT process the stanza and MUST either ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
       <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
     </section>
@@ -2085,13 +2085,13 @@ S: <stream:features>
       <t>Upon being so informed that resource binding is mandatory, the client MUST bind a resource to the stream as described in the following sections.</t>
     </section>
     <section title="Generation of Resource Identifiers" anchor="bind-generation">
-      <t>A resource identifier MUST at a minimum be unique among the connected resources for that &lt;localpart@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
-      <t>A resource identifier can be security-critical.  For example, if a malicious entity can guess a client's resource identifier then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leak'/>.  To prevent that possibility, a client can either (1) generate a random resource identifier on its own or (2) ask the server to generate a resource identifier on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resource identifier, it is RECOMMENDED that the resource identifier be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t>
+      <t>A resourcepart MUST at a minimum be unique among the connected resources for that &lt;localpart@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
+      <t>A resourcepart can be security-critical.  For example, if a malicious entity can guess a client's resourcepart then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leak'/>.  To prevent that possibility, a client can either (1) generate a random resourcepart on its own or (2) ask the server to generate a resourcepart on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resourcepart, it is RECOMMENDED that the resourcepart be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t>
     </section>
     <section title="Server-Generated Resource Identifier" anchor="bind-servergen">
-      <t>A server that supports resource binding MUST be able to generate an XMPP resource identifier on behalf of a client.</t>
+      <t>A server that supports resource binding MUST be able to generate an XMPP resourcepart on behalf of a client.</t>
       <section title="Success Case" anchor="bind-servergen-success">
-        <t>A client requests a server-generated resource identifier by sending an IQ stanza of type "set" (see <xref target="stanzas-semantics-iq"/>) containing an empty &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace.</t>
+        <t>A client requests a server-generated resourcepart by sending an IQ stanza of type "set" (see <xref target="stanzas-semantics-iq"/>) containing an empty &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace.</t>
         <figure>
           <artwork><![CDATA[
 C: <iq id='bind_1' type='set'>
@@ -2099,7 +2099,7 @@ C: <iq id='bind_1' type='set'>
    </iq>
           ]]></artwork>
         </figure>
-        <t>Once the server has generated an XMPP resource identifier for the client, it MUST return an IQ stanza of type "result" to the client, which MUST include a &lt;jid/&gt; child element that specifies the full JID for the connected resource as determined by the server.</t>
+        <t>Once the server has generated an XMPP resourcepart for the client, it MUST return an IQ stanza of type "result" to the client, which MUST include a &lt;jid/&gt; child element that specifies the full JID for the connected resource as determined by the server.</t>
         <figure>
           <artwork><![CDATA[
 S: <iq id='bind_1' type='result'>
@@ -2113,7 +2113,7 @@ S: <iq id='bind_1' type='result'>
         </figure>
       </section>
       <section title="Error Cases" anchor="bind-servergen-error">
-        <t>When a client asks the server to generate a resource identifer during resource binding, the following stanza error conditions are possible:</t>
+        <t>When a client asks the server to generate a resourcepart during resource binding, the following stanza error conditions are possible:</t>
         <t>
           <list style="symbols">
             <t>The account has reached a limit on the number of simultaneous connected resources allowed.</t>
@@ -2149,9 +2149,9 @@ S: <iq id='bind_2' type='error'>
       </section>
     </section>
     <section title="Client-Submitted Resource Identifier" anchor="bind-clientsubmit">
-      <t>Instead of asking the server to generate a resource identifier on its behalf, a client MAY attempt to submit a resource identifier that it has generated or that the controlling user has provided.</t>
+      <t>Instead of asking the server to generate a resourcepart on its behalf, a client MAY attempt to submit a resourcepart that it has generated or that the controlling user has provided.</t>
       <section title="Success Case" anchor="bind-clientsubmit-success">
-        <t>A client asks its server to accept a client-submitted resource identifier by sending an IQ stanza of type "set" containing a &lt;bind/&gt; element with a child &lt;resource/&gt; element containing non-zero-length XML character data.</t>
+        <t>A client asks its server to accept a client-submitted resourcepart by sending an IQ stanza of type "set" containing a &lt;bind/&gt; element with a child &lt;resource/&gt; element containing non-zero-length XML character data.</t>
         <figure>
           <artwork><![CDATA[
 C: <iq id='bind_2' type='set'>
@@ -2161,7 +2161,7 @@ C: <iq id='bind_2' type='set'>
    </iq>
           ]]></artwork>
         </figure>
-        <t>The server SHOULD accept the client-submitted resource identifier.  It does so by returning an IQ stanza of type "result" to the client, including a &lt;jid/&gt; child element that specifies the full JID for the connected resource and contains without modification the client-submitted text.</t>
+        <t>The server SHOULD accept the client-submitted resourcepart.  It does so by returning an IQ stanza of type "result" to the client, including a &lt;jid/&gt; child element that specifies the full JID for the connected resource and contains without modification the client-submitted text.</t>
         <figure>
           <artwork><![CDATA[
 S: <iq id='bind_2' type='result'>
@@ -2173,15 +2173,15 @@ S: <iq id='bind_2' type='result'>
         </figure>
       </section>
       <section title="Error Cases" anchor="bind-clientsubmit-error">
-        <t>When a client attempts to submit its own XMPP resource identifier during resource binding, the following stanza error conditions are possible in addition to those described under <xref target='bind-servergen-error'/>:</t>
+        <t>When a client attempts to submit its own XMPP resourcepart during resource binding, the following stanza error conditions are possible in addition to those described under <xref target='bind-servergen-error'/>:</t>
         <t>
           <list style="symbols">
-            <t>The provided resource identifier cannot be processed by the server, e.g. because it is not in accordance with the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/>).</t>
-            <t>The provided resource identifier is already in use.</t>
+            <t>The provided resourcepart cannot be processed by the server, e.g. because it is not in accordance with the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/>).</t>
+            <t>The provided resourcepart is already in use.</t>
           </list>
         </t>
         <section title="Bad Request" anchor="bind-clientsubmit-error-badrequest">
-          <t>If the provided resource identifier cannot be processed by the server, the server MAY return a &lt;bad-request/&gt; error (but SHOULD instead apply the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/> or otherwise process the resource identifier so that it is in conformance).</t>
+          <t>If the provided resourcepart cannot be processed by the server, the server MAY return a &lt;bad-request/&gt; error (but SHOULD instead apply the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/> or otherwise process the resourcepart so that it is in conformance).</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
@@ -2196,7 +2196,7 @@ S: <iq id='bind_2' type='error'>
           <t>If there is already a connected resource of the same name, the server MUST do one of the following:</t>
           <t>
             <list style='numbers'>
-              <t>Not accept the resource identifier provided by the client but instead override it with an XMPP resource identifier that the server generates.</t>
+              <t>Not accept the resourcepart provided by the client but instead override it with an XMPP resourcepart that the server generates.</t>
               <t>Terminate the current resource and allow the newly-requested resource.</t>
               <t>Disallow the newly-requested resource and maintain the current resource.</t>
             </list>
@@ -2219,7 +2219,7 @@ S: <iq id='bind_2' type='result'>
 S: <iq id='bind_2' type='result'/>
             ]]></artwork>
           </figure>
-          <t>In case #3, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resource identifier before sending another request for resource binding.</t>
+          <t>In case #3, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resourcepart before sending another request for resource binding.</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
@@ -2232,7 +2232,7 @@ S: <iq id='bind_2' type='error'>
         </section>
       </section>
       <section title="Retries" anchor="bind-clientsubmit-retries">
-        <t>If an error occurs when a client submits a resource identifier, the server SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the client to tolerate incorrectly-provided resource identifiers (e.g., bad data formats or duplicate text strings) without being forced to reconnect.</t>
+        <t>If an error occurs when a client submits a resourcepart, the server SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the client to tolerate incorrectly-provided resourceparts (e.g., bad data formats or duplicate text strings) without being forced to reconnect.</t>
         <t>After the client has reached the retry limit, the server MUST return a &lt;policy-violation/&gt; stream error to the client.</t>
       </section>
     </section>
@@ -2620,7 +2620,7 @@ S: <presence from='nosuchroom@conference.example.org/foo'
           <t><list style='empty'><t>Note: An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it MUST return a &lt;service-unavailable/&gt; error.</t></list></t>
         </section>
         <section title="jid-malformed" anchor="stanzas-error-conditions-jid-malformed">
-          <t>The sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., an XMPP resource identifier) that does not adhere to the syntax defined under <xref target="addressing"/>; the associated error type SHOULD be "modify".</t>
+          <t>The sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., an XMPP resourcepart) that does not adhere to the syntax defined under <xref target="addressing"/>; the associated error type SHOULD be "modify".</t>
           <figure>
             <artwork><![CDATA[
 C: <presence
@@ -3275,7 +3275,7 @@ C: <iq id='bind_1' type='set'>
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Step 14: Server accepts submitted resource identifier and informs client of successful resource binding:</preamble>
+          <preamble>Step 14: Server accepts submitted resourcepart and informs client of successful resource binding:</preamble>
           <artwork><![CDATA[
 S: <iq id='bind_1' type='result'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
@@ -3658,7 +3658,7 @@ S2: </stream:stream>
   <section title="Internationalization Considerations" anchor="i18n">
     <t>As specified under <xref target="xml-encoding"/>, XML streams MUST be encoded in UTF-8.</t>
     <t>As specified under <xref target="streams-attr"/>, an XML stream SHOULD include an 'xml:lang' attribute specifying the default language for any XML character data that is intended to be presented to a human user.  As specified under <xref target="stanzas-attributes-lang"/>, an XML stanza SHOULD include an 'xml:lang' attribute if the stanza contains XML character data that is intended to be presented to a human user.  A server SHOULD apply the default 'xml:lang' attribute to stanzas it routes or delivers on behalf of connected entities, and MUST NOT modify or delete 'xml:lang' attributes on stanzas it receives from other entities.</t>
-    <t>As specified under <xref target='addressing'/>, a server MUST support and enforce <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for localparts, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resource identifiers; this enables XMPP addresses to include a wide variety of Unicode characters outside the US-ASCII range.</t>
+    <t>As specified under <xref target='addressing'/>, a server MUST support and enforce <xref target="IDNA"/> for domain identifiers, the <xref target='nodeprep'>Nodeprep</xref> profile of <xref target="STRINGPREP"/> for localparts, and the <xref target='resourceprep'>Resourceprep</xref> profile of <xref target="STRINGPREP"/> for resourceparts; this enables XMPP addresses to include a wide variety of Unicode characters outside the US-ASCII range.</t>
   </section>
 
   <section title="Security Considerations" anchor="security">
@@ -3679,17 +3679,7 @@ S2: </stream:stream>
               <t>The certificate MUST NOT contain a basicConstraints extension with the cA boolean set to TRUE.</t>
               <t>The subject field MUST NOT be null.</t>
               <t>The hash algorithm for the signature SHOULD be SHA-256 as defined by <xref target='X509-ALGO'/>.</t>
-            </list>
-          </t>
-          <t>The following rules apply to attribute certificates that are issued to XMPP entities:</t>
-          <t>
-            <list style='numbers'>
-              <t>The certificate MUST conform to <xref target='X509-AUTH'/>.</t>
-              <t>The holder field MUST be the baseCertificateID.</t>
-              <t>The attributes field MUST include the Access Identity attribute, as specified in Section 4.4.2 of <xref target='X509-AUTH'/>.  Both the service and ident fields' GeneralName choice MUST be registeredID.  The service and ident fields MUST be as defined in Section 5.3 of <xref target='X509-AUTH'/>.  Other attributes MAY be included.</t>
-              <t>The extensions field MUST include the non-critical noRevAvail extension, as defined in Section 4.3.6 of <xref target='X509-AUTH'/>, to indicate that no revocation information is available from the attribute certificate issuer.</t>
-              <t>The extensions field MAY include the authorityKeyIdentifier extension if the issuer has more than one key pair.</t>
-              <t>The extensions field MAY include the issuerAltName extension if the issuer's certificate includes the subjectAltName extension (where the issuerAltName extension MUST be marked non-critical).</t>
+              <t>The certificate SHOULD include an Authority Information Access (AIA) extension that specifies the address of an Online Certificate Status Protocol <xref target='OCSP'/> responder.</t>
             </list>
           </t>
           <t>The following rules apply to issuers of XMPP certificates:</t>
@@ -3834,6 +3824,15 @@ XmppAddr ::= UTF8String
             <t>If the client certificate is self-signed, the server MUST proceed as under Case #1, Sub-Case #3.</t>
           </section>
         </section>
+        <section title="Checking of Certificates in Long-Lived Streams" anchor="security-certificates-validation-streams">
+          <t>Because XMPP uses long-lived XML streams, it is possible that a certificate presented during stream negotiation might expire or be revoked while the stream is still live (this is especially relevant in the context of server-to-server streams).  Therefore, each party to a long-lived stream SHOULD:</t>
+          <t>
+            <list style='numbers'>
+              <t>Cache the expiration date of the certificate presented by the other party and any certificates on which that certificate depends (such as a root or intermediate certificate for a certification authority), and terminate the stream when any such certificate expires.</t>
+              <t>Periodically query the Online Certificate Status Protocol <xref target='OCSP'/> responder listed in the Authority Information Access (AIA) extension of the certificate presented by the other party and any certificates on which that certificate depends (such as a root or intermediate certificate for a certification authority), and terminate the stream if any such certificate has been revoked.</t>
+            </list>
+          </t>
+        </section>
         <section title="Use of Certificates in XMPP Extensions" anchor="security-certificates-validation-extensions">
           <t>Certificates MAY be used in extensions to XMPP for the purpose of application-layer encryption or authentication above the level of XML streams (e.g., for end-to-end encryption).  Such extensions shall define their own certificate handling rules, which at a minimum SHOULD be consistent with the rules specified herein but MAY specify additional rules.</t>
         </section>
@@ -3890,10 +3889,10 @@ XmppAddr ::= UTF8String
     </section>
     <section title="Stringprep Profiles" anchor="security-stringprep">
       <t>XMPP makes use of the <xref target="NAMEPREP"/> profile of <xref target="STRINGPREP"/> for processing of domain identifiers; for security considerations related to Nameprep, refer to the appropriate section of <xref target="NAMEPREP"/>.</t>
-      <t>In addition, XMPP defines two profiles of <xref target="STRINGPREP"/>: <xref target="nodeprep">Nodeprep</xref> for localparts and <xref target="resourceprep">Resourceprep</xref> for resource identifiers.</t>
+      <t>In addition, XMPP defines two profiles of <xref target="STRINGPREP"/>: <xref target="nodeprep">Nodeprep</xref> for localparts and <xref target="resourceprep">Resourceprep</xref> for resourceparts.</t>
       <t>The Unicode and ISO/IEC 10646 repertoires have many characters that look similar.  In many cases, users of security protocols might perform visual matching, such as when comparing the names of trusted third parties.  Because it is impossible to map similar-looking characters without a great deal of context (such as knowing the fonts used), stringprep does nothing to map similar-looking characters together, nor to prohibit some characters because they look like others.</t>
       <t>A localpart can be employed as one part of an entity's address in XMPP.  One common usage is as the username of an instant messaging user; another is as the name of a multi-user conference room; and many other kinds of entities could use localparts as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized localpart; for example, a user entering a single internationalized localpart could access another user's account information, or a user could gain access to a hidden or otherwise restricted chat room or service.</t>
-      <t>A resource identifier can be employed as one part of an entity's address in XMPP.  One common usage is as the name for an instant messaging user's connected resource; another is as the nickname of a user in a multi-user conference room; and many other kinds of entities could use resource identifiers as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized resource identifier; for example, a user could attempt to initiate multiple connections with the same name, or a user could send a message to someone other than the intended recipient in a multi-user conference room.</t>
+      <t>A resourcepart can be employed as one part of an entity's address in XMPP.  One common usage is as the name for an instant messaging user's connected resource; another is as the nickname of a user in a multi-user conference room; and many other kinds of entities could use resourceparts as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized resourcepart; for example, a user could attempt to initiate multiple connections with the same name, or a user could send a message to someone other than the intended recipient in a multi-user conference room.</t>
     </section>
     <section title="Address Spoofing" anchor="security-spoofing">
       <t>As discussed in <xref target='XEP-0165'/>, there are two forms of address spoofing: forging and mimicking.</t>
@@ -4077,7 +4076,7 @@ XmppAddr ::= UTF8String
     <t>
       <list style='hanging'>
         <t hangText="Feature:">address-resource-length</t>
-        <t hangText="Description:">Ensure that the resource identifier of an XMPP address is limited to 1023 bytes in length.</t>
+        <t hangText="Description:">Ensure that the resourcepart of an XMPP address is limited to 1023 bytes in length.</t>
         <t hangText="Section:"><xref target='addressing-resource'/></t>
         <t hangText="Roles:">Both MUST.</t>
       </list>
@@ -4085,7 +4084,7 @@ XmppAddr ::= UTF8String
     <t>
       <list style='hanging'>
         <t hangText="Feature:">address-resource-prep</t>
-        <t hangText="Description:">Ensure that the resource identifier portion of an XMPP address conforms to the Resourceprep profile of Stringprep.</t>
+        <t hangText="Description:">Ensure that the resourcepart of an XMPP address conforms to the Resourceprep profile of Stringprep.</t>
         <t hangText="Section:"><xref target='addressing-domain'/></t>
         <t hangText="Roles:">Client SHOULD, Server MUST.</t>
       </list>
@@ -4763,6 +4762,81 @@ XmppAddr ::= UTF8String
 <format type='TXT' octets='10316' target='ftp://ftp.isi.edu/in-notes/rfc3491.txt' />
 </reference>
 
+<reference anchor='OCSP'>
+<front>
+<title abbrev='PKIX OCSP'>X.509 Internet Public Key Infrastructure Online Certificate Status Protocol - OCSP</title>
+<author initials='M.' surname='Myers' fullname='Michael Myers'>
+<organization>VeriSign, Inc.</organization>
+<address>
+<postal>
+<street>1350 Charleston Road</street>
+<city>Mountain View</city>
+<region>CA</region>
+<code>94043</code>
+<country>US</country></postal>
+<email>mmyers@verisign.com</email></address></author>
+<author initials='R.' surname='Ankney' fullname='Rich Ankney'>
+<organization>CertCo, LLC</organization>
+<address>
+<postal>
+<street>13506 King Charles Dr.</street>
+<city>Chantilly</city>
+<region>VA</region>
+<code>20151</code>
+<country>US</country></postal>
+<email>rankney@erols.com</email></address></author>
+<author initials='A.' surname='Malpani' fullname='Ambarish Malpani'>
+<organization>ValiCert, Inc.</organization>
+<address>
+<postal>
+<street>1215 Terra Bella Avenue</street>
+<city>Mountain View</city>
+<region>CA</region>
+<code>94043</code>
+<country>US</country></postal>
+<phone>+1 650 567 5457</phone>
+<email>ambarish@valicert.com</email></address></author>
+<author initials='S.' surname='Galperin' fullname='Slava Galperin'>
+<organization>My CFO, Inc.</organization>
+<address>
+<postal>
+<street>1945 Charleston Road</street>
+<city>Mountain View</city>
+<region>CA</region>
+<code>94043</code>
+<country>US</country></postal>
+<email>galperin@mycfo.com</email></address></author>
+<author initials='C.' surname='Adams' fullname='Carlisle Adams'>
+<organization>Entrust Technologies</organization>
+<address>
+<postal>
+<street>750 Heron Road</street>
+<street>Suite E08</street>
+<city>Ottawa</city>
+<region>Ontario</region>
+<code>K1V 1A7</code>
+<country>CA</country></postal>
+<email>cadams@entrust.com</email></address></author>
+<date year='1999' month='June' />
+<abstract>
+<t>This document specifies a protocol useful in determining the current
+   status of a digital certificate without requiring CRLs. Additional
+   mechanisms addressing PKIX operational requirements are specified in
+   separate documents.</t>
+<t>An overview of the protocol is provided in section 2. Functional
+   requirements are specified in section 4. Details of the protocol are
+   in section 5. We cover security issues with the protocol in section
+   6. Appendix A defines OCSP over HTTP, appendix B accumulates ASN.1
+   syntactic elements and appendix C specifies the mime types for the
+   messages.</t>
+<t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT",
+   "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this
+   document (in uppercase, as shown) are to be interpreted as described
+   in.</t></abstract></front>
+<seriesInfo name='RFC' value='2560' />
+<format type='TXT' octets='43243' target='ftp://ftp.isi.edu/in-notes/rfc2560.txt' />
+</reference>
+
 <reference anchor='PLAIN'>
 <front>
 <title>The PLAIN Simple Authentication and Security Layer (SASL) Mechanism</title>
@@ -5098,26 +5172,6 @@ specifications of each URI scheme.
 <t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='5280' />
 <format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
-</reference>
-
-<reference anchor='X509-AUTH'>
-<front>
-<title>An Internet Attribute Certificate Profile for Authorization</title>
-<author initials='R' surname='Housley' fullname='Russ Housley'>
-    <organization />
-</author>
-<author initials='S' surname='Farrell' fullname='Stephen Farrell'>
-    <organization />
-</author>
-<author initials='S' surname='Turner' fullname='Sean Turner'>
-    <organization />
-</author>
-<date month='April' day='27' year='2009' />
-<abstract><t>This specification defines a profile for the use of X.509 Attribute Certificates in Internet Protocols.  Attribute certificates may be used in a wide range of applications and environments covering a broad spectrum of interoperability goals and a broader spectrum of operational and assurance requirements.  The goal of this document is to establish a common baseline for generic applications requiring broad interoperability as well as limited special purpose requirements.  The profile places emphasis on attribute certificate support for Internet electronic mail, IPsec, and WWW security applications.  This document obsoletes RFC 3281.</t></abstract>
-</front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-pkix-3281update-05' />
-<format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-pkix-3281update-05.txt' />
 </reference>
 
 <reference anchor='X509-ALGO'>
@@ -6257,12 +6311,12 @@ specifications of each URI scheme.
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='October' day='23' year='2009' />
+<date month='November' day='17' year='2009' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-02' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-03' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-02.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-03.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
@@ -6368,10 +6422,10 @@ specifications of each URI scheme.
 
     <section title="Resourceprep" anchor="resourceprep">
       <section title="Introduction" anchor="resourceprep-introduction">
-      <t>This appendix defines the "Resourceprep" profile of stringprep.  As such, it specifies processing rules that will enable users to enter internationalized resource identifiers in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP resource identifier is the optional portion of an XMPP address that follows an XMPP domain identifier and the '/' separator.)  These processing rules are intended only for XMPP resource identifiers and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
+      <t>This appendix defines the "Resourceprep" profile of stringprep.  As such, it specifies processing rules that will enable users to enter internationalized resourceparts in the Extensible Messaging and Presence Protocol (XMPP) and have the highest chance of getting the content of the strings correct.  (An XMPP resourcepart is the optional portion of an XMPP address that follows an XMPP domain identifier and the '/' separator.)  These processing rules are intended only for XMPP resourceparts and are not intended for arbitrary text or any other aspect of an XMPP address.</t>
       <t>This profile defines the following, as required by <xref target="STRINGPREP"/>:</t>
       <t><list style="symbols">
-        <t>The intended applicability of the profile: internationalized resource identifiers within XMPP</t>
+        <t>The intended applicability of the profile: internationalized resourceparts within XMPP</t>
         <t>The character repertoire that is the input and output to stringprep: Unicode 3.2, specified in Section 2 of this Appendix</t>
         <t>The mappings used: specified in Section 3</t>
         <t>The Unicode normalization used: specified in Section 4</t>
@@ -6839,8 +6893,9 @@ specifications of each URI scheme.
       <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920.</t>
       <t>
         <list style='symbols'>
-          <t>Corrected the ABNF syntax for JIDs to prevent zero-length localparts, domain identifiers, and resource identifiers.</t>
+          <t>Corrected the ABNF syntax for JIDs to prevent zero-length localparts, domain identifiers, and resourceparts.</t>
           <t>To avoid confusion with the term "node" as used in <xref target="XEP-0030"/> and <xref target="XEP-0060"/> (see also <xref target="XEP-0271"/>), changed the term "node identifier" to "localpart" (but retained the name "Nodeprep" for backward compatibility).</t>
+          <t>To avoid confusion with the terms "resource" and "identifier" as used in <xref target="URI"/>, changed the term "resource identifier" to "resourcepart".</t>
           <t>Corrected the nameprep processing rules to require use of the UseSTD3ASCIIRules flag.</t>
           <t>Recommended or mandated use of the 'from' and 'to' attributes on stream headers.</t>
           <t>More fully specified stream closing handshake.</t>
@@ -6849,7 +6904,7 @@ specifications of each URI scheme.
           <t>Specified that the SASL SCRAM mechanism is a mandatory-to-implement technology.</t>
           <t>Specified that TLS plus the SASL PLAIN mechanism is a mandatory-to-implement technology for client-to-server connections.</t>
           <t>Specified that support for the SASL EXTERNAL mechanism is required for servers but only recommended for clients (since end-user X.509 certificates are difficult to obtain and not yet widely deployed).</t>
-          <t>More clearly specified the certificate profile for both public key certificates and attribute certificates.</t>
+          <t>More clearly specified the certificate profile for both public key certificates and issuer certificates.</t>
           <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>Added the &lt;not-modified/&gt; stanza error condition to enable potential ETags usage.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
