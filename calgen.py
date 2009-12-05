@@ -41,7 +41,7 @@ import glob
 
 from xml.dom.minidom import parse,parseString,Document,getDOMImplementation
 from datetime import datetime, timedelta
-from icalendar import Calendar, Event, UTC, vText
+from icalendar import Calendar, Event, Alarm, UTC, vText
 
 CALPATH = "/var/www/vhosts/xmpp.org/calendar"
 
@@ -104,6 +104,7 @@ class SimpleEvents:
 			ev = {}
 			if event.getElementsByTagName("all-day"):
 				ev['all-day'] = True
+				
 			if event.getElementsByTagName("date"):
 				ev['date'] = getText((event.getElementsByTagName("date")[0]).childNodes)
 			
@@ -118,6 +119,9 @@ class SimpleEvents:
 			
 			if event.getElementsByTagName("url"):
 				ev['url'] = getText((event.getElementsByTagName("url")[0]).childNodes)
+				
+			if event.getElementsByTagName("alarm"):
+				ev['alarm'] = True
 			
 			self.eventList.append(ev)
 		
@@ -186,7 +190,14 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 				event.add('dtstart', start)
 				event.add('dtend', (start + duration))
 				event.add("dtstamp", (start + duration))
-			
+			if "alarm" in ev:
+				alarm = Alarm()
+				alarm_time = datetime.strptime(ev["date"], "%Y-%m-%dT%H:%M:%S")
+				alarm_time = alarm_time.replace(tzinfo=UTC)
+				alarm_time = alarm_time - timedelta(minutes=15)
+				alarm.add("trigger", alarm_time)
+				alarm.add("action", "display")
+				event.add_component(alarm)
 			if "summary" in ev:
 				event.add('summary', ev["summary"])
 			if "description" in ev:
