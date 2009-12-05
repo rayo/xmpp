@@ -203,6 +203,9 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 	except:
 		print "File not found! - " + events_file
 
+def genCalendarForTeam( name ):
+	genCalendarFromEventsFile("xsf/teams/" + name + "/events.xml", CALPATH + "/team-" + name + ".ics")
+
 def genAllEventsCalendar( cal_file ):
 	cal = Calendar()
 	cal.add('prodid', '-//calgen.py//xmpp.org//')
@@ -217,9 +220,16 @@ def genAllEventsCalendar( cal_file ):
 def main(argv):
 	os.umask(0012)
 	# TODO jabbers anniversary January 4 1999 in the all and XSF calendar 
+	# General XSF
 	genCalendarFromEventsFile("council/events.xml", CALPATH + "/xsf-council.ics")
 	genCalendarFromEventsFile("xsf/board/events.xml", CALPATH + "/xsf-board.ics")
 	genCalendarFromEventsFile("xsf/events.xml", CALPATH + "/xsf-xsf.ics")
+	
+	# XSF Teams
+	genCalendarForTeam("communication")
+	genCalendarForTeam("infrastructure")
+	genCalendarForTeam("techreview")
+	
 	genExtensionsCalendar(CALPATH + "/xsf-extensions.ics")
 	genAllEventsCalendar(CALPATH + "/xsf-all.ics")
 	
