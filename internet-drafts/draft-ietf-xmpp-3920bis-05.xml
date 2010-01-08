@@ -15,7 +15,7 @@
         <email>Peter.SaintAndre@WebEx.com</email>
       </address>
     </author>
-    <date year="2009" month="December" day="1"/>
+    <date year="2010" month="January" day="8"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -1493,7 +1493,7 @@ S: <stream:error>
       <t>XMPP includes a method for securing the stream from tampering and eavesdropping.  This channel encryption method makes use of the Transport Layer Security <xref target="TLS"/> protocol, specifically a "STARTTLS" extension that is modelled after similar extensions for the <xref target="IMAP"/>, <xref target="POP3"/>, and <xref target="ACAP"/> protocols as described in <xref target="USINGTLS"/>.  The XML namespace name for the STARTTLS extension is 'urn:ietf:params:xml:ns:xmpp-tls'.</t>
       <t>Support for STARTTLS is REQUIRED in XMPP client and server implementations.  An administrator of a given deployment MAY necessitate the use of TLS for client-to-server communication, server-to-server communication, or both.  A deployed client SHOULD use TLS to secure its stream with a server prior to attempting the completion of <xref target='sasl'>SASL negotiation</xref>, and deployed servers SHOULD use TLS between two domains for the purpose of securing server-to-server communication.</t>
     </section>
-    <section title="Rules" anchor="tls-rules">
+    <section title="Stream Negotiation Rules" anchor="tls-rules">
       <section title="Mandatory-to-Negotiate" anchor="tls-rules-mtn">
         <t>If the receiving entity advertises only the STARTTLS feature or if the receiving entity includes the &lt;required/&gt; child element, the parties MUST consider TLS as mandatory-to-negotiate.  If TLS is mandatory-to-negotiate, the receiving entity SHOULD NOT advertise support for any stream feature except STARTTLS during the initial stage of the stream negotiation process, because further stream features might depend on prior negotiation of TLS given the order of layers in XMPP (e.g., the particular SASL mechanisms offered by the receiving entity will likely depend on whether TLS has been negotiated).</t>
       </section>
@@ -1664,7 +1664,7 @@ R: <stream:features>
       <t>XMPP includes a method for authenticating a stream by means of an XMPP-specific profile of the Simple Authentication and Security Layer protocol (see <xref target="SASL"/>).  SASL provides a generalized method for adding authentication support to connection-based protocols, and XMPP uses an XML namespace profile of SASL that conforms to the profiling requirements of <xref target="SASL"/>.</t>
       <t>Support for SASL negotiation is REQUIRED in XMPP client and server implementations.</t>
     </section>
-    <section title="Rules" anchor="sasl-rules">
+    <section title="Stream Negotiation Rules" anchor="sasl-rules">
       <section title="Mandatory-to-Negotiate" anchor="sasl-rules-mtn">
         <t>The parties to a stream MUST consider SASL as mandatory-to-negotiate.</t>
       </section>
@@ -2032,7 +2032,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
    </failure>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>Note: An XMPP client MUST treat a &lt;transition-needed/&gt; error with extreme caution, SHOULD NOT provide a plaintext password over an XML stream that is not encrypted via Transport Layer Security, and MUST warn a human user before allowing the user to provide a plaintext password over an unencrypted connection.</t></list></t>
+        <t><list style='empty'><t>Note: An XMPP client MUST treat a &lt;transition-needed/&gt; SASL error with extreme caution, SHOULD NOT provide a plaintext password over an XML stream that is not encrypted via Transport Layer Security, and MUST warn a human user before allowing the user to provide a plaintext password over an unencrypted connection.</t></list></t>
       </section>
     </section>
     <section title="SASL Definition" anchor="sasl-def">
@@ -2054,7 +2054,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
       <t>If, before completing the resource binding step, the client attempts to send an XML stanza to an entity other than the client's account or the server, the server MUST NOT process the stanza and MUST either ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
       <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
     </section>
-    <section title="Rules" anchor="bind-rules">
+    <section title="Stream Negotiation Rules" anchor="bind-rules">
       <section title="Mandatory-to-Negotiate" anchor="bind-rules-mtn">
         <t>The parties to a stream MUST consider resource binding as mandatory-to-negotiate.</t>
       </section>
@@ -2116,12 +2116,13 @@ S: <iq id='bind_1' type='result'>
         <t>When a client asks the server to generate a resourcepart during resource binding, the following stanza error conditions are possible:</t>
         <t>
           <list style="symbols">
+            <t>The request is malformed.</t>
             <t>The account has reached a limit on the number of simultaneous connected resources allowed.</t>
             <t>The client is otherwise not allowed to bind a resource to the stream.</t>
           </list>
         </t>
         <section title="Resource Constraint" anchor="bind-servergen-error-resourceconstraint">
-          <t>If the account has reached a limit on the number of simultaneous connected resources allowed, the server MUST return a &lt;resource-constraint/&gt; error.</t>
+          <t>If the account has reached a limit on the number of simultaneous connected resources allowed, the server MUST return a &lt;resource-constraint/&gt; stanza error.</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
@@ -2134,7 +2135,7 @@ S: <iq id='bind_2' type='error'>
           </figure>
         </section>
         <section title="Not Allowed" anchor="bind-servergen-error-notallowed">
-          <t>If the client is otherwise not allowed to bind a resource to the stream, the server MUST return a &lt;not-allowed/&gt; error.</t>
+          <t>If the client is otherwise not allowed to bind a resource to the stream, the server MUST return a &lt;not-allowed/&gt; stanza error.</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
@@ -2176,12 +2177,12 @@ S: <iq id='bind_2' type='result'>
         <t>When a client attempts to submit its own XMPP resourcepart during resource binding, the following stanza error conditions are possible in addition to those described under <xref target='bind-servergen-error'/>:</t>
         <t>
           <list style="symbols">
-            <t>The provided resourcepart cannot be processed by the server, e.g. because it is not in accordance with the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/>).</t>
+            <t>The provided resourcepart cannot be processed by the server.</t>
             <t>The provided resourcepart is already in use.</t>
           </list>
         </t>
         <section title="Bad Request" anchor="bind-clientsubmit-error-badrequest">
-          <t>If the provided resourcepart cannot be processed by the server, the server MAY return a &lt;bad-request/&gt; error (but SHOULD instead apply the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/> or otherwise process the resourcepart so that it is in conformance).</t>
+          <t>If the provided resourcepart cannot be processed by the server (e.g. because it is of zero length or because it is not in accordance with the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/>), the server MAY return a &lt;bad-request/&gt; stanza error (but SHOULD instead apply the <xref target="resourceprep">Resourceprep</xref> profile of <xref target='STRINGPREP'/> or otherwise process the resourcepart so that it is in conformance).</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='bind_2' type='error'>
@@ -2617,7 +2618,7 @@ S: <presence from='nosuchroom@conference.example.org/foo'
    </iq>
             ]]></artwork>
           </figure>
-          <t><list style='empty'><t>Note: An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it MUST return a &lt;service-unavailable/&gt; error.</t></list></t>
+          <t><list style='empty'><t>Note: An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it MUST return a &lt;service-unavailable/&gt; stanza error.</t></list></t>
         </section>
         <section title="jid-malformed" anchor="stanzas-error-conditions-jid-malformed">
           <t>The sending entity has provided or communicated an XMPP address (e.g., a value of the 'to' attribute) or aspect thereof (e.g., an XMPP resourcepart) that does not adhere to the syntax defined under <xref target="addressing"/>; the associated error type SHOULD be "modify".</t>
@@ -2795,7 +2796,7 @@ E: <presence
    </presence>
             ]]></artwork>
           </figure>
-          <t><list style='empty'><t>Note: An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it MUST return a &lt;service-unavailable/&gt; error.</t></list></t>
+          <t><list style='empty'><t>Note: An application MUST NOT return this error if doing so would provide information about the intended recipient's network availability to an entity that is not authorized to know such information; instead it MUST return a &lt;service-unavailable/&gt; stanza error.</t></list></t>
         </section>
         <section title="redirect" anchor="stanzas-error-conditions-redirect">
           <t>The recipient or server is redirecting requests for this information to another entity, typically in a temporary fashion (the &lt;gone/&gt; condition is used for permanent addressing failures); the associated error type SHOULD be "modify" and the error stanza SHOULD contain the alternate address in the XML character data of the &lt;redirect/&gt; element (which MUST be a URI or IRI at which the entity can be contacted, typically an XMPP IRI as specified in <xref target='XMPP-URI'/>).</t>
@@ -2926,7 +2927,7 @@ S: <message from='juliet@im.example.com/foo'
    </message>
             ]]></artwork>
           </figure>
-          <t>An application MUST return a &lt;service-unavailable/&gt; error instead of &lt;item-not-found/&gt; or &lt;recipient-unavailable/&gt; if sending one of the latter errors would provide information about the intended recipient's network availability to an entity that is not authorized to know such information.</t>
+          <t>An application MUST return a &lt;service-unavailable/&gt; stanza error instead of &lt;item-not-found/&gt; or &lt;recipient-unavailable/&gt; if sending one of the latter errors would provide information about the intended recipient's network availability to an entity that is not authorized to know such information.</t>
         </section>
         <section title="subscription-required" anchor="stanzas-error-conditions-subscription-required">
           <t>The requesting entity is not authorized to access the requested service because a prior subscription is necessary; the associated error type SHOULD be "auth".</t>
