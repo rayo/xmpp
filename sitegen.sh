@@ -54,5 +54,6 @@ cp xsf/teams/*.* $basepath/xsf/teams/
 cp xsf/teams/infrastructure/*.* $basepath/xsf/teams/infrastructure/
 cp xsf/teams/communication/*.* $basepath/xsf/teams/communication/
 cp xsf/teams/techreview/*.* $basepath/xsf/teams/techreview/
+cp js/*.* $basepath/js/
 
 # END
