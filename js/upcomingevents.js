@@ -43,9 +43,9 @@ $(document).ready(function() {
 		for (var i=eventData.length - 1; i >= 0; i--) {
 			var ev = eventData[i];
 			if (ev.allday) {
-				$("h2#upcoming").after("<p class='nav'>" + ev.title + " [" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "]</p>");
+				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " [" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "]</p>");
 			} else {
-				$("h2#upcoming").after("<p class='nav'>" + ev.title + " [" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "  " + timeSpan(ev.start, ev.end) + "]</p>");
+				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " [" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "  " + timeSpan(ev.start, ev.end) + "]</p>");
 			}
 		}
 	}
