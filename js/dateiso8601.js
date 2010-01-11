@@ -1,4 +1,4 @@
-ate.prototype.toISO8601String = function (format, offset) {
+Date.prototype.toISO8601String = function (format, offset) {
     /* accepted values for the format [1-6]:
      1 Year:
        YYYY (eg 1997)
