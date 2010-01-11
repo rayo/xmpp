@@ -49,6 +49,7 @@ $(document).ready(function() {
 				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " <abbr class='timeago' title='" + ev.start.toISO8601String(5) + "'>" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "  " + timeSpan(ev.start, ev.end) + "</abbr></p>");
 			}
 		}
+		jQuery('abbr.timeago').timeago();
 	}
 	$.get("/calendar/xsf-all.ics", null, gotFile, "text");
 });
