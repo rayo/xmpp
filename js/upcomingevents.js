@@ -43,9 +43,10 @@ $(document).ready(function() {
 		for (var i=eventData.length - 1; i >= 0; i--) {
 			var ev = eventData[i];
 			if (ev.allday) {
-				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " [" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "]</p>");
+				//<abbr class="timeago" title="2008-07-17T09:24:17Z">July 17, 2008</abbr>
+				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " <abbr class='timeago' title='" + ev.start.toISO8601String(5) + "'>" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "</abbr></p>");
 			} else {
-				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " [" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "  " + timeSpan(ev.start, ev.end) + "]</p>");
+				$("h3#upcomingevents").after("<p class='nav'>" + ev.title + " <abbr class='timeago' title='" + ev.start.toISO8601String(5) + "'>" + ev.start.getFullYear() + "-" + (ev.start.getMonth() + 1) + "-" + ev.start.getDate() + "  " + timeSpan(ev.start, ev.end) + "</abbr></p>");
 			}
 		}
 	}
