@@ -244,5 +244,7 @@ def main(argv):
 	genExtensionsCalendar(CALPATH + "/xsf-extensions.ics")
 	genAllEventsCalendar(CALPATH + "/xsf-all.ics")
 	
+	genCalendarFromEventsFile("summit/events.xml", CALPATH + "/xsf-summit.ics")
+
 if __name__ == "__main__":
 	main(sys.argv[1:])
