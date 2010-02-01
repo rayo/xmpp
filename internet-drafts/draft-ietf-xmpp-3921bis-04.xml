@@ -5,17 +5,17 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3921bis-03" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-ietf-xmpp-3921bis-04" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
       <organization>Cisco</organization>
       <address>
-        <email>Peter.SaintAndre@WebEx.com</email>
+        <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2009" month="November" day="17"/>
+    <date year="2010" month="February" day="1"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -1298,7 +1298,7 @@ CS: <presence from='juliet@example.com/balcony'
     </section>
 
     <section title="Presence Probes" anchor="presence-probe">
-      <t><iref item='Presence Probe'/>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  The value of the 'from' address MUST be the full JID &lt;user@domain/resource&gt; of the user and the value of the 'to' address MUST be the bare JID &lt;contact@domain&gt; of the contact to which the user is subscribed.</t>
+      <t><iref item='Presence Probe'/>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare or full JID of the subscribed user and the value of the 'to' address SHOULD be the bare JID of the contact to which the user is subscribed (since presence subscriptions are based on the bare JID) but MAY be a full JID for the contact.  (Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>.)</t>
       <figure>
         <artwork><![CDATA[
 US: <presence from='juliet@example.com/balcony' 
@@ -1307,7 +1307,6 @@ US: <presence from='juliet@example.com/balcony'
         ]]></artwork>
       </figure>
       <t><list style='empty'><t>Note: Although presence probes MAY be sent by a client, in general a client will not need to send them since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT return a stanza or stream error to the client.</t></list></t>
-      <t>If a server receives a presence probe intended for a full JID &lt;contact@domain/resource&gt;, it SHOULD handle it on behalf of the connected resource by returning only the presence information for that particular resource (and in any case MUST NOT deliver it to the resource).</t>
 
       <section title="Server Generation of Outbound Presence Probe" anchor="presence-probe-outbound">
         <t>When a server needs to discover the availability of a user's contact, it sends a presence probe from the full JID &lt;user@domain/resource&gt; of the user to the bare JID &lt;contact@domain&gt; of the contact.  The server MUST NOT send a probe to a contact if the user is not subscribed to the contact's presence (i.e., if the contact is not in the user's roster with the 'subscription' attribute set to a value of "to" or "both".</t>
@@ -1328,7 +1327,7 @@ US: <presence from='juliet@example.com/balcony'
         </section>
 
       <section title="Server Processing of Inbound Presence Probe" anchor="presence-probe-inbound">
-        <t>Upon receiving a presence probe from the user's server on behalf of the user, the contact's server SHOULD reply as follows:</t>
+        <t>Upon receiving a presence probe to the contact's bare JID from the user's server on behalf of the user, the contact's server SHOULD reply as follows:</t>
         <t>
           <list style="numbers">
             <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe (however, if a server receives a presence probe from a configured hostname of the server itself or another such trusted service, it MAY provide presence information about the user to that entity).
@@ -1340,7 +1339,15 @@ CS: <presence from='mercutio@example.com'
                 ]]></artwork>
               </figure>
             </t>
-            <t>Else, if the contact has no available resources, then the server SHOULD reply to the presence probe by sending to the user the full XML of the last presence stanza of type "unavailable" received by the server from the contact (however, the server MAY opt to not reply at all).</t>
+            <t>Else, if the contact has no available resources, then the server SHOULD reply to the presence probe by sending to the user a presence stanza of type "unavailable" (although sending unavailable presence here is preferable because it results in a deterministic answer to the probe, it is not mandatory because it can greatly increase the number of presence notifications generated by the contact's server); this presence stanza MAY include the full XML of the last unavailable presence stanza that the server received from the contact, if appropriate in accordance with local security policies, otherwise it will indicate only that the contact is unavailable.
+              <figure>
+                <artwork><![CDATA[
+CS: <presence from='mercutio@example.com' 
+              to='juliet@example.com' 
+              type='unavailable'/>
+                ]]></artwork>
+              </figure>
+            </t>
             <t>Else, if the contact has at least one available resource, then the server MUST reply to the presence probe by sending to the user the full XML of the last presence stanza with no 'to' attribute received by the server from each of the contact's available resources.
               <figure>
                 <artwork><![CDATA[
@@ -1355,6 +1362,15 @@ CS: <presence from='romeo@example.net/bar'
               </figure>
             </t>
           </list>
+        </t>
+        <t>If the contact's server receives a presence probe addressed to a full JID of the contact, the server MUST NOT return presence information about any resource except the resource specified by the 'to' address of the probe.  Rules #1 and #2 for a bare JID probe apply equally to the case of a full JID probe.  If there is a resource matching the full JID and (a) the probing entity has authorization via a presence subscription to see the contact's presence or (b) the contact has sent directed available presence to the probing entity, then the server MUST return an available presence notification, which SHOULD communicate only the fact that the resource is available (not detailed information such as the &lt;show/&gt;, &lt;status/&gt;, &lt;priority/&gt;, or presence extensions).</t>
+        <t>
+          <figure>
+            <artwork><![CDATA[
+CS: <presence from='romeo@example.net/bar'
+              to='lobby@chat.example.com'/>
+            ]]></artwork>
+          </figure>
         </t>
       </section>
     </section>
@@ -2175,6 +2191,7 @@ US: </stream:stream>
           <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST silently ignore the stanza.</t>
           <t>For a presence stanza of type "subscribe", the server MUST return a presence stanza of type "unsubscribed".</t>
           <t>For a presence stanza of type "subscribed", "unsubscribe", or "unsubscribed", the server MUST silently ignore the stanza.</t>
+          <t>For a presence stanza of type "probe", the server MUST return a presence stanza of type "unsubscribed".</t>
         </list>
       </t>
     </section>
@@ -2189,6 +2206,7 @@ US: </stream:stream>
             <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST deliver the stanza to the resource.</t>
             <t>For a presence stanza of type "subscribe", the server MUST follow the guidelines provided under <xref target='sub-request-inbound'/>.</t>
             <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST follow the guidelines provided under <xref target='sub'/>.</t>
+            <t>For a presence stanza of type "probe", the server MUST follow the guidelines provided under <xref target='presence-probe'/>.</t>
           </list>
         </t>
       </section>
@@ -2203,6 +2221,7 @@ US: </stream:stream>
             <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST silently ignore the stanza.</t>
             <t>For a presence stanza of type "subscribe", the server MUST follow the guidelines provided under <xref target='sub-request-inbound'/>.</t>
             <t>For a presence stanza of type "subscribed", "unsubscribe", or "unsubscribed", the server MUST ignore the stanza.</t>
+            <t>For a presence stanza of type "probe", the server MUST follow the guidelines provided under <xref target='presence-probe'/>.</t>
           </list>
         </t>
       </section>
@@ -2212,17 +2231,17 @@ US: </stream:stream>
       <section title="Available or Connected Resources" anchor="rules-barejid-resource">
         <t>If there is at least one available or connected resource, how the stanza is processed depends on the stanza type.</t>
         <section title="Message" anchor="rules-barejid-resource-message">
-          <t>For a message stanza of type "headline", the server SHOULD deliver the stanza to all available resources.</t>
-          <t>For a message stanza of type "chat" or "normal", the server SHOULD deliver the stanza to the highest-priority available resource. If there is not one highest-priority available resource but instead the highest priority is asserted by two or more available resources, these resources are said to form a "delivery tie".  In the case of a delivery tie, a server SHOULD deliver the message to all of the tied resources.  However, before delivering the message, a server MAY remove one or more resources from the tie.  Methods for doing so are outside the scope of this specification, but could include factors such as the resource's time of connection, time of last network or application activity, availability as determined by some hierarchy of &lt;show/&gt; values, or user-configured rules.  Nevertheless, a server MUST NOT remove all resources from the tie, and MUST deliver the message to at least one of the highest-priority resources (subject to appropriate security policies as described under <xref target='security'/> and in <xref target='xmpp-core'/>).</t>
+          <t>For a message stanza of type "headline", the server MUST deliver the stanza to all available resources.</t>
+          <t>For a message stanza of type "chat" or "normal", the server MUST either (a) deliver the stanza to the highest-priority available resource(s), or (b) deliver the stanza to all available resources with non-negative presence priority.  In the case of (a), if there is not one highest-priority available resource but instead the highest priority is asserted by two or more available resources, these resources are said to form a "delivery tie".  If there is a delivery tie, a server SHOULD deliver the message to all of the tied resources.  However, before delivering the message, a server MAY remove one or more resources from the tie.  Methods for doing so are outside the scope of this specification, but could include factors such as the resource's time of connection, time of last network or application activity, availability as determined by some hierarchy of &lt;show/&gt; values, or user-configured rules.  Nevertheless, a server MUST NOT remove all resources from the tie, and MUST deliver the message to at least one of the highest-priority resources (subject to appropriate security policies as described under <xref target='security'/> and in <xref target='xmpp-core'/>).</t>
           <t>For a message stanza of type "groupchat", the server MUST NOT deliver the stanza to any of the available resources but instead MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
           <t>For a message stanza of type "error", the server MUST silently discard the message (i.e., neither deliver it to the intended recipient nor return a stanza error to the sender).</t>
           <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available or connected resources as described under <xref target='rules-barejid-noresource'/>.</t>
           <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
         </section>
         <section title="Presence" anchor="rules-barejid-resource-pres">
-          <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
-          <t>For a presence stanza with no type or of type "unavailable", the server MUST deliver the stanza to all available resources.</t>
+          <t>For a presence stanza with no type or of type "unavailable", the server MUST deliver it to all available resources.</t>
           <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+          <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
           <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
         </section>
         <section title="IQ" anchor="rules-barejid-resource-iq">
@@ -2232,15 +2251,16 @@ US: </stream:stream>
       <section title="No Available or Connected Resources" anchor="rules-barejid-noresource">
         <t>If there are no available or connected resources associated with the user, how the stanza is processed depends on the stanza type.</t>
         <section title="Message" anchor="rules-barejid-noresource-message">
-          <t><iref item='Offline Message Storage'/>In order to properly handle message stanzas, it is strongly RECOMMENDED for an implementation to support OFFLINE STORAGE, i.e., the server SHOULD store the message stanza on behalf of the user and deliver it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
+          <t><iref item='Offline Message Storage'/>In order to properly handle message stanzas, it is RECOMMENDED for an implementation to support OFFLINE STORAGE, i.e., the server SHOULD store the message stanza on behalf of the user and deliver it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
           <t>For a message stanza of type "chat" or "normal", the server SHOULD add the message to offline storage or forward the message to the user via a non-XMPP messaging system (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled or available (e.g., because a size limit has been reached on offline messages), then the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-          <t>For a message stanza of type "headline", according to local service policies the server MUST either (1) add the message to offline storage or (2) silently discard the message (i.e., neither deliver it to the intended recipient nor return an error to the sender).</t>
+          <t>For a message stanza of type "headline", according to local service policies the server MUST either (a) add the message to offline storage or (b) silently discard the message (i.e., neither deliver it to the intended recipient nor return an error to the sender).</t>
           <t>For a message stanza of type "groupchat", the server SHOULD NOT add the message to offline storage but instead SHOULD return an error to the sender.</t>
-          <t>For a message stanza of type "error", the server MUST NOT add the message to offline storage but instead SHOULD silently discard the message (i.e., neither deliver it to the intended recipient nor return an error to the sender).</t>
+          <t>For a message stanza of type "error", the server MUST NOT add the message to offline storage but instead MUST silently discard the message (i.e., neither deliver it to the intended recipient nor return an error to the sender).</t>
         </section>
         <section title="Presence" anchor="rules-barejid-noresource-pres">
-          <t>For a presence stanza with no type or of type "unavailable" or "probe", the server SHOULD silently ignore the stanza by not storing it for later delivery and not replying to it on behalf of the user.</t>
+          <t>For a presence stanza with no type or of type "unavailable", the server SHOULD silently ignore the stanza by not storing it for later delivery and not replying to it on behalf of the user.</t>
           <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+          <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
         </section>
         <section title="IQ" anchor="rules-barejid-noresource-iq">
           <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, then the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, then the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
@@ -3771,7 +3791,7 @@ US: </stream:stream>
     </xs:restriction>
   </xs:simpleType>
 
-  <xs:element name='priority' type='xs:byte'/>
+  <xs:element name='priority' type='xs:byte' default='0'/>
 
   <xs:element name='iq'>
     <xs:complexType>
@@ -3905,13 +3925,21 @@ US: </stream:stream>
         <list style='symbols'>
           <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, for the sake of backward-compatibility server implementations are encouraged to advertise support for the feature, even though session establishment is a "no-op".</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, clarified and modified error handling related to presence subscription requests, presence probes and presence notifications.</t>
+          <t>Explicitly specified that a server is allowed to deliver a message stanza of type "chat" or "normal" to all resources.</t>
           <t>Added optional versioning of roster information to save bandwidth in cases where the roster has not changed (or has changed very little) between sessions; the relevant protocol interactions were originally described in <xref target='XEP-0237'/>.</t>
           <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed" and the optional "subscribed" value for the 'ask' flag.</t>
           <t>Added optional 'parent' attribute to &lt;thread/&gt; element</t>
           <t>Moved the protocol for communications blocking (specified in Section 10 of RFC 3921) back to <xref target='XEP-0016'/>, from which it was originally taken.</t>
         </list>
       </t>
-      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
+      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols, including the following.</t>
+      <t>
+        <list style='symbols'>
+          <t>Recommended returning presence unavailable in response to probes.</t>
+          <t>Clarified handling of presence probes sent to full JIDs.</t>
+          <t>Explicitly specified that the default value for the presence &lt;priority/&gt; element is zero.</t>
+        </list>
+      </t>
     </section>
 
     <section title="Copying Conditions" anchor="copying">
