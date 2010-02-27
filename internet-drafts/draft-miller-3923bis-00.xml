@@ -9,7 +9,7 @@
 
   <front>
     <title abbrev="XMPP E2E">End-to-End Object Encryption for the Extensible Messaging and Presence Protocol (XMPP)</title>
-    <author initials="M." surname="Miller" fullname="Matt Miller">
+    <author initials="M." surname="Miller" fullname="Matthew Miller">
       <organization>Cisco</organization>
       <address>
         <email>mamille2@cisco.com</email>
@@ -29,365 +29,26 @@
   <middle>
 
     <section title="Introduction" anchor="intro">
-      <t>This memo defines methods of end-to-end signing and object encryption for the Extensible Messaging and Presence Protocol (XMPP).  (For information about XMPP, see <xref target="XMPP-CORE"/> and <xref target="XMPP-IM"/>.)  The method specified herein enables a sender to sign and/or encrypt an instant message sent to a specific recipient, sign and/or encrypt presence information that is directed to a specific user, and sign and/or encrypt any arbitrary XMPP stanza directed to a specific user.  This memo thereby helps the XMPP specifications meet the requirements specified in <xref target="IMP-REQS"/>.</t>
+      <t>This memo defines methods of end-to-end object encryption for the Extensible Messaging and Presence Protocol (XMPP).  (For information about XMPP, see <xref target="XMPP-CORE"/> and <xref target="XMPP-IM"/>.)  The method specified herein enables a sender to encrypt an instant message sent to a specific recipient, and sign and/or encrypt any arbitrary XMPP stanza directed to a specific user.</t>
       <section title="Terminology" anchor="intro-terms">
-        <t>This document inherits terminology defined in <xref target="CMS"/>, <xref target="IMP-MODEL"/>, <xref target="SMIME"/>, and <xref target="XMPP-CORE"/>.</t>
+        <t>This document inherits terminology defined in <xref target="XMPP-CORE"/>.</t>
         <t>The capitalized key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="TERMS">BCP 14, RFC 2119</xref>.</t>
       </section>
     </section>
 
-    <section title="Requirements" anchor="req">
-      <t>For the purposes of this memo, we stipulate the following requirements:</t>
-      <t><list style="numbers">
-        <t>The method defined MUST address signing and encryption requirements for minimal instant messaging and presence, as those are defined in <xref target="IMP-REQS"/>.  In particular, the method MUST address the following requirements, which are copied here verbatim from <xref target="IMP-REQS"/>:
-        <list style="symbols">
-          <t>The protocol MUST provide means to ensure confidence that a received message (NOTIFICATION or INSTANT MESSAGE) has not been corrupted or tampered with.  (Section 2.5.1)</t>
-          <t>The protocol MUST provide means to ensure confidence that a received message (NOTIFICATION or INSTANT MESSAGE) has not been recorded and played back by an adversary.  (Section 2.5.2)</t>
-          <t>The protocol MUST provide means to ensure that a sent message (NOTIFICATION or INSTANT MESSAGE) is only readable by ENTITIES that the sender allows.  (Section 2.5.3)</t>
-          <t>The protocol MUST allow any client to use the means to ensure non-corruption, non-playback, and privacy, but the protocol MUST NOT require that all clients use these means at all times.  (Section 2.5.4)</t>
-          <t>When A establishes a SUBSCRIPTION to B's PRESENCE INFORMATION, the protocol MUST provide A means of verifying the accurate receipt of the content B chooses to disclose to A.  (Section 5.1.4)</t>
-          <t>The protocol MUST provide A means of verifying that the presence information is accurate, as sent by B.  (Section 5.3.1)</t>
-          <t>The protocol MUST provide A means of ensuring that no other PRINCIPAL C can see the content of M.  (Section 5.4.6)</t>
-          <t>The protocol MUST provide A means of ensuring that no other PRINCIPAL C can tamper with M, and B means to verify that no tampering has occurred.  (Section 5.4.7)</t>
-        </list></t>
-        <t>The method defined MUST enable interoperability with non-XMPP messaging systems that support the Common Presence and Instant Messaging (CPIM) specifications published by the Instant Messaging and Presence (IMPP) Working Group.  Two corollaries of this requirement are: <list style="symbols">
-          <t>Prior to signing and/or encrypting, the format of an instant message MUST conform to the CPIM Message Format defined in <xref target="MSGFMT"/>.</t>
-          <t>Prior to signing and/or encrypting, the format of presence information MUST conform to the CPP Presence Information Data Format defined in <xref target="PIDF"/>.</t>
-        </list></t>
-        <t>The method MUST follow the required procedures (including the specific algorithms) defined in <xref target='CPIM'/> and <xref target='CPP'/>.  In particular, these documents specify: <list style='symbols'>
-            <t>Signing MUST use <xref target='SMIME'/> signatures with <xref target='CMS'/> SignedData.</t>
-            <t>Encryption MUST use <xref target='SMIME'/> encryption with <xref target='CMS'/> EnvelopeData.</t>
-          </list></t>
-        <t>In order to enable interoperable implementations, sending and receiving applications MUST implement the algorithms specified under <xref target="rules-mandatory">Mandatory-to-Implement Cryptographic Algorithms</xref>.</t>
-      </list></t>
-      <t>We further stipulate that the following functionality is out of scope for this memo:</t>
-      <t><list style="symbols">
-        <t>Discovery of support for this protocol. An entity could discover whether another entity supports this protocol by (1) attempting to send signed or encrypted stanzas and receiving an error stanza ("technical" discovery) or a textual message in reply ("social" discovery) if the protocol is not supported, or (2) using a dedicated service discovery protocol, such as <xref target="DISCO"/> or <xref target="CAPS"/>.  However, the definition of a service discovery protocol is out of scope for this memo.</t>
-        <t>Signing or encryption of XMPP groupchat messages, which are mentioned in <xref target="XMPP-IM"/> but not defined therein since they are not required by <xref target="IMP-REQS"/>; such messages are best specified in <xref target="MUC"/>.</t>
-        <t>Signing or encryption of broadcasted presence as described in <xref target="XMPP-IM"/> (the methods defined herein apply to directed presence only).</t>
-        <t>Signing or encryption of communications that occur within the context of applications other than instant messaging and presence as those are described in <xref target="IMP-MODEL"/> and <xref target="IMP-REQS"/>.</t>
-      </list></t>
-    </section>
-
     <section title='Securing Messages' anchor="message">
       <section title='Process for Securing Messages' anchor="message-process">
-        <t>In order to sign and/or encrypt a message, a sending agent MUST use the following procedure:</t>
-        <t><list style='numbers'>
-          <t>Generate a "Message/CPIM" object as defined in <xref target='MSGFMT'/>.</t>
-          <t>Sign and/or encrypt both the headers and content of the "Message/CPIM" object as specified in Requirement 3 of <xref target="req"/> above.</t>
-          <t>Provide the resulting signed and/or encrypted object within an XML CDATA section (see Section 2.7 of <xref target="XML"/>) contained in an &lt;e2e/&gt; child of a &lt;message/&gt; stanza, where the &lt;e2e/&gt; element is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace as specified more fully in <xref target="namespace"/> below.</t>
-        </list></t>
-      </section>
-      <section title='Example of a Signed Message' anchor="message-sign">
-        <t>The following example illustrates the defined steps for signing a message.</t>
-        <t>First, the sending agent generates a "Message/CPIM" object in accordance with the rules and formats specified in <xref target="MSGFMT"/>.</t>
-        <figure>
-          <preamble>Example 1: Sender generates "Message/CPIM" object:</preamble>
-          <artwork><![CDATA[
-|   Content-type: Message/CPIM
-|   
-|   From: Juliet Capulet <im:juliet@example.com>
-|   To: Romeo Montague <im:romeo@example.net>
-|   DateTime: 2003-12-09T11:45:36.66Z
-|   Subject: Imploring
-|   
-|   Content-type: text/plain; charset=utf-8
-|   Content-ID: <1234567890@example.com>
-|   
-|   Wherefore art thou, Romeo?
-          ]]></artwork>
-        </figure>
-        <t>Once the sending agent has generated the "Message/CPIM" object, the sending agent may sign it.  The result is a multipart <xref target="SMIME"/> object (see <xref target='MULTI'/>) that has a Content-Type of "multipart/signed" and includes two parts: one whose Content-Type is "Message/CPIM" and another whose Content-Type is "application/pkcs7-signature".</t>
-        <figure>
-          <preamble>Example 2: Sender generates multipart/signed object:</preamble>
-          <artwork>
-|   Content-Type: multipart/signed; boundary=next;
-|                 micalg=sha1;
-|                 protocol=application/pkcs7-signature
-|   
-|   --next
-|   Content-type: Message/CPIM
-|   
-|   From: Juliet Capulet &lt;im:juliet@example.com&gt;
-|   To: Romeo Montague &lt;im:romeo@example.net&gt;
-|   DateTime: 2003-12-09T23:45:36.66Z
-|   Subject: Imploring
-|   
-|   Content-type: text/plain; charset=utf-8
-|   Content-ID: &lt;1234567890@example.com&gt;
-|   
-|   Wherefore art thou, Romeo?
-|   --next
-|   Content-Type: application/pkcs7-signature
-|   Content-Disposition: attachment;handling=required;\
-|                                   filename=smime.p7s
-|   
-|   [signed body part]
-|   
-|   --next--
-        </artwork>
-      </figure>
-      <t>The sending agent now wraps the "multipart/signed" object in an XML CDATA section, which is contained in an &lt;e2e/&gt; element that is included as a child element of the XMPP message stanza and that is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace.</t>
-      <figure>
-        <preamble>Example 3: Sender generates XMPP message stanza:</preamble>
-        <artwork>
-|   &lt;message to='romeo@example.net/orchard' type='chat'&gt;
-|     &lt;e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'&gt;
-|   &lt;![CDATA[
-|   Content-Type: multipart/signed; boundary=next;
-|                 micalg=sha1;
-|                 protocol=application/pkcs7-signature
-|   
-|   --next
-|   Content-type: Message/CPIM
-|   
-|   From: Juliet Capulet &lt;im:juliet@example.com&gt;
-|   To: Romeo Montague &lt;im:romeo@example.net&gt;
-|   DateTime: 2003-12-09T23:45:36.66Z
-|   Subject: Imploring
-|   
-|   Content-type: text/plain; charset=utf-8
-|   Content-ID: &lt;1234567890@example.com&gt;
-|   
-|   Wherefore art thou, Romeo?
-|   --next
-|   Content-Type: application/pkcs7-signature
-|   Content-Disposition: attachment;handling=required;\
-|                                   filename=smime.p7s
-|   
-|   [signed body part]
-|   
-|   --next--
-|   ]]&gt;
-|     &lt;/e2e&gt;
-|   &lt;/message&gt;
-          </artwork>
-        </figure>
+        <t>TODO: rework (IJEP-083)</t>
       </section>
       <section title='Example of an Encrypted Message' anchor="message-encrypt">
-        <t>The following example illustrates the defined steps for encrypting a message.</t>
-        <t>First, the sending agent generates a "Message/CPIM" object in accordance with the rules and formats specified in <xref target="MSGFMT"/>.</t>
-        <figure>
-          <preamble>Example 4: Sender generates "Message/CPIM" object:</preamble>
-          <artwork><![CDATA[
-|   Content-type: Message/CPIM
-|   
-|   From: Juliet Capulet <im:juliet@example.com>
-|   To: Romeo Montague <im:romeo@example.net>
-|   DateTime: 2003-12-09T11:45:36.66Z
-|   Subject: Imploring
-|   
-|   Content-type: text/plain; charset=utf-8
-|   Content-ID: <1234567890@example.com>
-|   
-|   Wherefore art thou, Romeo?
-          ]]></artwork>
-        </figure>
-        <t>Once the sending agent has generated the "Message/CPIM" object, the sending agent may encrypt it.</t>
-        <figure>
-          <preamble>Example 5: Sender generates encrypted object:</preamble>
-          <artwork>
-|   U2FsdGVkX19okeKTlLxa/1n1FE/upwn1D20GhPWqhDWlexKMUKYJInTWzERP+vcQ
-|   /OxFs40uc9Fx81a5/62p/yPb/UWnuG6SR6o3Ed2zwcusDImyyz125HFERdDUMBC9
-|   Pt6Z4cTGKBmJzZBGyuc3Y+TMBTxqFFUAxeWaoxnZrrl+LP72vwbriYc3KCMxDbQL
-|   Igc1Vzs5/5JecegMieNY24SlNyX9HMFRNFpbI64vLxYEk55A+3IYbZsluCFT31+a
-|   +GeAvJkvH64LRV4mPbUhENTQ2wbAwnOTvbLIaQEQrii78xNEh+MK8Bx7TBTvi4yH
-|   Ddzf9Sim6mtWsXaCAvWSyp0X91d7xRJ4JIgKfPzkxNsWJFCLthQS1p734eDxXVd3
-|   i08lEHzyll6htuEr59ZDAw==
-          </artwork>
-        </figure>
-        <t>The sending agent now wraps the encrypted object in an XML CDATA section, which is contained in an &lt;e2e/&gt; element that is included as a child element of the XMPP message stanza and that is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace.</t>
-        <figure>
-          <preamble>Example 6: Sender generates XMPP message stanza:</preamble>
-          <artwork>
-|   &lt;message to='romeo@example.net/orchard' type='chat'&gt;
-|     &lt;e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'&gt;
-|   &lt;![CDATA[
-|   U2FsdGVkX19okeKTlLxa/1n1FE/upwn1D20GhPWqhDWlexKMUKYJInTWzERP+vcQ
-|   /OxFs40uc9Fx81a5/62p/yPb/UWnuG6SR6o3Ed2zwcusDImyyz125HFERdDUMBC9
-|   Pt6Z4cTGKBmJzZBGyuc3Y+TMBTxqFFUAxeWaoxnZrrl+LP72vwbriYc3KCMxDbQL
-|   Igc1Vzs5/5JecegMieNY24SlNyX9HMFRNFpbI64vLxYEk55A+3IYbZsluCFT31+a
-|   +GeAvJkvH64LRV4mPbUhENTQ2wbAwnOTvbLIaQEQrii78xNEh+MK8Bx7TBTvi4yH
-|   Ddzf9Sim6mtWsXaCAvWSyp0X91d7xRJ4JIgKfPzkxNsWJFCLthQS1p734eDxXVd3
-|   i08lEHzyll6htuEr59ZDAw==
-|   ]]&gt;
-|     &lt;/e2e&gt;
-|   &lt;/message&gt;
-          </artwork>
-        </figure>
-      </section>
-    </section>
-
-    <section title='Securing Presence' anchor="presence">
-      <section title='Process for Securing Presence Information' anchor="presence-process">
-        <t>In order to sign and/or encrypt presence information, a sending agent MUST use the following procedure:</t>
-        <t><list style='numbers'>
-          <t>Generate an "application/pidf+xml" object as defined in <xref target='PIDF'/>.</t>
-          <t>Sign and/or encrypt the "application/pidf+xml" object as specified in Requirement 3 of <xref target="req"/> above.</t>
-          <t>Provide the resulting signed and/or encrypted object within an XML CDATA section (see Section 2.7 of <xref target="XML"/>) contained in an &lt;e2e/&gt; child of a &lt;presence/&gt; stanza, where the &lt;e2e/&gt; element is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace.  The &lt;presence/&gt; stanza MUST include a 'to' attribute, i.e., it must be an instance of directed presence as defined in <xref target='XMPP-IM'/>.</t>
-        </list></t>
-      </section>
-      <section title='Example of Signed Presence Information' anchor="presence-sign">
-        <t>The following example illustrates the defined steps for signing presence information.</t>
-        <t>First, the sending agent generates an "application/pidf+xml" object in accordance with the rules and formats specified in <xref target="PIDF"/>.</t>
-        <figure>
-          <preamble>Example 7: Sender generates "application/pidf+xml" object:</preamble>
-          <artwork><![CDATA[
-|   <?xml version="1.0" encoding="UTF-8"?>
-|   <presence xmlns="urn:ietf:params:xml:ns:pidf"
-|             xmlns:im="urn:ietf:params:xml:ns:pidf:im"
-|             entity="pres:juliet@example.com">
-|     <tuple id="hr0zny"
-|       <status>
-|         <basic>open</basic>
-|         <im:im>away</im:im>
-|       </status>
-|       <note xml:lang="en">retired to the chamber</note>
-|       <timestamp>2003-12-09T23:53:11.31</timestamp>
-|     </tuple>
-|   </presence>
-          ]]></artwork>
-        </figure>
-        <t>Once the sending agent has generated the "application/pidf+xml" object, the sending agent may sign it.  The result is a multipart <xref target="SMIME"/> object (see <xref target='MULTI'/>) that has a Content-Type of "multipart/signed" and includes two parts: one whose Content-Type is "application/pidf+xml" and another whose Content-Type is "application/pkcs7-signature".</t>
-        <figure>
-          <preamble>Example 8: Sender generates multipart/signed object:</preamble>
-          <artwork><![CDATA[
-|   Content-Type: multipart/signed; boundary=next;
-|                 micalg=sha1;
-|                 protocol=application/pkcs7-signature
-|   
-|   --next
-|   Content-type: application/pidf+xml
-|   Content-ID: <2345678901@example.com>
-|   
-|   <xml version="1.0" encoding="UTF-8"?>
-|   <presence xmlns="urn:ietf:params:xml:ns:pidf"
-|             xmlns:im="urn:ietf:params:xml:ns:pidf:im"
-|             entity="pres:juliet@example.com">
-|     <tuple id="hr0zny">
-|       <status&gt;
-|         <basic>open</basic>
-|         <im:im>away</im:im>
-|       </status>
-|       <note xml:lang="en">retired to the chamber</note>
-|       <timestamp>2003-12-09T23:53:11.31Z</timestamp>
-|     </tuple>
-|   </presence>
-|   --next
-|   Content-Type: application/pkcs7-signature
-|   Content-Disposition: attachment;handling=required;\
-|                                   filename=smime.p7s
-|   
-|   [signed body part]
-|   
-|   --next--
-          ]]></artwork>
-        </figure>
-        <t>The sending agent now wraps the "multipart/signed" object in an XML CDATA section, which is contained in an &lt;e2e/&gt; element that is included as a child element of the XMPP message stanza and that is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace.</t>
-        <figure>
-          <preamble>Example 9: Sender generates XMPP presence stanza:</preamble>
-          <artwork>
-|   &lt;presence to='romeo@example.net/orchard'&gt;
-|     &lt;e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'&gt;
-|   &lt;![CDATA[
-|   Content-Type: multipart/signed; boundary=next;
-|                 micalg=sha1;
-|                 protocol=application/pkcs7-signature
-|   
-|   --next
-|   Content-type: application/pidf+xml
-|   Content-ID: &lt;2345678901@example.com&gt;
-|   
-|   &lt;xml version="1.0" encoding="UTF-8"?&gt;
-|   &lt;presence xmlns="urn:ietf:params:xml:ns:pidf"
-|             xmlns:im="urn:ietf:params:xml:ns:pidf:im"
-|             entity="pres:juliet@example.com"&gt;
-|     &lt;tuple id="hr0zny"&gt;
-|       &lt;status&gt;
-|         &lt;basic&gt;open&lt;/basic&gt;
-|         &lt;im:im&gt;away&lt;/im:im&gt;
-|       &lt;/status&gt;
-|       &lt;note xml:lang="en"&gt;retired to the chamber&lt;/note&gt;
-|       &lt;timestamp&gt;2003-12-09T23:53:11.31Z&lt;/timestamp&gt;
-|     &lt;/tuple&gt;
-|   &lt;/presence&gt;
-|   --next
-|   Content-Type: application/pkcs7-signature
-|   Content-Disposition: attachment;handling=required;\
-|                                   filename=smime.p7s
-|   
-|   [signed body part]
-|   
-|   --next--
-|   ]]&gt;
-|     &lt;/e2e&gt;
-|   &lt;/presence&gt;
-          </artwork>
-        </figure>
-      </section>
-      <section title='Example of Encrypted Presence Information' anchor="presence-encrypt">
-        <t>The following example illustrates the defined steps for encrypting presence information.</t>
-        <t>First, the sending agent generates an "application/pidf+xml" object in accordance with the rules and formats specified in <xref target="PIDF"/>.</t>
-        <figure>
-          <preamble>Example 10: Sender generates "application/pidf+xml" object:</preamble>
-          <artwork><![CDATA[
-|   <?xml version="1.0" encoding="UTF-8"?>
-|   <presence xmlns="urn:ietf:params:xml:ns:pidf"
-|             xmlns:im="urn:ietf:params:xml:ns:pidf:im"
-|             entity="pres:juliet@example.com">
-|     <tuple id="hr0zny"
-|       <status>
-|         <basic>open</basic>
-|         <im:im>away</im:im>
-|       </status>
-|       <note xml:lang="en">retired to the chamber</note>
-|       <timestamp>2003-12-09T23:53:11.31</timestamp>
-|     </tuple>
-|   </presence>
-          ]]></artwork>
-        </figure>
-        <t>Once the sending agent has generated the "application/pidf+xml" object, the sending agent may encrypt it.</t>
-        <figure>
-          <preamble>Example 11: Sender generates encrypted object:</preamble>
-          <artwork><![CDATA[
-|   U2FsdGVkX18VJPbx5GMdFPTPZrHLC9QGiVP+ziczu6zWZLFQxae6O5PP6iqpr2No
-|   zOvBVMWvYeRAT0zd18hr6qsqKiGl/GZpAAbTvPtaBxeIykxsd1+CX+U+iw0nEGCr
-|   bjiQrk0qUKJ79bNxwRnqdidjhyTpKSbOJC0XZ8CTe7AE9KDM3Q+uk+O3jrqX4byL
-|   GBlKThbzKidxz32ObojPEEwfFiM/yUeqYUP1OcJpUmeQ8lcXhD6tcx+m2MAyYYLP
-|   boKQxpLknxRnbM8T/voedlnFLbbDu69mOlxDPbr1mHZd3hDsyFudb1fb4rI3Kw0K
-|   Nq+3udr2IkysviJDgQo+xGIQUG/5sED/mAaPRlj4f/JtTzvT4EaQTawv69ntXfKV
-|   MCr9KdIMMdjdJzOJkYLoAhNVrcZn5tw8WsJGwuKuhYb/SShy7InzOapPaPAl7/Mm
-|   PHj7zj3NZ6EEIweDOuAwWlIG/dT506tci27+EW7JnXwMPnFMkF+6a7tr/0Y+iiej
-|   woJxUIBqCOgX+U7srHpK2NYtNTZ7UQp2V0yEx1JV8+Y=
-          ]]></artwork>
-        </figure>
-        <t>The sending agent now wraps the encrypted object in an XML CDATA section, which is contained in an &lt;e2e/&gt; element that is included as a child element of the XMPP message stanza and that is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace.</t>
-        <figure>
-          <preamble>Example 12: Sender generates XMPP presence stanza:</preamble>
-          <artwork>
-|   &lt;presence to='romeo@example.net/orchard'&gt;
-|     &lt;e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'&gt;
-|   &lt;![CDATA[
-|   U2FsdGVkX18VJPbx5GMdFPTPZrHLC9QGiVP+ziczu6zWZLFQxae6O5PP6iqpr2No
-|   zOvBVMWvYeRAT0zd18hr6qsqKiGl/GZpAAbTvPtaBxeIykxsd1+CX+U+iw0nEGCr
-|   bjiQrk0qUKJ79bNxwRnqdidjhyTpKSbOJC0XZ8CTe7AE9KDM3Q+uk+O3jrqX4byL
-|   GBlKThbzKidxz32ObojPEEwfFiM/yUeqYUP1OcJpUmeQ8lcXhD6tcx+m2MAyYYLP
-|   boKQxpLknxRnbM8T/voedlnFLbbDu69mOlxDPbr1mHZd3hDsyFudb1fb4rI3Kw0K
-|   Nq+3udr2IkysviJDgQo+xGIQUG/5sED/mAaPRlj4f/JtTzvT4EaQTawv69ntXfKV
-|   MCr9KdIMMdjdJzOJkYLoAhNVrcZn5tw8WsJGwuKuhYb/SShy7InzOapPaPAl7/Mm
-|   PHj7zj3NZ6EEIweDOuAwWlIG/dT506tci27+EW7JnXwMPnFMkF+6a7tr/0Y+iiej
-|   woJxUIBqCOgX+U7srHpK2NYtNTZ7UQp2V0yEx1JV8+Y=
-|   ]]&gt;
-|     &lt;/e2e&gt;
-|   &lt;/presence&gt;
-          </artwork>
-        </figure>
+        <t>TODO: rework</t>
       </section>
     </section>
 
     <section title='Securing Arbitrary XMPP Data' anchor="arbitrary">
+      <t>TODO: rework</t>
       <t>The foregoing sections of this memo describe how to secure "least common denominator" messaging and presence data of the kind that can be directly translated into the MSGFMT or PIDF formats.  However, XMPP possesses a third base-level stanza type (&lt;iq/&gt;) in addition to &lt;message/&gt; and &lt;presence/&gt;, as well as the ability to include extended XML data within arbitrary child elements of the three core stanza types.  Therefore, it would be desirable to secure such data if possible.</t>
-      <t>Because <xref target="MSGFMT"/> specifies the ability to encapsulate any MIME type, the approach taken in this memo is to include arbitrary XMPP data in an XML media type named "application/xmpp+xml" as specified more fully in <xref target="mediatype"/> below.</t>
+      <t>Because <xref target="MSGFMT"/> specifies the ability to encapsulate any MIME type, the approach taken in this memo is to include arbitrary XMPP data in an XML media type named "application/xmpp+xml" as specified more fully in mediatype below.</t>
       <t>The following examples illustrate the structure of the "application/xmpp+xml" MIME type.  (Note: The 'http://jabber.org/protocol/evil' namespace used in these examples is associated with an April Fool's protocol written to be the instant messaging equivalent of RFC 3514; it is included only as an instance of extended information included in an XML stanza and should not be taken seriously as a functional XMPP extension.)</t>
       <figure>
         <preamble>Example 13: Message stanza with extended data contained in "application/xmpp+xml" MIME type:</preamble>
@@ -438,7 +99,7 @@
 |   &lt;/xmpp&gt;
         </artwork>
       </figure>
-      <t>Just as with the "Message/CPIM" and "application/pidf+xml" objects, the "application/xmpp+xml" object would be signed and/or encrypted, then encapsulated within an XML CDATA section (see Section 2.7 of <xref target="XML"/>) contained in an &lt;e2e/&gt; child of a &lt;presence/&gt; stanza, where the &lt;e2e/&gt; element is qualified by the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace.</t>
+      <t>Just as with the "Message/CPIM" and "application/pidf+xml" objects, the "application/xmpp+xml" object would be signed and/or encrypted, then encapsulated within an XML CDATA section (see Section 2.7 of <xref target="XML"/>) contained in an &lt;e2e/&gt; child of a &lt;presence/&gt; stanza, where the &lt;e2e/&gt; element is qualified by the 'urn:ietf:params:xml:ns:xmpp-objenc' namespace.</t>
     </section>
 
     <section title="Rules for S/MIME Generation and Handling" anchor="rules">
@@ -459,16 +120,6 @@
       <section title="Transfer Encoding" anchor="rules-transfer">
         <t>Because it is expected that XMPP applications will not interface with older 7-bit systems, the transfer encoding (as defined in Section 3.1.2 of <xref target="SMIME"/>) MUST be "binary".</t>
       </section> 
-      <section title="Order of Signing and Encrypting" anchor="rules-order">
-        <t>If a stanza is both signed and encrypted, it SHOULD be signed first, then encrypted.</t>
-      </section>
-      <section title="Inclusion of Certificates" anchor="rules-certs">
-        <t>If the sender and recipient are involved in an active messaging session over a period of time, the sending agent SHOULD include the sender's certificate along with at least one encrypted message stanza every five minutes. Outside the context of an active messaging session, the sending agent SHOULD include the sender's certificate along with each encrypted message stanza.  A sending agent MAY include the sender's certificate along with each encrypted presence stanza.  However, a sending agent SHOULD NOT include a certificate more than once every five minutes.</t>
-      </section>
-      <section title="Attachment and Checking of Signatures" anchor="rules-sigs"> 
-        <t>Sending agents SHOULD attach a signature to each encrypted XML stanza. If a signature is attached, a Content-Disposition header field (as defined in <xref target='DISP'/>) SHOULD be included to specify how the signature is to be handled by the receiving application.</t>
-        <t>If the receiving agent determines that the signature attached to an encrypted XML stanza is invalid, it SHOULD NOT present the stanza to the intended recipient (human or application), SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that the attached signature is invalid), and MAY return a stanza error to the sender as described under <xref target="errors">Recipient Error Handling</xref>.</t>
-      </section>
       <section title="Decryption" anchor="rules-decrypt">
         <t>If the receiving agent is unable to decrypt the encrypted XML stanza, it SHOULD NOT present the stanza to the intended recipient (human or application), SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that it has received a stanza that cannot be decrypted), and MAY return a stanza error to the sender as described under <xref target="errors">Recipient Error Handling</xref>.</t>
       </section>
@@ -511,7 +162,7 @@
         <preamble>Example 16: Recipient returns &lt;not-acceptable/&gt; error:</preamble>
         <artwork><![CDATA[
 <message from='romeo@example.net/orchard' type='chat'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
   [CDATA section here]
   </e2e>
   <error type='modify'>
@@ -526,7 +177,7 @@
         <preamble>Example 17: Recipient returns &lt;not-acceptable/&gt; error:</preamble>
         <artwork><![CDATA[
 <message from='romeo@example.net/orchard' type='chat'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
   [CDATA section here]
   </e2e>
   <error type='modify'>
@@ -541,7 +192,7 @@
         <preamble>Example 18: Recipient returns &lt;bad-request/&gt; error:</preamble>
         <artwork><![CDATA[
 <message from='romeo@example.net/orchard' type='chat'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
   [CDATA section here]
   </e2e>
   <error type='modify'>
@@ -553,39 +204,15 @@
       </figure>
     </section>
 
-    <section title="Secure Communications Through a Gateway" anchor="gateway">
-      <t>A common method for achieving interoperability between two disparate services is through the use of a "gateway" that interprets the protocols of each service and translates them into the protocols of the other.  The CPIM specifications (specifically <xref target="MSGFMT"/> and <xref target="PIDF"/> define the common profiles to be used for interoperability between instant messaging and presence services that comply with <xref target="IMP-REQS"/>.  In the case of communications between an XMPP service and a non-XMPP service, we can visualize this relationship as follows:</t>
-      <figure>
-        <artwork><![CDATA[
-+-------------+        +-------------+        +------------+
-|             |        |             |        |            |
-|    XMPP     |        |  XMPP-CPIM  |        |  Non-XMPP  |
-|   Service   | <----> |   Gateway   | <----> |  Service   |
-|             |        |             |        |            |
-+-------------+        +-------------+        +------------+
-        ]]></artwork>
-      </figure>
-      <t>The end-to-end encryption method defined herein enables the exchange of encrypted and/or signed instant messages and presence through an XMPP-CPIM gateway.  In particular:</t>
-      <t><list style='symbols'>
-        <t>When a gateway receives a secured XMPP message or presence stanza from the XMPP service that is addressed to a user on the non-XMPP service, it MUST remove the XMPP "wrapper" (everything down to and including the &lt;e2e&gt; and &lt;/e2e&gt; tags) in order to reveal the multipart S/MIME object, then route the object to the non-XMPP service (first wrapping it in the protocol used by the non-XMPP service if necessary).</t>
-        <t>When a gateway receives a secured non-XMPP instant message or presence document from the non-XMPP service that is addressed to a user on the XMPP service, it MUST remove the non-XMPP "wrapper" (if any) in order to reveal the multipart S/MIME object, wrap the object in an XMPP message or presence "wrapper" (including the &lt;e2e&gt; and &lt;/e2e&gt; tags), and then route the XMPP stanza to the XMPP service.</t>
-      </list></t>
-      <t>The wrapped S/MIME object MUST be immutable and MUST NOT be modified by an XMPP-CPIM gateway.</t>
-    </section>
-
     <section title='urn:ietf:params:xml:xmpp-e2e Namespace' anchor='namespace'>
-      <t>The &lt;e2e xmlns='urn:ietf:params:xml:ns:xmpp-e2e'/&gt; element is a wrapper for an XML CDATA section (see Section 2.7 of <xref target="XML"/>) that contains a "Message/CPIM", "application/pidf+xml", or "application/xmpp+xml" object. Thus the 'urn:ietf:params:xml:xmpp-e2e' namespace has no inherent semantics, and the semantics of the encapsulated object are defined by one of the following specifications:</t>
+      <t>The &lt;e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'/&gt; element is a wrapper for an XML CDATA section (see Section 2.7 of <xref target="XML"/>) that contains a "Message/CPIM", "application/pidf+xml", or "application/xmpp+xml" object. Thus the 'urn:ietf:params:xml:xmpp-e2e' namespace has no inherent semantics, and the semantics of the encapsulated object are defined by one of the following specifications:</t>
       <t><list style="symbols">
         <t><xref target="MSGFMT"/> for "Message/CPIM"</t>
         <t><xref target="PIDF"/> for "application/pidf+xml"</t>
         <t><xref target="XMPP-CORE"/> for "application/xmpp+xml"</t>
       </list></t>
       <t>Although the "application/xmpp+xml" media type is specified in this document, the &lt;xmpp/&gt; element is simply a wrapper for a &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; stanza, where the semantics of those stanza types are specified in <xref target="XMPP-CORE"/>.</t>
-      <t>Given that the 'urn:ietf:params:xml:ns:xmpp-e2e' namespace has no inherent semantics and specifies a using protocol only, versioning is the responsibility of the protocols that define the encapsulated objects (<xref target="MSGFMT"/>, <xref target="PIDF"/>, and <xref target="XMPP-CORE"/>).</t>
-    </section>
-
-    <section title='application/xmpp+xml Media Type' anchor='mediatype'>
-      <t>The "application/xmpp+xml" media type adheres to the guidelines specified in <xref target="XML-MEDIA"/>.  The root element for this MIME type is &lt;xmpp/&gt;, and the root element MUST contain one and only one child element, corresponding to one of the XMPP stanza types (i.e., message, presence, or iq) if the default namespace is 'jabber:client' or 'jabber:server' as defined in <xref target="XMPP-CORE"/>.  The character encoding for this XML media type MUST be UTF-8, in accordance with Section 11.5 of <xref target="XMPP-CORE"/>.</t>
+      <t>Given that the 'urn:ietf:params:xml:ns:xmpp-objenc' namespace has no inherent semantics and specifies a using protocol only, versioning is the responsibility of the protocols that define the encapsulated objects (<xref target="MSGFMT"/>, <xref target="PIDF"/>, and <xref target="XMPP-CORE"/>).</t>
     </section>
 
     <section title='Security Considerations' anchor='security'>
@@ -597,7 +224,7 @@
       <section title="XML Namespace Name for e2e Data in XMPP" anchor="iana-ns-e2e">
         <t>A URN sub-namespace of signed and encrypted content for the Extensible Messaging and Presence Protocol (XMPP) is defined as follows. (This namespace name adheres to the format defined in <xref target='XML-REG'/>.)</t>
         <t><list style='hanging'> 
-          <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-e2e</t> 
+          <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-objenc</t> 
           <t hangText='Specification:'>RFC 3923</t>
           <t hangText='Description:'>This is an XML namespace name of signed and encrypted content for the Extensible Messaging and Presence Protocol as defined by RFC 3923.</t>
           <t hangText='Registrant Contact:'>IESG, &lt;iesg@ietf.org&gt;</t> 
@@ -1043,7 +670,7 @@
     </author>
     <date day="01" month="August" year="2004"/>
   </front>
-  <seriesInfo name="JSF JEP" value="0115"/>
+  <seriesInfo name="XSF XEP" value="0115"/>
   <format type="HTML" target="http://www.jabber.org/jeps/jep-0115.html"/>
 </reference>
 
@@ -1154,7 +781,7 @@
     </author>
     <date day="20" month="July" year="2004"/>
   </front>
-  <seriesInfo name="JSF JEP" value="0030"/>
+  <seriesInfo name="XSF JEP" value="0030"/>
   <format type="HTML" target="http://www.jabber.org/jeps/jep-0030.html"/>
 </reference>
 
@@ -1169,7 +796,7 @@
     </author>
     <date day="30" month="June" year="2004"/>
   </front>
-  <seriesInfo name="JSF JEP" value="0045"/>
+  <seriesInfo name="XSF JEP" value="0045"/>
   <format type="HTML" target="http://www.jabber.org/jeps/jep-0045.html"/>
 </reference>
 
@@ -1218,7 +845,7 @@
 
     </references>
 
-    <section title="Schema for urn:ietf:params:xml:ns:xmpp-e2e" anchor="schemas-e2e">
+    <section title="Schema for urn:ietf:params:xml:ns:xmpp-objenc" anchor="schemas-e2e">
       <t>The following XML schema is descriptive, not normative.</t>
       <figure>
         <artwork><![CDATA[
@@ -1226,8 +853,8 @@
 
 <xs:schema
     xmlns:xs='http://www.w3.org/2001/XMLSchema'
-    targetNamespace='urn:ietf:params:xml:ns:xmpp-e2e'
-    xmlns='urn:ietf:params:xml:ns:xmpp-e2e'
+    targetNamespace='urn:ietf:params:xml:ns:xmpp-objenc'
+    xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
     elementFormDefault='qualified'>
 
   <xs:element name='e2e' type='xs:string'/>
