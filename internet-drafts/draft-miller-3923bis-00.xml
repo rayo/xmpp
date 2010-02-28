@@ -37,69 +37,53 @@
     </section>
 
     <section title='Securing Messages' anchor="message">
-      <section title='Process for Securing Messages' anchor="message-process">
-        <t>TODO: rework (IJEP-083)</t>
-      </section>
-      <section title='Example of an Encrypted Message' anchor="message-encrypt">
-        <t>TODO: rework</t>
-      </section>
+        <t>An entity that wishes to encrypt messages to a recipient MUST perform the following:</t> 
+        <t><list style="numbers">
+          <t>Constructs a cleartext version of the &lt;message/&gt; stanza "S".
+          <figure>
+            <artwork><![CDATA[
+<message    xmlns='jabber:client'
+            from='juliet@capulet.net/balcony'
+            id='183ef129'
+            to='romeo@montegue.net'
+            type='chat'>
+    <thread>8996aef0-061d-012d-347a-549a200771aa</thread>
+    <body>Wherefore art thou, Romeo?</body>
+</message>
+            ]]></artwork>
+          </figure></t>
+          <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements an attributes (NOTE: line breaks within the XMPP message &lt;body/&gt; element and in other elements are significant and MUST NOT be removed), i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because it for purposes of encryption and decryption it is not treated as XML but as an opaque string.</t>
+          <t>Encrypts the stanza-string S' using the recipient's public key to produce encrypted data T.</t>
+          <t>Base64-encodes T to produce the encrypted data T'.</t>
+          <t>Constructs a &lt;data&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace, with T' as the text content.</t>
+          <t>Sends the &lt;e2e/&gt; element and an XMPP &lt;thread/&gt; element as the payload of an XMPP &lt;message/&gt;.
+          <figure>
+            <artwork><![CDATA[
+<message    xmlns='jabber:client'
+            from='juliet@capulet.net/balcony'
+            id='6410ed123'
+            to='romeo@montegue.net'
+            type='chat'>
+    <thread>460f0da0-0628-012d-347b-549a200771aa</thread>
+    <e2e   xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
+        AFm8G5F6FcilXdL3mlJ+XcOp3FqsaLN7pZ2kizL5s++BQxeb5gGPVf
+        r8ZQhjymzd/RhZNOk56zxawBBkft5ae1MWtmjR8X4LU6g9/RUeJS7m
+        FYD9/9l3ChjjPM5YrDlXP2mJh1dJNQ6Gai/g77zopaT26vGOT/2WLo
+        T+8pbOHFxluenivQ==
+    </e2e>
+</message>
+            ]]></artwork>
+          </figure></t>
+        </list></t>
     </section>
 
     <section title='Securing Arbitrary XMPP Data' anchor="arbitrary">
       <t>TODO: rework</t>
-      <t>The foregoing sections of this memo describe how to secure "least common denominator" messaging and presence data of the kind that can be directly translated into the MSGFMT or PIDF formats.  However, XMPP possesses a third base-level stanza type (&lt;iq/&gt;) in addition to &lt;message/&gt; and &lt;presence/&gt;, as well as the ability to include extended XML data within arbitrary child elements of the three core stanza types.  Therefore, it would be desirable to secure such data if possible.</t>
-      <t>Because <xref target="MSGFMT"/> specifies the ability to encapsulate any MIME type, the approach taken in this memo is to include arbitrary XMPP data in an XML media type named "application/xmpp+xml" as specified more fully in mediatype below.</t>
-      <t>The following examples illustrate the structure of the "application/xmpp+xml" MIME type.  (Note: The 'http://jabber.org/protocol/evil' namespace used in these examples is associated with an April Fool's protocol written to be the instant messaging equivalent of RFC 3514; it is included only as an instance of extended information included in an XML stanza and should not be taken seriously as a functional XMPP extension.)</t>
       <figure>
-        <preamble>Example 13: Message stanza with extended data contained in "application/xmpp+xml" MIME type:</preamble>
+        <preamble>Example XXXX:</preamble>
         <artwork>
-|   &lt;?xml version='1.0' encoding='UTF-8'?&gt;
-|   &lt;xmpp xmlns='jabber:client'&gt;
-|     &lt;message 
-|         from='iago@example.com/pda' 
-|         to='emilia@example.com/cell'&gt;
-|       &lt;body&gt; 
-|         I told him what I thought, and told no more 
-|         Than what he found himself was apt and true.  
-|       &lt;/body&gt;
-|       &lt;evil xmlns='http://jabber.org/protocol/evil'/&gt;
-|     &lt;/message&gt;
-|   &lt;/xmpp&gt;
         </artwork>
       </figure>
-      <figure>
-        <preamble>Example 14: Presence stanza with extended data contained in "application/xmpp+xml" MIME type:</preamble>
-        <artwork>
-|   &lt;?xml version='1.0' encoding='UTF-8'?&gt;
-|   &lt;xmpp xmlns='jabber:client'&gt;
-|     &lt;presence from='iago@example.com/pda'&gt;
-|       &lt;show&gt;dnd&lt;/show&gt;
-|       &lt;status&gt;Fomenting dissension&lt;/status&gt;
-|       &lt;evil xmlns='http://jabber.org/protocol/evil'/&gt;
-|     &lt;/presence&gt;
-|   &lt;/xmpp&gt;
-        </artwork>
-      </figure>
-      <figure>
-        <preamble>Example 15: IQ stanza with extended data contained in "application/xmpp+xml" MIME type:</preamble>
-        <artwork>
-|   &lt;?xml version='1.0' encoding='UTF-8'?&gt;
-|   &lt;xmpp xmlns='jabber:client'&gt;
-|     &lt;iq type='result'
-|         from='iago@example.com/pda'
-|         to='emilia@example.com/cell'
-|         id='evil1'&gt;
-|       &lt;query xmlns='jabber:iq:version'&gt;
-|         &lt;name&gt;Stabber&lt;/name&gt;
-|         &lt;version&gt;666&lt;/version&gt;
-|         &lt;os&gt;FiendOS&lt;/os&gt;
-|       &lt;/query&gt;
-|       &lt;evil xmlns='http://jabber.org/protocol/evil'/&gt;
-|     &lt;/iq&gt;
-|   &lt;/xmpp&gt;
-        </artwork>
-      </figure>
-      <t>Just as with the "Message/CPIM" and "application/pidf+xml" objects, the "application/xmpp+xml" object would be signed and/or encrypted, then encapsulated within an XML CDATA section (see Section 2.7 of <xref target="XML"/>) contained in an &lt;e2e/&gt; child of a &lt;presence/&gt; stanza, where the &lt;e2e/&gt; element is qualified by the 'urn:ietf:params:xml:ns:xmpp-objenc' namespace.</t>
     </section>
 
     <section title="Rules for S/MIME Generation and Handling" anchor="rules">
@@ -124,6 +108,7 @@
         <t>If the receiving agent is unable to decrypt the encrypted XML stanza, it SHOULD NOT present the stanza to the intended recipient (human or application), SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that it has received a stanza that cannot be decrypted), and MAY return a stanza error to the sender as described under <xref target="errors">Recipient Error Handling</xref>.</t>
       </section>
       <section title="Inclusion and Checking of Timestamps" anchor="rules-timestamps">
+        <t>TODO: rework to something supporting offline usage</t>
         <t>Timestamps are included in "Message/CPIM" and "application/pidf+xml" objects to help prevent replay attacks.  All timestamps MUST conform to <xref target='DATETIME'/> and be presented as UTC with no offset, including fractions of a second as appropriate.  Absent a local adjustment to the sending agent's perceived time or the underlying clock time, the sending agent MUST ensure that the timestamps it sends to the receiver increase monotonically (if necessary by incrementing the seconds fraction in the timestamp if the clock returns the same time for multiple requests).  The following rules apply to the receiving application:</t>
         <t><list style="symbols">
           <t>It MUST verify that the timestamp received is within five minutes of the current time.</t>
@@ -150,10 +135,9 @@
       <t>When an XMPP entity receives an XML stanza containing data that is signed and/or encrypted using the protocol described herein, several scenarios are possible:</t>
       <t><list style='hanging'>
         <t hangText='Case #1:'>The receiving application does not understand the protocol.</t>
-        <t hangText='Case #2:'>The receiving application understands the protocol and is able to decrypt the payload and verify the sender's signature.</t>
-        <t hangText='Case #3:'>The receiving application understands the protocol and is able to decrypt the payload and verify the sender's signature, but the timestamps fail the checks specified above under <xref target="rules-timestamps">Checking of Timestamps</xref>.</t>
-        <t hangText='Case #4:'>The receiving application understands the protocol and is able to decrypt the payload but is unable to verify the sender's signature.</t>
-        <t hangText='Case #5:'>The receiving application understands the protocol but is unable to decrypt the payload.</t>
+        <t hangText='Case #2:'>The receiving application understands the protocol and is able to decrypt the payload.</t>
+        <t hangText='Case #3:'>The receiving application understands the protocol and is able to decrypt the payload, but the timestamps fail the checks specified above under <xref target="rules-timestamps">Checking of Timestamps</xref>.</t>
+         <t> hangText='Case #4:'>The receiving application understands the protocol but is unable to decrypt the payload.</t>
       </list></t>
       <t>In Case #1, the receiving application MUST do one and only one of the following: (1) ignore the &lt;e2e/&gt; extension, (2) ignore the entire stanza, or (3) return a &lt;service-unavailable/&gt; error to the sender, as described in <xref target="XMPP-CORE"/>.</t>
       <t>In Case #2, the receiving application MUST NOT return a stanza error to the sender, since this is the success case.</t>
@@ -172,22 +156,7 @@
 </message>
         ]]></artwork>
       </figure>
-      <t>In Case #4, the receiving application SHOULD return a &lt;not-acceptable/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;unverified-signature/&gt; as shown below:</t>
-      <figure>
-        <preamble>Example 17: Recipient returns &lt;not-acceptable/&gt; error:</preamble>
-        <artwork><![CDATA[
-<message from='romeo@example.net/orchard' type='chat'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
-  [CDATA section here]
-  </e2e>
-  <error type='modify'>
-    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-    <unverified-signature xmlns='urn:ietf:params:xml:xmpp-e2e'/>
-  </error>
-</message>
-        ]]></artwork>
-      </figure>
-      <t>In Case #5, the receiving application SHOULD return a &lt;bad-request/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;decryption-failed/&gt; as shown below:</t>
+      <t>In Case #4, the receiving application SHOULD return a &lt;bad-request/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;decryption-failed/&gt; as shown below:</t>
       <figure>
         <preamble>Example 18: Recipient returns &lt;bad-request/&gt; error:</preamble>
         <artwork><![CDATA[
