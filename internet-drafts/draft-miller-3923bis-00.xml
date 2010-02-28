@@ -36,12 +36,30 @@
       </section>
     </section>
 
-    <section title='Securing Messages' anchor="message">
-        <t>An entity that wishes to encrypt messages to a recipient MUST perform the following:</t> 
-        <t><list style="numbers">
-          <t>Constructs a cleartext version of the &lt;message/&gt; stanza "S".
-          <figure>
-            <artwork><![CDATA[
+
+    <section title='Securing XMPP Stanzas' anchor='stanza'>
+      <t>The process a sending agent follows for securing stanzas is very similar regardless of the form of stanza (e.g. &lt;iq/&gt;, &lt;message/&gt;, and &lt;presence/&gt; from <xref target="XMPP-IM"/>).</t>
+      <t><list style="numbers">
+        <t>Constructs a cleartext version of the stanza, S.</t>
+        <t>Notes the current date and time when this stanza is constructed, formatted as per <xref target="DATETIME"/>, N.</t>
+        <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because it for purposes of encryption and decryption it is not treated as XML but as an opaque string.</t>
+        <t>Creates a Message Authentication Code "M" for stanza-string S' using <xref target="HMAC"/>. The algorithm is SHA256 and the sender's public key (R) is the secret.  The input to HMAC-SHA256 MUST be the timestamp from step 2 (conforming to <xref target='DATETIME'/>) appended by the cleartext sanza-string S', as follows:
+        <figure>
+          <artwork><![CDATA[
+HMAC-SHA256( SHA256(R), UTF8-encode(N+S') )
+          ]]></artwork>
+        </figure></t>
+        <t>Prepends M (which will be 32 octets in length) to the stanza-string S' to create a bytestring B.</t>
+        <t>Encrypts the bytestring B using the recipient's public key to produce encrypted data T.</t>
+        <t>Base64-encodes T to produce the encrypted data T'.</t>
+        <t>Constructs a &lt;e2e&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace, with the attribute 'stamp' set to the timestamp N from step 2, and T' as the text content.</t>
+        <t>Sends the &lt;e2e/&gt; element as the payload to a stanza of the same form from step 1.</t>
+      </list></t>
+
+      <section title='Example of Securing Messages' anchor="message">
+        <t>The sender begins with the cleartext version of the &lt;message/&gt; stanza "S":</t>
+        <figure>
+          <artwork><![CDATA[
 <message    xmlns='jabber:client'
             from='juliet@capulet.net/balcony'
             id='183ef129'
@@ -50,40 +68,38 @@
     <thread>8996aef0-061d-012d-347a-549a200771aa</thread>
     <body>Wherefore art thou, Romeo?</body>
 </message>
-            ]]></artwork>
-          </figure></t>
-          <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements an attributes (NOTE: line breaks within the XMPP message &lt;body/&gt; element and in other elements are significant and MUST NOT be removed), i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because it for purposes of encryption and decryption it is not treated as XML but as an opaque string.</t>
-          <t>Encrypts the stanza-string S' using the recipient's public key to produce encrypted data T.</t>
-          <t>Base64-encodes T to produce the encrypted data T'.</t>
-          <t>Constructs a &lt;data&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace, with T' as the text content.</t>
-          <t>Sends the &lt;e2e/&gt; element and an XMPP &lt;thread/&gt; element as the payload of an XMPP &lt;message/&gt;.
-          <figure>
-            <artwork><![CDATA[
-<message    xmlns='jabber:client'
-            from='juliet@capulet.net/balcony'
-            id='6410ed123'
-            to='romeo@montegue.net'
-            type='chat'>
-    <thread>460f0da0-0628-012d-347b-549a200771aa</thread>
-    <e2e   xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
-        AFm8G5F6FcilXdL3mlJ+XcOp3FqsaLN7pZ2kizL5s++BQxeb5gGPVf
-        r8ZQhjymzd/RhZNOk56zxawBBkft5ae1MWtmjR8X4LU6g9/RUeJS7m
-        FYD9/9l3ChjjPM5YrDlXP2mJh1dJNQ6Gai/g77zopaT26vGOT/2WLo
-        T+8pbOHFxluenivQ==
-    </e2e>
+          ]]></artwork>
+        </figure>
+        <t>The Message Authentication Code is constructed from:</t>
+        <figure>
+          <artwork><![CDATA[
+2010-02-28T18:00:00Z<message xmlns='jabber:client' from='juliet@capulet.net/balcony' id='183ef129' to='romeo@montegue.net' type='chat'><thread>8996aef0-061d-012d-347a-549a200771aa</thread><body>Wherefore art thou, Romeo?</body></message>
+          ]]></artwork>
+        </figure>
+        <t>The sender then performs the steps from above, and sends the following:</t>
+        <figure>
+          <artwork><![CDATA[
+<message  xmlns='jabber:client'
+          from='juliet@capulet.net/balcony'
+          id='6410ed123'
+          to='romeo@montegue.net'
+          type='chat'>
+  <thread>460f0da0-0628-012d-347b-549a200771aa</thread>
+  <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
+        stamp='2010-02-28T18:00:00Z'>
+    oOb/huFlvC17+XxZdye4BAj4jN2yWiSQZts7BctqZB+wo1tCfHE0w
+    BMQlof4\nC7KLn6+ktILqX6k5/IgQrwGF0hxKjFk44R01RcVmzlUS
+    0HaSEIQVQk/3r33c\n3/NKzN8Cq+yzZKfP/p3KkpHMixCUTEe7B38
+    Eu9h5hfs8PgXkb/GAdw7Ea/qW\nQgRjYcNl7jcplYY/FQQTEEfQoc
+    fKCbm/RaOsRSMnqGjkqGGt6+yQGWtvzSS2\nHD4/EHGV62IGz/sQH
+    5cAvloA9LqfiNh/oEm/UD2iLTAVj1BBS+WJZqMRznAJ\nNM4gF8vF
+    nDdLAMyeMZedlrHCS4lp6PzeblDD0Jk2HQ==
+  </e2e>
 </message>
-            ]]></artwork>
-          </figure></t>
-        </list></t>
-    </section>
-
-    <section title='Securing Arbitrary XMPP Data' anchor="arbitrary">
-      <t>TODO: rework</t>
-      <figure>
-        <preamble>Example XXXX:</preamble>
-        <artwork>
-        </artwork>
-      </figure>
+          ]]></artwork>
+        </figure>
+        <t>NOTE: The sender SHOULD include a &lt;thread/&gt; with each chat to maintain conversation continuity.</t>
+      </section>
     </section>
 
     <section title="Rules for S/MIME Generation and Handling" anchor="rules">
@@ -752,6 +768,13 @@
   </front>
   <seriesInfo name="XSF JEP" value="0030"/>
   <format type="HTML" target="http://www.jabber.org/jeps/jep-0030.html"/>
+</reference>
+
+<reference anchor="HMAC">
+  <front>
+    <title>The Keyed-Hash Message Authentication Code (HMAC): Federal Information Processing Standards Publication 198</title>
+    <author/>
+  </front>
 </reference>
 
 <reference anchor="MUC">
