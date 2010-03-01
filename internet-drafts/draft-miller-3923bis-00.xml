@@ -113,12 +113,45 @@ to='romeo@montegue.net' type='chat'><thread>
       </section>
     </section>
 
-    <section title="Decryption" anchor="decrypt">
-      <t>If the receiving agent is unable to decrypt the encrypted XML stanza, it SHOULD NOT present the stanza to the intended recipient (human or application), SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that it has received a stanza that cannot be decrypted), and MAY return a stanza error to the sender as described under <xref target="errors">Recipient Error Handling</xref>.</t>
-    </section>
-
-    <section title="Certificates" anchor="certs">
-      <t>To participate in end-to-end encryption using the methods defined in this document, a client needs to possess an X.509 certificate.  It is expected that many clients will generate their own (self-signed) certificates rather than obtain a certificate issued by a certification authority (CA).  In any case the certificate MUST include an XMPP address that is represented using the ASN.1 Object Identifier "id-on-xmppAddr" as specified in Section 5.1.1 of <xref target="XMPP-CORE"/>.</t>
+    <section title="Handling of Inbound Stanzas" anchor="inbound">
+      <t>Several scenarios are possible when an entity receives an encrypted stanza:</t>
+      <t><list style='hanging'>
+        <t hangText='Case #1:'>The receiving application does not understand the protocol.</t>
+        <t hangText='Case #2:'>The receiving application understands the protocol and is able to decrypt the payload.</t>
+        <t hangText='Case #3:'>The receiving application understands the protocol and is able to decrypt the payload, but the timestamps fail the checks specified under <xref target="timestamps">Checking of Timestamps</xref>.</t>
+        <t hangText='Case #4:'>The receiving application understands the protocol but is unable to decrypt the payload.</t>
+      </list></t>
+      <t>In Case #1, the receiving application MUST do one and only one of the following: (1) ignore the &lt;e2e/&gt; extension, (2) ignore the entire stanza, or (3) return a &lt;service-unavailable/&gt; error to the sender, as described in <xref target="XMPP-CORE"/>.</t>
+      <t>In Case #2, the receiving application MUST NOT return a stanza error to the sender, since this is the success case.</t>
+      <t>In Case #3, the receiving application MAY return a &lt;not-acceptable/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;bad-timestamp/&gt; as shown below:</t>
+      <figure>
+        <artwork><![CDATA[
+<message from='romeo@example.net/orchard' type='chat'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
+    XML-character-data-here
+  </e2e>
+  <error type='modify'>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <bad-timestamp xmlns='urn:ietf:params:xml:xmpp-e2e'/>
+  </error>
+</message>
+        ]]></artwork>
+      </figure>
+      <t>In Case #4, the receiving application SHOULD return a &lt;bad-request/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;decryption-failed/&gt; as shown below:</t>
+      <figure>
+        <artwork><![CDATA[
+<message from='romeo@example.net/orchard' type='chat'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
+    XML-character-data-here
+  </e2e>
+  <error type='modify'>
+    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    <decryption-failed xmlns='urn:ietf:params:xml:xmpp-e2e'/>
+  </error>
+</message>
+        ]]></artwork>
+      </figure>
+      <t>In addition to returning an error in Case #4 the receiving application SHOULD NOT present the stanza to the intended recipient (human or application) and SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that it has received a stanza that cannot be decrypted).</t>
     </section>
 
     <section title="Inclusion and Checking of Timestamps" anchor="timestamps">
@@ -126,7 +159,7 @@ to='romeo@montegue.net' type='chat'><thread>
       <t><list style="symbols">
         <t>It MUST verify that the timestamp received is within five minutes of the current time, except as described below for offline messages.</t>
         <t>It SHOULD verify that the timestamp received is greater than any timestamp received in the last 10 minutes which passed the previous check.</t>
-        <t>If any of the foregoing checks fails, the timestamp SHOULD be presented to the receiving entity (human or application) marked as "old timestamp", "future timestamp", or "decreasing timestamp", and the receiving entity MAY return a stanza error to the sender as described under <xref target="errors">Recipient Error Handling</xref>.</t>
+        <t>If any of the foregoing checks fails, the timestamp SHOULD be presented to the receiving entity (human or application) marked as "old timestamp", "future timestamp", or "decreasing timestamp", and the receiving entity MAY return a stanza error to the sender.</t>
       </list></t>
       <t>The foregoing checks assume that the recipient is online when the message is received.  However, if the recipient is offline then the server will probably store the message for delivery when the recipient is next online (offline storage does not apply to &lt;iq/&gt; or &lt;presence/&gt; stanzas, only &lt;message/&gt; stanzas).  As described in <xref target='OFFLINE'/>, when sending an offline message to the recipient, the server SHOULD include delayed delivery data as specified in <xref target='DELAY'/> so that the recipient knows that this is an offline message and also knows the original time of receipt at the server.  In this case, the recipient SHOULD verify that the timestamp received is within five minutes of the time stamped by the recipient's server.</t>
     </section>
@@ -139,45 +172,8 @@ to='romeo@montegue.net' type='chat'><thread>
       </list></t>
     </section>
 
-    <section title="Recipient Error Handling" anchor="errors">
-      <t>When an XMPP entity receives an XML stanza containing data that is signed and/or encrypted using the protocol described herein, several scenarios are possible:</t>
-      <t><list style='hanging'>
-        <t hangText='Case #1:'>The receiving application does not understand the protocol.</t>
-        <t hangText='Case #2:'>The receiving application understands the protocol and is able to decrypt the payload.</t>
-        <t hangText='Case #3:'>The receiving application understands the protocol and is able to decrypt the payload, but the timestamps fail the checks specified above under <xref target="timestamps">Checking of Timestamps</xref>.</t>
-         <t> hangText='Case #4:'>The receiving application understands the protocol but is unable to decrypt the payload.</t>
-      </list></t>
-      <t>In Case #1, the receiving application MUST do one and only one of the following: (1) ignore the &lt;e2e/&gt; extension, (2) ignore the entire stanza, or (3) return a &lt;service-unavailable/&gt; error to the sender, as described in <xref target="XMPP-CORE"/>.</t>
-      <t>In Case #2, the receiving application MUST NOT return a stanza error to the sender, since this is the success case.</t>
-      <t>In Case #3, the receiving application MAY return a &lt;not-acceptable/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;bad-timestamp/&gt; as shown below:</t>
-      <figure>
-        <artwork><![CDATA[
-<message from='romeo@example.net/orchard' type='chat'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
-  [CDATA section here]
-  </e2e>
-  <error type='modify'>
-    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-    <bad-timestamp xmlns='urn:ietf:params:xml:xmpp-e2e'/>
-  </error>
-</message>
-        ]]></artwork>
-      </figure>
-      <t>In Case #4, the receiving application SHOULD return a &lt;bad-request/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;decryption-failed/&gt; as shown below:</t>
-      <figure>
-        <preamble>Example 18: Recipient returns &lt;bad-request/&gt; error:</preamble>
-        <artwork><![CDATA[
-<message from='romeo@example.net/orchard' type='chat'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
-  [CDATA section here]
-  </e2e>
-  <error type='modify'>
-    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-    <decryption-failed xmlns='urn:ietf:params:xml:xmpp-e2e'/>
-  </error>
-</message>
-        ]]></artwork>
-      </figure>
+    <section title="Certificates" anchor="certs">
+      <t>To participate in end-to-end encryption using the methods defined in this document, a client needs to possess an X.509 certificate.  It is expected that many clients will generate their own (self-signed) certificates rather than obtain a certificate issued by a certification authority (CA).  In any case the certificate MUST include an XMPP address that is represented using the ASN.1 Object Identifier "id-on-xmppAddr" as specified in Section 5.1.1 of <xref target="XMPP-CORE"/>.</t>
     </section>
 
     <section title='Security Considerations' anchor='security'>
@@ -349,7 +345,6 @@ to='romeo@montegue.net' type='chat'><thread>
   <xs:element name='e2e' type='xs:string'/>
 
   <xs:element name='decryption-failed' type='empty'/>
-  <xs:element name='signature-unverified' type='empty'/>
   <xs:element name='bad-timestamp' type='empty'/>
 
   <xs:simpleType name='empty'>
