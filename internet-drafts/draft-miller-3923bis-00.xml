@@ -36,7 +36,7 @@
 
     <section title="Introduction" anchor="intro">
       <t>End-to-end encryption of traffic sent over the Extensible Messaging and Presence Protocol <xref target='XMPP-CORE'/> is a desirable goal.  Requirements and a threat analysis for XMPP encryption are provided in <xref target='E2E-REQ'/>.  Many possible approaches to meet those (or similar) requirements have been proposed over the years, including methods based on PGP, S/MIME, SIGMA, and TLS.</t>
-      <t>The S/MIME approach defined in RFC 3923 has never been implemented in XMPP clients to the best of our knowledge, but has some attractive features, especially the ability to store-and-forward an encrypted message at a user's server if the user is not online when the message is received (in the XMPP community this is called "offline storage" and the message is referred to as an "offline message").  The authors surmise that RFC 3923 has not been implemented mainly because it adds several new dependencies to XMPP clients, especially MIME (along with the CPIM and MSGFMT media types).  Therefore this document explores the possibility of an approach that is similar to but simpler than RFC 3923.</t>
+      <t>The S/MIME approach defined in RFC 3923 has never been implemented in XMPP clients to the best of our knowledge, but has some attractive features, especially the ability to store-and-forward an encrypted message at a user's server if the user is not online when the message is received (in the XMPP community this is called "offline storage" and the message is referred to as an "offline message").  The authors surmise that RFC 3923 has not been implemented mainly because it adds several new dependencies to XMPP clients, especially MIME (along with the CPIM and MSGFMT media types).  Therefore this document explores the possibility of an approach that is similar to but simpler than RFC 3923, but that retains the same basic object encryption model.</t>
     </section>
 
     <section title="Terminology" anchor="terms">
@@ -48,19 +48,19 @@
       <t>The process a sending agent follows for securing stanzas is very similar regardless of the form of stanza (i.e., &lt;iq/&gt;, &lt;message/&gt;, or &lt;presence/&gt;).</t>
       <t><list style="numbers">
         <t>Constructs a cleartext version of the stanza, S.</t>
-        <t>Notes the current date and time when this stanza is constructed, formatted as per <xref target="DATETIME"/>, N.</t>
+        <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and always including the seconds (resulting in a datetime string 20 characters in length).</t>
         <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because for purposes of encryption and decryption it is not treated as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
-        <t>Creates a Message Authentication Code "M" for the stanza-string S' using <xref target="HMAC"/>. The algorithm is SHA256 and the sender's public key (R) is the secret.  The input to HMAC-SHA256 MUST be the timestamp from step 2 (conforming to <xref target='DATETIME'/>) appended by the cleartext sanza-string S', as follows:
+        <t>Creates a Message Authentication Code "M" for the stanza-string S' using <xref target="HMAC"/>. The algorithm is SHA256 and the sender's public key (R) is the secret.  The input to HMAC-SHA256 MUST be the timestamp from step 2 (conforming to <xref target='DATETIME'/> and always including seconds) appended by the cleartext sanza-string S', as follows:
         <figure>
           <artwork><![CDATA[
 HMAC-SHA256( SHA256(R), UTF8-encode(N+S') )
           ]]></artwork>
         </figure></t>
         <t>Prepends M (which will be 32 octets in length) to the stanza-string S' to create a bytestring B.</t>
-        <t>Encrypts the bytestring B using the recipient's public key to produce encrypted data T.</t>
+        <t>Encrypts the bytestring B using the recipient's public key to produce encrypted data T. (Note: This step is under-specified and will be expanded in the next version of this document.)</t>
         <t>Base64-encodes T to produce the encrypted data T'.</t>
         <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace, with the attribute 'stamp' set to the timestamp N from step 2, and with the XML character data as T' from step 7.</t>
-        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza of the same form as in step 1.</t>
+        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that matches the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
       </list></t>
 
       <section title='Example of Securing Messages' anchor="message">
@@ -161,7 +161,7 @@ to='romeo@montegue.net' type='chat'><thread>
         <t>It SHOULD verify that the timestamp received is greater than any timestamp received in the last 10 minutes which passed the previous check.</t>
         <t>If any of the foregoing checks fails, the timestamp SHOULD be presented to the receiving entity (human or application) marked as "old timestamp", "future timestamp", or "decreasing timestamp", and the receiving entity MAY return a stanza error to the sender.</t>
       </list></t>
-      <t>The foregoing checks assume that the recipient is online when the message is received.  However, if the recipient is offline then the server will probably store the message for delivery when the recipient is next online (offline storage does not apply to &lt;iq/&gt; or &lt;presence/&gt; stanzas, only &lt;message/&gt; stanzas).  As described in <xref target='OFFLINE'/>, when sending an offline message to the recipient, the server SHOULD include delayed delivery data as specified in <xref target='DELAY'/> so that the recipient knows that this is an offline message and also knows the original time of receipt at the server.  In this case, the recipient SHOULD verify that the timestamp received is within five minutes of the time stamped by the recipient's server.</t>
+      <t>The foregoing checks assume that the recipient is online when the message is received.  However, if the recipient is offline then the server will probably store the message for delivery when the recipient is next online (offline storage does not apply to &lt;iq/&gt; or &lt;presence/&gt; stanzas, only &lt;message/&gt; stanzas).  As described in <xref target='OFFLINE'/>, when sending an offline message to the recipient, the server SHOULD include delayed delivery data as specified in <xref target='DELAY'/> so that the recipient knows that this is an offline message and also knows the original time of receipt at the server.  In this case, the recipient SHOULD verify that the timestamp received in the encrypted message is within five minutes of the time stamped by the recipient's server in the &lt;delay/&gt; element.</t>
     </section>
 
     <section title="Mandatory-to-Implement Cryptographic Algorithms" anchor="mti">
@@ -169,6 +169,7 @@ to='romeo@montegue.net' type='chat'><thread>
       <t><list style='symbols'>
         <t>The RSA (PKCS #1 v1.5) key transport, as specified in <xref target="CMS-ALG"/> section 4.2.1.</t>
         <t>The AES-128 encryption algorithm in CBC mode, as specified in <xref target="CMS-AES"/>.</t>
+        <t>The SHA-256 hashing algorithm, as specified in <xref target='X509-ALGO'/>.</t>
       </list></t>
     </section>
 
@@ -274,6 +275,20 @@ to='romeo@montegue.net' type='chat'><thread>
         <seriesInfo name='BCP' value='14' />
         <seriesInfo name='RFC' value='2119' />
       </reference>
+
+<reference anchor='X509-ALGO'>
+<front>
+<title>Public-Key Cryptography Standards (PKCS) #1: RSA Cryptography Specifications Version 2.1</title>
+<author initials='J.' surname='Jonsson' fullname='J. Jonsson'>
+<organization /></author>
+<author initials='B.' surname='Kaliski' fullname='B. Kaliski'>
+<organization /></author>
+<date year='2003' month='February' />
+<abstract>
+<t>This memo represents a republication of PKCS #1 v2.1 from RSA Laboratories' Public-Key Cryptography Standards (PKCS) series, and change control is retained within the PKCS process.  The body of this document is taken directly from the PKCS #1 v2.1 document, with certain corrections made during the publication process.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='3447' />
+<format type='TXT' octets='143173' target='ftp://ftp.isi.edu/in-notes/rfc3447.txt' />
+</reference>
 
 <reference anchor='XMPP-CORE'>
   <front>
