@@ -26,7 +26,7 @@
       </address>
     </author>
 
-    <date day="3" month="March" year="2010"/>
+    <date day="4" month="March" year="2010"/>
     <area>Applications</area>
     <keyword>Internet-Draft</keyword>
 
@@ -39,7 +39,7 @@
 
     <section title="Introduction" anchor="intro">
       <section title="Motivation" anchor="motivation">
-      <t>When a client wishes to establish a secure communication channel with an application server (e.g., "the HTTP server at example.com"), at a minimum the client needs to verify the identity of the server in order to prevent certain passive and active attacks against the connection.  To establish secure connections, many application technologies use Transport Layer Security <xref target='TLS'/> with certificates issued by certification authorities that are part of the Internet X.509 Public Key Infrastructure (PKI) as described in <xref target="X509"/>; such application technologies include but are not limited to the following:</t>
+      <t>When a client wishes to establish a secure communication channel with an application server (e.g., "the HTTP server for example.com"), at a minimum the client needs to verify the identity of the server in order to prevent certain passive and active attacks against the connection.  To establish secure connections, many application technologies use Transport Layer Security <xref target='TLS'/> with certificates issued by certification authorities that are part of the Internet X.509 Public Key Infrastructure (PKI) as described in <xref target="X509"/>; such application technologies include but are not limited to the following:</t>
       <t>
         <list style="symbols">
           <t>The Hypertext Transfer Protocol <xref target="HTTP"/>, for which see also <xref target="HTTP-TLS"/></t>
@@ -53,8 +53,7 @@
           <t>The Extensible Messaging and Presence Protocol <xref target="XMPP"/>, for which see also <xref target="XMPPBIS"/></t>
         </list>
       </t>
-      <t>Different application protocols have traditionally specified their own rules for representing and verifying server identities.  Unfortunately, this divergence of approaches has caused some confusion among certification authorities, protocol designers, and application developers.  To codify secure authentication practices, this document specifies recommended procedures for representing and verifying server identities in certificates intended for use in applications that employ TLS, 
-     .</t>
+      <t>Different application protocols have traditionally specified their own rules for representing and verifying server identities.  Unfortunately, this divergence of approaches has caused some confusion among certification authorities, protocol designers, and application developers.  To codify secure authentication practices, this document specifies recommended procedures for representing and verifying server identities in certificates intended for use in applications that employ TLS.</t>
       </section>
 
       <section title="Scope" anchor="scope">
@@ -77,13 +76,13 @@
     </section>
 
     <section title="Architectural Assumptions" anchor="architecture">
-      <t>Internet applications often use a client-server architecture in which a client connects to a server in order to retrieve or upload data, access a broader network of services, or communicate with other entities on the network.  From the security perspective, a client might be a user agent controlled by a human, an automated process such as a bot, or a peer server.  We assume that an application server hosts information, enables a provisioned account to perform authorized services, or provides network access on behalf of a particular organization or service that is canonically identified by a domain name (not, say, an IP address).  The specific application provided (e.g., a web site or an instant messaging system) might further restrict the identity type that is represented or verified in a TLS interaction; such an identity type is often informal (e.g., most people expect a service that is provided on port 443 to be a web server) but can be specified more formally through the use of DNS SRV records <xref target='DNS-SRV'/> or the SRVName certificate extension defined in <xref target='SRVNAME'/> or other extensions for particular identity types.  The certificate presented by an application server might contain one identity or it might contain multiple identities of different types (e.g., one identity might be a simple dNSName and aonther might be an SRVName that restricts the certificate to use in the context of the specified service).</t>
-      <t>When a client connects to an application server, it has some conception of the server's identity (e.g., "an XMPP server for example.com") and the client expects at least one of the server's presented identities to match this reference identity.  It is important to note that the reference identity is provided by a human user or configured into the client application, and is not an identity that is derived from the reference identity in an automated fashion (e.g., an IP address discovered through DNS resolution of the reference identity).  The client expects to connect securely to, say, an XMPP server for example.com, not an IMAP server and not an IP address.  Only a match between the reference identity and a presented identity enables the client to be sure that the certificate can legitimately be used to secure the connection.</t>
+      <t>Internet applications often use a client-server architecture in which a client connects to a server in order to retrieve or upload data, access a broader network of services, or communicate with other entities on the network.  From the security perspective, a client might be a user agent controlled by a human, an automated process such as a bot, or a peer server.  We assume that an application server hosts information, enables a provisioned account to perform authorized services, or provides network access on behalf of a particular organization or service that is canonically identified by a domain name (not, say, an IP address).  The specific application provided (e.g., a web site or an instant messaging system) might further restrict the identity type that is represented or verified in a TLS interaction; such an identity type is often informal (e.g., most people expect a service that is provided on port 443 to be a web server) but can be specified more formally through the use of DNS SRV records <xref target='DNS-SRV'/>, the extended key usage (EKU) certificate extension <xref target='X509'/>, the SRVName certificate extension defined in <xref target='SRVNAME'/>, or other certificate extensions that have been defined for particular identity types (e.g., the XmppAddr extension for use in <xref target='XMPP'/>).  The certificate presented by an application server might contain one identity or it might contain multiple identities of different types (e.g., one identity might be a simple dNSName and aonther might be an SRVName that restricts the certificate to use in the context of the specified service).</t>
+      <t>When a client connects to an application server, it has some conception of the server's identity (e.g., "an XMPP server for example.com") and the client expects at least one of the server's presented identities to match this reference identity.  It is important to note that the reference identity is provided by a human user or configured into the client application (e.g., in the domain part of an "Application Unique String" as described in <xref target='SIP-LOC'/>), and is not an identity that is derived from the reference identity in an automated fashion (e.g., an IP address discovered through DNS resolution of the reference identity).  The client expects to connect securely to, say, an XMPP server for example.com, not an IMAP server and not an IP address.  Only a match between the reference identity and a presented identity enables the client to be sure that the certificate can legitimately be used to secure the connection.</t>
       <t>To summarize, we define the following terms to assist in understanding the process of representing and verifying server identity:</t>
       <t>
         <list style="hanging">
           <t hangText="identity set:">The set of identities that are presented by a server to a client (in the form of the server's X.509 certificate) when the client attempts to establish a secure connection with the server.</t>
-          <t hangText="identity type:">The "natural kind" of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, or a particular service in the sense of <xref target='DNS-SRV'/> (this specification does not provide a complete taxonomy of identity types).</t>
+          <t hangText="identity type:">The "natural kind" of identity to which a presented identity or reference identity belongs.  For example, the reference identity might be a domain name, an IPv4 or IPv6 address, or a particular service in the sense of <xref target='DNS-SRV'/> or <xref target='SRVNAME'/>.  This specification does not provide a complete taxonomy of identity types but assumes that an application server is identified by a domain name that could be represented in the form of several identity types (e.g., a dNSName and an SRVName).</t>
           <t hangText="presented identity:">A single member of the identity set.</t>
           <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection with the server, i.e. the identity that the client expects the server to present and to which the client makes reference when attempting to verify the server's identity.  The reference identity MUST be provided by the human user controlling the client (if any), e.g. when specifying the server portion of the user's account name on the server or when explicitly configuring the client to connect to a particular host.  The reference identity MAY be reflected in the TLS "server_name" extension as specified in <xref target='TLS'/>.</t>
         </list>
@@ -115,7 +114,7 @@
             <t>If the identity set has more than one member, a match with any of the presented identities is acceptable.</t>
           </list>
         </t>
-        <t><list style='empty'><t>Note: A hostname that is resolved via the Domain Name System MUST NOT be used as the reference identity unless an administrator or human user has explicitly configured an application to associate a particular hostname (and potentially port) with the hostname to which the application connects (say, to "hardcode" an association between an original hostname of example.net and a configured hostname and of connector.example.com:443).</t></list></t>
+        <t><list style='empty'><t>Note: A hostname that is resolved via the Domain Name System MUST NOT be used as the reference identity unless an administrator or human user has explicitly configured an application to associate a particular hostname (and potentially port) with the hostname to which the application connects (say, to "hardcode" an association between an original hostname of example.net and a configured hostname of connector.example.com:443).</t></list></t>
         <t>In addition to the identity check described in this section, a client might complete further verification to ensure that the server is authorized to provide the service it is requested to provide.  Methods for doing so (which might include consulting local policy information) are out of scope for this document.</t>
       </section>
       <section title="Comparison Rules" anchor="certs-rules">
@@ -147,7 +146,7 @@ cn=www.example.com, ou=Web Services, c=GB
           <list style='hanging'>
             <t hangText='Case #1:'>The client finds at least one presented identity that matches the reference identity; the entity MUST use this as the validated identity of the server.</t>
             <t hangText='Case #2:'>The client finds no subjectAltName or subjectName that matches the reference identity but a human user has permanently accepted the certificate during a previous connection attempt; the client MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed since the last time that a secure connection was successfully negotiated.</t>
-            <t hangText='Case #3:'>The client finds no subjectAltName or subjectName that matches the reference identity and a human user has not permanently accepted the certificate during a previous connection attempt; the client MUST NOT use the presented identity (if any) as the validated identity of the server and instead MUST proceed as described in the next section.  Instead, if the client is a user-oriented application, then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts behave as in Case #2.  (It is the resposibility of the human user to verify the hash value or fingerprint of the certificate with the server over a trusted communication layer.)  If the client is an automated application, then it SHOULD terminate the connection with a bad certificate error and log the error to an appropriate audit log; an automated application MAY provide a configuration setting that disables this check, but MUST provide a setting that enables the check.</t>
+            <t hangText='Case #3:'>The client finds no subjectAltName or subjectName that matches the reference identity and a human user has not permanently accepted the certificate during a previous connection attempt.  The client MUST NOT use the presented identity (if any).  Instead, if the client is a user-oriented application, then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection MUST attempt behave as in Case #2.  (It is the resposibility of the human user to verify the hash value or fingerprint of the certificate with the server over a trusted communication layer.)  If the client is an automated application, then it SHOULD terminate the connection with a bad certificate error and log the error to an appropriate audit log; an automated application MAY provide a configuration setting that disables this check, but MUST enable the check by default.</t>
           </list>
         </t>
       </section>
@@ -832,6 +831,20 @@ cn=www.example.com, ou=Web Services, c=GB
 <seriesInfo name='Internet-Draft' value='draft-ietf-sip-domain-certs-04' />
 <format type='TXT'
         target='http://www.ietf.org/internet-drafts/draft-ietf-sip-domain-certs-04.txt' />
+</reference>
+
+<reference anchor='SIP-LOC'>
+<front>
+<title>Session Initiation Protocol (SIP): Locating SIP Servers</title>
+<author initials='J.' surname='Rosenberg' fullname='J. Rosenberg'>
+<organization /></author>
+<author initials='H.' surname='Schulzrinne' fullname='H. Schulzrinne'>
+<organization /></author>
+<date year='2002' month='June' />
+<abstract>
+<t>The Session Initiation Protocol (SIP) uses DNS procedures to allow a client to resolve a SIP Uniform Resource Identifier (URI) into the IP address, port, and transport protocol of the next hop to contact.  It also uses DNS to allow a server to send a response to a backup client if the primary client has failed.  This document describes those DNS procedures in detail. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='3263' />
+<format type='TXT' octets='42310' target='ftp://ftp.isi.edu/in-notes/rfc3263.txt' />
 </reference>
 
 <reference anchor='SMTP'>
