@@ -50,17 +50,14 @@
         <t>Constructs a cleartext version of the stanza, S.</t>
         <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and always including the seconds (resulting in a datetime string 20 characters in length).</t>
         <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because for purposes of encryption and decryption it is not treated as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
-        <t>Creates a Message Authentication Code "M" for the stanza-string S' using <xref target="HMAC"/>. The algorithm is SHA256 and the sender's public key (R) is the secret.  The input to HMAC-SHA256 MUST be the timestamp from step 2 (conforming to <xref target='DATETIME'/> and always including seconds) appended by the cleartext sanza-string S', as follows:
-        <figure>
-          <artwork><![CDATA[
-HMAC-SHA256( SHA256(R), UTF8-encode(N+S') )
-          ]]></artwork>
-        </figure></t>
-        <t>Prepends M (which will be 32 octets in length) to the stanza-string S' to create a bytestring B.</t>
-        <t>Encrypts the bytestring B using the recipient's public key to produce encrypted data T. (Note: This step is under-specified and will be expanded in the next version of this document.)</t>
+        <t>Encrypts the stanza-string S' using the recipient's public key to produce encrypted data T. (Note: This step is under-specified and will be expanded in the next version of this document.)</t>
         <t>Base64-encodes T to produce the encrypted data T'.</t>
-        <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace, with the attribute 'stamp' set to the timestamp N from step 2, and with the XML character data as T' from step 7.</t>
-        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that matches the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
+        <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
+        <t><list style="hanging">
+          <t>The attribute 'stamp' set to the timestamp N from step 2</t>
+          <t>The attribute 'cipher' set to the encryption scheme used in step 4 above</t>
+          <t>The XML character data as T' from step 5.</t>
+        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that SHOULD match the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
       </list></t>
 
       <section title='Example of Securing Messages' anchor="message">
@@ -77,16 +74,6 @@ HMAC-SHA256( SHA256(R), UTF8-encode(N+S') )
 </message>
           ]]></artwork>
         </figure>
-        <t>The Message Authentication Code is constructed from (line endings are included only for the sake of readability):</t>
-        <figure>
-          <artwork><![CDATA[
-2010-02-28T18:00:00Z<message xmlns='jabber:client' 
-from='juliet@capulet.net/balcony' id='183ef129' 
-to='romeo@montegue.net' type='chat'><thread>
-8996aef0-061d-012d-347a-549a200771aa</thread>
-<body>Wherefore art thou, Romeo?</body></message>
-          ]]></artwork>
-        </figure>
         <t>The sender then performs the steps from above, and sends the following:</t>
         <figure>
           <artwork><![CDATA[
@@ -95,9 +82,9 @@ to='romeo@montegue.net' type='chat'><thread>
           id='6410ed123'
           to='romeo@montegue.net'
           type='chat'>
-  <thread>460f0da0-0628-012d-347b-549a200771aa</thread>
   <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
-        stamp='2010-02-28T18:00:00Z'>
+        stamp='2010-02-28T18:00:00Z'
+        cipher='RSAES-PKCS1-v1_5'>
     oOb/huFlvC17+XxZdye4BAj4jN2yWiSQZts7BctqZB+wo1tCfHE0w
     BMQlof4\nC7KLn6+ktILqX6k5/IgQrwGF0hxKjFk44R01RcVmzlUS
     0HaSEIQVQk/3r33c\n3/NKzN8Cq+yzZKfP/p3KkpHMixCUTEe7B38
@@ -109,7 +96,6 @@ to='romeo@montegue.net' type='chat'><thread>
 </message>
           ]]></artwork>
         </figure>
-        <t>NOTE: The sender SHOULD include a &lt;thread/&gt; with each chat to maintain conversation continuity.</t>
       </section>
     </section>
 
