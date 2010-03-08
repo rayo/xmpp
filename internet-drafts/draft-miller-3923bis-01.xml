@@ -41,6 +41,7 @@
 
     <section title="Terminology" anchor="terms">
       <t>This document inherits terminology defined in <xref target="XMPP-CORE"/>.</t>
+      <t>Security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>.</t>
       <t>The capitalized key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target="TERMS">BCP 14, RFC 2119</xref>.</t>
     </section>
 
@@ -56,10 +57,11 @@
         <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
         <list style="hanging">
           <t>The attribute 'stamp' set to the timestamp N from step 2;</t>
-          <t>The attribute 'cipher' set to the encryption scheme used in step 4;</t>
-          <t>The XML character data as T' from step 5.</t>
+          <t>The attribute 'hash' set to the cryptographic hashing algorithm used in step 3;</t>
+          <t>The attribute 'cipher' set to the encryption scheme used in step 5;</t>
+          <t>The XML character data as T' from step 6.</t>
         </list></t>
-        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that SHOULD match the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
+        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that matches the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
       </list></t>
 
       <section title='Example of Securing Messages' anchor="ex-message">
@@ -69,7 +71,7 @@
 <message    xmlns='jabber:client'
             from='juliet@capulet.net/balcony'
             id='183ef129'
-            to='romeo@montegue.net'
+            to='romeo@montague.net'
             type='chat'>
     <thread>8996aef0-061d-012d-347a-549a200771aa</thread>
     <body>Wherefore art thou, Romeo?</body>
@@ -82,11 +84,11 @@
 <message  xmlns='jabber:client'
           from='juliet@capulet.net/balcony'
           id='6410ed123'
-          to='romeo@montegue.net'
+          to='romeo@montague.net'
           type='chat'>
   <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
-        algo='SHA-256'
         cipher='RSAES-PKCS1-v1_5'
+        hash='SHA-256'
         stamp='2010-02-28T18:00:00Z'>
     Ysocyy9I2jUACcChThqCuVxqB9qdFJ+mKzpbABiF+a5wMavDnQf
     z1Rda1OAL\nzs5M8+uSnQA643bGlpVvuzbi1zdfmuRtqIHzopz2
@@ -107,7 +109,7 @@
 <iq       xmlns='jabber:client'
           from='juliet@capulet.net/crypt'
           id='a543bc3ee'
-          to='romeo@montegue.net'
+          to='romeo@montague.net'
           type='resut'>
   <mood xmlns='http://jabber.org/protocol/mood'>
     <dejected/>
@@ -125,11 +127,12 @@
 <iq       xmlns='jabber:client'
           from='juliet@capulet.net/crypt'
           id='a543bc3ee'
-          to='romeo@montegue.net/crypt'
+          to='romeo@montague.net/crypt'
           type='result'>
   <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
-        stamp='2010-03-06T20:53:18Z'
-        cipher='RSAES-PKCS1-v1_5'>
+        cipher='RSAES-PKCS1-v1_5'
+        hash='SHA-256'
+        stamp='2010-03-06T20:53:18Z'>
     Up3uZr1j0H9UCdG91ec8h4bIbgmHNZ6Gu/UHr03XsPtc4Qamb/8
     hpc4h+JL5\n6G8hhIkPeUN2ieCrXbCa84RtsJ/TuFONLw/tNe2Y
     Fm7Js7RKgTrTRzjWCTAh\nKTp2rvjkN1T15c9N0kE2m4QX5nnYo
@@ -146,8 +149,8 @@
 
     <section title="Interaction with Stanza Semantics" anchor="interact">
       <t>The following limitations and caveats apply:</t>
-      <t><list style="hanging">
-        <t>Undirected &lt;presence/&gt; stanzas MUST NOT be encrypted. Such stanzas are delivered to anyone for whom the sender has authorized, and therefore an appropriate certificate is not likely to be obtainable.</t>
+      <t><list style="symbols">
+        <t>Undirected &lt;presence/&gt; stanzas MUST NOT be encrypted. Such stanzas are delivered to anyone the sender has authorized, and therefore it is highly unlikely that the send can find an appropriate certificate.</t>
         <t>Stanzas directed to multiplexing services (e.g. multi-user chat) SHOULD NOT be encrypted, unless the sender has established an acceptable trust relationship with the multiplexing service.</t>
       </list></t>
     </section>
@@ -196,7 +199,7 @@
 </message>
         ]]></artwork>
       </figure>
-      <t>In addition to returning an error in Case #4 the receiving application SHOULD NOT present the stanza to the intended recipient (human or application) and SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that it has received a stanza that cannot be decrypted).</t>
+      <t>In addition to returning an error in Case #4, the receiving application SHOULD NOT present the stanza to the intended recipient (human or application) and SHOULD provide some explicit alternate processing of the stanza (which may be to display a message informing the recipient that it has received a stanza that cannot be decrypted).</t>
     </section>
 
     <section title="Inclusion and Checking of Timestamps" anchor="timestamps">
@@ -206,7 +209,7 @@
         <t>It SHOULD verify that the timestamp received is greater than any timestamp received in the last 10 minutes which passed the previous check.</t>
         <t>If any of the foregoing checks fails, the timestamp SHOULD be presented to the receiving entity (human or application) marked as "old timestamp", "future timestamp", or "decreasing timestamp", and the receiving entity MAY return a stanza error to the sender.</t>
       </list></t>
-      <t>The foregoing checks assume that the recipient is online when the message is received.  However, if the recipient is offline then the server will probably store the message for delivery when the recipient is next online (offline storage does not apply to &lt;iq/&gt; or &lt;presence/&gt; stanzas, only &lt;message/&gt; stanzas).  As described in <xref target='OFFLINE'/>, when sending an offline message to the recipient, the server SHOULD include delayed delivery data as specified in <xref target='DELAY'/> so that the recipient knows that this is an offline message and also knows the original time of receipt at the server.  In this case, the recipient SHOULD verify that the timestamp received in the encrypted message is within five minutes of the time stamped by the recipient's server in the &lt;delay/&gt; element.</t>
+      <t>The foregoing timestamp checks assume that the recipient is online when the message is received.  However, if the recipient is offline then the server will probably store the message for delivery when the recipient is next online (offline storage does not apply to &lt;iq/&gt; or &lt;presence/&gt; stanzas, only &lt;message/&gt; stanzas).  As described in <xref target='OFFLINE'/>, when sending an offline message to the recipient, the server SHOULD include delayed delivery data as specified in <xref target='DELAY'/> so that the recipient knows that this is an offline message and also knows the original time of receipt at the server.  In this case, the recipient SHOULD verify that the timestamp received in the encrypted message is within five minutes of the time stamped by the recipient's server in the &lt;delay/&gt; element.</t>
     </section>
 
     <section title="Mandatory-to-Implement Cryptographic Algorithms" anchor="mti">
@@ -223,7 +226,7 @@
     </section>
 
     <section title='Security Considerations' anchor='security'>
-      <t>The recipient's server might store any &lt;message/&gt;s received until the recipient is next available; this duration could anywhere from a few minutes to several months.</t>
+      <t>The recipient's server might store any &lt;message/&gt; stanzas received until the recipient is next available; this duration could be anywhere from a few minutes to several months.</t>
     </section>
 
     <section title="IANA Considerations" anchor="iana">
@@ -282,12 +285,24 @@
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='June' day='29' year='2009' />
+<date month='March' day='8' year='2010' />
 <abstract><t>This document describes requirements for end-to-end encryption in the Extensible Messaging and Presence Protocol (XMPP).</t></abstract>
 </front>
 <seriesInfo name='Internet-Draft' value='draft-saintandre-xmpp-e2e-requirements-01' />
 <format type='TXT'
         target='http://www.ietf.org/internet-drafts/draft-saintandre-xmpp-e2e-requirements-01.txt' />
+</reference>
+
+<reference anchor='SECTERMS'>
+<front>
+<title>Internet Security Glossary, Version 2</title>
+<author initials='R.' surname='Shirey' fullname='R. Shirey'>
+<organization /></author>
+<date year='2007' month='August' />
+<abstract>
+<t>This Glossary provides definitions, abbreviations, and explanations of terminology for information system security.  The 334 pages of entries offer recommendations to improve the comprehensibility of written material that is generated in the Internet Standards Process (RFC 2026).  The recommendations follow the principles that such writing should (a) use the same term or definition whenever the same concept is mentioned; (b) use terms in their plainest, dictionary sense; (c) use terms that are already well-established in open publications; and (d) avoid terms that either favor a particular vendor or favor a particular technology or mechanism over other, competing techniques that already exist or could be developed.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='4949' />
+<format type='TXT' octets='867626' target='ftp://ftp.isi.edu/in-notes/rfc4949.txt' />
 </reference>
 
       <reference anchor='TERMS'>
@@ -366,13 +381,6 @@
   <format type="HTML" target="http://xmpp.org/extensions/xep-0203.html"/>
 </reference>
 
-<reference anchor="HMAC">
-  <front>
-    <title>The Keyed-Hash Message Authentication Code (HMAC): Federal Information Processing Standards Publication 198</title>
-    <author/>
-  </front>
-</reference>
-
 <reference anchor="OFFLINE">
   <front>
     <title>Best Practices for Handling Offline Messages</title>
@@ -406,10 +414,10 @@
     <xs:complexType>
       <xs:simpleContent>
         <xs:extension base='xs:string'>
-          <xs:attribute name='algo'
+          <xs:attribute name='cipher'
                         type='xs:string'
                         use='optional'/>
-          <xs:attribute name='cipher'
+          <xs:attribute name='hash'
                         type='xs:string'
                         use='optional'/>
           <xs:attribute name='timestamp'
