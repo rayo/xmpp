@@ -61,7 +61,7 @@
         <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that SHOULD match the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
       </list></t>
 
-      <section title='Example of Securing Messages' anchor="message">
+      <section title='Example of Securing Messages' anchor="ex-message">
         <t>The sender begins with the cleartext version of the &lt;message/&gt; stanza "S":</t>
         <figure>
           <artwork><![CDATA[
@@ -86,25 +86,68 @@
   <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
         stamp='2010-02-28T18:00:00Z'
         cipher='RSAES-PKCS1-v1_5'>
-    oOb/huFlvC17+XxZdye4BAj4jN2yWiSQZts7BctqZB+wo1tCfHE0w
-    BMQlof4\nC7KLn6+ktILqX6k5/IgQrwGF0hxKjFk44R01RcVmzlUS
-    0HaSEIQVQk/3r33c\n3/NKzN8Cq+yzZKfP/p3KkpHMixCUTEe7B38
-    Eu9h5hfs8PgXkb/GAdw7Ea/qW\nQgRjYcNl7jcplYY/FQQTEEfQoc
-    fKCbm/RaOsRSMnqGjkqGGt6+yQGWtvzSS2\nHD4/EHGV62IGz/sQH
-    5cAvloA9LqfiNh/oEm/UD2iLTAVj1BBS+WJZqMRznAJ\nNM4gF8vF
-    nDdLAMyeMZedlrHCS4lp6PzeblDD0Jk2HQ==
+    Ysocyy9I2jUACcChThqCuVxqB9qdFJ+mKzpbABiF+a5wMavDnQf
+    z1Rda1OAL\nzs5M8+uSnQA643bGlpVvuzbi1zdfmuRtqIHzopz2
+    3CNq5cz8nuIPOLcWZvWP\nmDa5tbhB+loItG8roCYuF7Y4h+RkG
+    CwXBpV+Kwe9ZKhM1vklJ4znCfcghDXU\nORQiY29W2r/Vrqhd6U
+    u+ftp0mFm+7s45NjIOSYm7T+Fl5e7wu1FUtr9CmcPd\n22WRLNT
+    wZ+iKu0AdGUUSqLWqAUBtERA85hhj/3vNCdawOf6dm/K9eLmoLF
+    zH\nph7vc0519w5mqUktKnfzuh/4/iXGRHWJ27jZLfCcag==
   </e2e>
 </message>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title='Example of Securing IQs' anchor="ex-iq">
+        <t>The sender begins with the cleartext version of the &lt;iq/&gt; stanza "S":</t>
+        <figure>
+          <artwork><![CDATA[
+<iq       xmlns='jabber:client'
+          from='juliet@capulet.net/crypt'
+          id='a543bc3ee'
+          to='romeo@montegue.net'
+          type='resut'>
+  <mood xmlns='http://jabber.org/protocol/mood'>
+    <dejected/>
+    <text>
+      Romeo, what's here? Poison? Drunk all, and left no
+      friendly drop to help me after?
+    </text>
+  </mood>
+</iq>
+          ]]></artwork>
+        </figure>
+        <t>The sender then performs the steps from above, and sends the following:</t>
+        <figure>
+          <artwork><![CDATA[
+<iq       xmlns='jabber:client'
+          from='juliet@capulet.net/crypt'
+          id='a543bc3ee'
+          to='romeo@montegue.net/crypt'
+          type='result'>
+  <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
+        stamp='2010-03-06T20:53:18Z'
+        cipher='RSAES-PKCS1-v1_5'>
+    Up3uZr1j0H9UCdG91ec8h4bIbgmHNZ6Gu/UHr03XsPtc4Qamb/8
+    hpc4h+JL5\n6G8hhIkPeUN2ieCrXbCa84RtsJ/TuFONLw/tNe2Y
+    Fm7Js7RKgTrTRzjWCTAh\nKTp2rvjkN1T15c9N0kE2m4QX5nnYo
+    zv+bV/i/mFFCwY1UdDQqIpKhd0eaHV/\n9FYikzp319fDu6op8/
+    kbyce2rUBzAbYRAPCxM1E1sd11UERR0VwWoOTMEDCz\n+g3/Rhd
+    vT5HOIVBHYEFKl+NQeHTJIAIsVWRl9Bn1+CdgZxM8phoRidtYFk
+    18\nOaPvVABy65HBeUIYaye7Mzi0Qg2oNwRkLy1Brf/m9Q==
+  </e2e>
+</iq>
           ]]></artwork>
         </figure>
       </section>
     </section>
 
     <section title="Interaction with Stanza Semantics" anchor="interact">
-      <t></t>
-      <section title="Message Stanza Interaction" anchor="interact-message">
-        <t></t>
-      </section>
+      <t>The following limitations and caveats apply:</t>
+      <t><list style="hanging">
+        <t>Undirected &lt;presence/&gt; stanzas MUST NOT be encrypted. Such stanzas are delivered to anyone for whom the sender has authorized, and therefore an appropriate certificate is not likely to be obtainable.</t>
+        <t>Stanzas directed to multiplexing services (e.g. multi-user chat) SHOULD NOT be encrypted, unless the sender has established an acceptable trust relationship with the multiplexing service.</t>
+      </list></t>
     </section>
 
     <section title="Handling of Inbound Stanzas" anchor="inbound">
@@ -172,7 +215,7 @@
     </section>
 
     <section title='Security Considerations' anchor='security'>
-      <t>To follow.</t>
+      <t>The recipient's server might store any &lt;message/&gt;s received until the recipient is next available; this duration could anywhere from a few minutes to several months.</t>
     </section>
 
     <section title="IANA Considerations" anchor="iana">
