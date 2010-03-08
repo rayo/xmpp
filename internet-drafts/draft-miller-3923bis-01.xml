@@ -36,7 +36,7 @@
 
     <section title="Introduction" anchor="intro">
       <t>End-to-end encryption of traffic sent over the Extensible Messaging and Presence Protocol <xref target='XMPP-CORE'/> is a desirable goal.  Requirements and a threat analysis for XMPP encryption are provided in <xref target='E2E-REQ'/>.  Many possible approaches to meet those (or similar) requirements have been proposed over the years, including methods based on PGP, S/MIME, SIGMA, and TLS.</t>
-      <t>The S/MIME approach defined in RFC 3923 has never been implemented in XMPP clients to the best of our knowledge, but has some attractive features, especially the ability to store-and-forward an encrypted message at a user's server if the user is not online when the message is received (in the XMPP community this is called "offline storage" and the message is referred to as an "offline message").  The authors surmise that RFC 3923 has not been implemented mainly because it adds several new dependencies to XMPP clients, especially MIME (along with the CPIM and MSGFMT media types).  Therefore this document explores the possibility of an approach that is similar to but simpler than RFC 3923, but that retains the same basic object encryption model.</t>
+      <t>The S/MIME approach defined in RFC 3923 has never been implemented in XMPP clients to the best of our knowledge, but has some attractive features, especially the ability to store-and-forward an encrypted message at a user's server if the user is not online when the message is received (in the XMPP community this is called "offline storage" and the message is referred to as an "offline message").  The authors surmise that RFC 3923 has not been implemented mainly because it adds several new dependencies to XMPP clients, especially MIME (along with the CPIM and MSGFMT media types).  Therefore this document explores the possibility of an approach that is similar to but simpler than RFC 3923, while retaining the same basic object encryption model.</t>
     </section>
 
     <section title="Terminology" anchor="terms">
@@ -45,17 +45,18 @@
     </section>
 
     <section title='Securing XMPP Stanzas' anchor='stanza'>
-      <t>The process a sending agent follows for securing stanzas is very similar regardless of the form of stanza (i.e., &lt;iq/&gt;, &lt;message/&gt;, or &lt;presence/&gt;).</t>
+      <t>The process that a sending agent follows for securing stanzas is very similar regardless of the form of stanza (i.e., &lt;iq/&gt;, &lt;message/&gt;, or &lt;presence/&gt;).</t>
       <t><list style="numbers">
         <t>Constructs a cleartext version of the stanza, S.</t>
-        <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and always including the seconds (resulting in a datetime string 20 characters in length).</t>
-        <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because for purposes of encryption and decryption it is not treated as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
-        <t>Encrypts the stanza-string S' using the recipient's public key to produce encrypted data T. (Note: This step is under-specified and will be expanded in the next version of this document.)</t>
+        <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and including the seconds and fractions of a second to three digits (resulting in a datetime string 24 characters in length, such as "2010-02-28T18:00:00.314Z").</t>
+        <t>Hashes the datetime N using a cryptographic hashing algorithm, i.e., hash(N) = N'.</t>
+        <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because for purposes of encryption and decryption it is treated not as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
+        <t>Encrypts (N' + S') using the recipient's public key to produce encrypted data T.  (Known issue: This step is under-specified and will be expanded in a later version of this document.)</t>
         <t>Base64-encodes T to produce the encrypted data T'.</t>
         <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
         <list style="hanging">
-          <t>The attribute 'stamp' set to the timestamp N from step 2</t>
-          <t>The attribute 'cipher' set to the encryption scheme used in step 4 above</t>
+          <t>The attribute 'stamp' set to the timestamp N from step 2;</t>
+          <t>The attribute 'cipher' set to the encryption scheme used in step 4;</t>
           <t>The XML character data as T' from step 5.</t>
         </list></t>
         <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that SHOULD match the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
@@ -84,8 +85,9 @@
           to='romeo@montegue.net'
           type='chat'>
   <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
-        stamp='2010-02-28T18:00:00Z'
-        cipher='RSAES-PKCS1-v1_5'>
+        algo='SHA-256'
+        cipher='RSAES-PKCS1-v1_5'
+        stamp='2010-02-28T18:00:00Z'>
     Ysocyy9I2jUACcChThqCuVxqB9qdFJ+mKzpbABiF+a5wMavDnQf
     z1Rda1OAL\nzs5M8+uSnQA643bGlpVvuzbi1zdfmuRtqIHzopz2
     3CNq5cz8nuIPOLcWZvWP\nmDa5tbhB+loItG8roCYuF7Y4h+RkG
@@ -160,10 +162,13 @@
       </list></t>
       <t>In Case #1, the receiving application MUST do one and only one of the following: (1) ignore the &lt;e2e/&gt; extension, (2) ignore the entire stanza, or (3) return a &lt;service-unavailable/&gt; error to the sender, as described in <xref target="XMPP-CORE"/>.</t>
       <t>In Case #2, the receiving application MUST NOT return a stanza error to the sender, since this is the success case.</t>
-      <t>In Case #3, the receiving application MAY return a &lt;not-acceptable/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;bad-timestamp/&gt; as shown below:</t>
+      <t>In Case #3, the receiving application MAY return a &lt;not-acceptable/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element of &lt;bad-timestamp/&gt; as shown below:</t>
       <figure>
         <artwork><![CDATA[
-<message from='romeo@example.net/orchard' type='chat'>
+<message from='romeo@example.net/orchard'
+         id='6410ed123' 
+         to='juliet@capulet.net/balcony'
+         type='error'>
   <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
     XML-character-data-here
   </e2e>
@@ -174,10 +179,13 @@
 </message>
         ]]></artwork>
       </figure>
-      <t>In Case #4, the receiving application SHOULD return a &lt;bad-request/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element &lt;decryption-failed/&gt; as shown below:</t>
+      <t>In Case #4, the receiving application SHOULD return a &lt;bad-request/&gt; error to the sender (as described in <xref target="XMPP-CORE"/>), optionally supplemented by an application-specific error condition element of &lt;decryption-failed/&gt; as shown below:</t>
       <figure>
         <artwork><![CDATA[
-<message from='romeo@example.net/orchard' type='chat'>
+<message from='romeo@example.net/orchard'
+         id='6410ed123' 
+         to='juliet@capulet.net/balcony'
+         type='error'>
   <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
     XML-character-data-here
   </e2e>
@@ -192,7 +200,7 @@
     </section>
 
     <section title="Inclusion and Checking of Timestamps" anchor="timestamps">
-      <t>Timestamps are included to help prevent replay attacks.  All timestamps MUST conform to <xref target='DATETIME'/> and be presented as UTC with no offset, including fractions of a second as appropriate.  Absent a local adjustment to the sending agent's perceived time or the underlying clock time, the sending agent MUST ensure that the timestamps it sends to the receiver increase monotonically (if necessary by incrementing the seconds fraction in the timestamp if the clock returns the same time for multiple requests).  The following rules apply to the receiving application:</t>
+      <t>Timestamps are included to help prevent replay attacks.  All timestamps MUST conform to <xref target='DATETIME'/> and be presented as UTC with no offset, always including the seconds and fractions of a second to three digits (resulting in a datetime 24 characters in length).  Absent a local adjustment to the sending agent's perceived time or the underlying clock time, the sending agent MUST ensure that the timestamps it sends to the receiver increase monotonically (if necessary by incrementing the seconds fraction in the timestamp if the clock returns the same time for multiple requests).  The following rules apply to the receiving application:</t>
       <t><list style="symbols">
         <t>It MUST verify that the timestamp received is within five minutes of the current time, except as described below for offline messages.</t>
         <t>It SHOULD verify that the timestamp received is greater than any timestamp received in the last 10 minutes which passed the previous check.</t>
@@ -394,7 +402,23 @@
     xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
     elementFormDefault='qualified'>
 
-  <xs:element name='e2e' type='xs:string'/>
+  <xs:element name='e2e'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:string'>
+          <xs:attribute name='algo'
+                        type='xs:string'
+                        use='optional'/>
+          <xs:attribute name='cipher'
+                        type='xs:string'
+                        use='optional'/>
+          <xs:attribute name='timestamp'
+                        type='xs:string'
+                        use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
 
   <xs:element name='decryption-failed' type='empty'/>
   <xs:element name='bad-timestamp' type='empty'/>
