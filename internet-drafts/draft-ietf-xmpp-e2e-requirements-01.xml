@@ -7,19 +7,20 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="info" docName="draft-ietf-xmpp-e2e-requirements-00" ipr="trust200902">
+<rfc category="info" docName="draft-ietf-xmpp-e2e-requirements-01" ipr="trust200902">
 
   <front>
     <title abbrev="XMPP E2E Requirements">Requirements for End-to-End Encryption in the Extensible Messaging and Presence Protocol (XMPP)</title>
 
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre" role='editor'>
       <organization>Cisco</organization>
       <address>
         <email>psaintan@cisco.com</email>
       </address>
     </author>
 
-    <date day="27" month="August" year="2009"/>
+    <date month="March" day="8" year="2010"/>
+
     <area>Applications</area>
     <workgroup>XMPP</workgroup>
     <keyword>Internet-Draft</keyword>
@@ -32,13 +33,12 @@
   <middle>
 
     <section title='Introduction' anchor='intro'>
-      <t>End-to-end or "e2e" encryption of traffic sent over the Extensible Messaging and Presence Protocol (XMPP) is a desirable goal.  Since 1999, the Jabber/XMPP developer community has experimented with several such technologies, including OpenPGP <xref target='XMPP-PGP'/>, S/MIME <xref target='XMPP-SMIME'/>, and encrypted sessions <xref target='ESessions'/>.  More recently, the community has explored the possibility of using Transport Layer Security <xref target='TLS'/> as the base technology for e2e encryption.  In order to provide a foundation for deciding on a sustainable approach to e2e encryption, this document specifies a set of requirements that the ideal technology would meet.</t>
+      <t>End-to-end or "e2e" encryption of traffic sent over the Extensible Messaging and Presence Protocol (XMPP) is a desirable goal.  Since 1999, the Jabber/XMPP developer community has experimented with several such technologies, including OpenPGP <xref target='XMPP-PGP'/>, S/MIME <xref target='XMPP-SMIME'/>, and encrypted sessions <xref target='XMPP-SESS'/>.  More recently, the community has explored the possibility of using Transport Layer Security <xref target='TLS'/> as the base technology for e2e encryption.  In order to provide a foundation for deciding on a sustainable approach to e2e encryption, this document specifies a set of requirements that the ideal technology would meet.</t>
       <t>The preferred venue for discussion of this document is the xmpp@ietf.org mailing list; visit <eref target='https://www.ietf.org/mailman/listinfo/xmpp'/> for further information.</t>
-      <t>Much of the text in this document has been copied from <xref target='XEP-0210'/>.</t>
     </section>
 
     <section title='Scope' anchor='scope'>
-      <t>There are several different kinds of communications between XMPP entitites:</t>
+      <t>There are several different forms of communication between XMPP entitites:</t>
       <t>
         <list style='numbers'>
           <t>One-to-one communication sessions between two entities, where each entity is online and available during the life of the session so that all of the communications occur in real time.</t>
@@ -47,7 +47,7 @@
           <t>Many-to-many communication sessions among more than two entities, such as a text conference in a chatroom as described in <xref target='MUC'/>.</t>
         </list>
       </t>
-      <t>Ideally, any technology for end-to-end encryption in XMPP could be extended to cover all the scenarios above.  However, both one-to-many broadcast and many-to-many sessions are deemed out-of-scope for this document, and this document puts more weight on one-to-one communication sessions (the typical scenario for XMPP) than on offline messages.</t>
+      <t>Ideally, any technology for end-to-end encryption in XMPP could be extended to cover all of the foregoing communication methods.  However, both one-to-many broadcast and many-to-many sessions are deemed out-of-scope for this document, and this document puts more weight on one-to-one communication sessions (the typical scenario for XMPP) than on offline messages.</t>
     </section>
 
     <section title='Threat Analysis' anchor='threat'>
@@ -65,20 +65,22 @@
         </list>
       </t>
       <t>Other attacks are possible, and the foregoing list is best considered incomplete at this time.</t>
+      <t>Although an attacker might be able to launch an attack once, it is possible that the attacker cannot launch an attack multiple times.  Given that the communication pattern in XMPP is typically to hold multiple different conversations that are separated in time, many end users might consider it acceptable to engage in a "leap of faith" the first time two parties negotiate a secure communication session, then check to make sure that the credentials are the same in subsequent communication sessions.</t>
     </section>
+
     <section title='Security Requirements' anchor='reqs-sec'>
       <t>This document stipulates the following security requirements for end-to-end encryption of XMPP communications:</t>
       <t>
         <list style='hanging'>
-          <t hangText='Confidentiality:'>The one-to-one XML stanzas exchanged between two entities (conventionally, "Alice" and "Bob") must not be understandable to any other entity that might intercept the communications.  The encrypted stanzas should be understood by an intermediate server only to the extent required to route them.</t>
+          <t hangText='Confidentiality:'>The one-to-one XML stanzas exchanged between two entities (conventionally, "Alice" and "Bob") must not be understandable to any other entity that might intercept the communications.  The encrypted stanzas should be understood by an intermediate server only to the extent absolutely required to route them (i.e., the 'from' and 'to' addresses).  However, note that some intermediaries might require or desire access to more detailed information in order to route XMPP stanzas (e.g., data about confidentiality levels or delivery semantics).</t>
           <t hangText='Integrity:'>Alice and Bob must be sure that no other entity can change the content of the XML stanzas they exchange, or remove or insert stanzas undetected.</t>
           <t hangText='Replay Protection:'>Alice or Bob must be able to identify and reject any communications that are copies of their previous communications resent by another entity.</t>
           <t hangText='Perfect Forward Secrecy:'>The encrypted communication should not be revealed even if long-lived keys are compromised in the future (e.g., Steve steals Bob's computer).  For long-lived sessions it must be possible to periodically change the decryption keys.</t>
-          <t hangText='PKI Independence:'>The protocol must not force the use of any public key infrastructure (PKI), certification authority, web of trust, or any other trust model that is external to the trust established between Alice and Bob.  However, if external authentication or trust models are available then Alice and Bob should be able to use such trust models to enhance any trust that exists between them.</t>
-          <t hangText='Authentication:'>Each party to a conversation must know that the other party is who they want to communicate with (Alice must be able to know that Bob really is Bob, and vice versa).  Note: Authentication can be as simple as Alice confirming that Bob is the same Bob that she communicated with yesterday or that she talked to on the telephone.  The reliable association between an entity and its public keys is "identification" and therefore beyond the scope of this document.</t>
-          <t hangText='Identity Protection:'>No other entity should be able to identify Alice or Bob.  The JabberIDs they use to route their stanzas are unavoidably vulnerable to interception.  Therefore, even if Alice and Bob protect their identities by using different JabberIDs for each session, it must be possible for their user agents to authenticate them transparently, without any other entity identifying them via an active ("man-in-the-middle") attack, or even linking them to their previous sessions.  If that is not possible because Alice and Bob choose to authenticate using public keys instead of retained shared secrets, then the public keys must not be revealed to other entities using a passive attack.  Bob should also be able to choose between protecting either his public key or Alice's public key from disclosure through an active attack.</t>
-          <t hangText='Robustness:'>The protocol should provide more than one difficult challenge that has to be overcome before an attack can succeed (for example, by generating encryption keys using as many shared secrets as possible, such as retained secrets or optional passwords).</t>
-          <t hangText='Upgradability:'>The protocol must be upgradable so that, if a vulnerability is discovered, a new version can fix it.  Alice must tell Bob which versions of the protocol she is prepared to support.</t>
+          <t hangText='Trust:'>The protocol must enable Alice and Bob to establish trust in each other's credentials either within the protocol or using outside channels.  The supported credential types might include self-signed certificates, pre-shared keys, and shared secrets, either as stable credentials or as mechanisms for bootstrapping trust in ephemeral keying material.  The protocol must not force the use of any public key infrastructure (PKI), certification authority, web of trust, or any other trust model that is external to the trust established between Alice and Bob; however, if external authentication or trust models are available then Alice and Bob should be able to use such trust models to enhance any trust that exists between them.</t>
+          <t hangText='Authentication:'>Each party to a conversation should be able to determine that the other party is who they want to communicate with (Alice must be able to know that Bob really is Bob, or at least is an entity that possesses a credential to which only Bob is expected to have access).  Authentication can be as simple as Alice confirming that Bob is the same Bob that she communicated with yesterday or that she talked with on the telephone (identity coherence across time).  The reliable association between an entity and its public keys is "identification" and therefore beyond the scope of this document.</t>
+          <t hangText='Identity Protection:'>No entity other than the intermediate servers and the parties themselves should be able to identify Alice or Bob.  Naturally, the JabberIDs they use to route their stanzas are unavoidably vulnerable to interception.  Therefore, even if Alice and Bob protect their identities by using different JabberIDs for each session, it must be possible for their user agents to authenticate them transparently, without any other entity identifying them via an active ("man-in-the-middle") attack, or even linking them to their previous sessions.  If that is not possible because Alice and Bob choose to authenticate using public keys instead of retained shared secrets, then the public keys must not be revealed to other entities using a passive attack.  Bob should also be able to choose between protecting either his public key or Alice's public key from disclosure through an active attack.</t>
+          <t hangText='Robustness:'>The protocol should have multiple lines of defense and should force an attacker to surmount more than one difficult challenge before an attack can succeed (for example, by generating encryption keys using as many shared secrets as possible, such as retained secrets or optional passwords).</t>
+          <t hangText='Upgradability:'>The protocol must be upgradable so that, if a vulnerability is discovered, a new version can fix it.  Alice must tell Bob which versions of the protocol she is prepared to support.  Upgradability refers to the protocol as a whole as well as to components thereof (e.g., cryptographic hashing algorithms).</t>
         </list>
       </t>
     </section>
@@ -105,38 +107,16 @@
       <t>This document has no actions for the IANA.</t>
     </section>
 
+    <section title='Acknowledgements' anchor='acks'>
+      <t>Much of the text in this document has been copied from <xref target='XEP-0210'/>.  The editor wishes to thank Ian Paterson for his work on that document and the ESessions technology in general.</t>
+      <t>Thanks also to Bernard Aboba for his feedback.</t>
+    </section>
+
   </middle>
 
   <back>
 
     <references title="Informative References">
-
-<reference anchor="ESessions">
-  <front>
-    <title>Encrypted Session Negotiation</title>
-    <author initials="I." surname="Paterson" fullname="Ian Paterson">
-      <organization/>
-      <address>
-        <email>ian.paterson@clientside.co.uk</email>
-      </address>
-    </author>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email/>
-      </address>
-    </author>
-    <author initials="D." surname="Smith" fullname="Dave Smith">
-      <organization/>
-      <address>
-        <email>dizzyd@jabber.org</email>
-      </address>
-    </author>
-    <date day="30" month="May" year="2007"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0116"/>
-  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0116.html"/>
-</reference>
 
 <reference anchor="MUC">
   <front>
@@ -319,12 +299,12 @@
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='June' day='1' year='2009' />
-<abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.  This document also specifies the format for XMPP addresses, which are fully internationalizable.</t><t>This document obsoletes RFC 3920.</t></abstract>
+<date month='March' day='8' year='2010' />
+<abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network- aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities. This document also specifies the format for XMPP addresses, which are fully internationalizable. This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-05' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-05.txt' />
 </reference>
 
 <reference anchor="XMPP-IM">
@@ -333,12 +313,12 @@
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='June' day='1' year='2009' />
+<date month='March' day='8' year='2010' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-05' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-05.txt' />
 </reference>
 
 <reference anchor="XMPP-PGP">
@@ -354,6 +334,33 @@
   </front>
   <seriesInfo name="XSF XEP" value="0027"/>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0027.html"/>
+</reference>
+
+<reference anchor="XMPP-SESS">
+  <front>
+    <title>Encrypted Session Negotiation</title>
+    <author initials="I." surname="Paterson" fullname="Ian Paterson">
+      <organization/>
+      <address>
+        <email>ian.paterson@clientside.co.uk</email>
+      </address>
+    </author>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email/>
+      </address>
+    </author>
+    <author initials="D." surname="Smith" fullname="Dave Smith">
+      <organization/>
+      <address>
+        <email>dizzyd@jabber.org</email>
+      </address>
+    </author>
+    <date day="30" month="May" year="2007"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0116"/>
+  <format type="HTML" target="http://www.xmpp.org/extensions/xep-0116.html"/>
 </reference>
 
 <reference anchor='XMPP-SMIME'>
