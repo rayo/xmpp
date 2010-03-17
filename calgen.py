@@ -213,6 +213,7 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 		f.close()
 	except:
 		print "File not found! - " + events_file
+		print "Unexpected error:", sys.exc_info()[0]
 
 def genCalendarForTeam( name ):
 	genCalendarFromEventsFile("xsf/teams/" + name + "/events.xml", CALPATH + "/team-" + name + ".ics")
