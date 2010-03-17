@@ -38,6 +38,7 @@ import re
 import sys
 import getopt
 import glob
+import traceback
 
 from xml.dom.minidom import parse,parseString,Document,getDOMImplementation
 from datetime import datetime, timedelta
@@ -178,6 +179,9 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 	
 		for ev in events.getEventList():
 			event = Event()
+			if "date" in ev:
+				ev["date"] = ev["date"].rstrip("Z")
+			
 			if "all-day" in ev:
 				start = datetime.strptime(ev["date"], "%Y-%m-%d") # T%H:%M:%S
 				event.add('dtstart', start.date())
@@ -214,6 +218,7 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 	except:
 		print "File not found! - " + events_file
 		print "Unexpected error:", sys.exc_info()[0]
+		traceback.print_exc(file=sys.stdout)
 
 def genCalendarForTeam( name ):
 	genCalendarFromEventsFile("xsf/teams/" + name + "/events.xml", CALPATH + "/team-" + name + ".ics")
