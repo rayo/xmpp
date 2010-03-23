@@ -49,17 +49,28 @@
       <t>The process that a sending agent follows for securing stanzas is very similar regardless of the form of stanza (i.e., &lt;iq/&gt;, &lt;message/&gt;, or &lt;presence/&gt;).</t>
       <t><list style="numbers">
         <t>Constructs a cleartext version of the stanza, S.</t>
+        <t>Generates a session key R appropriate for the intended block cipher (e.g. AES-SHA-256).</t>
         <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and including the seconds and fractions of a second to three digits (resulting in a datetime string 24 characters in length, such as "2010-02-28T18:00:00.314Z").</t>
-        <t>Hashes the datetime N using a cryptographic hashing algorithm, i.e., hash(N) = N'.</t>
         <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because for purposes of encryption and decryption it is treated not as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
-        <t>Encrypts (N' + S') using the recipient's public key to produce encrypted data T.  (Known issue: This step is under-specified and will be expanded in a later version of this document.)</t>
+        <t>Hashes the session key R using the datetime N and stanza string S' using a cryptographic hashing algorithm, i.e., hmac(N + S', R) = R'.</t>
+        <t>Encrypts (N + S') using the intended block cipher, i.e. block-encrypt(N + S', ) = T.</t>
         <t>Base64-encodes T to produce the encrypted data T'.</t>
+        <t>Encrypts (R) using the recipient's public key to produce encrypted data K.  (Known issue: This step is under-specified and will be expanded in a later version of this document.)</t>
+        <t>Base64-encodes K to produce the encrypted key K'.</t>
         <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
         <list style="hanging">
-          <t>The attribute 'stamp' set to the timestamp N from step 2;</t>
-          <t>The attribute 'hash' set to the cryptographic hashing algorithm used in step 3;</t>
-          <t>The attribute 'cipher' set to the encryption scheme used in step 5;</t>
-          <t>The XML character data as T' from step 6.</t>
+          <t>The attribute 'stamp' set to the timestamp N from step 3;</t>
+          <t>The child element &lt;key/&gt; qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
+          <list style="hanging">
+            <t>The attribute 'cipher' set to the encryption scheme used in step 8;</t>
+            <t>The XML character data K' from step 9.</t>
+          </list></t>
+          <t>The child element &lt;data/&gt; qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
+          <list>
+            <t>The attribute 'mac' set to the cryptographic hashing algorithm used in step 5;</t>
+            <t>The attribute 'cipher' set to the encryption scheme used in step 6;</t>
+            <t>The XML character data as T' from step 7.</t>
+          </list></t>
         </list></t>
         <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that matches the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
       </list></t>
@@ -86,18 +97,25 @@
           id='6410ed123'
           to='romeo@montague.net'
           type='chat'>
-  <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
-        cipher='RSAES-PKCS1-v1_5'
-        hash='SHA-256'
-        stamp='2010-02-28T18:00:00.203Z'>
-    Ysocyy9I2jUACcChThqCuVxqB9qdFJ+mKzpbABiF+a5wMavDnQf
-    z1Rda1OAL\nzs5M8+uSnQA643bGlpVvuzbi1zdfmuRtqIHzopz2
-    3CNq5cz8nuIPOLcWZvWP\nmDa5tbhB+loItG8roCYuF7Y4h+RkG
-    CwXBpV+Kwe9ZKhM1vklJ4znCfcghDXU\nORQiY29W2r/Vrqhd6U
-    u+ftp0mFm+7s45NjIOSYm7T+Fl5e7wu1FUtr9CmcPd\n22WRLNT
-    wZ+iKu0AdGUUSqLWqAUBtERA85hhj/3vNCdawOf6dm/K9eLmoLF
-    zH\nph7vc0519w5mqUktKnfzuh/4/iXGRHWJ27jZLfCcag==
-  </e2e>
+ <e2e   xmlns="urn:ietf:params:xml:ns:xmpp-objec"
+        stamp="2010-03-09T16:29:43.012Z">
+   <key     cipher="RSAES-OAEP-SHA-256-MFG1">
+     PrGA6extyYdY6sFWk7/+YAvTglZe4GSglWeTshada6+GOKqVViK17FIvR9TQcSTB
+     Ak1YcKr5Oa8ok0bf9gQzscwastKho72NaJ9NplTuDOZ4I3e3ZXhcN5iXoJYkVMHf
+     scz20vYK170b5FYKorlQ/cgXw62slxb51t6jgCKZ+bUDpcalUmepU56y7Wwy+OwE
+     buP2B1tr5XFVX1r0+epObTfdunCr/N1GphuVP70108lCavZhRLO1gNAC+6FEA75E
+     pelvYstXaCHbXkkWT03AY02p//L4pdoyGQK+ZbJJjOfRndFTGMx1DJApkySRaQhW
+     P2+5HpJMJ6jeWCyPAawK8A==
+   </key>
+   <data    cipher="AES-256-CBC-PKCS5-WITH-IV"
+            mac="HMACSHA256">
+     lM06rZtX5YXi+jrlNOKdsydMjAcVkAcJCZ8lncIgIF1CatVVTtIoachMHFm3XV7a
+     SyEjrVO1P8Sdd3MTdOn1o+ktJvI66zAVWFL/aCoJbcwO1BUKtIn4AOG76V7kSYBj
+     CDzWD7Hus620TEah/h1K/9Au6RHjWB78qpVLPLiROlZSH9Pw5sg4eDOKeusffSyb
+     gcHDGXlDEVduWViaNWfIl6fboHiZXVfsU4ZPlxMXW41WjXVB1wwlfIUnsjL8e0Xc
+     106EkLR5XM9E6vT3MNY0UeOJO89W3t3RzKkZfFhWKn3ALPjoikRyEvdvw7baRD3O
+   </data>
+ </e2e>
 </message>
           ]]></artwork>
         </figure>
@@ -129,18 +147,25 @@
           id='a543bc3ee'
           to='romeo@montague.net/crypt'
           type='result'>
-  <e2e  xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
-        cipher='RSAES-PKCS1-v1_5'
-        hash='SHA-256'
-        stamp='2010-03-06T20:53:18.082Z'>
-    Up3uZr1j0H9UCdG91ec8h4bIbgmHNZ6Gu/UHr03XsPtc4Qamb/8
-    hpc4h+JL5\n6G8hhIkPeUN2ieCrXbCa84RtsJ/TuFONLw/tNe2Y
-    Fm7Js7RKgTrTRzjWCTAh\nKTp2rvjkN1T15c9N0kE2m4QX5nnYo
-    zv+bV/i/mFFCwY1UdDQqIpKhd0eaHV/\n9FYikzp319fDu6op8/
-    kbyce2rUBzAbYRAPCxM1E1sd11UERR0VwWoOTMEDCz\n+g3/Rhd
-    vT5HOIVBHYEFKl+NQeHTJIAIsVWRl9Bn1+CdgZxM8phoRidtYFk
-    18\nOaPvVABy65HBeUIYaye7Mzi0Qg2oNwRkLy1Brf/m9Q==
-  </e2e>
+ <e2e   xmlns="urn:ietf:params:xml:ns:xmpp-objec"
+        stamp="2010-03-09T16:29:43.012Z">
+   <key     cipher="RSAES-OAEP-SHA-256-MFG1">
+     PrGA6extyYdY6sFWk7/+YAvTglZe4GSglWeTshada6+GOKqVViK17FIvR9TQcSTB
+     Ak1YcKr5Oa8ok0bf9gQzscwastKho72NaJ9NplTuDOZ4I3e3ZXhcN5iXoJYkVMHf
+     scz20vYK170b5FYKorlQ/cgXw62slxb51t6jgCKZ+bUDpcalUmepU56y7Wwy+OwE
+     buP2B1tr5XFVX1r0+epObTfdunCr/N1GphuVP70108lCavZhRLO1gNAC+6FEA75E
+     pelvYstXaCHbXkkWT03AY02p//L4pdoyGQK+ZbJJjOfRndFTGMx1DJApkySRaQhW
+     P2+5HpJMJ6jeWCyPAawK8A==
+   </key>
+   <data    cipher="AES-256-CBC-PKCS5-WITH-IV"
+            mac="HMACSHA256">
+     lM06rZtX5YXi+jrlNOKdsydMjAcVkAcJCZ8lncIgIF1CatVVTtIoachMHFm3XV7a
+     SyEjrVO1P8Sdd3MTdOn1o+ktJvI66zAVWFL/aCoJbcwO1BUKtIn4AOG76V7kSYBj
+     CDzWD7Hus620TEah/h1K/9Au6RHjWB78qpVLPLiROlZSH9Pw5sg4eDOKeusffSyb
+     gcHDGXlDEVduWViaNWfIl6fboHiZXVfsU4ZPlxMXW41WjXVB1wwlfIUnsjL8e0Xc
+     106EkLR5XM9E6vT3MNY0UeOJO89W3t3RzKkZfFhWKn3ALPjoikRyEvdvw7baRD3O
+   </data>
+ </e2e>
 </iq>
           ]]></artwork>
         </figure>
@@ -217,7 +242,7 @@
       <t><list style='symbols'>
         <t>The RSA (PKCS #1 v1.5) key transport, as specified in <xref target="CMS-ALG"/> section 4.2.1.</t>
         <t>The AES-128 encryption algorithm in CBC mode, as specified in <xref target="CMS-AES"/>.</t>
-        <t>The SHA-256 hashing algorithm, as specified in <xref target='X509-ALGO'/>.</t>
+        <t>The HMACSHA256 hashing algorithm, as specified in <xref target='X509-ALGO'/>.</t>
       </list></t>
     </section>
 
