@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3920bis-06" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-ietf-xmpp-3920bis-07" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="March" day="31"/>
+    <date year="2010" month="April" day="7"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -171,6 +171,7 @@ romeo@example.net           juliet@im.example.com
            <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
         </list>
       </t>
+      <t><list style='empty'><t>Note: In the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), the initiating entity SHOULD check that the target domain name returned in the SRV record matches the original service domain that was queried.  If the target domain name is not in the queried domain, the connecting application SHOULD verify with the human user (if any) that the SRV target domain name is suitable for use before executing any connections to the IP address of the XMPP service.</t></list></t>
       <t><list style='empty'><t>Note: If the initiating entity has been explicitly configured to associate a particular hostname (and potentially port) with the original hostname of the receiving entity (say, to "hardcode" an association between an original hostname of example.net and a configured hostname and of webcm.example.com:80), the initiating entity SHALL use the configured name instead of performing the foregoing resolution process on the original name.</t></list></t>
       <t><list style='empty'><t>Note: Many XMPP servers are implemented in such a way that they can host additional services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at hostnames that are subdomains of the hostname of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or subdomains of the first-level domain of the underlying host (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity from a remote domain wishes to use such additional services, it would generate an appropriate XML stanza and the remote domain itself would attempt to resolve the service's hostname via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if a service wishes to enable entities from remote domains to access these additional services, it needs to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for its main XMPP service.</t></list></t>
     </section>
@@ -418,6 +419,7 @@ S: </stream:stream>
 
     <section title="Stream Attributes" anchor="streams-attr">
       <t>The attributes of the root &lt;stream/&gt; element are defined in the following sections.</t>
+      <t><list style='empty'><t>Note: Until and unless the confidentiality and integrity of a stream header is ensured via Transport Layer Security as described under <xref target='tls'/>, an entity SHOULD NOT trust the attributes provided in a stream header.</t></list></t>
       <t><list style='empty'><t>Note: The attributes of the root &lt;stream/&gt; element are not prepended by a namespace prefix because, as explained in <xref target="XML-NAMES"/>, "[d]efault namespace declarations do not apply directly to attribute names; the interpretation of unprefixed attributes is determined by the element on which they appear."</t></list></t>
       <section title='from' anchor='streams-attr-from'>
         <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
@@ -466,7 +468,7 @@ R: <?xml version='1.0'?>
         <t><list style='empty'><t>Note: It is possible that implementations based on the predecessor to this specification will not include the 'from' address on stream headers; an entity SHOULD be liberal in accepting such stream headers.</t></list></t>
       </section>
       <section title='to' anchor='streams-attr-to'>
-        <t>For initial stream headers in both client-to-server and server-to-server communication, the initiating entity MUST include the 'to' attribute and MUST set its value to a hostname that the initiating entity knows or expects the receiving entity to service.</t>
+        <t>For initial stream headers in both client-to-server and server-to-server communication, the initiating entity MUST include the 'to' attribute and MUST set its value to a hostname that the initiating entity knows or expects the receiving entity to service.  (The same information can be provided in other ways, such as a server name indication during TLS negotiation as described in <xref target='TLS-EXT'/>.)</t>
         <figure>
           <artwork><![CDATA[
 I: <?xml version='1.0'?>
@@ -1466,6 +1468,13 @@ S: <stream:error>
       </section>
       <section title="Order of Negotiation" anchor="tls-rules-order">
         <t>If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is necessary to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
+      </section>
+      <section title="Renegotiation" anchor="tls-rules-renegotiation">
+        <t>XMPP entities MUST NOT attempt TLS renegotiation, and if either party to a TLS-protected stream detects a TLS renegotiation attempt it MUST immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
+      </section>
+      <section title="TLS Extensions" anchor="tls-rules-extensions">
+        <t>Either party to a stream MAY include any TLS extension during the TLS negotiation itself.  This is a matter for the TLS layer, not the XMPP layer (STARTTLS).</t>
+        <t>Because XMPP services are often provided in so-called virtual hosting deployments, it is RECOMMENDED for the initiating entity to include an extension of type "server_name" as defined in <xref target='TLS-EXT'/>.</t>
       </section>
     </section>
     <section title="Process" anchor="tls-process">
@@ -3842,14 +3851,20 @@ XmppAddr ::= UTF8String
     <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
       <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings.  However, if a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
     </section>
+    <section title="Weak Passwords" anchor="security-passwords">
+      <t>At the time of this writing, most XMPP servers authenticate account connections by means of passwords.  It is well-known that most users do not choose strong passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.</t>
+    </section>
     <section title="Use of base64 in SASL" anchor="security-base64">
       <t>Both the client and the server MUST verify any base64 data received during <xref target='sasl'>SASL negotiation</xref>.  An implementation MUST reject (not ignore) any characters that are not explicitly allowed by the base64 alphabet; this helps to guard against creation of a covert channel that could be used to "leak" information.</t>
       <t>An implementation MUST NOT break on invalid input and MUST reject any sequence of base64 characters containing the pad ('=') character if that character is included as something other than the last character of the data (e.g., "=AAA" or "BBBB=CCC"); this helps to guard against buffer overflow attacks and other attacks on the implementation.</t>
       <t>While base 64 encoding visually hides otherwise easily recognized information (such as passwords), it does not provide any computational confidentiality.</t>
       <t>All uses of base 64 encoding MUST follow the definition in Section 4 of <xref target="BASE64"/> and padding bits MUST be set to zero.</t>
     </section>
-    <section title="Firewalls" anchor="security-firewalls">
-      <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
+    <section title="Use of XML" anchor="security-xml">
+      <t>Because XMPP is an application profile of the Extensible Markup Language <xref target='XML'/>, many of the security considerations described in <xref target='XML-MEDIA'/> also apply to XMPP.  Several aspects of XMPP mitigate the risks described there, such as the prohibitions specified under <xref target='xml-restrictions'/> and the lack of external references to style sheets or transformations, but these mitigating factors are by no means comprehensive.</t>
+    </section>
+    <section title="Use of DNS" anchor="security-dns">
+      <t>XMPP typically relies on the Domain Name System (specifically <xref target='DNS-SRV'/> records) to resolve a fully qualified domain name to an IP address before a client connects to a server (or before a peer connects to another server).  In the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), the initiating entity SHOULD check that the target domain name returned in the SRV record matches the original service domain that was queried.  If the target domain name is not in the queried domain, the connecting application SHOULD verify with a human user (if any) that the SRV target domain name is suitable for use before executing any connections to the IP address of the XMPP service.</t>
     </section>
     <section title="Denial of Service" anchor="security-dos">
       <t><xref target='DOS'/> defines denial of service as follows:</t>
@@ -3873,6 +3888,9 @@ XmppAddr ::= UTF8String
         </list>
       </t>
       <t>For more detailed recommendations regarding denial of service attacks in XMPP systems, refer to <xref target='XEP-0205'/>.</t>
+    </section>
+    <section title="Firewalls" anchor="security-firewalls">
+      <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
     </section>
     <section title="Presence Leaks" anchor="security-leak">
       <t>One of the core aspects of XMPP is presence: information about the network availability of an XMPP entity (i.e., whether the entity is currently online or offline).  A PRESENCE LEAK occurs when an entity's network availability is inadvertently and involuntarily revealed to a second entity that is not authorized to know the first entity's network availability.</t>
@@ -5031,6 +5049,22 @@ specifications of each URI scheme.
 <format type='HTML' target='http://www.w3.org/TR/2006/REC-xml-20060816' />
 </reference>
 
+<reference anchor='XML-MEDIA'>
+<front>
+<title>XML Media Types</title>
+<author initials='M.' surname='Murata' fullname='M. Murata'>
+<organization /></author>
+<author initials='S.' surname='St. Laurent' fullname='S. St. Laurent'>
+<organization /></author>
+<author initials='D.' surname='Kohn' fullname='D. Kohn'>
+<organization /></author>
+<date year='2001' month='January' />
+<abstract>
+<t>This document standardizes five new media types -- text/xml, application/xml, text/xml-external-parsed-entity, application/xml- external-parsed-entity, and application/xml-dtd -- for use in exchanging network entities that are related to the Extensible Markup Language (XML).  This document also standardizes a convention (using the suffix '+xml') for naming media types outside of these five types when those media types represent XML MIME (Multipurpose Internet Mail Extensions) entities. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='3023' />
+<format type='TXT' octets='86011' target='ftp://ftp.isi.edu/in-notes/rfc3023.txt' />
+</reference>
+
 <reference anchor="XML-NAMES" target="http://www.w3.org/TR/REC-xml-names">
 <front>
 <title>Namespaces in XML 1.1 (Second Edition)</title>
@@ -5058,12 +5092,12 @@ specifications of each URI scheme.
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='March' day='31' year='2010' />
+<date month='April' day='7' year='2010' />
 <abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP).</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-xmpp-address-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-00' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-xmpp-address-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-00.txt' />
 </reference>
 
     </references>
@@ -5651,6 +5685,26 @@ specifications of each URI scheme.
 <seriesInfo name='BCP' value='61' />
 <seriesInfo name='RFC' value='3365' />
 <format type='TXT' octets='16411' target='ftp://ftp.isi.edu/in-notes/rfc3365.txt' />
+</reference>
+
+<reference anchor='TLS-EXT'>
+<front>
+<title>Transport Layer Security (TLS) Extensions</title>
+<author initials='S.' surname='Blake-Wilson' fullname='S. Blake-Wilson'>
+<organization /></author>
+<author initials='M.' surname='Nystrom' fullname='M. Nystrom'>
+<organization /></author>
+<author initials='D.' surname='Hopwood' fullname='D. Hopwood'>
+<organization /></author>
+<author initials='J.' surname='Mikkelsen' fullname='J. Mikkelsen'>
+<organization /></author>
+<author initials='T.' surname='Wright' fullname='T. Wright'>
+<organization /></author>
+<date year='2006' month='April' />
+<abstract>
+<t>This document describes extensions that may be used to add functionality to Transport Layer Security (TLS). It provides both generic extension mechanisms for the TLS handshake client and server hellos, and specific extensions using these generic mechanisms.&lt;/t>&lt;t> The extensions may be used by TLS clients and servers. The extensions are backwards compatible: communication is possible between TLS clients that support the extensions and TLS servers that do not support the extensions, and vice versa. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4366' />
+<format type='TXT' octets='66344' target='ftp://ftp.isi.edu/in-notes/rfc4366.txt' />
 </reference>
 
 <reference anchor='URN-OID'>
