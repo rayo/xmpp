@@ -106,23 +106,23 @@
           <t>The certification authority MUST issue the certificate based on the DNS domain name at which the server will provide the relevant service (not an IP address or host name for a specific machine).<vspace blankLines="1"/></t>
           <t>The certificate MUST include an identifier of dNSName.<vspace blankLines="1"/></t>
           <t>If the service at which the certificate will be used deploys a technology that is discovered by means of DNS SRV records <xref target='DNS-SRV'/>, then the certificate SHOULD include an identifier of type SRVName <xref target='SRVNAME'/>.<vspace blankLines="1"/></t>
-          <t>If the service is associated with a particular URI, then the certificate MAY include an identifier of type uniformResourceIdentifier (i.e., a subjectAltName extension that includes a uniformResourceIdentifier name form whose authority component is the DNS domain name of the service).<vspace blankLines="1"/></t>
+          <t>If the service is associated with a particular URI, then the certificate MAY include an identifier of type uniformResourceIdentifier (i.e., a subjectAltName extension that includes a uniformResourceIdentifier name form whose scheme is that of the protocol associated with the application type and whose authority component is the DNS domain name of the service).<vspace blankLines="1"/></t>
           <t>The certificate MAY include other application-specific identifiers for types that were defined before specification of the SRVName extension (e.g., XmppAddr for <xref target='XMPP'/>) or for which service names or URI schemes do not exist.<vspace blankLines="1"/></t>
           <t>An identifier of any type MAY contain one instance of the wildcard character '*' but only as the left-most label of the DNS domain name (as "label" is defined in <xref target='RFC1035'/>).  An application protocol that employs the rules specified in this document MUST specify whether the wildcard character is or is not allowed in certificates issued for use with that protocol.<vspace blankLines="1"/></t>
-          <t>The certificate SHOULD NOT represent the server's DNS domain name in an identifier of Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) within the Relative Distinguished Names (RDNs) of the subjectName, even though it is recognized that many deployed clients still check this legacy identifier.<vspace blankLines="1"/></t>
+          <t>The certificate SHOULD NOT represent the server's DNS domain name in an identifier of Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) within the Relative Distinguished Names (RDNs) of the subjectName, even though it is recognized that many deployed clients still check this legacy identifier.  However, if the server's DNS domain name is represented in a CN then it MUST be the last Common Name (CN) within the Relative Distinguished Names (RDNs), as those RDNs are found in the DER-encoded Name within the server's X.509 certificate.<vspace blankLines="1"/></t>
           <t>The certificate MUST NOT represent the server's DNS domain name by means of a series of Domain Component (DC) attributes (because the order of Domain Components is not guaranteed, certain attacks are possible if DC attributes are included).<vspace blankLines="1"/></t>
         </list>
       </t>
     </section>
 
-    <section title="Verification of Server Identity" anchor="verification">
-      <section title="Overview" anchor="certs-overview">
+    <section title="Verification of Server Identity" anchor="verify">
+      <section title="Overview" anchor="verify-overview">
         <t>At a high level, the client verifies the server's identity in accordance with the following rules:</t>
         <t>
           <list style="numbers">
             <t>Before connecting to the server, the client determines the possible identifier type(s) of the reference identity.<vspace blankLines="1"/></t>
             <t>During the process of attempting to establish a secure connection, the server MUST present its identity set to the client in the form of an X.509 certificate <xref target="X509"/>.<vspace blankLines="1"/></t>
-            <t>Upon being presented with the server's identity set, the client MUST check the reference identity against the presented identifiers for the purpose of finding a match.  To do so, the client iterates through all of the subjectAltName extensions it recognizes in the server's certificate and compares the value of each extension to the reference identity until it has either produced a match or exhausted the identifiers in the identity set (comparison rules for matching particular identity types are provided under <xref target="certs-rules"/>).  Even if the application technology does not define an application-specific preference order for checking of identifiers, the client SHOULD check them in order from most specific (e.g., SRVName) to least specific (e.g., dNSName).<vspace blankLines="1"/></t>
+            <t>Upon being presented with the server's identity set, the client MUST check the reference identity against the presented identifiers for the purpose of finding a match.  To do so, the client iterates through all of the subjectAltName extensions it recognizes in the server's certificate and compares the value of each extension to the reference identity until it has either produced a match or exhausted the identifiers in the identity set (comparison rules for matching particular identifier types are provided under <xref target="verify"/>).  Even if the application technology does not define an application-specific preference order for checking of identifiers, the client SHOULD check them in order from most specific (e.g., SRVName) to least specific (e.g., dNSName).<vspace blankLines="1"/></t>
             <t>Before attempting to find a match in relation to a particular presented identifier, the client MAY map the reference identity to a different identity type.  Such a mapping MAY be performed for any available subjectAltName type to which the reference identity can be mapped; however, the reference identity SHOULD be mapped only to types for which the mapping is inherently secure (e.g., extracting the DNS domain name from a URI to match against a subjectAltName of type dNSName or SRVName) or for which the mapping is performed in a secure manner (e.g., using <xref target='DNSSEC'/>, or using a user-configured or admin-configured lookup table for host-to-address or address-to-host translations).<vspace blankLines="1"/></t>
             <t>If the identity set has more than one member, a match with any of the presented identifiers is acceptable.<vspace blankLines="1"/></t>
           </list>
@@ -130,12 +130,12 @@
         <t><list style='empty'><t>Note: A hostname that is resolved via the Domain Name System MUST NOT be used as the reference identity unless an administrator or human user has explicitly configured an application to associate a particular hostname (and potentially port) with the hostname to which the application connects (e.g., to "hardcode" an association between an original hostname of example.net and a configured hostname of connector.example.com:443).</t></list></t>
         <t>In addition to the identity check described in this section, a client might complete further verification to ensure that the server is authorized to provide the service it is requested to provide.  Methods for doing so (which might include consulting local policy information) are out of scope for this document.</t>
       </section>
-      <section title="Comparison Rules" anchor="certs-rules">
+      <section title="Verifying the Domain Name" anchor="verify-domain">
         <t>This document assumes that the reference identity is a DNS domain name as defined by <xref target='RFC1034'/> and <xref target='RFC1035'/> for "traditional" domain names or by <xref target='IDNA2003'/> or <xref target='IDNA2008'/> for internationalized domain names.  The client MUST match the reference identity against subjectAltName extensions of type dNSName and SRVName <xref target='SRVNAME'/> according to the following rules.</t> 
-        <section title="Traditional Domain Names" anchor="certs-rules-trad">
+        <section title="Traditional Domain Names" anchor="verify-domain-trad">
           <t>If the reference identity is a "traditional" domain name, then matching of reference identity against the presented identifier is performed by comparing the set of domain components using a case-insensitive ASCII comparison (as clarified by <xref target='DNS-CASE'/>).</t>
         </section>
-        <section title="Internationalized Domain Names" anchor="certs-rules-idn">
+        <section title="Internationalized Domain Names" anchor="verify-domain-idn">
           <t>Note: This section needs to be updated to reflect <xref target='IDNA2008'/>.</t>
           <t>If the reference identity is an internationalized domain name, then an implementation MUST convert the reference identity to the ASCII Compatible Encoding (ACE) format as specified in Section 4 of <xref target='IDNA2003'/> before comparison with subjectAltName values of type dNSName; specifically, the conversion operation specified in Section 4 of <xref target='IDNA2003'/> MUST be performed as follows:</t>
           <t>
@@ -148,10 +148,10 @@
           </t> 
           <t>After performing the "to-ASCII" conversion with regard to an internationalized domain name, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of <xref target='IDNA2003'/>, i.e. once all label separators are replaced with U+002E (dot) they are compared in a case-insensitive manner.</t>
         </section>
-        <section title="Wildcards" anchor="certs-rules-wildcards">
+        <section title="Wildcards" anchor="verify-domain-wildcards">
           <t>Unless otherwise specified by an application protocol that employs the rules specified in this document, the client MAY match against an identity that contains one instance of the wildcard character '*' as the left-most label of the domain name.  If it does so, the client MUST match the reference identity against the entire left-most label only (thus *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself).  The client MUST ignore a presented identifier in which the wildcard character is contained within a label fragment (e.g., baz*.example.net is not allowed and MUST NOT be taken to match baz1.example.net and baz2.example.net).</t>
         </section>
-        <section title="Common Names" anchor="certs-rules-cn">
+        <section title="Common Names" anchor="verify-domain-cn">
           <t>A client MUST NOT check the Common Name if the identity set includes any subjectAltName extension of type dNSName, SRVName, uniformResourceIdentifier (or other application-specific subjectAltName extensions).</t>
           <t>Therefore, if and only if the identity set does not include subjectAltName extensions of type dNSName, SRVName, uniformResourceIdentifier (or other application-specific subjectAltName extensions), the client MAY as a fallback check the value of the last Common Name (CN) within the Relative Distinguished Names (RDNs), as those RDNs are found in the DER-encoded Name within the server's X.509 certificate.  (Note: The DER order is often not the string order presented to a user; the order that is applied here MUST be the DER order.)</t>
           <t>In existing certificates, the CN is often used for representing a domain name; for example, consider the following subjectName where the last RDN is the Common Name:</t>
@@ -163,11 +163,24 @@ ou=Web Services, c=GB, cn=www.example.com
           <t>Here the Common Name is "www.example.com" and the client could choose to compare the reference identity against that CN.  When doing so, the client MUST follow the comparison rules described above for subjectAltName extensions of type dNSName.</t>
           <t>A client MUST NOT check the Common Name if it is other than the last Relative Distinguished Name (RDN) in the subjectName.</t>
         </section>
-        <section title="Relative Distinguished Names" anchor="certs-rules-rdn">
+        <section title="Relative Distinguished Names" anchor="verify-domain-rdn">
           <t>A client MUST NOT check Relative Distinguished Names (RDNs) other than the Common Name; in particular, this means that a series of Domain Component (DC) attributes MUST NOT be checked (because the order of Domain Components is not guaranteed, certain attacks are possible if DC attributes are checked).</t>
         </section>
       </section>
-      <section title="Outcome" anchor="certs-outcome">
+      <section title="Verifying the Application Type" anchor="verify-app">
+        <t>A client SHOULD check not only the domain name but also the application type of the service to which it connects.  This is a best practice because typically a client is not designed to connect to all kinds of services using all possible application protocols, but instead is designed to connect to a specific kind of service, such as a web site, an email service, or an instant messaging service.</t>
+        <section title="SRVName" anchor="verify-app-srvname">
+          <t>If the client is connecting to the server using an application protocol that is discovered by means of DNS SRV records <xref target='DNS-SRV'/>, then it SHOULD check the presented certificate for an identifier of type SRVName <xref target='SRVNAME'/>.</t>
+          <t>If the identifier set does not include any identifiers of type SRVName then the client MAY warn the human user (if any).</t>
+          <t>If the identifier set includes at least one identifier of type SRVName but the service name portion of the SRVName does not match the application type of the reference identity (e.g., if the reference identity is "the IMAP service at mail.example.com" but the certificate includes only an SRVName of "_xmpp.mail.example.com"), then the client SHOULD warn the human user (if any) about the mismatch.</t>
+        </section>
+        <section title="uniformResourceIdentifier" anchor="verify-app-uri">
+          <t>If the client is connecting to the server using an application protocol in which server identity is normally represented as a URI (e.g., as is the case for <xref target='SIP'/>), then it SHOULD check the presented certificate for an identifier of type uniformResourceIdentifier.</t>
+          <t>If the identifier set does not include any identifiers of type uniformResourceIdentifier then the client MAY warn the human user (if any).</t>
+          <t>If the identifier set includes at least one identifier of type uniformResourceIdentifier but the scheme portion of the uniformResourceIdentifier does not match the application type of the reference identity (e.g., if the reference identity is "the SIP service at voip.example.com" but the certificate includes only a uniformResourceIdentifier of "xmpp:voip.example.com"), then the client SHOULD warn the human user (if any) about the mismatch.</t>
+        </section>
+      </section>
+      <section title="Outcome" anchor="verify-outcome">
         <t>The outcome of the checking procedure is one of the following:</t>
         <t>
           <list style='hanging'>
@@ -180,8 +193,18 @@ ou=Web Services, c=GB, cn=www.example.com
     </section>
 
     <section title="Security Considerations" anchor="security">
-      <t>This entire document discusses security.</t>
-      <t>When the connecting application is a human-oriented client or user agent, the reference identity MUST be provided by a human user (e.g. when specifying the server portion of the user's account name on the server or when explicitly configuring the client to connect to a particular host or URI as in <xref target='SIP-LOC'/>) and MUST NOT be derived from the reference identity in an automated fashion (e.g., a machine name or IP address discovered through DNS resolution of the reference identity).  This rule is important because only a match between the reference identity and a presented identifier enables the client to be sure that the certificate can legitimately be used to secure the connection.  However, a user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a particular machine name or IP address to be checked for connection purposes, thus explicitly overriding some of the matching rules defined in this document.</t>
+      <section title="Reference Identity" anchor="security-reference">
+        <t>When the connecting application is a human-oriented client or user agent, the reference identity MUST be provided by a human user (e.g. when specifying the server portion of the user's account name on the server or when explicitly configuring the client to connect to a particular host or URI as in <xref target='SIP-LOC'/>) and MUST NOT be derived from the reference identity in an automated fashion (e.g., a machine name or IP address discovered through DNS resolution of the reference identity).  This rule is important because only a match between the reference identity and a presented identifier enables the client to be sure that the certificate can legitimately be used to secure the connection.  However, a user-oriented client MAY provide a configuration setting that enables a human user to explicitly specify a particular machine name or IP address to be checked for connection purposes, thus explicitly overriding some of the matching rules defined in this document.</t>
+      </section>
+      <section title="Wildcard Certificates" anchor="security-wildcard">
+        <t>To follow.</t>
+      </section>
+      <section title="Common Name" anchor="security-cn">
+        <t>To follow.</t>
+      </section>
+      <section title="Internationalized Doman Names" anchor="security-idn">
+        <t>To follow.</t>
+      </section>
     </section>
 
     <section title="IANA Considerations" anchor="iana">
