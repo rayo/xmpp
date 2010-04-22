@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="April" day="7"/>
+    <date year="2010" month="April" day="22"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -89,6 +89,7 @@
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
       <t>Certain security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
       <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, and LF.</t>
+      <t>With regard to XML stanzas or parts thereof, the term "silently ignore" means for a routing entity (typically a server) to route the data unmodified to another server or to deliver the data unmodified to a client, or for a client to discard the data without presenting it a human user or associated application.</t>
       <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent <xref target='UNICODE'/> characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
       <t>In examples, lines have been wrapped for improved readability, "[...]" means elision, and the following prepended strings are used (these prepended strings are not to be sent over the wire):</t>
       <t>
@@ -325,7 +326,7 @@ R: <stream:features/>
       <section title="Determination of Addresses" anchor="streams-negotiation-address">
         <t>After the parties to an XML stream have completed the appropriate aspects of stream negotiation (typically <xref target='sasl'>SASL negotiation</xref> and, if appropriate, <xref target="bind">resource binding</xref>) the receiving entity for a stream MUST determine the initiating entity's JID.</t>
         <t>For server-to-server communication, the initiating server's JID MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating server during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the receiving server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  In the absence of SASL negotiation (e.g., when the older server dialback protocol is used as specified in <xref target='XEP-0220'/>), the receiving server MAY consider the authentication identity to be the 'from' address on the initial stream header (preferably only the stream header sent after TLS negotiation, because otherwise the 'from' address can be spoofed).</t>
-        <t>For client-to-server communication, the client's bare JID (&lt;localpart@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resourcepart of the full JID (&lt;localpart@domain/resource&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.</t>
+        <t>For client-to-server communication, the client's bare JID (&lt;localpart@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resourcepart of the full JID (&lt;localpart@domain/resource&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.  A client MUST NOT attempt to guess at its JID but instead MUST consider its JID to be whatever the server returns to it during SASL negotiation (bare JID) or resource binding (full JID).</t>
         <t>The receiving entity MUST ensure that the resulting JID (including localpart, domainpart, resourcepart, and separator characters) conforms to the canonical format for XMPP addresses defined in <xref target='XMPP-ADDR'/>; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
       </section>
 
@@ -2016,7 +2017,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
     <section title="Overview" anchor="bind-overview">
       <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client.  That is, there MUST be an XMPP resource associated with the bare JID (&lt;localpart@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;localpart@domain/resource&gt; (including the resourcepart).  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client in relation to entities other than the server itself, as explained under <xref target="rules"/> (the client could exchange stanzas with the server itself before binding a resource since the full JID is needed only for addressing outside the context of the stream negotiated between the client and the server, but this is not commonly done).</t>
       <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resourcepart; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
-      <t>If, before completing the resource binding step, the client attempts to send an XML stanza to an entity other than the client's account or the server, the server MUST NOT process the stanza and MUST either ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
+      <t>If, before completing the resource binding step, the client attempts to send an XML stanza to an entity other than the client's account or the server, the server MUST NOT process the stanza and MUST either silently ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
       <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
     </section>
     <section title="Stream Negotiation Rules" anchor="bind-rules">
@@ -3013,7 +3014,7 @@ E: <iq from='pubsub.example.com'
 </message>
           ]]></artwork>
         </figure>
-        <t>An entity that receives an application-specific error condition it does not understand MUST ignore the condition.</t>
+        <t>An entity that receives an application-specific error condition it does not understand MUST silently ignore the condition.</t>
       </section>
     </section>
 
@@ -3061,16 +3062,16 @@ E: <iq from='pubsub.example.com'
       </figure>
       <t>It is conventional in the XMPP community for implementations to not generate namespace prefixes for elements that are qualified by extended namespaces.  However, if an implementation generates such namespace prefixes then it MUST include the namespace declaration in the stanza itself or a child element of the stanza, not in the stream header (see <xref target='streams-ns-other'/>).</t>
       <t>Routing entities (typically servers) SHOULD try to maintain prefixes when serializing XML stanzas for processing, but receiving entities MUST NOT rely on the prefix strings having any particular value.</t>
-      <t>Support for any given extended namespace is OPTIONAL on the part of any implementation.  If an entity does not understand such a namespace, the entity's expected behavior depends on whether the entity is (1) the recipient or (2) an entity that is routing the stanza to the recipient.</t>
+      <t>Support for any given extended namespace is OPTIONAL on the part of any implementation.  If an entity does not understand such a namespace, the entity's expected behavior depends on whether the entity is (1) the recipient or (2) a server that is routing or delivering the stanza to the recipient.</t>
       <t><list style="hanging">
-        <t hangText="Recipient:">If a recipient receives a stanza that contains an element or attribute it does not understand, it MUST silently ignore that particular XML data, i.e., it MUST NOT process it or present it to a user or associated application (if any).  In particular:
+        <t hangText="Recipient:">If a recipient receives a stanza that contains an element or attribute it does not understand, it MUST silently ignore that XML data.  In particular:
           <list style='symbols'>
-            <t>If an entity receives a message or presence stanza that contains XML data qualified by a namespace it does not understand, the portion of the stanza that qualified by the unknown namespace MUST be ignored.</t>
-            <t>If an entity receives a message stanza whose only child element is qualified by a namespace it does not understand, it MUST ignore the entire stanza.</t>
+            <t>If an entity receives a message or presence stanza that contains XML data qualified by a namespace it does not understand, the portion of the stanza that qualified by the unknown namespace MUST be silently ignored.</t>
+            <t>If an entity receives a message stanza whose only child element is qualified by a namespace it does not understand, it MUST silently ignore the entire stanza.</t>
             <t>If an entity receives an IQ stanza of type "get" or "set" containing a child element qualified by a namespace it does not understand, the entity MUST return an IQ stanza of type "error" with an error condition of &lt;service-unavailable/&gt;.</t>
           </list>
         </t>
-        <t hangText="Router:">If a routing entity (typically a server) handles a stanza that contains a child element it does not understand, it MUST ignore the associated XML data by routing or delivering it untouched to the recipient.</t>
+        <t hangText="Server:">If a server handles a stanza that contains a child element it does not understand, it MUST silently ignore the associated XML data by routing it unmodified to another server or delivering it unmodified to the recipient.</t>
       </list></t>
     </section>
 
@@ -3598,7 +3599,7 @@ S2: </stream:stream>
     </section>
 
     <section title="Validation" anchor="xml-validation">
-      <t>A server is not responsible for ensuring that XML data delivered to a client or routed to another server is valid, in accordance with the definition of "valid" provided in Section 2.8 of <xref target='XML'/>.  An implementation MAY choose to accept or provide only validated data, but such behavior is OPTIONAL.  A client SHOULD NOT rely on the ability to send data that does not conform to the schemas, and SHOULD ignore any non-conformant elements or attributes on the incoming XML stream.</t>
+      <t>A server is not responsible for ensuring that XML data delivered to a client or routed to another server is valid, in accordance with the definition of "valid" provided in Section 2.8 of <xref target='XML'/>.  An implementation MAY choose to accept or provide only validated data, but such behavior is OPTIONAL.  A client SHOULD NOT rely on the ability to send data that does not conform to the schemas, and SHOULD silently ignore any non-conformant elements or attributes on the incoming XML stream.</t>
       <t><list style='empty'><t>Note: The terms "valid" and "well-formed" are distinct in XML.</t></list></t>
     </section>
 
@@ -3842,6 +3843,9 @@ XmppAddr ::= UTF8String
     <section title="Hash Function Agility" anchor="security-hash">
       <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
     </section>
+    <section title="TLS Versions" anchor="security-tls">
+      <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients SHOULD NOT support or offer SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
+    </section>
     <section title="SASL Downgrade Attacks" anchor="security-downgrade">
       <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To help prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
     </section>
@@ -3855,10 +3859,13 @@ XmppAddr ::= UTF8String
       <t>At the time of this writing, most XMPP servers authenticate account connections by means of passwords.  It is well-known that most users do not choose strong passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.</t>
     </section>
     <section title="Use of base64 in SASL" anchor="security-base64">
-      <t>Both the client and the server MUST verify any base64 data received during <xref target='sasl'>SASL negotiation</xref>.  An implementation MUST reject (not ignore) any characters that are not explicitly allowed by the base64 alphabet; this helps to guard against creation of a covert channel that could be used to "leak" information.</t>
+      <t>Both the client and the server MUST verify any base64 data received during <xref target='sasl'>SASL negotiation</xref>.  An implementation MUST reject (not silently ignore) any characters that are not explicitly allowed by the base64 alphabet; this helps to guard against creation of a covert channel that could be used to "leak" information.</t>
       <t>An implementation MUST NOT break on invalid input and MUST reject any sequence of base64 characters containing the pad ('=') character if that character is included as something other than the last character of the data (e.g., "=AAA" or "BBBB=CCC"); this helps to guard against buffer overflow attacks and other attacks on the implementation.</t>
       <t>While base 64 encoding visually hides otherwise easily recognized information (such as passwords), it does not provide any computational confidentiality.</t>
       <t>All uses of base 64 encoding MUST follow the definition in Section 4 of <xref target="BASE64"/> and padding bits MUST be set to zero.</t>
+    </section>
+    <section title="Use of UTF-8" anchor="security-utf8">
+      <t>The use of UTF-8 makes it possible to transport non-ASCII characters, and thus enables character "spoofing" scenarios, in which a displayed value appears to be something other than it is.  Furthermore, there are known attack scenarios related to the decoding of UTF-8 data.  On both of these points, refer to <xref target='UTF-8'/> for more information.</t>
     </section>
     <section title="Use of XML" anchor="security-xml">
       <t>Because XMPP is an application profile of the Extensible Markup Language <xref target='XML'/>, many of the security considerations described in <xref target='XML-MEDIA'/> and <xref target='XML-GUIDE'/> also apply to XMPP.  Several aspects of XMPP mitigate the risks described there, such as the prohibitions specified under <xref target='xml-restrictions'/> and the lack of external references to style sheets or transformations, but these mitigating factors are by no means comprehensive.</t>
@@ -4180,7 +4187,7 @@ XmppAddr ::= UTF8String
     <t>
       <list style='hanging'>
         <t hangText="Feature:">stanza-extension</t>
-        <t hangText="Description:">Correctly process XML data qualified by an unsupported XML namespace, where "correctly process" means to ignore that portion of the stanza in the case of a message or presence stanza and return an error in the case of an IQ stanza (for the intended recipient) or to routeor deliver the stanza (for a routing entity such as a server).</t>
+        <t hangText="Description:">Correctly process XML data qualified by an unsupported XML namespace, where "correctly process" means to silently ignore that portion of the stanza in the case of a message or presence stanza and return an error in the case of an IQ stanza (for the intended recipient) or to routeor deliver the stanza (for a routing entity such as a server).</t>
         <t hangText="Section:"><xref target='stanzas-extended'/></t>
         <t hangText="Roles:">Client MUST, Server MUST.</t>
       </list>
