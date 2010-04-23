@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="April" day="22"/>
+    <date year="2010" month="April" day="23"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -325,8 +325,8 @@ R: <stream:features/>
       </section>
       <section title="Determination of Addresses" anchor="streams-negotiation-address">
         <t>After the parties to an XML stream have completed the appropriate aspects of stream negotiation (typically <xref target='sasl'>SASL negotiation</xref> and, if appropriate, <xref target="bind">resource binding</xref>) the receiving entity for a stream MUST determine the initiating entity's JID.</t>
-        <t>For server-to-server communication, the initiating server's JID MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating server during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the receiving server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  In the absence of SASL negotiation (e.g., when the older server dialback protocol is used as specified in <xref target='XEP-0220'/>), the receiving server MAY consider the authentication identity to be the 'from' address on the initial stream header (preferably only the stream header sent after TLS negotiation, because otherwise the 'from' address can be spoofed).</t>
         <t>For client-to-server communication, the client's bare JID (&lt;localpart@domain&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resourcepart of the full JID (&lt;localpart@domain/resource&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.  A client MUST NOT attempt to guess at its JID but instead MUST consider its JID to be whatever the server returns to it during SASL negotiation (bare JID) or resource binding (full JID).</t>
+        <t>For server-to-server communication, the initiating server's JID MUST be the authentication identity communicated by the initiating entity during <xref target='sasl'>SASL negotiation</xref>; in the absence of SASL negotiation (e.g., when the older server dialback protocol is used as specified in <xref target='XEP-0220'/>), the receiving server MAY consider the authentication identity to be the 'from' address on the initial stream header sent after TLS negotiation (information contained in stream headers sent before TLS negotation can be spoofed).  Note that authorization identities are not allowed during SASL negotiation for server-to-server streams; for details, see under <xref target="sasl-rules-authzid"/>.</t>
         <t>The receiving entity MUST ensure that the resulting JID (including localpart, domainpart, resourcepart, and separator characters) conforms to the canonical format for XMPP addresses defined in <xref target='XMPP-ADDR'/>; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
       </section>
 
@@ -1668,7 +1668,9 @@ R: <stream:features>
         <t>Some SASL mechanisms have the concept of a "simple username" (e.g., CRAM-MD5, DIGEST-MD5, and SCRAM).  The exact form of the simple username in any particular mechanism is a local matter, and a simple username does not necessarily map to an application identifier such as a JID or a JID component.</t>
       </section>
       <section title="Authorization Identity" anchor="sasl-rules-authzid">
-        <t>An authorization identity is an optional identity specified by the initiating entity, which is typically used by an administrator to perform some management task on behalf of another user.  If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.  If provided, the value of the authorization identity MUST be a bare JID of the form &lt;domain&gt; (i.e., an XMPP domainpart only) for servers and a bare JID of the form &lt;localpart@domain&gt; (i.e., localpart and domainpart) for clients.</t>
+        <t>An authorization identity is an optional identity specified by the initiating entity, which is typically used by an administrator to perform some management task on behalf of another user.  If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.  As specified in <xref target="SASL"/>, the initiating entity MUST NOT provide an authorization identity unless the authorization identity is different from the default authorization identity derived from the authentication identity.</t>
+        <t>Authorization identities are allowed only for client-to-server streams.  Because a server-to-server stream is valid only for the particular domain pair authenticated during stream negotiation, authorization of any additional domains for the stream needs to be completed by means of protocol extensions above the core XMPP stream layer.   Therefore in the case of server-to-server communication the initiating server MUST NOT attempt to negotiate an authorization identity during SASL negotiation and the receiving server MUST NOT accept an authorization identity from the initiating server.</t>
+        <t>In the case of client-to-server communication, the value of an authorization identity MUST be a bare JID of the form &lt;localpart@domain&gt; (i.e., localpart and domainpart).</t>
         <t><list style='empty'><t>Note: The authorization identity communicated during SASL negotiation is used to determine the canonical address for the initiating client or server according to the receiving server, as described under <xref target='streams-negotiation-address'/>.</t></list></t>
       </section>
       <section title="Realms" anchor="sasl-rules-realms">
@@ -2008,7 +2010,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
         <t hangText="initiation sequence:">After the initiating entity provides an opening XML stream header and the receiving entity replies in kind, the receiving entity provides a list of acceptable authentication methods.  The initiating entity chooses one method from the list and sends it to the receiving entity as the value of the 'mechanism' attribute possessed by an &lt;auth/&gt; element, optionally including an initial response to avoid a round trip.</t>
         <t hangText="exchange sequence:">Challenges and responses are carried through the exchange of &lt;challenge/&gt; elements from receiving entity to initiating entity and &lt;response/&gt; elements from initiating entity to receiving entity.  The receiving entity reports failure by sending a &lt;failure/&gt; element and success by sending a &lt;success/&gt; element; the initiating entity aborts the exchange by sending an &lt;abort/&gt; element.  Upon successful negotiation, both sides consider the original XML stream to be closed and new stream headers are sent by both entities.</t>
         <t hangText="security layer negotiation:">The security layer takes effect immediately after sending the closing '&gt;' character of the &lt;success/&gt; element for the receiving entity, and immediately after receiving the closing '&gt;' character of the &lt;success/&gt; element for the initiating entity.  The order of layers is first <xref target="TCP"/>, then <xref target="TLS"/>, then <xref target="SASL"/>, then XMPP.</t>
-        <t hangText="use of the authorization identity:">The authorization identity can be used in XMPP to denote the non-default &lt;localpart@domain&gt; of a client or the sending &lt;domain&gt; of a server; an empty string is equivalent to an absent authorization identity.</t>
+        <t hangText="use of the authorization identity:">The authorization identity can be used in XMPP to denote the non-default &lt;localpart@domain&gt; of a client; an empty string is equivalent to an absent authorization identity.</t>
       </list></t>
     </section>
   </section>
@@ -3385,15 +3387,14 @@ S2: <stream:features>
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Step 9: Server1 selects the EXTERNAL mechanism, in this case with an authorization identity encoded according to <xref target="BASE64"/>:</preamble>
+          <preamble>Step 9: Server1 selects the EXTERNAL mechanism:</preamble>
           <artwork><![CDATA[
 S1: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
-          mechanism='EXTERNAL'/>aW0uZXhhbXBsZS5jb20=</auth>
+          mechanism='EXTERNAL'/>
           ]]></artwork>
-          <postamble>The decoded authorization identity is "im.example.com".</postamble>
         </figure>
         <figure>
-          <preamble>Step 10: Server2 determines that the authorization identity provided by Server1 matches the information in the presented certificate and therefore returns success:</preamble>
+          <preamble>Step 10: Server2 returns success:</preamble>
           <artwork><![CDATA[
 S2: <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
           ]]></artwork>
