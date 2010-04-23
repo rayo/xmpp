@@ -26,7 +26,7 @@
       </address>
     </author>
 
-    <date month="April" day="16" year="2010"/>
+    <date month="April" day="23" year="2010"/>
 
     <area>Applications</area>
     <keyword>Internet-Draft</keyword>
@@ -68,7 +68,7 @@
       <t>The certificate presented by an application server over TLS might contain one identifier or it might contain multiple identifiers associated with different application types.  For example, one identifier might be a simple DNS domain name and another might be an SRV name that restricts the certificate to use in the context of the specified application type.</t>
       <t>When a client connects to an application server over TLS, it has some conception of either the server's identity (e.g., "an XMPP server for example.com") or of what humans tend to think of as the server's location (e.g., "the SMTP server at mail.example.com").  The client expects at least one of the server's presented identifiers to correspond to this reference identity, and only a match between the reference identity (or a component thereof) and a presented identifier enables the client to be sure that the certificate can legitimately be used to secure the connection. (See under <xref target='security'/> for more details.)</t>
       <t>It is difficult to define precisely the concept of an "application server", in part because the concept is often a matter of user expectations.  In this document we assume that an application server provides a given "application type" at or on behalf of a given "location" on the Internet.  The application type is typically defined by a protocol specification (e.g., RFC 2616 for HTTP); however, users are unaware of protocol specifications and it is better to think in terms of application types, which are almost "natural kinds" such as web sites, email services, and instant messaging services.  The location is typically associated with a DNS domain name like "example.com", which users often think of in common language as a particular "place" on the Internet (as evidenced by the term "web site").</t>
-      <t>In the absence of usability studies, we assume that users associate an application server more strongly with a location than with an application type.  For example, users are not especially precise about the application type but might be concerned if they try to connect to example.com but instead connect to example.org or otherdomain.tld (we emphasize the word "might", since the success of phishing attacks provides much evidence to the contrary).  We also note that not all application servers are created equal.  Users connect to many websites on a regular basis, but might connect to only one email or IM server.  As a result, users might be more willing to "hardcode" an association between an email or IM server and a particular machine or service provider (e.g., at a hosting service).  In part this is a legacy of the traditional configuration process for POP and IMAP servers, but it is important not to assume that users have the same expectations regarding different kinds of application servers or even particular services (e.g., they might be more cautious about a banking web site than a news web site).</t>
+      <t>We assume that users associate an application server more strongly with a location than with an application type.  For example, users are not especially precise about the application type but might be concerned if they try to connect to example.com but instead connect to example.org or otherdomain.tld (we emphasize the word "might", since the success of phishing attacks provides much evidence to the contrary).  We also note that not all application servers are created equal.  Users connect to many websites on a regular basis, but might connect to only one email or IM server.  As a result, users might be more willing to "hardcode" an association between an email or IM server and a particular machine or service provider (e.g., at a hosting service).  In part this is a legacy of the traditional configuration process for POP and IMAP servers, but it is important not to assume that users have the same expectations regarding different kinds of application servers or even particular services (e.g., they might be more cautious about a banking web site than a news web site).</t>
       </section>
 
       <section title="Terminology" anchor="terminology">
@@ -80,9 +80,10 @@
             <t hangText="identifier set:">The set of identifiers that are presented by a server to a client (in the form of the server's X.509 certificate) when the client attempts to establish a secure connection with the server.<vspace blankLines="1"/></t>
             <t hangText="identifier type:">A formally defined category of identifier that can be included in a certificate, such as dNSName, SRVName, or uniformResourceIdentifier.<vspace blankLines="1"/></t>
             <t hangText="reference identity:">The client's conception of the server's identity before it attempts to establish a secure connection with the server, i.e. the identity that the client expects the server to present and to which the client makes reference when attempting to verify the server's identity.  The reference identity can consist only of a DNS domain name but might also include an application type that specifies which kind of application the user expects to connect to at the domain.<vspace blankLines="1"/></t>
+            <t hangText="traditional domain name:">A contraction of this more formal and accurate name: "traditional US-ASCII letter-digit-hyphen DNS domain name".  Traditional domain names are defined in <xref target='RFC1035'/> in conjunction with <xref target='RFC1123'/> as explained in <xref target='IDNA2003'/>.  In essence, a traditional domain name consists of a set of one or more labels, with the labels usually shown separated by dots.  Labels nominally consist of only <xref target='US-ASCII'/> uppercase and lowercase letters, digits, and hyphen.  There are additional qualifications (please refer to the above-referenced specifications for details) but they are not germane to this specification.<vspace blankLines="1"/></t>
           </list>
         </t>
-        <t>Most security-related terms in this document are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "attack", "authentication", "authorization", "certificate", "credential", "identity", "self-signed certificate", "trust", "trust anchor", "trust chain", "validate", and "verify".</t>
+        <t>Most security-related terms in this document are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "attack", "authentication", "authorization", "certification authority", "certificate", "credential", "identity", "self-signed certificate", "trust", "trust anchor", "trust chain", "validate", and "verify".</t>
         <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
       </section>
 
@@ -102,19 +103,36 @@
     </section>
 
     <section title="Representation of Server Identity" anchor="representation">
-      <t>The following rules apply to the representation of application server identities in certificates issued by certification authorities.</t>
-      <t>
-        <list style='numbers'>
-          <t>The certification authority MUST issue the certificate based on the DNS domain name at which the server will provide the relevant service (not an IP address or host name for a specific machine).<vspace blankLines="1"/></t>
-          <t>The certificate MUST include an identifier of dNSName.<vspace blankLines="1"/></t>
-          <t>If the service at which the certificate will be used deploys a technology that is discovered by means of DNS SRV records <xref target='DNS-SRV'/>, then the certificate SHOULD include an identifier of type SRVName <xref target='SRVNAME'/>.<vspace blankLines="1"/></t>
-          <t>If the service is associated with a particular URI, then the certificate MAY include an identifier of type uniformResourceIdentifier (i.e., a subjectAltName extension that includes a uniformResourceIdentifier name form whose scheme is that of the protocol associated with the application type and whose authority component is the DNS domain name of the service).<vspace blankLines="1"/></t>
-          <t>The certificate MAY include other application-specific identifiers for types that were defined before specification of the SRVName extension (e.g., XmppAddr for <xref target='XMPP'/>) or for which service names or URI schemes do not exist.<vspace blankLines="1"/></t>
-          <t>An identifier of any type MAY contain one instance of the wildcard character '*' (see <xref target='DNS-WILD'/>) but only as the left-most label of the DNS domain name (as "label" is defined in <xref target='RFC1035'/>).  An application protocol that employs the rules specified in this document MUST specify whether the wildcard character is or is not allowed in certificates issued for use with that protocol.<vspace blankLines="1"/></t>
-          <t>The certificate SHOULD NOT represent the server's DNS domain name in an identifier of Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) within the Relative Distinguished Names (RDNs) of the subjectName, even though it is recognized that many deployed clients still check this legacy identifier.  However, if the server's DNS domain name is represented in a CN then it MUST be the last Common Name (CN) within the Relative Distinguished Names (RDNs), as those RDNs are found in the DER-encoded Name within the server's X.509 certificate.<vspace blankLines="1"/></t>
-          <t>The certificate MUST NOT represent the server's DNS domain name by means of a series of Domain Component (DC) attributes (because the order of Domain Components is not guaranteed, certain attacks are possible if DC attributes are included).<vspace blankLines="1"/></t>
-        </list>
-      </t>
+      <t>This section enumerates the rules for representing application server identity via PKIX certificates.  First we provide a brief tutorial about subject naming, then we provide the rules.</t>
+      <section title="Subject Naming in PKIX Certificates" anchor="representation-names">
+        <t>The application server is the subject of a server certificate.  As <xref target='PKIX'/> says, "[the] subject field identifies the entity associated with the public key stored in the subject public key field."</t>
+        <t>The application server is identified by a name or names carried in the subject field and/or the subjectAltName extension of the certificate.  See sections 4.1.2.6 and 4.2.1.6 of <xref target='PKIX'/> for details.  This section only briefly introduces distinguished names and their components, as well as subjectAltNames and the particular subjectAltName extension types explicitly mentioned in this specification.</t>
+        <t>The subject field of a PKIX Certificate is defined as a X.501 type Name <xref target='PKIX'/> and known as a Distinguished Name (DN).  See also <xref target='X.501'/> A DN is an ordered sequence of attribute type and attribute value pairs (termed "attribute value assertions (AVAs)"), where the attributes are to be those of the subject.  Each AVA is also termed a "Relative Distinguished Name (RDN)".  The RDNs are ordered in the DN sequence from most general to most specific.</t>
+        <t>Note that certificates are binary objects -- they are encoded using binary encoding rules (BER).  Thus, displayable (aka printable) renderings of certificate subject (and issuer) names means that the BER-encoded sequences are decoded and converted into a "string representation" of a DN before being rendered.  Often such a DN string representation is ordered from left-to-right, most specific to most general.  See <xref target='LDAP-AUTH'/> for details.</t>
+        <t>Certificate subjects may also have "alternative" names.  These are represented within certificates using the SubjectAltName field.  This field is a sequence of typed fields, where each type is a distinct type of identifier.  For example, the SubjectAltName identifier types noted in this specification are:</t>
+        <t>
+          <list style='symbols'>
+            <t>dNSName                     -- a DNS domain name <xref target='PKIX'/></t>
+            <t>SRVName                     -- a service name <xref target='SRVNAME'/></t>
+            <t>uniformResourceIdentifier   -- a URI <xref target='URI'/> <xref target='PKIX'/></t>
+          </list>
+        </t>
+      </section>
+      <section title="PKIX Certificate Name Rules" anchor="representation-rules">
+        <t>The following rules apply to the representation of application server identities in PKIX certificates issued by certification authorities.</t>
+        <t>
+          <list style='numbers'>
+            <t>The certification authority MUST issue the certificate based on the DNS domain name at which the server will provide the relevant service (not an IP address).<vspace blankLines="1"/></t>
+            <t>The certificate MUST include a subjectAltName identifier of type dNSName.<vspace blankLines="1"/></t>
+            <t>If the service using the certificate deploys a technology in which a server is discovered by means of DNS SRV records <xref target='DNS-SRV'/> (e.g., this is true of <xref target='XMPP'/>), then the certificate SHOULD include an identifier of type SRVName <xref target='SRVNAME'/>.<vspace blankLines="1"/></t>
+            <t>If the service using the certificate deploys a technology in which a server is typically associated with a URI (e.g., this is true of <xref target='SIP'/>), then the certificate MAY include an identifier of type uniformResourceIdentifier (i.e., a subjectAltName extension that includes a uniformResourceIdentifier name form whose scheme is that of the protocol associated with the application type and whose authority component is the DNS domain name of the service).<vspace blankLines="1"/></t>
+            <t>The certificate MAY include other application-specific identifiers for types that were defined before specification of the SRVName extension (e.g., XmppAddr for <xref target='XMPP'/>) or for which service names or URI schemes do not exist.<vspace blankLines="1"/></t>
+            <t>An identifier of any type MAY contain one instance of the wildcard character '*' (see <xref target='DNS-WILD'/>) but only as the left-most label of the DNS domain name component of the identifier (as "label" is defined in <xref target='RFC1035'/>).  An application protocol that employs the rules specified in this document MUST specify whether the wildcard character is or is not allowed in certificates issued for use with that protocol.<vspace blankLines="1"/></t>
+            <t>The certificate SHOULD NOT represent the server's DNS domain name in a Relative Distinguished Name (RDN) of type Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) within the subjectName field, even though it is recognized that many deployed clients still check for this legacy identifier configuration within certificate subjectName.  However, if this legacy identifer configuration is employed, then the server's DNS domain name MUST be placed in the last RDN (most specific RDN) within the RDN sequence making up the certificate's subjectName, as the order of RDNs is determined by the DER-encoded Name within the server's X.509 certificate.<vspace blankLines="1"/></t>
+            <t>The certificate MUST NOT represent the server's DNS domain name by means of a series of Domain Component (DC) attributes (because the order of Domain Components is not guaranteed, certain attacks are possible if DC attributes are included).<vspace blankLines="1"/></t>
+          </list>
+        </t>
+      </section>
     </section>
 
     <section title="Verification of Server Identity" anchor="verify">
@@ -247,6 +265,28 @@ ou=Web Services, c=GB, cn=www.example.com
         target='http://www.ietf.org/internet-drafts/draft-ietf-idnabis-protocol-18.txt' />
 </reference>
 
+<reference anchor='PKIX'>
+<front>
+<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
+<author initials='D.' surname='Cooper' fullname='D. Cooper'>
+<organization /></author>
+<author initials='S.' surname='Santesson' fullname='S. Santesson'>
+<organization /></author>
+<author initials='S.' surname='Farrell' fullname='S. Farrell'>
+<organization /></author>
+<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
+<organization /></author>
+<author initials='R.' surname='Housley' fullname='R. Housley'>
+<organization /></author>
+<author initials='W.' surname='Polk' fullname='W. Polk'>
+<organization /></author>
+<date year='2008' month='May' />
+<abstract>
+<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5280' />
+<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
+</reference>
+
 <reference anchor='RFC1034'>
 <front>
 <title abbrev='Domain Concepts and Facilities'>Domain names - concepts and facilities</title>
@@ -328,28 +368,6 @@ ou=Web Services, c=GB, cn=www.example.com
 <format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
 <format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
-</reference>
-
-<reference anchor='PKIX'>
-<front>
-<title>Internet X.509 Public Key Infrastructure Certificate and Certificate Revocation List (CRL) Profile</title>
-<author initials='D.' surname='Cooper' fullname='D. Cooper'>
-<organization /></author>
-<author initials='S.' surname='Santesson' fullname='S. Santesson'>
-<organization /></author>
-<author initials='S.' surname='Farrell' fullname='S. Farrell'>
-<organization /></author>
-<author initials='S.' surname='Boeyen' fullname='S. Boeyen'>
-<organization /></author>
-<author initials='R.' surname='Housley' fullname='R. Housley'>
-<organization /></author>
-<author initials='W.' surname='Polk' fullname='W. Polk'>
-<organization /></author>
-<date year='2008' month='May' />
-<abstract>
-<t>This memo profiles the X.509 v3 certificate and X.509 v2 certificate revocation list (CRL) for use in the Internet.  An overview of this approach and model is provided as an introduction.  The X.509 v3 certificate format is described in detail, with additional information regarding the format and semantics of Internet name forms.  Standard certificate extensions are described and two Internet-specific extensions are defined.  A set of required certificate extensions is specified.  The X.509 v2 CRL format is described in detail along with standard and Internet-specific extensions.  An algorithm for X.509 certification path validation is described.  An ASN.1 module and examples are provided in the appendices. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='5280' />
-<format type='TXT' octets='352580' target='ftp://ftp.isi.edu/in-notes/rfc5280.txt' />
 </reference>
 
     </references>
@@ -800,6 +818,26 @@ ou=Web Services, c=GB, cn=www.example.com
 <format type='TXT' octets='47018' target='ftp://ftp.isi.edu/in-notes/rfc1939.txt' />
 </reference>
 
+<reference anchor='RFC1123'>
+<front>
+<title>Requirements for Internet Hosts - Application and Support</title>
+<author initials='R.' surname='Braden' fullname='Robert Braden'>
+<organization>University of Southern California (USC), Information Sciences Institute</organization>
+<address>
+<postal>
+<street>4676 Admiralty Way</street>
+<city>Marina del Rey</city>
+<region>CA</region>
+<code>90292-6695</code>
+<country>US</country></postal>
+<phone>+1 213 822 1511</phone>
+<email>Braden@ISI.EDU</email></address></author>
+<date year='1989' month='October' /></front>
+<seriesInfo name='STD' value='3' />
+<seriesInfo name='RFC' value='1123' />
+<format type='TXT' octets='245503' target='ftp://ftp.isi.edu/in-notes/rfc1123.txt' />
+</reference>
+
 <reference anchor='RFC2459'>
 <front>
 <title abbrev='Internet X.509 Public Key Infrastructure'>Internet X.509 Public Key Infrastructure Certificate and CRL Profile</title>
@@ -1077,6 +1115,17 @@ specifications of each URI scheme.
 <format type='XML' octets='165759' target='http://xml.resource.org/public/rfc/xml/rfc3986.xml' />
 </reference>
 
+<reference anchor="US-ASCII">
+<front>
+<title>Coded Character Set - 7-bit American Standard Code for Information Interchange</title>
+<author>
+<organization>American National Standards Institute</organization>
+</author>
+<date month="" year="1986" />
+</front>
+<seriesInfo name="ANSI" value="X3.4" />
+</reference>
+
 <reference anchor="USINGTLS">
 <front>
 <title>Using TLS with IMAP, POP3 and ACAP</title>
@@ -1093,6 +1142,19 @@ specifications of each URI scheme.
 <date month='June' year='1999' /></front>
 <seriesInfo name='RFC' value='2595' />
 <format type='TXT' octets='32440' target='ftp://ftp.isi.edu/in-notes/rfc2595.txt' />
+</reference>
+
+<reference anchor="X.501">
+<front>
+<title>Information Technology - Open Systems Interconnection - The Directory:
+Models</title>
+<author>
+<organization>International Telecommunications Union</organization>
+</author>
+<date month="February" year="2001" />
+</front>
+<seriesInfo name="ITU-T" value="Recommendation X.501" />
+<seriesInfo name="ISO" value="Standard 9594-2" />
 </reference>
 
 <reference anchor='XMPP'>
