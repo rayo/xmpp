@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="April" day="23"/>
+    <date year="2010" month="April" day="26"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -384,16 +384,18 @@ R: <stream:features/>
     </section>
 
     <section title="Closing a Stream" anchor="streams-close">
-      <t>An XML stream between two entities can be closed because a stream error has occurred or in some cases in the absence of an error.  Where feasible, it is preferable to close a stream only if a stream error has occurred.</t>
+      <t>An XML stream between two entities can be closed because a specific stream error has occurred or in some cases in the absence of an error.  Where feasible, it is preferable to close a stream only if a specific stream error has occurred.</t>
       <t>A stream is closed by sending a closing &lt;/stream&gt; tag over the TCP connection.</t>
       <figure>
         <artwork><![CDATA[
 S: </stream:stream>
         ]]></artwork>
       </figure>
+      <t>The following sections describe how to handle closing of a stream in the error case and the non-error case.</t>
+      <t><list style='empty'><t>Note: As described under <xref target="streams-close-idle"/>, an idle stream SHOULD NOT be considered a trigger for a stream error.</t></list></t>
       <t>After an entity sends a closing stream tag, it MUST NOT send further data over that stream.</t>
       <section title="With Stream Error" anchor="streams-close-witherror">
-        <t>If a stream error has occurred, the entity that detects the error MUST close the stream as described under <xref target='streams-error-rules'/>.</t>
+        <t>If a specific stream error has occurred, the entity that detects the error MUST close the stream as described under <xref target='streams-error-rules'/>.</t>
       </section>
       <section title="Without Stream Error" anchor="streams-close-withouterror">
         <t>At any time after XML streams have been negotiated between two entities, either entity MAY close its stream to the other party in the absence of a stream error by sending a closing stream tag.</t>
@@ -402,7 +404,7 @@ S: </stream:stream>
 P: </stream:stream>
           ]]></artwork>
         </figure>
-        <t>The entity that sends the closing stream tag SHOULD wait for the other party to also close its stream.</t>
+        <t>The entity that sends the closing stream tag SHOULD wait for the other party to also close its stream before terminated the underlying TCP connection.  This gives the other party an opportunity to finish transmitting any data in the opposite direction before the TCP connection is terminated.</t>
         <figure>
           <artwork><![CDATA[
 S: </stream:stream>
@@ -616,7 +618,8 @@ R: <?xml version='1.0'?>
         <t>For historical reasons, an implementation MAY refuse to support any other default namespaces.  If an entity receives a stream header with a default namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t>
         <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.</t>
         <t><list style='empty'><t>Note: The 'jabber:client' and 'jabber:server' namespaces are nearly identical but are used in different contexts (client-to-server communication for 'jabber:client' and server-to-server communication for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent over XML streams qualified by the 'jabber:client' namespace, whereas they are REQUIRED on stanzas sent over XML streams qualified by the 'jabber:server' namespace.</t></list></t>
-        <t>An implementation MAY support a default namespace other than "jabber:client" or "jabber:server".  However, because such namespaces would define applications other than XMPP, they are to be defined in separate specifications.</t>
+        <t><list style='empty'><t>Note: Because a client sends stanzas over a stream whose default namespace is 'jabber:client', if the server to which the client is connected needs to route a client-generated stanza to another server then it MUST "re-scope" the stanza so that its default namespace is 'jabber:server' (i.e., it MUST NOT send a stanza qualified by the 'jabber:client' namespace over a stream whose default namespace is 'jabber:server').  Similarly, a routing server MUST "re-scope" a stanza received over a server-to-server stream (whose default namespace is 'jabber:server') so that the stanza is qualified by the 'jabber:client' namespace before sending it over a client-to-server stream (whose default namespace is 'jabber:client').</t></list></t>
+        <t>An implementation MAY support a default namespace other than 'jabber:client' or 'jabber:server'.  However, because such namespaces would define applications other than XMPP, they are to be defined in separate specifications.</t>
       </section>
       <section title="Declaration of Other Namespaces" anchor="streams-ns-other">
         <t>Because an XML stanza is the primary unit of meaning in XMPP and because an XML stanza can be routed outside the context of the stream in which it originated, a stream header MUST NOT include namespace declarations for namespaces that are different from the streams namespace and the default namespace.</t>
@@ -1649,7 +1652,7 @@ R: <stream:features>
       <section title="Mechanism Offers" anchor="sasl-rules-offers">
         <t>If the receiving entity considers <xref target='tls'>TLS negotiation</xref> to be mandatory before use of a particular SASL authentication mechanism will be acceptable, the receiving entity MUST NOT advertise that mechanism in its list of available SASL authentication mechanisms prior to successful TLS negotiation.</t>
         <t>If during prior TLS negotiation the initiating entity presented a certificate that is acceptable to the receiving entity for purposes of strong identity verification in accordance with local service policies, the receiving entity MUST offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>) and SHOULD prefer that mechanism to enable mutual authentication.  However, the EXTERNAL mechanism MAY be offered under other circumstances as well.</t>
-        <t>See <xref target="security-mandatory"/> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well.  Best practices for the use of several SASL mechanisms in the context of XMPP are described in <xref target='XEP-0175'/> and <xref target='XEP-0178'/>.</t>
+        <t>See <xref target="security-mandatory"/> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well.  Best practices for the use of SASL in the context of XMPP are described in <xref target='XEP-0175'/> for the ANONYMOUS mechanism and in <xref target='XEP-0178'/> for the EXTERNAL mechanism.</t>
       </section>
       <section title="Data Formatting" anchor="sasl-rules-data">
         <t>The following data formattting rules apply to the SASL negotiation:</t>
@@ -3387,10 +3390,10 @@ S2: <stream:features>
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Step 9: Server1 selects the EXTERNAL mechanism:</preamble>
+          <preamble>Step 9: Server1 selects the EXTERNAL mechanism (including an empty response of "="):</preamble>
           <artwork><![CDATA[
 S1: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
-          mechanism='EXTERNAL'/>
+          mechanism='EXTERNAL'/>=</auth>
           ]]></artwork>
         </figure>
         <figure>
@@ -3885,7 +3888,7 @@ XmppAddr ::= UTF8String
       <t>
         <list style='numbers'>
           <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connections that it will accept from a given IP address at any one time.  If an entity attempts to connect but the maximum number of TCP connections has been reached, the receiving server MUST NOT allow the new connection to proceed.<vspace blankLines='1'/></t>
-          <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connection attempts that it will accept from a given IP address in a given time period.  (While it is possible to limit the number of connections at the TCP layer rather than at the XMPP application layer, this is not advisable because limits at the TCP layer might result in an inability to access non-XMPP services.)  If an entity attempts to connect but the maximum number of connections has been reached, the receiving server MUST NOT allow the new connection to proceed.<vspace blankLines='1'/></t>
+          <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connection attempts that it will accept from a given IP address in a given time period.  If an entity attempts to connect but the maximum number of connection attempts has been reached, the receiving server MUST NOT allow the new connection to proceed.<vspace blankLines='1'/></t>
           <t>A server MUST NOT process XML stanzas from clients that have not yet provided appropriate authentication credentials and MUST NOT process XML stanzas from peer servers whose identity it has not either authenticated via SASL or weakly verified via server dialback (see <xref target='XEP-0220'/>).<vspace blankLines='1'/></t>
           <t>A server implementation SHOULD enable a server administrator to limit the number of connected resources it will allow an account to bind at any one time.  If a client attempts to bind a resource but it has already reached the configured number of allowable resources, the receiving server MUST return a &lt;resource-constraint/&gt; stanza error.<vspace blankLines='1'/></t>
           <t>A server implementation SHOULD enable a server administrator to limit the size of stanzas it will accept from a connected client or peer server.  If a connected resource or peer server sends a stanza that violates the upper limit, the receiving server SHOULD NOT process the stanza and instead SHOULD return a &lt;not-allowed/&gt; stanza error.  Alternatively (e.g., if the sender has sent an egregiously large stanza), the server MAY instead return a &lt;policy-violation/&gt; stream error.<vspace blankLines='1'/></t>
