@@ -26,8 +26,7 @@
     <keyword>Extensible Markup Language</keyword>
     <keyword>XML</keyword>
     <abstract>
-      <t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements for the purpose of exchanging structured information in close to real time between any two or more network-aware entities.  XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built.  The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions.</t>
-      <t>This document obsoletes RFC 3920.</t>
+      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language (XML) that enables the near-real-time exchange of structured yet extensible data between any two or more network entities.  This document defines XMPP's core protocol methods: setup and teardown of XML streams, channel encryption, authentication, error handling, and communication primitives for messaging, network availability ("presence"), and request-response interactions.</t>
     </abstract>
   </front>
 
@@ -35,32 +34,20 @@
 
   <section title="Introduction" anchor="intro">
     <section title="Overview" anchor="intro-overview">
-      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language <xref target="XML"/> for streaming XML data in close to real time between any two (or more) network-aware entities.  XMPP is typically used to exchange messages, share presence information, and engage in structured request-response interactions.  The basic syntax and semantics of XMPP were developed originally within the Jabber open-source community, mainly in 1999.  In late 2002, the XMPP Working Group was chartered with developing an adaptation of the core Jabber protocol that would be suitable as an IETF instant messaging (IM) and presence technology.  As a result of work by the XMPP WG, <xref target='RFC3920'/> and <xref target='RFC3921'/> were published in October 2004, representing the most complete definition of XMPP at that time.</t>
-      <t>As a result of extensive implementation and deployment experience with XMPP since 2004, as well as more formal interoperability testing carried out under the auspices of the XMPP Standards Foundation (XSF), this document reflects consensus from the XMPP developer community regarding XMPP's core XML streaming technology.  In particular, this document incorporates the following backward-compatible changes from RFC 3920:</t>
-      <t>
-        <list style='symbols'>
-          <t>Incorporated corrections and errata</t>
-          <t>Added examples throughout</t>
-          <t>Clarified and more completely specified matters that were underspecified</t>
-          <t>Modified text to reflect updated technologies for which XMPP is a using protocol, e.g., Transport Layer Security (TLS) and the Simple Authentication and Security Layer (SASL)</t>
-          <t>Defined several additional stream, stanza, and SASL error conditions</t>
-          <t>Removed the deprecated DIGEST-MD5 SASL mechanism <xref target='DIGEST-MD5'/> as a mandatory-to-implement technology</t>
-          <t>Added the TLS plus the SASL PLAIN mechanism <xref target='PLAIN'/> as a mandatory-to-implement technology</t>
-          <t>Defined of optional support for multiple resources over the same connection</t>
-          <t>Transferred historical documentation for the server dialback protocol from this specification to a separate specification</t>
-        </list>
-      </t>
-      <t>Therefore, this document defines the core features of XMPP 1.0, thus obsoleting RFC 3920.</t>
-      <t><list style='empty'><t>Note: <xref target="XMPP-IM"/> defines the XMPP features needed to provide the basic instant messaging and presence functionality that is described in <xref target="IMP-REQS"/>.</t></list></t>
+      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language <xref target="XML"/> that enables the near-real-time exchange of structured yet extensible data between any two or more network entities.  This document defines XMPP's core protocol methods: setup and teardown of XML streams, channel encryption, authentication, error handling, and communication primitives for messaging, network availability ("presence"), and request-response interactions.</t>
+    </section>
+    <section title="History" anchor="intro-history">
+      <t>The basic syntax and semantics of XMPP were developed originally within the Jabber open-source community, mainly in 1999.  In late 2002, the XMPP Working Group was chartered with developing an adaptation of the core Jabber protocol that would be suitable as an IETF instant messaging (IM) and presence technology in accordance with <xref target='IMP-REQS'/>.  In October 2004, <xref target='RFC3920'/> and <xref target='RFC3921'/> were published, representing the most complete definition of XMPP at that time.</t>
+      <t>Since 2004 the Internet community has gained extensive implementation and deployment experience with XMPP, including formal interoperability testing carried out under the auspices of the XMPP Standards Foundation (XSF).  This document incorporates comprehensive feedback from software developers and service providers, including a number of backward-compatible modifications summarized under <xref target='diffs'/>.  As a result, this document reflects the rough consensus of the Internet community regarding the core features of XMPP 1.0, thus obsoleting RFC 3920.</t>
     </section>
     <section title="Functional Summary" anchor="intro-summary">
       <t>This non-normative section provides a developer-friendly, functional summary of XMPP; refer to the sections that follow for a normative definition of XMPP.</t>
-      <t>The purpose of XMPP is to enable the exchange of relatively small pieces of structured data (called "XML stanzas") over a network between any two (or more) entities.  XMPP is implemented using a client-server architecture, wherein a client needs to connect to a server in order to gain access to the network and thus be allowed to exchange XML stanzas with other entities (which can be associated with other servers).  The process whereby a client connects to a server, exchanges XML stanzas, and ends the connection is:</t>
+      <t>The purpose of XMPP is to enable the exchange of relatively small pieces of structured data (called "XML stanzas") over a network between any two (or more) entities.  XMPP is implemented using a distributed client-server architecture, wherein a client needs to connect to a server in order to gain access to the network and thus be allowed to exchange XML stanzas with other entities (which can be associated with other servers).  The process whereby a client connects to a server, exchanges XML stanzas, and ends the connection is:</t>
       <t>
         <list style='numbers'>
           <t>Determine the hostname and port at which to connect</t>
           <t>Open a TCP connection</t>
-          <t>Open an XML stream</t>
+          <t>Open an XML stream over TCP</t>
           <t>Complete TLS negotiation for channel encryption (recommended)</t>
           <t>Complete SASL negotiation for authentication</t>
           <t>Bind a resource to the stream</t>
@@ -83,14 +70,14 @@
         </list>
       </t>
       <t><list style='empty'><t>* Note: Depending on local service policies, it is possible that a deployed server will use the older server dialback protocol to provide weak identity verification in cases where SASL negotiation would not result in strong authentication (e.g., because TLS negotiation was not mandated by the peer server, or because the certificate presented by the peer server during TLS negotiation is self-signed and thus provides only weak identity); for details, see <xref target='XEP-0220'/>.</t></list></t>
-      <t>In the section following discussion of XMPP architecture, this document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, those payloads are defined by various XMPP extensions.  For example, <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality.  In addition, various specifications produced in the XSF's XEP series <xref target='XEP-0001'/> define extensions for a wide range of more advanced functionality.</t>
+      <t>This document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, those payloads are defined by various XMPP extensions.  For example, <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality.  In addition, various specifications produced in the XSF's XEP series <xref target='XEP-0001'/> define extensions for a wide range of applications.</t>
     </section>
-    <section title="Conventions" anchor="intro-conventions">
+    <section title="Terminology" anchor="intro-terms">
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
       <t>Certain security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
-      <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, and LF.</t>
-      <t>With regard to XML stanzas or parts thereof, the term "silently ignore" means for a routing entity (typically a server) to route the data unmodified to another server or to deliver the data unmodified to a client, or for a client to discard the data without presenting it a human user or associated application.</t>
-      <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent <xref target='UNICODE'/> characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
+      <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, or LF.</t>
+      <t>With regard to XML stanzas or parts thereof, the term "silently ignore" means (1) for a routing entity (typically a server) to route the data unmodified to another server or to deliver the data unmodified to a client, or (2) for a client to discard the data without presenting it a human user or associated application.</t>
+      <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent <xref target='UNICODE'/> code points (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
       <t>In examples, lines have been wrapped for improved readability, "[...]" means elision, and the following prepended strings are used (these prepended strings are not to be sent over the wire):</t>
       <t>
         <list style='symbols'>
@@ -109,7 +96,6 @@
       <t>The editor of this document finds it impossible to appropriately acknowledge the many individuals who have provided comments regarding the protocols defined herein.  However, thanks are due to those who have who have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since the publication of the RFC this document supersedes.  The editor has endeavored to address all such feedback, but is solely responsible for any remaining errors and ambiguities.</t>
     </section>
     <section title="Discussion Venue" anchor="intro-discuss">
-      <t>[[ RFC Editor: please remove this section. ]]</t>
       <t>The document editor and the broader XMPP developer community welcome discussion and comments related to the topics presented in this document.  The primary and preferred venue is the &lt;xmpp@ietf.org&gt; mailing list, for which archives and subscription information are available at <eref target='https://www.ietf.org/mailman/listinfo/xmpp'/>.  Related discussions often occur on the &lt;standards@xmpp.org&gt; mailing list, for which archives and subscription information are available at <eref target='http://mail.jabber.org/mailman/listinfo/standards'/>.</t>
     </section>
   </section>
@@ -176,18 +162,16 @@ romeo@example.net           juliet@im.example.com
       <t><list style='empty'><t>Note: If the initiating entity has been explicitly configured to associate a particular hostname (and potentially port) with the original hostname of the receiving entity (say, to "hardcode" an association between an original hostname of example.net and a configured hostname and of webcm.example.com:80), the initiating entity SHALL use the configured name instead of performing the foregoing resolution process on the original name.</t></list></t>
       <t><list style='empty'><t>Note: Many XMPP servers are implemented in such a way that they can host additional services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at hostnames that are subdomains of the hostname of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or subdomains of the first-level domain of the underlying host (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity from a remote domain wishes to use such additional services, it would generate an appropriate XML stanza and the remote domain itself would attempt to resolve the service's hostname via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if a service wishes to enable entities from remote domains to access these additional services, it needs to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for its main XMPP service.</t></list></t>
     </section>
-    <section title="Client-to-Server Communication" anchor="tcp-c2s">
+    <section title="Directionality" anchor="tcp-direction">
       <t>A client is subordinate to a server.  As a result, a client authenticates to the server but the server does not necessarily authenticate to the client.  Therefore the server MUST allow the client to share a single, bidirectional TCP connection for XML stanzas sent from client to server and from server to client (i.e., the inital stream and response stream as specified under <xref target='streams'/>).</t>
-    </section>
-    <section title="Server-to-Server Communication" anchor="tcp-s2s">
-      <t>Any two given servers are peers.  As a result, each peer MUST authenticate with the other.  This can be accomplished in one of two ways:</t>
+      <t>By contrast, any two given servers are peers.  As a result, each peer MUST authenticate to the other.  This can be accomplished in two ways:</t>
       <t>
         <list style='symbols'>
           <t>Through one-way authentication on two, unidirectional TCP connections: one for XML stanzas sent from the first server to the second server and another, initiated by the second server, for XML stanzas from the second server to the first server (this is the "legacy" approach in the absence of mutual authentication).<vspace blankLines='1'/></t>
           <t>Through mutual authentication on a single, bidirectional TCP connection (this is possible using TLS and SASL with certificates, however methods for explicitly signalling the use of a single, bidirectional TCP connection are out of scope for this specification).<vspace blankLines='1'/></t>
         </list>
       </t>
-      <t>This rule applies only to <xref target='stanzas'>XML stanzas</xref>.  Therefore during <xref target='tls'>STARTTLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref> the servers would use one TCP connection, but after stream setup that TCP connection would be used only for the initiating server to send XML stanzas to the receiving server.  In order for the receiving server to send XML stanzas to the initiating server, the receiving server would need to reverse the roles and negotiate an XML stream from the receiving server to the initiating server.</t>
+      <t>The directionality of a stream applies only to <xref target='stanzas'>XML stanzas</xref>.  Therefore during <xref target='tls'>STARTTLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref> two servers would use one TCP connection, but after stream setup that TCP connection would be used only for the initiating server to send XML stanzas to the receiving server.  In order for the receiving server to send XML stanzas to the initiating server, the receiving server would need to reverse the roles and negotiate an XML stream from the receiving server to the initiating server.</t>
     </section>
     <section title="Reconnection" anchor="tcp-reconnect">
       <t>It can happen that an XMPP server goes offline while servicing TCP connections from local clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  The following guidelines are RECOMMENDED:</t>
@@ -3087,7 +3071,7 @@ E: <iq from='pubsub.example.com'
   </section>
 
   <section title="Examples" anchor="examples">
-    <section title="Client-to-Server" anchor="examples-c2s">
+    <section title="Client-to-Server Examples" anchor="examples-c2s">
       <t>The following examples show the XMPP data flow for a client negotiating an XML stream with a server, exchanging XML stanzas, and closing the negotiated stream.  The server is "im.example.com", the server requires use of TLS, the client authenticates via the SASL PLAIN mechanism as "juliet@im.example.com", and the client binds a client-submitted resource to the stream.  It is assumed that before sending the initial stream header, the client has already resolved an SRV record of _xmpp-client._tcp.im.example.com and has opened a TCP connection to the advertised port at the resolved IP address.</t>
       <t><list style='empty'><t>Note: The alternate steps shown are provided only to illustrate the protocol for failure cases; they are not exhaustive and would not necessarily be triggered by the data sent in the examples.</t></list></t>
       <section title="TLS" anchor="examples-c2s-tls">
@@ -6641,7 +6625,7 @@ specifications of each URI scheme.
       <t>Account provisioning is out of scope for this specification.  Possible methods for account provisioning include account creation by a server administrator and in-band account registration using the 'jabber:iq:register' namespace as documented in <xref target="XEP-0077"/>.</t>
     </section>
 
-    <section title="Differences From RFC 3920" anchor="diffs">
+    <section title="Differences from RFC 3920" anchor="diffs">
       <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920.</t>
       <t>
         <list style='symbols'>
