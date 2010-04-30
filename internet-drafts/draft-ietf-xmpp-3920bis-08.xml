@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="April" day="27"/>
+    <date year="2010" month="April" day="29"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -148,19 +148,44 @@ romeo@example.net           juliet@im.example.com
   <section title="TCP Binding" anchor="tcp">
     <section title="Scope" anchor="tcp-scope">
       <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a Transmission Control Protocol <xref target='TCP'/> connection at the receiving entity (server) before it negotiates XML streams with the receiving entity.  The parties then maintain that TCP connection for as long as the XML streams are in use.  The rules specified in the following sections apply to the TCP binding.</t>
+      <t><list style='empty'><t>Note: There is no necessary coupling of XML streams to TCP, and other transports are possible.  For example, two entities could connect to each other by means of <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines only a binding of XMPP to TCP.</t></list></t>
     </section>
     <section title="Hostname Resolution" anchor="tcp-resolution">
-      <t>Before opening the TCP connection, the initiating entity first MUST resolve the Domain Name System (DNS) hostname associated with the receiving entity and determine the appropriate TCP port for communication with the receiving entity.  The process is:</t>
-      <t>
-        <list style='numbers'>
-          <t>Attempt to resolve the hostname using (a) a <xref target="DNS-SRV"/> Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections) and (b) a Proto of "tcp", resulting in resource records such as "_xmpp-client._tcp.example.net." or "_xmpp-server._tcp.im.example.com.".  The result of the SRV lookup will be one or more combinations of a port and hostname, which hostnames the initiating entity MUST resolve according to returned SRV record weight (if the result of the SRV lookup is a single RR with a Target of ".", i.e. the root domain, the initiating entity MUST abort SRV processing but SHOULD attempt a fallback resolution as described below).  The initiating entity uses the IP address(es) from the first successfully resolved hostname (with the corresponding port number returned by the SRV lookup) in order to connect to the receiving entity.  If the initiating entity fails to connect using one of the IP addresses, the initiating entity uses the next resolved IP address to connect.  If the initiating entity fails to connect using all resolved IP addresses, then the initiating entity repeats the process of resolution and connection for the next hostname returned by the SRV lookup.<vspace blankLines='1'/></t>
-           <t>If the SRV lookup aborts or fails, the fallback SHOULD be a normal IPv4 or IPv6 address record resolution to determine the IP address, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.<vspace blankLines='1'/></t>
-           <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.<vspace blankLines='1'/></t>
-        </list>
-      </t>
-      <t><list style='empty'><t>Note: In the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), the initiating entity SHOULD check that the target domain name returned in the SRV record matches the original service domain that was queried.  If the target domain name is not in the queried domain, the connecting application SHOULD verify with the human user (if any) that the SRV target domain name is suitable for use before executing any connections to the IP address of the XMPP service.</t></list></t>
-      <t><list style='empty'><t>Note: If the initiating entity has been explicitly configured to associate a particular hostname (and potentially port) with the original hostname of the receiving entity (say, to "hardcode" an association between an original hostname of example.net and a configured hostname and of webcm.example.com:80), the initiating entity SHALL use the configured name instead of performing the foregoing resolution process on the original name.</t></list></t>
-      <t><list style='empty'><t>Note: Many XMPP servers are implemented in such a way that they can host additional services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at hostnames that are subdomains of the hostname of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or subdomains of the first-level domain of the underlying host (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity from a remote domain wishes to use such additional services, it would generate an appropriate XML stanza and the remote domain itself would attempt to resolve the service's hostname via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if a service wishes to enable entities from remote domains to access these additional services, it needs to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for its main XMPP service.</t></list></t>
+      <t>Because XML streams are sent over TCP, the initiating entity needs to determine the IPv4 or IPv6 address (and port) of the receiving entity's "origin domain" before it can attempt to connect to the XMPP network.</t>
+      <section title="Preferred Process: SRV Lookup" anchor="tcp-resolution-prefer">
+        <t>The preferred process for hostname resolution is to use <xref target='DNS-SRV'/> records as follows:</t>
+        <t>
+          <list style='numbers'>
+            <t>The initiating entity constructs a DNS SRV query whose inputs are:
+              <list style='symbols'>
+                <t>a Service of "xmpp-client" (for client-to-server connections) or "xmpp-server" (for server-to-server connections)</t>
+                <t>a Proto of "tcp"</t>
+                <t>a Name corresponding to the "origin domain" of the XMPP service to which the initiating entity wishes to connect (e.g., "example.net" or "im.example.com")</t>
+              </list>
+            <vspace blankLines='1'/></t>
+            <t>The resulting is a query such as "_xmpp-client._tcp.example.net." or "_xmpp-server._tcp.im.example.com.".<vspace blankLines='1'/></t>
+            <t>If a response is received, it will contain one or more combinations of a port and hostname, each of which is weighted as described in <xref target="DNS-SRV"/>.  However, if the result of the SRV lookup is a single resource record with a Target of ".", i.e. the root domain, then the initiating entity MUST abort SRV processing at this point (but SHOULD attempt the fallback process described in the next section).<vspace blankLines='1'/></t>
+            <t>The initiating entity resolves at least one of the returned hostnames, in order according to the returned SRV record weight.  It resolves the hostname using a DNS "A" or "AAAA" lookup on the hostname, which will result in an IPv4 or IPv6 address.<vspace blankLines='1'/></t>
+            <t>The initiating entity uses the IP address(es) from the first successfully resolved hostname (with the corresponding port number returned by the SRV lookup) as the connection address for the receiving entity.<vspace blankLines='1'/></t>
+            <t>If the initiating entity fails to connect using that IP address but the "A" or "AAAA" lookup returned more than one IP address, then the initiating entity uses the next resolved IP address for that hostname as the connection address.<vspace blankLines='1'/></t>
+            <t>If the initiating entity fails to connect using all resolved IP addresses for a given hostname, then it repeats the process of resolution and connection for the next hostname returned by the SRV lookup.<vspace blankLines='1'/></t>
+            <t>If the initiating entity fails to connect using any hostname returned by the SRV lookup, then it can either abort the connection attempt or use the fallback process described in the next section.<vspace blankLines='1'/></t>
+          </list>
+        </t>
+      </section>
+      <section title="Fallback Processes" anchor="tcp-resolution-fallback">
+         <t>The fallback process SHOULD be a normal "A" or "AAAA" address record resolution to determine the IPv4 or IPv6 address of the origin domain, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.</t>
+         <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
+      </section>
+      <section title="When Not to Use SRV" anchor="tcp-resolution-srvnot">
+        <t>If the initiating entity has been explicitly configured to associate a particular hostname (and potentially port) with the origin domain of the receiving entity (say, to "hardcode" an association from an origin domain of example.net to a configured hostname of webcm.example.com:80), the initiating entity SHALL use the configured name instead of performing the preferred SRV resolution process on the origin name.</t>
+      </section>
+      <section title="SRV Security Checks" anchor="tcp-resolution-srvsec">
+        <t>In the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), the initiating entity SHOULD check that the target domain name returned in the SRV record matches the origin domain that was queried.  If the target domain name is not within the trust boundaries of the origin domain, the connecting application SHOULD verify with the human user (if any) that the SRV target domain name is suitable for use before executing any connections to the IP address of the XMPP service.</t>
+      </section>
+      <section title="Use of SRV Records with Add-On Services" anchor="tcp-resolution-srvadd">
+        <t>Many XMPP servers are implemented in such a way that they can host add-on services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at hostnames that typically are subdomains of the hostname of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or subdomains of the first-level domain of the underlying host (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity from a remote domain wishes to use such add-on services, it would generate an appropriate XML stanza and the remote domain itself would attempt to resolve the service's hostname via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if a service wishes to enable entities from remote domains to access these add-on services, it needs to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for its main XMPP service.</t>
+      </section>
     </section>
     <section title="Directionality" anchor="tcp-direction">
       <t>A client is subordinate to a server.  As a result, a client authenticates to the server but the server does not necessarily authenticate to the client.  Therefore the server MUST allow the client to share a single, bidirectional TCP connection for XML stanzas sent from client to server and from server to client (i.e., the inital stream and response stream as specified under <xref target='streams'/>).</t>
@@ -182,13 +207,10 @@ romeo@example.net           juliet@im.example.com
           <t>If the first reconnection attempt does not succeed, an entity MUST back off increasingly on the time between subsequent reconnection attempts, e.g. in accordance with the exponential backoff principle.<vspace blankLines='1'/></t>
         </list>
       </t>
-      <t><list style='empty'><t>Note: Because it is possible that a disconnected entity cannot determine the cause of disconnection (e.g., because there was no explicit stream error) or does not need a new stream for immediate communication (e.g., because the stream was idle and therefore timed out), it SHOULD NOT assume that is needs to reconnect immediately.</t></list></t>
+      <t><list style='empty'><t>Note: Because it is possible that a disconnected entity cannot determine the cause of disconnection (e.g., because there was no explicit stream error) or does not need a new stream for immediate communication (e.g., because the stream was idle and therefore timed out), it SHOULD NOT assume that it needs to reconnect immediately.</t></list></t>
     </section>
     <section title="Reliability" anchor="streams-reliability">
       <t>The use of long-lived TCP connections in XMPP implies that the sending of XML stanzas over XML streams can be unreliable, since the parties to a long-lived TCP connection might not discover a connectivity disruption in a timely manner.  At the XMPP application layer, long connectivity disruptions can result in undelivered stanzas.  Although the core XMPP technology defined in this specification does not contain features to overcome this lack of reliability, there exist XMPP extensions for doing so (e.g., <xref target='XEP-0198'/>).</t>
-    </section>
-    <section title="Other Bindings" anchor="tcp-other">
-      <t>There is no necessary coupling of an XML stream to a TCP connection.  For example, two entities could connect to each other via another transport, such as <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  Although this specification neither encourages nor discourages other bindings, it defines only a binding of XMPP to TCP.</t>
     </section>
   </section>
 
@@ -2528,7 +2550,7 @@ E: <presence
        type='error'>
      <error type='modify'>
        <gone xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'>
-         xmpp:conference.example.com
+         xmpp:characters@conference.example.com
        </gone>
      </error>
    </presence>
@@ -3832,7 +3854,7 @@ XmppAddr ::= UTF8String
       <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
     </section>
     <section title="TLS Versions" anchor="security-tls">
-      <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients SHOULD NOT support or offer SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
+      <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients MUST NOT request or offer SSL 2.0, and MUST close the TCP connection if the other party to an XML stream requests or offers SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
     </section>
     <section title="SASL Downgrade Attacks" anchor="security-downgrade">
       <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To help prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
