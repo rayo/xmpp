@@ -69,7 +69,7 @@
           <t>Close the TCP connection</t>
         </list>
       </t>
-      <t><list style='empty'><t>* Deployment Note: Depending on local service policies, it is possible that a deployed server will use the older server dialback protocol to provide weak identity verification in cases where SASL negotiation would not result in strong authentication (e.g., because TLS negotiation was not mandated by the peer server, or because the certificate presented by the peer server during TLS negotiation is self-signed and thus provides only weak identity); for details, see <xref target='XEP-0220'/>.</t></list></t>
+      <t><list style='empty'><t>* Implementation Note: Depending on local service policies, it is possible that a deployed server will use the older server dialback protocol to provide weak identity verification in cases where SASL negotiation would not result in strong authentication (e.g., because TLS negotiation was not mandated by the peer server, or because the certificate presented by the peer server during TLS negotiation is self-signed and thus provides only weak identity); for details, see <xref target='XEP-0220'/>.</t></list></t>
       <t>This document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, those payloads are defined by various XMPP extensions.  For example, <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality.  In addition, various specifications produced in the XSF's XEP series <xref target='XEP-0001'/> define extensions for a wide range of applications.</t>
     </section>
     <section title="Terminology" anchor="intro-terms">
@@ -441,7 +441,7 @@ S: </stream:stream>
       <section title='from' anchor='streams-attr-from'>
         <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
         <t>For initial stream headers in client-to-server communication, if the client knows the XMPP identity of the principal controlling the client (typically an account name of the form &lt;localpart@domain&gt;), then it MAY include the 'from' attribute and set its value to that identity.  However, because the client might not know the XMPP identity of the principal controlling the entity (e.g., because the XMPP identity is assigned at a level other than the XMPP application layer, as in the General Security Service Application Program Interface <xref target='GSS-API'/>), inclusion of the 'from' address is OPTIONAL.</t>
-        <t>Security Note: Including the XMPP identity before the stream is protected via TLS can expose that identity to eavesdroppers.</t>
+        <t><list style='empty'><t>Security Note: Including the XMPP identity before the stream is protected via TLS can expose that identity to eavesdroppers.</t></list></t>
         <figure>
           <artwork><![CDATA[
 I: <?xml version='1.0'?>
@@ -622,12 +622,12 @@ R: <?xml version='1.0'?>
 
     <section title="Namespace Declarations" anchor="streams-ns">
       <section title="Declaration of Streams Namespace" anchor="streams-ns-stream">
-        <t>A streams namespace declaration is REQUIRED in all XML stream headers and the name of the streams namespace MUST be 'http://etherx.jabber.org/streams'.  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; but MAY be &lt;bad-format/&gt;.</t>
+        <t>A streams namespace declaration is REQUIRED in all XML stream headers, and the name of the streams namespace MUST be 'http://etherx.jabber.org/streams'.  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; but MAY be &lt;bad-format/&gt;.</t>
         <t>The element names of the &lt;stream/&gt; element and its &lt;features/&gt; and &lt;error/&gt; children MUST be qualified by the streams namespace prefix in all instances.  If this rule is violated, the entity that receives the offending element MUST return a stream error to the sending entity, which SHOULD be &lt;bad-format/&gt;.</t>
-        <t>For historical reasons, an implementation MAY accept only the 'stream:' prefix for these elements.  If an entity receives a stream header with a streams namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; but MAY be &lt;bad-format/&gt;.</t>
+        <t><list style='empty'><t>Compatibility Note: For historical reasons, an implementation MAY accept only the 'stream:' prefix for these elements.  If an entity receives a stream header with a streams namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; but MAY be &lt;bad-format/&gt;.</t></list></t>
       </section>
       <section title="Declaration of Default Namespace" anchor="streams-ns-default">
-        <t>A default namespace declaration is REQUIRED and defines the allowable first-level children of the root stream element.  This namespace declaration MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The default namespace declaration applies to the stream and all first-level child element sent within a stream unless explicitly qualified by the streams namespace or another namespace.</t>
+        <t>A default namespace declaration is REQUIRED and defines the allowable first-level children of the root stream element.  This namespace declaration MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The default namespace declaration applies to the stream and all first-level child elements sent over a stream unless explicitly qualified by the streams namespace or another namespace.</t>
         <t>A server implementation MUST support the following two default namespaces:</t>
         <t>
           <list style='symbols'>
@@ -636,12 +636,12 @@ R: <?xml version='1.0'?>
           </list>
         </t>
         <t>A client implementation MUST support the 'jabber:client' default namespace.</t>
-        <t>If an implementation accepts a stream that is qualified by the 'jabber:client' or 'jabber:server' namespace, it MUST support the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza types (message, presence, and IQ).</t>
-        <t>For historical reasons, an implementation MAY refuse to support any other default namespaces.  If an entity receives a stream header with a default namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t>
-        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.</t>
         <t><list style='empty'><t>Informational Note: The 'jabber:client' and 'jabber:server' namespaces are nearly identical but are used in different contexts (client-to-server communication for 'jabber:client' and server-to-server communication for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent over XML streams qualified by the 'jabber:client' namespace, whereas they are REQUIRED on stanzas sent over XML streams qualified by the 'jabber:server' namespace.</t></list></t>
+        <t>If an implementation accepts a stream that is qualified by the 'jabber:client' or 'jabber:server' namespace, it MUST support the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza types (message, presence, and IQ).</t>
+        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.</t>
         <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose default namespace is 'jabber:client', if the server to which the client is connected needs to route a client-generated stanza to another server then it MUST "re-scope" the stanza so that its default namespace is 'jabber:server' (i.e., it MUST NOT send a stanza qualified by the 'jabber:client' namespace over a stream whose default namespace is 'jabber:server').  Similarly, a routing server MUST "re-scope" a stanza received over a server-to-server stream (whose default namespace is 'jabber:server') so that the stanza is qualified by the 'jabber:client' namespace before sending it over a client-to-server stream (whose default namespace is 'jabber:client').</t></list></t>
         <t>An implementation MAY support a default namespace other than 'jabber:client' or 'jabber:server'.  However, because such namespaces would define applications other than XMPP, they are to be defined in separate specifications.</t>
+        <t><list style='empty'><t>Compatibility Note: For historical reasons, an implementation MAY refuse to support any other default namespaces.  If an entity receives a stream header with a default namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t></list></t>
       </section>
       <section title="Declaration of Other Namespaces" anchor="streams-ns-other">
         <t>Because an XML stanza is the primary unit of meaning in XMPP and because an XML stanza can be routed outside the context of the stream in which it originated, a stream header MUST NOT include namespace declarations for namespaces that are different from the streams namespace and the default namespace.</t>
@@ -653,10 +653,10 @@ R: <?xml version='1.0'?>
       <section title="Rules" anchor="streams-error-rules">
         <t>The following rules apply to stream-level errors.</t>
         <section title="Stream Errors Are Unrecoverable" anchor="streams-error-rules-unrecoverable">
-          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send a &lt;error/&gt; element with an appropriate child element that specifies the error condition and at the same time send a closing &lt;/stream&gt; tag.</t>
+          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send an &lt;error/&gt; element with an appropriate child element that specifies the error condition and at the same time send a closing &lt;/stream&gt; tag.</t>
           <figure>
             <artwork><![CDATA[
-C: <message><body></message>
+C: <message><body>No closing tag!</message>
 
 S: <stream:error>
      <xml-not-well-formed 
@@ -665,7 +665,7 @@ S: <stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
-          <t>The entity that generates the stream error then SHOULD immediately terminate the underlying TCP connection, although it MAY wait until after it receives a closing &lt;/stream&gt; tag from the entity to which it sent the stream error.</t>
+          <t>The entity that generates the stream error then SHOULD immediately terminate the underlying TCP connection, although as explained under <xref target='streams-close'/> it MAY wait until after it receives a closing &lt;/stream&gt; tag from the entity to which it sent the stream error.</t>
           <figure>
             <artwork><![CDATA[
 C: </stream:stream>
@@ -733,17 +733,23 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="Where Stream Errors Are Sent" anchor="streams-error-rules-where">
-          <t>When two XML streams are used between the initiating entity and the receiving entity (one in each direction) rather than using a single bidirectional stream, stanza errors triggered by stanzas sent over the outbound stream are returned on the inbound stream (since they are inbound stanzas from the perspective of the entity that sent the triggering stanza), whereas stream errors related to the outbound stream are returned on the outbound stream (since they are not inbound stanzas from the perspective of the entity that sent the triggering stanza but strictly related to the outbound stream itself); the same is true, naturally, of any stream errors that are related to the outbound stream but not triggered by an outbound stanza.</t>
+          <t>When two TCP connections are used between the initiating entity and the receiving entity (one in each direction) rather than using a single bidirectional connection, the following rules apply:</t>
+          <t>
+            <list style='symbols'>
+              <t>Stanza errors triggered by outbound stanzas sent from the initiating entity over the initial stream via the first TCP connection are returned by the receiving entity on the response stream via the second TCP connection (since they are inbound stanzas from the perspective of the initiating entity).<vspace blankLines='1'/></t>
+              <t>By contrast, stream-level errors related to the initial stream are returned by the receiving entity on the response stream via the first TCP connection.<vspace blankLines='1'/></t>
+            </list>
+          </t>
         </section>
       </section>
       <section title="Syntax" anchor="streams-error-syntax">
-        <t>The syntax for stream errors is as follows, where "defined-condition" is a placeholder for one of the conditions defined under <xref target='streams-error-conditions'/>.</t>
+        <t>The syntax for stream errors is as follows, where "defined-condition" is a placeholder for one of the conditions defined under <xref target='streams-error-conditions'/> and XML data shown within the square brackets '[' and ']' is OPTIONAL.</t>
         <figure>
           <artwork><![CDATA[
 <stream:error>
   <defined-condition xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
   [<text xmlns='urn:ietf:params:xml:ns:xmpp-streams'
-        xml:lang='langcode'>
+         xml:lang='langcode'>
     [ ... descriptive text ... ]
   </text>]
   [application-specific condition element]
@@ -762,11 +768,11 @@ S: <?xml version='1.0'?>
         <t>The following stream-level error conditions are defined.</t>
         <section title="bad-format" anchor="streams-error-conditions-bad-format">
           <t>The entity has sent XML that cannot be processed.</t>
-          <t>(In the following example, the client sends an XMPP message that is not well-formed XML.)</t>
+          <t>(In the following example, the client sends an XMPP message that is not well-formed XML, which alternatively might trigger an &lt;xml-not-well-formed/&gt; stream error.)</t>
           <figure>
             <artwork><![CDATA[
 C: <message>
-     <body>No closing body tag!
+     <body>No closing tag!
    </message>
 
 S: <stream:error>
@@ -809,7 +815,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="conflict" anchor="streams-error-conditions-conflict">
-          <t>The server is either (1) closing the existing stream for this entity because a new stream has been initiated that conflicts with the existing stream, or (2) is refusing a new stream for this entity because allowing the new stream would conflict with an existing stream (e.g., because the server allows only a certain number of connections from the same IP address).</t>
+          <t>The server either (1) is closing the existing stream for this entity because a new stream has been initiated that conflicts with the existing stream, or (2) is refusing a new stream for this entity because allowing the new stream would conflict with an existing stream (e.g., because the server allows only a certain number of connections from the same IP address).</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -848,6 +854,7 @@ P: <stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
+          <t>As explained under <xref target='streams-close-idle'/>, it is RECOMMENDED to not return an error when closing an idle stream.</t>
         </section>
         <section title="host-gone" anchor="streams-error-conditions-host-gone">
           <t>The value of the 'to' attribute provided in the initial stream header corresponds to a hostname that is no longer serviced by the receiving entity.</t>
@@ -911,7 +918,7 @@ S: <?xml version='1.0'?>
         </section>
         <section title="improper-addressing" anchor="streams-error-conditions-improper-addressing">
           <t>A stanza sent between two servers lacks a 'to' or 'from' attribute, the 'from' or 'to' attribute has no value, or the value is not a valid XMPP address.</t>
-          <t>(In the following example, the peer sends a stanza without a 'to' address.)</t>
+          <t>(In the following example, the peer sends a stanza without a 'to' address over a server-to-server stream.)</t>
           <figure>
             <artwork><![CDATA[
 P: <message from='juliet@im.example.com'>
@@ -1071,6 +1078,7 @@ C: <message to='juliet@im.example.com' id='foo'>
 S: <stream:error>
      <policy-violation 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
+     <stanza-too-big xmlns='urn:xmpp:errors'/>
    </stream:error>
 
 S: </stream:stream>
@@ -1107,7 +1115,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="reset" anchor="streams-error-conditions-reset">
-          <t>The server is closing the stream because it has new (typically security-critical) features to offer or needs to reset the stream for some other reason (e.g., because the certificates used to establish a secure context for the stream have expired or have been revoked during the life of the stream).</t>
+          <t>The server is closing the stream because it has new (typically security-critical) features to offer or because it needs to reset the stream for some other reason (e.g., because the certificates used to establish a secure context for the stream have expired or have been revoked during the life of the stream).</t>
           <figure>
             <artwork><![CDATA[
 
@@ -1339,11 +1347,11 @@ S: <?xml version='1.0'?>
         </section>
         <section title="xml-not-well-formed" anchor="streams-error-conditions-xml-not-well-formed">
           <t>The initiating entity has sent XML that violates the well-formedness rules of <xref target="XML"/> or <xref target='XML-NAMES'/>.</t>
-          <t>(In the following example, the client sends an XMPP message that is not well-formed XML.)</t>
+          <t>(In the following example, the client sends an XMPP message that is not namespace-well-formed.)</t>
           <figure>
             <artwork><![CDATA[
 C: <message>
-     <body>No closing body tag!
+     <foo:body>What is this foo?</foo:body>
    </message>
 
 S: <stream:error>
@@ -1458,11 +1466,10 @@ S: <?xml version='1.0'?>
 
 [ ... resource binding ... ]
 
-
 C:   <message from='juliet@im.example.com/balcony'
               to='romeo@example.net'
               xml:lang='en'>
-       <body>No closing body tag!
+       <body>No closing tag!
      </message>
 
 S: <stream:error>
@@ -2306,7 +2313,7 @@ S: <iq id='bind_2' type='error'>
         <t>It is up to the originating entity whether the value of the 'id' attribute will be unique only within its current stream (session) or unique globally.</t>
         <t>For &lt;message/&gt; and &lt;presence/&gt; stanzas, it is RECOMMENDED for the originating entity to include an 'id' attribute; for &lt;iq/&gt; stanzas, it is REQUIRED.</t>
         <t>If the generated stanza includes an 'id' attribute then it is REQUIRED for the response or error stanza to also include an 'id' attribute, where the value of the 'id' attribute MUST match that of the generated stanza.</t>
-        <t>Informational Note: The semantics of IQ stanzas impose additional restrictions; see <xref target="stanzas-semantics-iq"/>.</t>
+        <t><list style='empty'><t>Informational Note: The semantics of IQ stanzas impose additional restrictions; see <xref target="stanzas-semantics-iq"/>.</t></list></t>
       </section>
       <section title="type" anchor="stanzas-attributes-type">
         <t>The 'type' attribute specifies the purpose or context of the message, presence, or IQ stanza.  The particular allowable values for the 'type' attribute vary depending on whether the stanza is a message, presence, or IQ stanza.  The defined values for message and presence stanzas are specific to instant messaging and presence applications and therefore are specified in <xref target="XMPP-IM"/>, whereas the values for IQ stanzas specify the role of an IQ stanza in a structured request-response exchange and therefore are specified under <xref target="stanzas-semantics-iq"/>.  The only 'type' value common to all three stanzas is "error"; see <xref target="stanzas-error"/>.</t>
@@ -3635,7 +3642,7 @@ S2: </stream:stream>
 
     <section title="Character Encoding" anchor="xml-encoding">
       <t>Implementations MUST support the UTF-8 transformation of Universal Character Set <xref target="UCS2"/> characters, as needed for conformance with <xref target="CHARSET"/> and as defined in <xref target='UTF-8'/>.  Implementations MUST NOT attempt to use any other encoding.  If one party to an XML stream detects that the other party has attempted to send XML data with an encoding other than UTF-8, it MUST return a stream error, which SHOULD be &lt;unsupported-encoding/&gt; but MAY be &lt;bad-format/&gt;.</t>
-      <t>Implementation Note: Because it is mandatory for an XMPP implementation to support all and only the UTF-8 encoding and because UTF-8 always has the same byte order, an implementation MUST NOT send a byte order mark ("BOM") at the beginning of the data stream.  If an entity receives the Unicode character U+FEFF anywhere in an XML stream (including as the first character of the stream), it MUST interpret that character as a zero width no-break space, not as a byte order mark.</t>
+      <t><list style='empty'><t>Implementation Note: Because it is mandatory for an XMPP implementation to support all and only the UTF-8 encoding and because UTF-8 always has the same byte order, an implementation MUST NOT send a byte order mark ("BOM") at the beginning of the data stream.  If an entity receives the Unicode character U+FEFF anywhere in an XML stream (including as the first character of the stream), it MUST interpret that character as a zero width no-break space, not as a byte order mark.</t></list></t>
     </section>
 
     <section title="Whitespace" anchor="xml-whitespace">
