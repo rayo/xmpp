@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="May" day="3"/>
+    <date year="2010" month="May" day="5"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -2048,9 +2048,10 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
 
   <section title="Resource Binding" anchor="bind">
     <section title="Overview" anchor="bind-overview">
-      <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client.  That is, there MUST be an XMPP resource associated with the bare JID (&lt;localpart@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;localpart@domain/resource&gt; (including the resourcepart).  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client in relation to entities other than the server itself, as explained under <xref target="rules"/> (the client could exchange stanzas with the server itself before binding a resource since the full JID is needed only for addressing outside the context of the stream negotiated between the client and the server, but this is not commonly done).</t>
-      <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resourcepart; however, a server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
-      <t>If, before completing the resource binding step, the client attempts to send an XML stanza to an entity other than the client's account or the server, the server MUST NOT process the stanza and MUST either silently ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
+      <t>After a client authenticates with a server, it MUST bind a specific resource to the stream so that the server can properly address the client.  That is, there MUST be an XMPP resource associated with the bare JID (&lt;localpart@domain&gt;) of the client, so that the address for use over that stream is a full JID of the form &lt;localpart@domain/resource&gt; (including the resourcepart).  This ensures that the server can deliver XML stanzas to and receive XML stanzas from the client in relation to entities other than the server itself or the client's account, as explained under <xref target="rules"/> (the client could exchange stanzas with the server itself or the client's account before binding a resource since the full JID is needed only for addressing outside the context of the stream negotiated between the client and the server, but this is not commonly done).</t>
+      <t><iref item='Connected Resource'/>After a client has bound a resource to the stream, it is referred to as a CONNECTED RESOURCE.  A server SHOULD allow an entity to maintain multiple connected resources simultaneously, where each connected resource is associated with a distinct XML stream and differentiated from the other connected resources by a distinct resourcepart.</t>
+      <t><list style='empty'><t>Security Note: A server MUST enable the administrator of an XMPP service to limit the number of connected resources in order to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t></list></t>
+      <t>If, before completing the resource binding step, the client attempts to send an XML stanza to an entity other than the server itself or the client's account, the server MUST NOT process the stanza and MUST either silently ignore the stanza or return a &lt;not-authorized/&gt; stream error to the client.</t>
       <t>Support for resource binding is REQUIRED in XMPP client and server implementations.</t>
     </section>
     <section title="Stream Negotiation Rules" anchor="bind-rules">
@@ -2063,8 +2064,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
     </section>
     <section title="Advertising Support" anchor="bind-feature">
       <t>Upon sending a new response stream header to the client after successful SASL negotiation, the server MUST include a &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace in the stream features it presents to the client.</t>
-      <t><list style='empty'><t>Implementation Note: Resource binding is mandatory-to-negotiate for clients.</t></list></t>
-      <t><list style='empty'><t>Security Note: The server MUST NOT include the resource binding stream feature until after the client has authenticated, typically by means of successful SASL negotiation.</t></list></t>
+      <t>The server MUST NOT include the resource binding stream feature until after the client has authenticated, typically by means of successful SASL negotiation.</t>
       <figure>
         <artwork><![CDATA[
 S: <stream:stream
@@ -2085,7 +2085,7 @@ S: <stream:features>
     </section>
     <section title="Generation of Resource Identifiers" anchor="bind-generation">
       <t>A resourcepart MUST at a minimum be unique among the connected resources for that &lt;localpart@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
-      <t>A resourcepart can be security-critical.  For example, if a malicious entity can guess a client's resourcepart then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leak'/>.  To prevent that possibility, a client can either (1) generate a random resourcepart on its own or (2) ask the server to generate a resourcepart on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resourcepart, it is RECOMMENDED that the resourcepart be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t>
+      <t><list style='empty'><t>Security Note: A resourcepart can be security-critical.  For example, if a malicious entity can guess a client's resourcepart then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leak'/>.  To prevent that possibility, a client can either (1) generate a random resourcepart on its own or (2) ask the server to generate a resourcepart on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resourcepart, it is RECOMMENDED that the resourcepart be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t></list></t>
     </section>
     <section title="Server-Generated Resource Identifier" anchor="bind-servergen">
       <t>A server that supports resource binding MUST be able to generate an XMPP resourcepart on behalf of a client.</t>
@@ -2093,7 +2093,7 @@ S: <stream:features>
         <t>A client requests a server-generated resourcepart by sending an IQ stanza of type "set" (see <xref target="stanzas-semantics-iq"/>) containing an empty &lt;bind/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-bind' namespace.</t>
         <figure>
           <artwork><![CDATA[
-C: <iq id='bind_1' type='set'>
+C: <iq id='tn281v37' type='set'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'/>
    </iq>
           ]]></artwork>
@@ -2101,7 +2101,7 @@ C: <iq id='bind_1' type='set'>
         <t>Once the server has generated an XMPP resourcepart for the client, it MUST return an IQ stanza of type "result" to the client, which MUST include a &lt;jid/&gt; child element that specifies the full JID for the connected resource as determined by the server.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq id='bind_1' type='result'>
+S: <iq id='tn281v37' type='result'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
       <jid>
         juliet@im.example.com/4db06f06-1ea4-11dc-aca3-000bcd821bfb
@@ -2112,10 +2112,9 @@ S: <iq id='bind_1' type='result'>
         </figure>
       </section>
       <section title="Error Cases" anchor="bind-servergen-error">
-        <t>When a client asks the server to generate a resourcepart during resource binding, the following stanza error conditions are possible:</t>
+        <t>When a client asks the server to generate a resourcepart during resource binding, the following stanza error conditions are defined (and others not specified here are possible; see under <xref target='stanzas-error'/>):</t>
         <t>
           <list style='symbols'>
-            <t>The request is malformed.</t>
             <t>The account has reached a limit on the number of simultaneous connected resources allowed.</t>
             <t>The client is otherwise not allowed to bind a resource to the stream.</t>
           </list>
@@ -2124,7 +2123,7 @@ S: <iq id='bind_1' type='result'>
           <t>If the account has reached a limit on the number of simultaneous connected resources allowed, the server MUST return a &lt;resource-constraint/&gt; stanza error.</t>
           <figure>
             <artwork><![CDATA[
-S: <iq id='bind_2' type='error'>
+S: <iq id='wy2xa82b4' type='error'>
      <error type='wait'>
        <resource-constraint 
            xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
@@ -2137,7 +2136,7 @@ S: <iq id='bind_2' type='error'>
           <t>If the client is otherwise not allowed to bind a resource to the stream, the server MUST return a &lt;not-allowed/&gt; stanza error.</t>
           <figure>
             <artwork><![CDATA[
-S: <iq id='bind_2' type='error'>
+S: <iq id='wy2xa82b4' type='error'>
      <error type='cancel'>
        <not-allowed 
            xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
@@ -2154,7 +2153,7 @@ S: <iq id='bind_2' type='error'>
         <t>A client asks its server to accept a client-submitted resourcepart by sending an IQ stanza of type "set" containing a &lt;bind/&gt; element with a child &lt;resource/&gt; element containing non-zero-length XML character data.</t>
         <figure>
           <artwork><![CDATA[
-C: <iq id='bind_2' type='set'>
+C: <iq id='wy2xa82b4' type='set'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <resource>balcony</resource>
      </bind>
@@ -2164,16 +2163,28 @@ C: <iq id='bind_2' type='set'>
         <t>The server SHOULD accept the client-submitted resourcepart.  It does so by returning an IQ stanza of type "result" to the client, including a &lt;jid/&gt; child element that specifies the full JID for the connected resource and contains without modification the client-submitted text.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq id='bind_2' type='result'>
+S: <iq id='wy2xa82b4' type='result'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
       <jid>juliet@im.example.com/balcony</jid>
     </bind>
    </iq>
           ]]></artwork>
         </figure>
+        <t>Alternatively, in accordance with local service policies the server MAY refuse the client-submitted resourcepart and override it with a resourcepart that the server generates.</t>
+        <figure>
+          <artwork><![CDATA[
+S: <iq id='wy2xa82b4' type='result'>
+    <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
+      <jid>
+   juliet@im.example.com/balcony 4db06f06-1ea4-11dc-aca3-000bcd821bfb
+      </jid>
+    </bind>
+   </iq>
+          ]]></artwork>
+        </figure>
       </section>
       <section title="Error Cases" anchor="bind-clientsubmit-error">
-        <t>When a client attempts to submit its own XMPP resourcepart during resource binding, the following stanza error conditions are possible in addition to those described under <xref target='bind-servergen-error'/>:</t>
+        <t>When a client attempts to submit its own XMPP resourcepart during resource binding, the following stanza error conditions are defined in addition to those described under <xref target='bind-servergen-error'/> (and others not specified here are possible; see under <xref target='stanzas-error'/>):</t>
         <t>
           <list style='symbols'>
             <t>The provided resourcepart cannot be processed by the server.</t>
@@ -2184,7 +2195,7 @@ S: <iq id='bind_2' type='result'>
           <t>If the provided resourcepart cannot be processed by the server (e.g. because it is of zero length or because it is not in accordance with the Resourceprep profile of stringprep specified in <xref target='XMPP-ADDR'/>), the server MAY return a &lt;bad-request/&gt; stanza error (but SHOULD instead apply the Resourceprep profile or otherwise process the resourcepart so that it is in conformance).</t>
           <figure>
             <artwork><![CDATA[
-S: <iq id='bind_2' type='error'>
+S: <iq id='wy2xa82b4' type='error'>
      <error type='modify'>
        <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -2196,15 +2207,15 @@ S: <iq id='bind_2' type='error'>
           <t>If there is already a connected resource of the same name, the server MUST do one of the following:</t>
           <t>
             <list style='numbers'>
-              <t>Not accept the resourcepart provided by the client but instead override it with an XMPP resourcepart that the server generates.<vspace blankLines='1'/></t>
-              <t>Terminate the current resource and allow the newly-requested resource.<vspace blankLines='1'/></t>
+              <t>Not accept the resourcepart provided by the client but instead override it with a resourcepart that the server generates.<vspace blankLines='1'/></t>
               <t>Disallow the newly-requested resource and maintain the current resource.<vspace blankLines='1'/></t>
+              <t>Terminate the current resource and allow the newly-requested resource.<vspace blankLines='1'/></t>
             </list>
           </t>
           <t>Which of these the server does is up to the implementation, although it is RECOMMENDED to implement case #1.</t>
           <figure>
             <artwork><![CDATA[
-S: <iq id='bind_2' type='result'>
+S: <iq id='wy2xa82b4' type='result'>
     <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
       <jid>
    juliet@im.example.com/balcony 4db06f06-1ea4-11dc-aca3-000bcd821bfb
@@ -2213,20 +2224,20 @@ S: <iq id='bind_2' type='result'>
    </iq>
             ]]></artwork>
           </figure>
-          <t>In case #2, the server MUST send a &lt;conflict/&gt; stream error to the current resource and return an IQ stanza of type "result" (indicating success) to the newly-requested resource.</t>
+          <t>In case #2, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resourcepart before sending another request for resource binding.</t>
           <figure>
             <artwork><![CDATA[
-S: <iq id='bind_2' type='result'/>
-            ]]></artwork>
-          </figure>
-          <t>In case #3, the server MUST send a &lt;conflict/&gt; stanza error to the newly-requested resource but maintain the XML stream for that connection so that the newly-requested resource has an opportunity to negotiate a non-conflicting resourcepart before sending another request for resource binding.</t>
-          <figure>
-            <artwork><![CDATA[
-S: <iq id='bind_2' type='error'>
+S: <iq id='wy2xa82b4' type='error'>
      <error type='modify'>
        <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
    </iq>
+            ]]></artwork>
+          </figure>
+          <t>In case #3, the server MUST send a &lt;conflict/&gt; stream error to the current resource and return an IQ stanza of type "result" (indicating success) to the newly-requested resource.</t>
+          <figure>
+            <artwork><![CDATA[
+S: <iq id='wy2xa82b4' type='result'/>
             ]]></artwork>
           </figure>
         </section>
@@ -2493,13 +2504,13 @@ S: <iq from='im.example.com'
           <t>Access cannot be granted because an existing resource exists with the same name or address; the associated error type SHOULD be "cancel".</t>
           <figure>
             <artwork><![CDATA[
-C: <iq id='bind_2' type='set'>
+C: <iq id='wy2xa82b4' type='set'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <resource>balcony</resource>
      </bind>
    </iq>
 
-S: <iq id='bind_2' type='error'>
+S: <iq id='wy2xa82b4' type='error'>
      <error type='cancel'>
        <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
@@ -3267,7 +3278,7 @@ S: <stream:features>
         <figure>
           <preamble>Step 13: Client binds a resource:</preamble>
           <artwork><![CDATA[
-C: <iq id='bind_1' type='set'>
+C: <iq id='yhc13a95' type='set'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        balcony
      </bind>
@@ -3277,7 +3288,7 @@ C: <iq id='bind_1' type='set'>
         <figure>
           <preamble>Step 14: Server accepts submitted resourcepart and informs client of successful resource binding:</preamble>
           <artwork><![CDATA[
-S: <iq id='bind_1' type='result'>
+S: <iq id='yhc13a95' type='result'>
      <bind xmlns='urn:ietf:params:xml:ns:xmpp-bind'>
        <jid>
          juliet@im.example.com/balcony
