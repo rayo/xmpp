@@ -2732,41 +2732,6 @@ E: <presence
             ]]></artwork>
           </figure>
         </section>
-        <section title="not-modified" anchor="stanzas-error-conditions-not-modified">
-          <t>The item requested has not changed since it was last requested; the associated error type SHOULD be "continue".</t>
-          <figure>
-            <artwork><![CDATA[
-C: <iq from='romeo@montague.net/orchard' 
-       id='kd1s23ax'
-       type='get'>
-     <query xmlns='jabber:iq:privacy'>
-       <list name='special'/>
-       <headers xmlns='http://jabber.org/protocol/shim'>
-         <header name='If-None-Match'>
-           some-long-opaque-string
-         </header>
-       </headers>
-     </query>
-   </iq>
-
-S: <iq type='error' 
-       to='romeo@example.net/orchard'
-       id='getlist2'>
-    <query xmlns='jabber:iq:privacy'>
-       <list name='special'/>
-       <headers xmlns='http://jabber.org/protocol/shim'>
-         <header name='ETag'>
-           some-long-opaque-string
-         </header>
-       </headers>
-    </query>
-     <error code='304' type='modify'>
-       <not-modified xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-     </error>
-   </iq>
-            ]]></artwork>
-          </figure>
-        </section>
         <section title="payment-required" anchor="stanzas-error-conditions-payment-required">
           <t>The requesting entity is not authorized to access the requested service because payment is necessary; the associated error type SHOULD be "auth".</t>
           <figure>
@@ -6346,8 +6311,6 @@ specifications of each URI scheme.
             <xs:element ref='server:message'/>
             <xs:element ref='server:presence'/>
             <xs:element ref='server:iq'/>
-            <xs:element ref='db:result'/>
-            <xs:element ref='db:verify'/>
           </xs:choice>
         </xs:choice>
         <xs:element ref='error' minOccurs='0' maxOccurs='1'/>
@@ -6362,7 +6325,9 @@ specifications of each URI scheme.
 
   <xs:element name='features'>
     <xs:complexType>
-      <xs:any namespace='##other'/>
+      <xs:any namespace='##other'
+              minOccurs='0'
+              maxOccurs='unbounded'/>
     </xs:complexType>
   </xs:element>
 
@@ -6605,13 +6570,8 @@ specifications of each URI scheme.
   <xs:element name='bind'>
     <xs:complexType>
       <xs:choice>
-        <xs:choice>
-          <xs:element name='resource' type='resourceType'/>
-          <xs:element name='jid' type='fullJIDType'/>
-        </xs:choice>
-        <xs:any namespace='##other'
-                minOccurs='0'
-                minOccurs='unbounded'/>
+        <xs:element name='resource' type='resourceType'/>
+        <xs:element name='jid' type='fullJIDType'/>
       </xs:choice>
     </xs:complexType>
   </xs:element>
@@ -6656,7 +6616,6 @@ specifications of each URI scheme.
   <xs:element name='not-acceptable' type='empty'/>
   <xs:element name='not-allowed' type='empty'/>
   <xs:element name='not-authorized' type='empty'/>
-  <xs:element name='not-modified' type='empty'/>
   <xs:element name='payment-required' type='empty'/>
   <xs:element name='policy-violation' type='empty'/>
   <xs:element name='recipient-unavailable' type='empty'/>
@@ -6669,7 +6628,6 @@ specifications of each URI scheme.
   <xs:element name='subscription-required' type='empty'/>
   <xs:element name='undefined-condition' type='empty'/>
   <xs:element name='unexpected-request' type='empty'/>
-  <xs:element name='unknown-sender' type='empty'/>
 
   <xs:group name='stanzaErrorGroup'>
     <xs:choice>
@@ -6684,7 +6642,6 @@ specifications of each URI scheme.
       <xs:element ref='not-acceptable'/>
       <xs:element ref='not-authorized'/>
       <xs:element ref='not-allowed'/>
-      <xs:element ref='not-modified'/>
       <xs:element ref='payment-required'/>
       <xs:element ref='policy-violation'/>
       <xs:element ref='recipient-unavailable'/>
@@ -6697,7 +6654,6 @@ specifications of each URI scheme.
       <xs:element ref='subscription-required'/>
       <xs:element ref='undefined-condition'/>
       <xs:element ref='unexpected-request'/>
-      <xs:element ref='unknown-sender'/>
     </xs:choice>
   </xs:group>
 
@@ -6737,21 +6693,21 @@ specifications of each URI scheme.
         <list style='symbols'>
           <t>Moved specification of the XMPP address format to a separate document.</t>
           <t>Recommended or mandated use of the 'from' and 'to' attributes on stream headers.</t>
-          <t>More fully specified stream closing handshake.</t>
-          <t>Specified recommended stream reconnection algorithm.</t>
-          <t>Specified return of &lt;restricted-xml/&gt; stream error in response to receipt of prohibited XML features.</t> 
-          <t>Specified that the SASL SCRAM mechanism is a mandatory-to-implement technology.</t>
-          <t>Specified that TLS plus the SASL PLAIN mechanism is a mandatory-to-implement technology for client-to-server connections.</t>
+          <t>More fully specified the stream closing handshake.</t>
+          <t>Specified the recommended stream reconnection algorithm.</t>
+          <t>Specified return of the &lt;restricted-xml/&gt; stream error in response to receipt of prohibited XML features.</t> 
+          <t>Specified that the SASL SCRAM mechanism is a mandatory-to-implement technology for client-to-server streams.</t>
+          <t>Specified that TLS plus the SASL PLAIN mechanism is a mandatory-to-implement technology for client-to-server streams.</t>
           <t>Specified that support for the SASL EXTERNAL mechanism is required for servers but only recommended for clients (since end-user X.509 certificates are difficult to obtain and not yet widely deployed).</t>
           <t>Removed the hard two-connection rule for server-to-server streams if mutual authentication is successful.</t>
           <t>More clearly specified the certificate profile for both public key certificates and issuer certificates.</t>
           <t>Added the &lt;reset/&gt; streams error condition to handle expired/revoked certificates or the addition of security-critical features to an existing stream.</t>
           <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
-          <t>Added the &lt;not-modified/&gt; stanza error condition to enable potential ETags usage.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified the process of DNS SRV lookups and fallbacks.</t>
           <t>Clarified the handling of SASL security layers.</t>
-          <t>Clarified the handling of stream features, regularized use of the &lt;required/&gt; child element, and defined use of the &lt;optional/&gt; child element.</t>
+          <t>Clarified the stream negotiation process and associated state chart.</t>
+          <t>Clarified the handling of stream features.</t>
           <t>Clarified the handling of data that violates the well-formedness definitions for XML 1.0 and XML namespaces.</t>
           <t>Specified the security considerations in more detail, especially with regard to presence leaks and denial of service attacks.</t>
           <t>Moved historical documentation of the server dialback protocol from this specification to a separate specification maintained by the XMPP Standards Foundation.</t>
