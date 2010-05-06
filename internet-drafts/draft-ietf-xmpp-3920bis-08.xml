@@ -2081,7 +2081,7 @@ S: <stream:features>
    </stream:features>
         ]]></artwork>
       </figure>
-      <t>Upon being so informed that resource binding is mandatory, the client MUST bind a resource to the stream as described in the following sections.</t>
+      <t>Upon being informed that resource binding is mandatory, the client MUST bind a resource to the stream as described in the following sections.</t>
     </section>
     <section title="Generation of Resource Identifiers" anchor="bind-generation">
       <t>A resourcepart MUST at a minimum be unique among the connected resources for that &lt;localpart@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
@@ -3170,9 +3170,9 @@ E: <iq from='pubsub.example.com'
   </section>
 
   <section title="Examples" anchor="examples">
+      <t>The examples in this section further illustrate the protocols defined in this specification.  The examples are not exhaustive and not normative.  The alternate steps shown illustrate the handling of failure cases but would not necessarily be triggered by the data sent in the examples.</t>
     <section title="Client-to-Server Examples" anchor="examples-c2s">
       <t>The following examples show the XMPP data flow for a client negotiating an XML stream with a server, exchanging XML stanzas, and closing the negotiated stream.  The server is "im.example.com", the server requires use of TLS, the client authenticates via the SASL PLAIN mechanism as "juliet@im.example.com", and the client binds a client-submitted resource to the stream.  It is assumed that before sending the initial stream header, the client has already resolved an SRV record of _xmpp-client._tcp.im.example.com and has opened a TCP connection to the advertised port at the resolved IP address.</t>
-      <t><list style='empty'><t>Informational Note: The alternate steps shown are provided only to illustrate the protocol for failure cases; they are not exhaustive and would not necessarily be triggered by the data sent in the examples.</t></list></t>
       <section title="TLS" anchor="examples-c2s-tls">
         <figure>
           <preamble>Step 1: Client initiates stream to server:</preamble>
@@ -3200,7 +3200,7 @@ S: <stream:stream
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Step 3: Server sends stream features to client (STARTTLS extension only at this point):</preamble>
+          <preamble>Step 3: Server sends stream features to client (only the STARTTLS extension at this point):</preamble>
           <artwork><![CDATA[
 S: <stream:features>
      <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
@@ -3318,7 +3318,7 @@ S: <stream:features>
    </stream:features>
           ]]></artwork>
         </figure>
-        <t>Upon being so informed that resource binding is mandatory, the client needs to bind a resource to the stream; here we assume that the client submits a human-readable text string.</t>
+        <t>Upon being informed that resource binding is mandatory, the client needs to bind a resource to the stream; here we assume that the client submits a human-readable text string.</t>
         <figure>
           <preamble>Step 13: Client binds a resource:</preamble>
           <artwork><![CDATA[
@@ -3347,7 +3347,9 @@ S: <iq id='yhc13a95' type='result'>
         <figure>
           <artwork><![CDATA[
 C: <message from='juliet@im.example.com/balcony'
+            id='ju2ba41c'
             to='romeo@example.net'
+            type='chat'
             xml:lang='en'>
      <body>Art thou not Romeo, and a Montague?</body>
    </message>
@@ -3358,7 +3360,9 @@ C: <message from='juliet@im.example.com/balcony'
         <figure>
           <artwork><![CDATA[
 E: <message from='romeo@example.net/orchard'
+            id='ju2ba41c'
             to='juliet@im.example.com/balcony'
+            type='chat'
             xml:lang='en'>
      <body>Neither, fair saint, if either thee dislike.</body>
    </message>
@@ -3384,7 +3388,6 @@ S: </stream:stream>
     </section>
     <section title="Server-to-Server Examples" anchor="examples-s2s">
       <t>The following examples show the data flow for a server negotiating an XML stream with another server, exchanging XML stanzas, and closing the negotiated stream.  The initiating server ("Server1") is im.example.com; the receiving server ("Server2") is example.net and it requires use of TLS; im.example.com presents a certificate and authenticates via the SASL EXTERNAL mechanism.  It is assumed that before sending the initial stream header, Server1 has already resolved an SRV record of _xmpp-server._tcp.example.net and has opened a TCP connection to the advertised port at the resolved IP address.</t>
-      <t><list style='empty'><t>Informational Note: The alternate steps shown are provided only to illustrate the protocol for failure cases; they are not exhaustive and would not necessarily be triggered by the data sent in the examples.</t></list></t>
       <section title="TLS" anchor="examples-s2s-tls">
         <figure>
           <preamble>Step 1: Server1 initiates stream to Server2:</preamble>
@@ -3410,7 +3413,7 @@ S2: <stream:stream
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Step 3: Server2 sends stream features to Server1:</preamble>
+          <preamble>Step 3: Server2 sends stream features to Server1 (only the STARTTLS extension at this point):</preamble>
           <artwork><![CDATA[
 S2: <stream:features>
       <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
@@ -3527,7 +3530,9 @@ S2: <stream:features/>
           <preamble>Server1 sends XML stanza to Server2:</preamble>
           <artwork><![CDATA[
 S1: <message from='juliet@im.example.com/balcony'
+             id='ju2ba41c'
              to='romeo@example.net'
+             type='chat'
              xml:lang='en'>
     <body>Art thou not Romeo, and a Montague?</body>
    </message>
@@ -3538,7 +3543,9 @@ S1: <message from='juliet@im.example.com/balcony'
           <preamble>Server2 sends XML stanza to Server1:</preamble>
           <artwork><![CDATA[
 S2: <message from='romeo@example.net/orchard'
+             id='ju2ba41c'
              to='juliet@im.example.com/balcony'
+             type='chat'
              xml:lang='en'>
       <body>Neither, fair saint, if either thee dislike.</body>
     </message>
@@ -3581,9 +3588,9 @@ S2: </stream:stream>
         <t>If the server receives an IQ stanza with no 'to' attribute, it MUST process the stanza on behalf of the account from which received the stanza, as follows:</t>
         <t>
           <list style='numbers'>
-            <t>If the IQ stanza is of type "get" or "set" and the server understands the namespace that qualifies the payload, the server MUST handle the stanza on behalf of the sending entity or return an appropriate error to the sending entity.  While the meaning of "handle" is determined by the semantics of the qualifying namespace, in general the server will respond to the IQ stanza of type "get" or "set" by returning an appropriate IQ stanza of type "result" or "error", responding as if the server were the bare JID of the sending entity.  As an example, if the sending entity sends an IQ stanza of type "get" where the payload is qualified by the 'jabber:iq:roster' namespace (as described in <xref target='XMPP-IM'/>), then the server will return the roster associated with the sending entity's bare JID to the particular resource of the sending entity that requested the roster.<vspace blankLines='1'/></t>
+            <t>If the IQ stanza is of type "get" or "set" and the server understands the namespace that qualifies the payload, the server MUST handle the stanza on behalf of the sending entity or return an appropriate error to the sending entity.  Although the meaning of "handle" is determined by the semantics of the qualifying namespace, in general the server will respond to the IQ stanza of type "get" or "set" by returning an appropriate IQ stanza of type "result" or "error", responding as if the server were the bare JID of the sending entity.  As an example, if the sending entity sends an IQ stanza of type "get" where the payload is qualified by the 'jabber:iq:roster' namespace (as described in <xref target='XMPP-IM'/>), then the server will return the roster associated with the sending entity's bare JID to the particular resource of the sending entity that requested the roster.<vspace blankLines='1'/></t>
             <t>If the IQ stanza is of type "get" or "set" and the server does not understand the namespace that qualifies the payload, the server MUST return an error to the sending entity, which MUST be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-            <t>If the IQ stanza is of type "error" or "result", the server MUST handle the error or result as appropriate for the request-response interaction, responding as if the server were the bare JID of the sending entity.<vspace blankLines='1'/></t>
+            <t>If the IQ stanza is of type "error" or "result", the server MUST handle the error or result in accordance with the payload of the associated IQ stanza or type "get" of "set".<vspace blankLines='1'/></t>
           </list>
         </t>
       </section>
@@ -3597,7 +3604,7 @@ S2: </stream:stream>
         <t>If the JID contained in the 'to' attribute is of the form &lt;domain/resource&gt;, then the server MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
       </section>
       <section title="Localpart at Domain" anchor="rules-local-localpart">
-        <t><list style='empty'><t>Informational Note: For addresses of this type, more detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t></list></t>
+        <t>For addresses of this type, more detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t>
         <section title="No Such User" anchor="rules-local-localpart-nosuchuser">
           <t>If there is no local account associated with the &lt;localpart@domain&gt;, how the stanza is processed depends on the stanza type.</t>
           <t>
@@ -3612,8 +3619,8 @@ S2: </stream:stream>
           <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domain&gt;, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
-              <t>For a message stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST either return an error or store the message offline for delivery when the account next has a connected resource.<vspace blankLines='1'/></t>
-              <t>For a presence stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST silently discard the stanza.<vspace blankLines='1'/></t>
+              <t>For a message stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST either return a &lt;service-unavailable/&gt; stanza error or store the message offline for delivery when the account next has a connected resource.<vspace blankLines='1'/></t>
+              <t>For a presence stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server SHOULD silently discard the stanza.<vspace blankLines='1'/></t>
               <t>For an IQ stanza, the server MUST handle it directly on behalf of the intended recipient.<vspace blankLines='1'/></t>
             </list>
           </t>
@@ -3625,7 +3632,7 @@ S2: </stream:stream>
       </section>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
-      <t>If the hostname of the domainpart of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server itself, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  There are two possible cases.</t>
+      <t>If the domainpart of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server itself, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  There are two possible cases.</t>
       <section title="Existing Stream" anchor="rules-remote-existing">
         <t>If a server-to-server stream already exists between the two domains, the sender's server will attempt to route the stanza to the authoritative server for the remote domain over the existing stream.</t>
       </section>
@@ -3648,7 +3655,7 @@ S2: </stream:stream>
 
   <section title="XML Usage" anchor="xml">
     <section title="Restrictions" anchor="xml-restrictions">
-      <t>The Extensible Messaging and Presence Protocol (XMPP) defines a class of data objects called XML streams as well as the behavior of computer programs that process XML streams.  XMPP is an application profile or restricted form of the Extensible Markup Language <xref target='XML'/>, and a complete XML stream (including start and end stream tags) is a conforming XML document.</t>
+      <t>XMPP defines a class of data objects called XML streams as well as the behavior of computer programs that process XML streams.  XMPP is an application profile or restricted form of the Extensible Markup Language <xref target='XML'/>, and a complete XML stream (including start and end stream tags) is a conforming XML document.</t>
       <t>However, XMPP does not deal with XML documents but with XML streams.  Because XMPP does not require the parsing of arbitrary and complete XML documents, there is no requirement that XMPP needs to support the full feature set of <xref target="XML"/>.  In particular, the following features of XML are prohibited in XMPP:</t>
       <t>
         <list style='symbols'>
@@ -3675,8 +3682,8 @@ S2: </stream:stream>
       <t>There are two varieties of well-formedness:</t>
       <t>
         <list style='symbols'>
-          <t>"XML-well-formedness" in accordance with the definition of "well-formed" in Section 2.1 of <xref target='XML'/>.</t>
-          <t>"Namespace-well-formedness" in accordance with the definition of "namespace-well-formed" in Section 7 of <xref target='XML-NAMES'/>.</t>
+          <t>"XML-well-formedness" in accordance with the definition of "well-formed" from Section 2.1 of <xref target='XML'/>.</t>
+          <t>"Namespace-well-formedness" in accordance with the definition of "namespace-well-formed" from Section 7 of <xref target='XML-NAMES'/>.</t>
         </list>
       </t>
       <t>The following rules apply.</t>
@@ -3704,7 +3711,7 @@ S2: </stream:stream>
     </section>
 
     <section title="XML Versions" anchor="xml-versions">
-      <t>XMPP is an application profile of XML 1.0.  A future version of XMPP might be defined in terms of higher versions of XML, but this specification addresses XML 1.0 only.</t>
+      <t>XMPP is an application profile of XML 1.0.  A future version of XMPP might be defined in terms of higher versions of XML, but this specification defines XMPP only in terms of XML 1.0.</t>
     </section>
 
   </section>
