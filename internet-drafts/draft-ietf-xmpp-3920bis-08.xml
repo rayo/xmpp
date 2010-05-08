@@ -15,7 +15,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="May" day="6"/>
+    <date year="2010" month="May" day="7"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -74,7 +74,7 @@
     </section>
     <section title="Terminology" anchor="intro-terms">
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>Certain security-related terms are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
+      <t>Certain security-related terms are to be understood in the sense defined in <xref target="SEC-TERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
       <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, or LF.</t>
       <t>With regard to XML stanzas or parts thereof, the term "silently ignore" means (1) for a routing entity (typically a server) to route the data unmodified to another server or to deliver the data unmodified to a client, or (2) for a client to discard the data without presenting it a human user or associated application.</t>
       <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent <xref target='UNICODE'/> code points (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
@@ -113,7 +113,7 @@
       <t>Availability for communication is also built into a point-to-point "hop" through the use of persistent XML streams over long-lived TCP connections.  These "always-on" client-to-server or server-to-server streams enable each party to push data to the other party at any time for immediate routing or delivery.  XML streams are defined under <xref target="streams"/>.</t>
     </section>
     <section title="Structured Data" anchor="arch-data">
-      <t>The basic unit of meaning in XMPP is not an XML stream (which simply provides the transport for point-to-point communication) but an XML "stanza", which is essentially a fragment of XML that is sent over a stream.  The root element of a stanza includes routing attributes (such as "from" and "to" addresses) and the child elements of the stanza contain a payload for delivery to the intended recipient.  XML stanzas are defined under <xref target="stanzas"/>.</t>
+      <t>The basic protocol data unit in XMPP is not an XML stream (which simply provides the transport for point-to-point communication) but an XML "stanza", which is essentially a fragment of XML that is sent over a stream.  The root element of a stanza includes routing attributes (such as "from" and "to" addresses) and the child elements of the stanza contain a payload for delivery to the intended recipient.  XML stanzas are defined under <xref target="stanzas"/>.</t>
     </section>
     <section title="Distributed Network of Clients and Servers" anchor="arch-network">
       <t>In practice, XMPP consists of a network of clients and servers that inter-communicate (however, communication between any two given deployed servers is strictly OPTIONAL).  Thus, for example, the user &lt;juliet@im.example.com&gt; associated with the server &lt;im.example.com&gt; might be able to exchange messages, presence, and other structured data with the user &lt;romeo@example.net&gt; associated with the server &lt;example.net&gt;.  This pattern is familiar from messaging protocols that make use of global addresses, such as the email network (see <xref target="SMTP"/> and <xref target="EMAIL-ARCH"/>).  As a result, end-to-end communication in XMPP is logically peer-to-peer but physically client-to-server-to-server-to-client, as illustrated in the following diagram.</t>
@@ -481,7 +481,7 @@ R: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>Whether or not the 'from' attribute is included, each entity MUST verify the identity of the other entity before exchanging XML stanzas with it (see <xref target='security-client'/> and <xref target='security-server'/>).</t>
+        <t>Whether or not the 'from' attribute is included, each entity MUST verify the identity of the other entity before exchanging XML stanzas with it, as described under (see <xref target='security-authentication'/>.</t>
         <t><list style='empty'><t>Interoperability Note: It is possible that implementations based on the predecessor to this specification will not include the 'from' address on stream headers; an entity SHOULD be liberal in accepting such stream headers.</t></list></t>
       </section>
       <section title='to' anchor='streams-attr-to'>
@@ -526,7 +526,7 @@ R: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>Whether or not the 'to' attribute is included, each entity MUST verify the identity of the other entity before exchanging XML stanzas with it (see <xref target='security-client'/> and <xref target='security-server'/>).</t>
+        <t>Whether or not the 'to' attribute is included, each entity MUST verify the identity of the other entity before exchanging XML stanzas with it, as described under <xref target='security-authentication'/>.</t>
         <t><list style='empty'><t>Interoperability Note: It is possible that implementations based on the predecessor to this specification will not include the 'to' address on stream headers; an entity SHOULD be liberal in accepting such stream headers.</t></list></t>
       </section>
       <section title='id' anchor='streams-attr-id'>
@@ -2085,7 +2085,7 @@ S: <stream:features>
     </section>
     <section title="Generation of Resource Identifiers" anchor="bind-generation">
       <t>A resourcepart MUST at a minimum be unique among the connected resources for that &lt;localpart@domain&gt;.  Enforcement of this policy is the responsibility of the server.</t>
-      <t><list style='empty'><t>Security Note: A resourcepart can be security-critical.  For example, if a malicious entity can guess a client's resourcepart then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leak'/>.  To prevent that possibility, a client can either (1) generate a random resourcepart on its own or (2) ask the server to generate a resourcepart on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resourcepart, it is RECOMMENDED that the resourcepart be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t></list></t>
+      <t><list style='empty'><t>Security Note: A resourcepart can be security-critical.  For example, if a malicious entity can guess a client's resourcepart then it might be able to determine if the client (and therefore the controlling principal) is online or offline, thus resulting in a presence leak as described under <xref target='security-leaks-presence'/>.  To prevent that possibility, a client can either (1) generate a random resourcepart on its own or (2) ask the server to generate a resourcepart on its behalf, which MUST be random (see <xref target="RANDOM"/>).  When generating a random resourcepart, it is RECOMMENDED that the resourcepart be a Universally Unique Identifier (UUID), for which the format specified in <xref target='UUID'/> is RECOMMENDED.</t></list></t>
     </section>
     <section title="Server-Generated Resource Identifier" anchor="bind-servergen">
       <t>A server that supports resource binding MUST be able to generate an XMPP resourcepart on behalf of a client.</t>
@@ -3605,7 +3605,7 @@ S2: </stream:stream>
         <t>If there exists no server-to-server stream between the two domains, the sender's server will proceed as follows:</t>
         <t>
           <list style='numbers'>
-            <t>Resolve the hostname of the remote domain (as defined under <xref target="security-server"/>).<vspace blankLines='1'/></t>
+            <t>Resolve the hostname of the remote domain, as described under <xref target="security-reuse-dns"/>).<vspace blankLines='1'/></t>
             <t>Negotiate a server-to-server stream between the two domains (as defined under <xref target='tls'/> and <xref target='sasl'/>).<vspace blankLines='1'/></t>
             <t>Route the stanza to the authoritative server for the remote domain over the newly-established stream.<vspace blankLines='1'/></t>
           </list>
@@ -3688,9 +3688,59 @@ S2: </stream:stream>
   </section>
 
   <section title="Security Considerations" anchor="security">
-    <section title="High Security" anchor="security-high">
-      <t>For the purposes of XMPP communication (client-to-server and server-to-server), the term "high security" refers to the use of security technologies that provide both mutual authentication and integrity checking (on the importance of high security, refer to <xref target='STRONGSEC'/>); in particular, when using certificate-based authentication to provide high security, a trust chain SHOULD be established out-of-band, although a shared certification authority signing certificates could allow a previously unknown certificate to establish trust in-band.  See <xref target="security-certificates"/> regarding certificate validation procedures.</t>
-      <t>Implementations MUST support high security.  Service provisioning SHOULD use high security, subject to local security policies.</t>
+    <section title="Overview" anchor="security-overview">
+      <t>XMPP technologies are typically deployed using a decentralized client-server architecture.  As a result, several paths are possible when two XMPP entities need to communicate:</t>
+      <t>
+        <list style='numbers'>
+          <t>Both entities are servers.  In this case, the entities can establish a direct server-to-server stream between themselves.<vspace blankLines='1'/></t>
+          <t>One entity is a server and the other entity is a client whose account is hosted on that server.  In this case, the entities can establish a direct client-to-server stream between themselves.<vspace blankLines='1'/></t>
+          <t>Both entities are clients whose accounts are hosted on the same server.  In this case, the entities cannot establish a direct stream between themselves, but there is only one intermediate entity between them, whose policies they might understand and in which they might have some level of trust (e.g., the server might require the use of Transport Layer Security for all client connections).<vspace blankLines='1'/></t>
+          <t>Both entities are clients but their accounts are hosted on different servers.  In this case, the entities cannot establish a direct stream between themselves and there are two intermediate entities between them; each client might have some trust in the server that hosts its account but might know nothing about the policies of the server to which the other client connects.<vspace blankLines='1'/></t>
+        </list>
+      </t>
+      <t>This specification covers only the security of a direct XML stream between two servers or between a client and a server (cases #1 and #2), where each stream can be considered a single "hop" along a communication path.  The goal of security for a multi-hop path (cases #3 and #4), although very desirable, is out of scope for this specification.</t>
+      <t>In accordance with <xref target='SEC-GUIDE'/>, this specification covers communication security (confidentiality, data integrity, and peer entity authentication), non-repudiation, and systems security (unauthorized usage, inappropriate usage, and denial of service).  We also discuss common security issues such as information leaks, firewalls, and directory harvesting, as well as best practices related to the re-use of technologies such as base64, DNS, cryptographic hash functions, SASL, TLS, UTF-8, and XML.</t>
+    </section>
+    <section title="Threat Model" anchor="security-threats">
+      <t>The threat model for XMPP is in essence the standard "Internet Threat Model" described in <xref target='SEC-GUIDE'/>.  Attackers are assumed to be interested in and capable of launching the following attacks against unprotected XMPP systems:</t>
+      <t>
+        <list style='symbols'>
+          <t>Eavesdropping</t>
+          <t>Sniffing passwords</t>
+          <t>Breaking passwords through dictionary attacks</t>
+          <t>Discovering usernames through directory harvesting attacks</t>
+          <t>Replaying, inserting, deleting, or modifying stanzas</t>
+          <t>Spoofing users</t>
+          <t>Gaining unauthorized entry to a server or account</t>
+          <t>Using a server or account inappropriately</t>
+          <t>Denying service to other entities</t>
+          <t>Subverting communication streams through man-in-the-middle attacks</t>
+          <t>Gaining control over on-path servers</t>
+        </list>
+      </t>
+      <t>Where appropriate, the following sections describe methods for protecting against these threats.</t>
+    </section>
+    <section title="Order of Layers" anchor="security-layers">
+      <t>The order of layers in which protocols MUST be stacked is as follows:</t>
+      <t>
+        <list style='numbers'>
+          <t>TCP</t>
+          <t>TLS</t>
+          <t>SASL</t>
+          <t>XMPP</t>
+        </list>
+      </t>
+      <t>This order has important security characteristics, as described throughout these security considerations.</t>
+    </section>
+    <section title="Confidentiality and Integrity" anchor="security-confidentiality">
+      <t>The use of Transport Layer Security (TLS) for encrypting XML streams provides a reliable mechanism for the ensuring the confidentiality and integrity of data exchanged between a client and a server or between two servers.  Therefore TLS helps to protect against eavesdropping, password sniffing, man-in-the-middle attacks, and stanza replays, insertion, deletion, and modification over an XML stream.  XMPP clients and servers MUST support TLS as defined under <xref target='tls'/>.</t>
+    </section>
+    <section title="Peer Entity Authentication" anchor="security-authentication">
+      <t>The use of the Simple Authentication and Security Layer (SASL) for authentication provides a reliable mechanism for peer entity authentication.  Therefore SASL helps to protect against user spoofing, unauthorized usage, and man-in-the middle attacks.  XMPP clients and servers MUST support SASL as defined under <xref target='sasl'/>.</t>
+    </section>
+    <section title="Strong Security" anchor="security-strong">
+      <t><xref target='STRONGSEC'/> defines "strong security" and its importance to communication over the Internet.  For the purpose of XMPP communication over client-to-server and server-to-server streams, the term "strong security" refers to the use of security technologies that provide both mutual authentication and integrity checking (e.g., a combination of TLS encryption and SASL authentication using appropriate SASL mechanisms).  In particular, when using certificate-based authentication to provide strong security, a trust chain SHOULD be established out-of-band, although a shared certification authority signing certificates could allow a previously unknown certificate to establish trust in-band.  See the next section regarding certificate validation procedures.</t>
+      <t>Implementations MUST support strong security.  Service provisioning SHOULD use strong security, subject to local security policies.</t>
       <t>The initial stream and the response stream MUST be secured separately, although security in both directions MAY be established via mechanisms that provide mutual authentication.</t>
     </section>
     <section title="Certificates" anchor="security-certificates">
@@ -3865,31 +3915,8 @@ XmppAddr ::= UTF8String
         </section>
       </section>
     </section>
-    <section title="Client-to-Server Communication" anchor="security-client">
-      <t>A compliant client implementation MUST support both TLS and SASL for connections to a server.</t>
-      <t>The TLS protocol for encrypting XML streams (defined under <xref target='tls'/>) provides a reliable mechanism for helping to ensure the confidentiality and integrity of data exchanged between two entities.</t>
-      <t>The SASL protocol for authenticating XML streams (defined under <xref target='sasl'/>) provides a reliable mechanism for validating that a client connecting to a server is who it claims to be.</t>
-      <t>Client-to-server communication MUST NOT proceed until the DNS hostname asserted by the server has been resolved as specified under <xref target='tcp'/>.  If there is a mismatch between the hostname to which a client attempted to connect (e.g., "example.net") and the hostname to which the client actually connects (e.g., "x1.example.net"), the client MUST warn a human user about the mismatch and the human user MUST approve the connection before the client proceeds; however, the client MAY also allow the user to add the presented hostname to a configured set of accepted hostnames to expedite future connections.</t>
-      <t>A client's IP address and method of access MUST NOT be made public by a server, nor are any connections other than the original server connection necessary.  This helps to protect the client's server from direct attack or identification by third parties.</t>
-    </section>
-    <section title="Server-to-Server Communication" anchor="security-server">
-      <t>A compliant server implementation MUST support both TLS and SASL for inter-domain communication.</t>
-      <t>Because service provisioning is a matter of policy, it is optional for any given domain to communicate with other domains, and server-to-server communication can be disabled by the administrator of any given deployment.  If a particular domain enables inter-domain communication, it SHOULD enable high security.</t>
-      <t>Administrators might want to require use of SASL for server-to-server communication to ensure both authentication and confidentiality (e.g., on an organization's private network).  Compliant implementations SHOULD support SASL for this purpose.</t>
-      <t>Server-to-server communication MUST NOT proceed until the DNS hostnames asserted by both servers have been resolved as specified under <xref target='tcp'/>.</t>
-    </section>
-    <section title="Order of Layers" anchor="security-layers">
-      <t>The order of layers in which protocols MUST be stacked is:</t>
-      <t><list style='numbers'>
-        <t>TCP</t>
-        <t>TLS</t>
-        <t>SASL</t>
-        <t>XMPP</t>
-      </list></t>
-      <t>The rationale for this order is that <xref target="TCP"/> is the base connection layer used by all of the protocols stacked on top of TCP, <xref target="TLS"/> is often provided at the operating system layer, <xref target="SASL"/> is often provided at the application layer, and XMPP is the application itself.</t>
-    </section>
     <section title="Mandatory-to-Implement Technologies" anchor="security-mandatory">
-      <t>At a minimum, all implementations MUST support the following mechanisms unless otherwise specified below:</t>
+      <t>At a minimum, all implementations MUST support the following mechanisms unless otherwise specified:</t>
       <t><list style='hanging'>
         <t hangText='for authentication only:'>the SASL Salted Challenge Response mechanism <xref target='SCRAM'/> (preferred) and the SASL PLAIN mechanism <xref target='PLAIN'/> (not preferred)<vspace blankLines='1'/></t>
         <t hangText='for confidentiality only:'>TLS (using the TLS_RSA_WITH_AES_128_CBC_SHA cipher)<vspace blankLines='1'/></t>
@@ -3899,38 +3926,47 @@ XmppAddr ::= UTF8String
       <t>Naturally, implementations MAY support other ciphers with TLS and MAY support other SASL mechanisms.</t>
       <t><list style='empty'><t>Interoperability Note: The use of TLS plus SASL SCRAM or SASL PLAIN replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication.  For backward-compatibility with existing deployed infrastructure, implementations are encouraged to continue supporting the SASL DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>, however there are known interoperability issues with DIGEST-MD5 that make it impractical in the long term.  The use of the SASL SCRAM mechanism is strongly preferred over the SASL PLAIN mechanism because of its superior security properties, and PLAIN is intended to be a fallback only for implementations that do not yet support SCRAM.  Refer to <xref target='SCRAM'/> and <xref target='PLAIN'/> for important security considerations related to these SASL mechanisms.</t></list></t>
     </section>
-    <section title="Hash Function Agility" anchor="security-hash">
-      <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
+    <section title="Technology Reuse" anchor="security-reuse">
+      <section title="Use of base64 in SASL" anchor="security-reuse-base64">
+        <t>Both the client and the server MUST verify any base64 data received during <xref target='sasl'>SASL negotiation</xref>.  An implementation MUST reject (not silently ignore) any characters that are not explicitly allowed by the base64 alphabet; this helps to guard against creation of a covert channel that could be used to "leak" information.</t>
+        <t>An implementation MUST NOT break on invalid input and MUST reject any sequence of base64 characters containing the pad ('=') character if that character is included as something other than the last character of the data (e.g., "=AAA" or "BBBB=CCC"); this helps to guard against buffer overflow attacks and other attacks on the implementation.</t>
+        <t>While base 64 encoding visually hides otherwise easily recognized information (such as passwords), it does not provide any computational confidentiality.</t>
+        <t>All uses of base 64 encoding MUST follow the definition in Section 4 of <xref target="BASE64"/> and padding bits MUST be set to zero.</t>
+      </section>
+      <section title="Use of DNS" anchor="security-reuse-dns">
+        <t>XMPP typically relies on the Domain Name System (specifically <xref target='DNS-SRV'/> records) to resolve a fully qualified domain name to an IP address before a client connects to a server or before a peer server connects to another server.  Before attempting to negotiate an XML stream, the initiating entity MUST NOT proceed until the DNS hostname asserted by the receiving entity has been resolved as specified under <xref target='tcp'/>.</t>
+        <t>In the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), the initiating entity MUST check that the target domain name returned in a DNS SRV record matches the original service domain that was queried.  If the target domain name (e.g., "connect.example.net") is not in the queried domain (e.g., "example.com"), the connecting application MUST warn a human user (if any)  about the mismatch and require the user to approve the connection before the client proceeds; however, the client MAY also allow the user to add the presented hostname to a configured set of accepted hostnames to expedite future connections.</t>
+      </section>
+      <section title="Use of Hash Functions" anchor="security-reuse-hash">
+        <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
+      </section>
+      <section title="Use of SASL" anchor="security-reuse-sasl">
+        <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To help prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
+        <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings.  However, if a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
+        <t>Most XMPP servers authenticate account connections by means of passwords.  It is well-known that most human users choose relatively weak passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.</t>
+        <t>Some SASL mechanisms (e.g., <xref target='ANONYMOUS'/>) do not provide strong peer entity authentication of the client to the server.  Service administrators are advised to enable such mechanisms with caution.  Best practices for the use of the SASL ANONYMOUS mechanism in XMPP are described in <xref target='XEP-0175'/>.</t>
+      </section>
+      <section title="Use of TLS" anchor="security-reuse-tls">
+        <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients MUST NOT request, offer, or use SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
+      </section>
+      <section title="Use of UTF-8" anchor="security-reuse-utf8">
+        <t>The use of UTF-8 makes it possible to transport non-ASCII characters, and thus enables character "spoofing" scenarios, in which a displayed value appears to be something other than it is.  Furthermore, there are known attack scenarios related to the decoding of UTF-8 data.  On both of these points, refer to <xref target='UTF-8'/> for more information.</t>
+      </section>
+      <section title="Use of XML" anchor="security-reuse-xml">
+        <t>Because XMPP is an application profile of the Extensible Markup Language <xref target='XML'/>, many of the security considerations described in <xref target='XML-MEDIA'/> and <xref target='XML-GUIDE'/> also apply to XMPP.  Several aspects of XMPP mitigate the risks described there, such as the prohibitions specified under <xref target='xml-restrictions'/> and the lack of external references to style sheets or transformations, but these mitigating factors are by no means comprehensive.</t>
+      </section>
     </section>
-    <section title="TLS Versions" anchor="security-tls">
-      <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients MUST NOT request, offer, or use SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
+    <section title="Information Leaks" anchor="security-leaks">
+      <section title="IP Addresses" anchor="security-leaks-ipaddress">
+        <t>A client's IP address and method of access MUST NOT be made public by a server.</t>
+      </section>
+      <section title="Presence Information" anchor="security-leaks-presence">
+        <t>One of the core aspects of XMPP is presence: information about the network availability of an XMPP entity (i.e., whether the entity is currently online or offline).  A PRESENCE LEAK occurs when an entity's network availability is inadvertently and involuntarily revealed to a second entity that is not authorized to know the first entity's network availability.</t>
+        <t>Although presence is discussed more fully in <xref target='XMPP-IM'/>, it is important to note that an XMPP server MUST NOT leak presence.  In particular at the core XMPP level, real-time addressing and network availability is associated with a specific connected resource; therefore, any disclosure of a connected resource's full JID comprises a presence leak.  To help prevent such a presence leak, a server MUST NOT return different stanza errors if a potential attacker sends XML stanzas to the entity's bare JID (&lt;localpart@domain&gt;) or full JID (&lt;localpart@domain/resource&gt;).</t>
+      </section>
     </section>
-    <section title="SASL Downgrade Attacks" anchor="security-downgrade">
-      <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To help prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
-    </section>
-    <section title="Server-to-Server Downgrade Attacks" anchor="security-dialback">
-      <t>Before RFC 3920 defined TLS plus SASL EXTERNAL with certificates for encryption and authentication of server-to-server streams, the only method for weak identity verification of a peer server was server dialback as defined in <xref target='XEP-0220'/>.  Even when <xref target='DNSSEC'/> is used, dialback provides only weak identity verification and provides no confidentiality or integrity.  At the time of this writing, server dialback is still the most widely-used technique for some level of assurance over server-to-server streams.  This reality introduces the possibility of a downgrade attack from TLS + SASL EXTERNAL to dialback if an attacker can gain control of the channel and therefore convince the initiating server that the receiving server does not support TLS or does not have an appropriate certificate.  To help prevent this attack, the parties SHOULD protect the channel using TLS before proceeding, even if the presented certificates are self-signed or otherwise untrusted.</t>
-    </section>
-    <section title="Lack of SASL Channel Binding to TLS" anchor="security-channel">
-      <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer.  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings.  However, if a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
-    </section>
-    <section title="Weak Passwords" anchor="security-passwords">
-      <t>At the time of this writing, most XMPP servers authenticate account connections by means of passwords.  It is well-known that most users do not choose strong passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.</t>
-    </section>
-    <section title="Use of base64 in SASL" anchor="security-base64">
-      <t>Both the client and the server MUST verify any base64 data received during <xref target='sasl'>SASL negotiation</xref>.  An implementation MUST reject (not silently ignore) any characters that are not explicitly allowed by the base64 alphabet; this helps to guard against creation of a covert channel that could be used to "leak" information.</t>
-      <t>An implementation MUST NOT break on invalid input and MUST reject any sequence of base64 characters containing the pad ('=') character if that character is included as something other than the last character of the data (e.g., "=AAA" or "BBBB=CCC"); this helps to guard against buffer overflow attacks and other attacks on the implementation.</t>
-      <t>While base 64 encoding visually hides otherwise easily recognized information (such as passwords), it does not provide any computational confidentiality.</t>
-      <t>All uses of base 64 encoding MUST follow the definition in Section 4 of <xref target="BASE64"/> and padding bits MUST be set to zero.</t>
-    </section>
-    <section title="Use of UTF-8" anchor="security-utf8">
-      <t>The use of UTF-8 makes it possible to transport non-ASCII characters, and thus enables character "spoofing" scenarios, in which a displayed value appears to be something other than it is.  Furthermore, there are known attack scenarios related to the decoding of UTF-8 data.  On both of these points, refer to <xref target='UTF-8'/> for more information.</t>
-    </section>
-    <section title="Use of XML" anchor="security-xml">
-      <t>Because XMPP is an application profile of the Extensible Markup Language <xref target='XML'/>, many of the security considerations described in <xref target='XML-MEDIA'/> and <xref target='XML-GUIDE'/> also apply to XMPP.  Several aspects of XMPP mitigate the risks described there, such as the prohibitions specified under <xref target='xml-restrictions'/> and the lack of external references to style sheets or transformations, but these mitigating factors are by no means comprehensive.</t>
-    </section>
-    <section title="Use of DNS" anchor="security-dns">
-      <t>XMPP typically relies on the Domain Name System (specifically <xref target='DNS-SRV'/> records) to resolve a fully qualified domain name to an IP address before a client connects to a server (or before a peer connects to another server).  In the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), the initiating entity SHOULD check that the target domain name returned in the SRV record matches the original service domain that was queried.  If the target domain name is not in the queried domain, the connecting application SHOULD verify with a human user (if any) that the SRV target domain name is suitable for use before executing any connections to the IP address of the XMPP service.</t>
+    <section title="Directory Harvesting" anchor="security-harvesting">
+      <t>When a server generates an error stanza in response to receiving a stanza for a user account that does not exist, the use of the &lt;service-unavailable/&gt; stanza error condition can help protect against dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.  However, subtle differences in the exact XML of error stanzas, as well as in the timing with which such errors are returned, can enable an attacker to determine the network presence of a user when more advanced blocking technologies are not used (see for instance <xref target='XEP-0016'/> and <xref target='XEP-0191'/>).</t>
     </section>
     <section title="Denial of Service" anchor="security-dos">
       <t><xref target='DOS'/> defines denial of service as follows:</t>
@@ -3958,12 +3994,13 @@ XmppAddr ::= UTF8String
     <section title="Firewalls" anchor="security-firewalls">
       <t>Communication using XMPP normally occurs over TCP connections on port 5222 (client-to-server) or port 5269 (server-to-server), as registered with the IANA (see <xref target="iana"/>).  Use of these well-known ports allows administrators to easily enable or disable XMPP activity through existing and commonly-deployed firewalls.</t>
     </section>
-    <section title="Presence Leaks" anchor="security-leak">
-      <t>One of the core aspects of XMPP is presence: information about the network availability of an XMPP entity (i.e., whether the entity is currently online or offline).  A PRESENCE LEAK occurs when an entity's network availability is inadvertently and involuntarily revealed to a second entity that is not authorized to know the first entity's network availability.</t>
-      <t>Although presence is discussed more fully in <xref target='XMPP-IM'/>, it is important to note that an XMPP server MUST NOT leak presence.  In particular at the core XMPP level, real-time addressing and network availability is associated with a specific connected resource; therefore, any disclosure of a connected resource's full JID comprises a presence leak.  To help prevent such a presence leak, a server MUST NOT return different stanza errors if a potential attacker sends XML stanzas to the entity's bare JID (&lt;localpart@domain&gt;) or full JID (&lt;localpart@domain/resource&gt;).</t>
+    <section title="Interdomain Federation" anchor="security-federation">
+      <t>The term "federation" is commonly used to describe communication between two servers.</t>
+      <t>Because service provisioning is a matter of policy, it is OPTIONAL for any given server to support federation.  If a particular server enables federation, it SHOULD enable strong security as previously described to ensure both authentication and confidentiality; compliant implementations SHOULD support TLS and SASL for this purpose.</t>
+      <t>Before RFC 3920 defined TLS plus SASL EXTERNAL with certificates for encryption and authentication of server-to-server streams, the only method for weak identity verification of a peer server was server dialback as defined in <xref target='XEP-0220'/>.  Even when <xref target='DNSSEC'/> is used, dialback provides only weak identity verification and provides no confidentiality or integrity.  At the time of this writing, server dialback is still the most widely-used technique for some level of assurance over server-to-server streams.  This reality introduces the possibility of a downgrade attack from TLS + SASL EXTERNAL to dialback if an attacker can gain control of the channel and therefore convince the initiating server that the receiving server does not support TLS or does not have an appropriate certificate.  To help prevent this attack, the parties SHOULD protect the channel using TLS before proceeding, even if the presented certificates are self-signed or otherwise untrusted.</t>
     </section>
-    <section title="Directory Harvesting" anchor="security-harvesting">
-      <t>When a server generates an error stanza in response to receiving a stanza for a user account that does not exist, the use of the &lt;service-unavailable/&gt; stanza error condition can help protect against dictionary attacks, since this is the same error condition that is returned if, for instance, the namespace of an IQ child element is not understood, or if offline message storage or message forwarding is not enabled for a domain.  However, subtle differences in the exact XML of error stanzas, as well as in the timing with which such errors are returned, can enable an attacker to determine the network presence of a user when more advanced blocking technologies are not used (see for instance <xref target='XEP-0016'/> and <xref target='XEP-0191'/>).</t>
+    <section title="Non-Repudiation" anchor="security-nonrepudiation">
+      <t>Systems that provide both peer entity authentication and data integrity have the potential to enable an entity to prove to a third party that another entity intended to send particular data.  Although XMPP systems can provide both peer entity authentication and data integrity, XMPP was never designed to provide non-repudiation.</t>
     </section>
   </section>
 
@@ -5789,18 +5826,6 @@ specifications of each URI scheme.
 <format type='XML' octets='234468' target='http://xml.resource.org/public/rfc/xml/rfc3921.xml' />
 </reference>
 
-<reference anchor='SECTERMS'>
-<front>
-<title>Internet Security Glossary, Version 2</title>
-<author initials='R.' surname='Shirey' fullname='R. Shirey'>
-<organization /></author>
-<date year='2007' month='August' />
-<abstract>
-<t>This Glossary provides definitions, abbreviations, and explanations of terminology for information system security.  The 334 pages of entries offer recommendations to improve the comprehensibility of written material that is generated in the Internet Standards Process (RFC 2026).  The recommendations follow the principles that such writing should (a) use the same term or definition whenever the same concept is mentioned; (b) use terms in their plainest, dictionary sense; (c) use terms that are already well-established in open publications; and (d) avoid terms that either favor a particular vendor or favor a particular technology or mechanism over other, competing techniques that already exist or could be developed.  This memo provides information for the Internet community.</t></abstract></front>
-<seriesInfo name='RFC' value='4949' />
-<format type='TXT' octets='867626' target='ftp://ftp.isi.edu/in-notes/rfc4949.txt' />
-</reference>
-
 <reference anchor='SMTP'>
 <front>
 <title>Simple Mail Transfer Protocol</title>
@@ -5811,6 +5836,33 @@ specifications of each URI scheme.
 <t>This document is a specification of the basic protocol for Internet electronic mail transport.  It consolidates, updates, and clarifies several previous documents, making all or parts of most of them obsolete.  It covers the SMTP extension mechanisms and best practices for the contemporary Internet, but does not provide details about particular extensions.  Although SMTP was designed as a mail transport and delivery protocol, this specification also contains information that is important to its use as a "mail submission" protocol for "split-UA" (User Agent) mail reading systems and mobile environments. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='5321' />
 <format type='TXT' octets='225929' target='ftp://ftp.isi.edu/in-notes/rfc5321.txt' />
+</reference>
+
+<reference anchor='SEC-GUIDE'>
+<front>
+<title>Guidelines for Writing RFC Text on Security Considerations</title>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<author initials='B.' surname='Korver' fullname='B. Korver'>
+<organization /></author>
+<date year='2003' month='July' />
+<abstract>
+<t>All RFCs are required to have a Security Considerations section.  Historically, such sections have been relatively weak.  This document provides guidelines to RFC authors on how to write a good Security Considerations section.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t></abstract></front>
+<seriesInfo name='BCP' value='72' />
+<seriesInfo name='RFC' value='3552' />
+<format type='TXT' octets='110393' target='ftp://ftp.isi.edu/in-notes/rfc3552.txt' />
+</reference>
+
+<reference anchor='SEC-TERMS'>
+<front>
+<title>Internet Security Glossary, Version 2</title>
+<author initials='R.' surname='Shirey' fullname='R. Shirey'>
+<organization /></author>
+<date year='2007' month='August' />
+<abstract>
+<t>This Glossary provides definitions, abbreviations, and explanations of terminology for information system security.  The 334 pages of entries offer recommendations to improve the comprehensibility of written material that is generated in the Internet Standards Process (RFC 2026).  The recommendations follow the principles that such writing should (a) use the same term or definition whenever the same concept is mentioned; (b) use terms in their plainest, dictionary sense; (c) use terms that are already well-established in open publications; and (d) avoid terms that either favor a particular vendor or favor a particular technology or mechanism over other, competing techniques that already exist or could be developed.  This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='4949' />
+<format type='TXT' octets='867626' target='ftp://ftp.isi.edu/in-notes/rfc4949.txt' />
 </reference>
 
 <reference anchor='STRONGSEC'>
