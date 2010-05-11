@@ -7,7 +7,7 @@
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
 
-<rfc category="bcp" docName="draft-saintandre-tls-server-id-check-04" ipr="trust200902">
+<rfc category="bcp" docName="draft-saintandre-tls-server-id-check-05" ipr="trust200902">
 
   <front>
     <title abbrev="Server Identity">Representation and Verification of Application Server Identity in Certificates Used with Transport Layer Security (TLS)</title>
@@ -79,7 +79,7 @@
                 <t>URI-ID = a subjectAltName identifier of type uniformResourceName<vspace blankLines='1'/></t>
               </list>
             <vspace blankLines='1'/></t>
-            <t hangText="interactive client:">A software agent or device that is directly controlled by a natural person.<vspace blankLines='1'/></t>
+            <t hangText="interactive client:">A software agent or device that is directly controlled by a natural person.  (Other specifications related to security and application protocols often refer to this as a "user agent", e.g., <xref target='WSC-UI'/>.)<vspace blankLines='1'/></t>
             <t hangText="PKIX certificate:">An X.509v3 certificate generated and employed in the context of the Internet Public Key Infrastructure using X.509 <xref target='PKIX'/>.<vspace blankLines='1'/></t>
             <t hangText="presented identifier:">An identifier that is presented by a server to a client within the server's PKIX certificate when the client attempts to establish a secure connection with the server; the certificate can include one or more presented identifiers of different types.<vspace blankLines='1'/></t>
             <t hangText="reference identifier:">An identifier that is used by the client for matching purposes when checking the presented identifiers; the client can attempt to match multiple reference identifiers of different types.<vspace blankLines='1'/></t>
@@ -102,7 +102,7 @@
       </section>
 
       <section title="Acknowledgements" anchor="acknowledgements">
-        <t>The editors and contributors wish to thank the following individuals for their feedback and suggestions: Nelson Bolyard, Scott Cantor, Dave Crocker, Cyrus Daboo, Philip Guenther, Bruno Harbulot, David Harrington, Paul Hoffman, Scott Lawrence, Alexey Melnikov, Ludwig Nussel, Joe Orton, Tom Petch, Tim Polk, Pete Resnick, Joe Salowey, and Dan Wing.</t>
+        <t>The editors and contributors wish to thank the following individuals for their feedback and suggestions: Nelson Bolyard, Scott Cantor, Dave Crocker, Cyrus Daboo, Charles W. Gardiner, Philip Guenther, Bruno Harbulot, David Harrington, Paul Hoffman, Scott Lawrence, Alexey Melnikov, Ludwig Nussel, Joe Orton, Tom Petch, Tim Polk, Pete Resnick, Martin Rex, Joe Salowey, Dan Wing, and Dan Winship.</t>
       </section>
 
     </section>
@@ -112,7 +112,7 @@
       <section title="Subject Naming in PKIX Certificates" anchor="representation-names">
         <t>The application server is the subject of a server certificate.  As <xref target='PKIX'/> says, "[the] subject field identifies the entity associated with the public key stored in the subject public key field."</t>
         <t>The application server is identified by a name or names carried in the subject field and/or the subjectAltName extension of the certificate.  See sections 4.1.2.6 and 4.2.1.6 of <xref target='PKIX'/> for details.  This section only briefly introduces distinguished names and their components, as well as subjectAltNames and the particular subjectAltName extension types explicitly mentioned in this specification.</t>
-        <t>The subject field of a PKIX Certificate is defined as a X.501 type Name <xref target='PKIX'/> and known as a Distinguished Name (DN).  See also <xref target='X.501'/> A DN is an ordered sequence of attribute type and attribute value pairs (termed "attribute value assertions (AVAs)"), where the attributes are to be those of the subject.  Each AVA is also termed a "Relative Distinguished Name (RDN)".  The RDNs are ordered in the DN sequence from most general to most specific.</t>
+        <t>The subject field of a PKIX Certificate is defined as a X.501 type Name <xref target='PKIX'/> and known as a Distinguished Name (DN).  See also <xref target='X.501'/>.  A DN is an ordered sequence of Relative Distinguished Name (RDNs), where an RDN is a set (i.e., an unordered group) of attribute value assertions (AVAs), where the attributes are to be those of the subject.  The RDNs are ordered in the DN sequence from most general to most specific.</t>
         <t>Note that certificates are binary objects -- they are encoded using distinguished encoding rules (DER).  Thus, displayable (aka printable) renderings of certificate subject (and issuer) names means that the DER-encoded sequences are decoded and converted into a "string representation" of a DN before being rendered.  Often such a DN string representation is ordered from left-to-right, most specific to most general.  See <xref target='LDAP-AUTH'/> for details.</t>
         <t>Certificate subjects may also have "alternative" names.  These are represented within certificates using the SubjectAltName field.  This field is a sequence of typed fields, where each type is a distinct type of identifier.  For example, the SubjectAltName identifier types noted in this specification are:</t>
         <t>
@@ -172,7 +172,7 @@
           <list style='symbols'>
             <t>Reference identifiers that include the source domain MUST be preferred over reference identifiers that include a target domain (if any).<vspace blankLines='1'/></t>
             <t>Reference identifiers that include both a DNS domain name and an application type MUST be preferred over reference identifiers that include only a DNS domain name.  Therefore an SRV-ID or URI-ID is to be preferred over a DNS-ID.<vspace blankLines='1'/></t>
-            <t>A reference identifier of type CN-ID (if included) MUST always be the lowest-priority reference identifier in the list.<vspace blankLines='1'/></t>
+            <t>Notwithstanding any of the foregoing rules, reference identifiers of type CN-ID (if included) MUST always be the lowest-priority reference identifiers in the list.<vspace blankLines='1'/></t>
           </list>
         </t>
         <t>To illustrate the ordering rules, consider the case where the inputs are a source domain of "im.example.com" and an application type of "XMPP" (for which application servers are discovered via DNS SRV records) and the user of the client has also explicitly configured a target domain of "hosting.example.net".  In this case, the ordered list would be:</t>
@@ -255,8 +255,9 @@ ou=Web Services, c=GB, cn=www.example.com
                 <t>Actively warn the user that the certificate is untrusted and encourage the user to terminate the connection, but give advanced users the option to (a) view the entire certificate chain, (b) accept the certificate either temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts), and then (c) continue with the connection attempt.</t>
               </list>
             </t>
-            <t>If a user permanently accepts a certificate, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts MUST behave as in "Case #2: No Match Found, Cached Certificate".</t>
-            <t><list style='empty'><t>Note: It is the responsibility of the human user to verify the hash value or fingerprint of the certificate with the server over a trusted communication layer.</t></list></t> 
+            <t>If a user permanently accepts a certificate (an action referred to in <xref target='WSC-UI'/> as "pinning"), the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts MUST behave as in "Case #2: No Match Found, Cached Certificate".</t>
+            <t><list style='empty'><t>Security Note: It is the responsibility of the human user to verify the hash value or fingerprint of the certificate with the server over a trusted communication layer.</t></list></t> 
+            <t><list style='empty'><t>Informational Note: The guidelines provided here are roughly consistent with those provided for web browsers and other HTTP-aware interactive clients in <xref target='WSC-UI'/>.</t></list></t> 
           </section>
           <section title="Automated Client" anchor="verify-outcome-uncached-automated">
             <t>If the client is an automated application that is not directly controlled by a natural person, then it SHOULD terminate the connection with a bad certificate error and log the error to an appropriate audit log.  An automated application MAY provide a configuration setting that disables this check, but MUST enable the check by default.</t>
@@ -1254,6 +1255,22 @@ specifications of each URI scheme.
 <date month='June' year='1999' /></front>
 <seriesInfo name='RFC' value='2595' />
 <format type='TXT' octets='32440' target='ftp://ftp.isi.edu/in-notes/rfc2595.txt' />
+</reference>
+
+<reference anchor='WSC-UI'
+           target='http://www.w3.org/TR/2010/WD-wsc-ui-20100309'>
+<front>
+<title>Web Security Context: User Interface Guidelines</title>
+<author initials='A.' surname='Saldhana' fullname='Anil Saldhana'>
+    <organization />
+</author>
+<author initials='T.' surname='Roessler' fullname='Thomas Roessler'>
+    <organization />
+</author>
+<date month='March' day='9' year='2010' />
+</front>
+<seriesInfo name='World Wide Web Consortium LastCall' value='WD-wsc-ui-20100309' />
+<format type='HTML' target='http://www.w3.org/TR/2010/WD-wsc-ui-20100309' />
 </reference>
 
 <reference anchor="X.501">
