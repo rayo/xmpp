@@ -26,7 +26,7 @@
       </address>
     </author>
 
-    <date month="May" day="12" year="2010"/>
+    <date month="May" day="18" year="2010"/>
 
     <area>Applications</area>
     <keyword>Internet-Draft</keyword>
@@ -148,7 +148,7 @@
             <t>If the service using the certificate deploys a technology in which a server is discovered by means of DNS SRV records <xref target='DNS-SRV'/> (e.g., this is true of <xref target='XMPP'/>), then the certificate SHOULD include an "SRV-ID" (i.e., an instance of the SRVName form of otherName from the GeneralName structure in the subjectAltName as specified in <xref target='SRVNAME'/>).<vspace blankLines='1'/></t>
             <t>If the service using the certificate deploys a technology in which a server is typically associated with a URI (e.g., this is true of <xref target='SIP'/>), then the certificate SHOULD include an URI-ID (i.e., a subjectAltName identifier of type uniformResourceIdentifier); the scheme SHALL be that of the protocol associated with the application type and the authority component SHALL be the DNS domain name of the service.<vspace blankLines='1'/></t>
             <t>The certificate MAY include other application-specific identifiers for types that were defined before specification of the SRVName extension (e.g., XmppAddr for <xref target='XMPP'/>) or for which service names or URI schemes do not exist; however, such application-specific identifiers are not generally applicable and therefore are out of scope for this specification.<vspace blankLines='1'/></t>
-            <t>The DNS domain name portion of any identifier type MAY contain one instance of the wildcard character '*' (see <xref target='DNS-WILD'/>) but only as the left-most label of the DNS domain name component of the identifier (following the definition of "label" from <xref target='RFC1035'/>).  An application protocol that employs the rules defined in this document MUST specify whether the wildcard character is or is not allowed in certificates issued for use with that protocol; by default wildcard certificates SHOULD be disallowed.<vspace blankLines='1'/></t>
+            <t>The DNS domain name portion of any identifier type MAY contain one instance of the wildcard character '*' (see <xref target='DNS-WILD'/>) but only as the left-most label of the DNS domain name component of the identifier (following the definition of "label" from <xref target='RFC1035'/>).  Specifications that profile the rules defined in this document MUST specify whether the wildcard character is or is not allowed in certificates issued under that profile; by default wildcard certificates SHOULD NOT be allowed.<vspace blankLines='1'/></t>
             <t>The certificate SHOULD NOT represent the server's DNS domain name in a Relative Distinguished Name (RDN) of type Common Name (CN) (see <xref target='LDAP-SCHEMA'/>) within the subjectName field, even though it is recognized that many deployed clients still check for this legacy identifier configuration within certificate subjectName.  However, if this legacy identifer configuration is employed, then the server's DNS domain name MUST be placed in the last (most specific) RDN within the RDN sequence making up the certificate's subjectName, as the order of RDNs is determined by the DER-encoded Name within the server's PKIX certificate.<vspace blankLines='1'/></t>
             <t>The certificate MUST NOT represent the server's DNS domain name by means of a series of Domain Component (DC) attributes (because the order of Domain Components is not guaranteed, certain attacks are possible if DC attributes are included).<vspace blankLines='1'/></t>
           </list>
@@ -194,11 +194,11 @@
         <t>To illustrate the ordering rules, consider the case where the inputs are a source domain of "im.example.com" and an application type of "XMPP" (for which application servers are discovered via DNS SRV records) and the user of the client has also explicitly configured a target domain of "hosting.example.net".  In this case, the ordered list would be:</t>
         <t>
           <list style='numbers'>
-            <t>An SRV-ID of "_xmpp.im.example.com"</t>
-            <t>A DNS-ID of "im.example.com"</t>
-            <t>An SRV-ID of "_xmpp.hosting.example.net"</t>
-            <t>A DNS-ID of "hosting.example.net"</t>
-            <t>A CN-ID of "im.example.com"</t>
+            <t>SRV-ID of "_xmpp.im.example.com"</t>
+            <t>DNS-ID of "im.example.com"</t>
+            <t>SRV-ID of "_xmpp.hosting.example.net"</t>
+            <t>DNS-ID of "hosting.example.net"</t>
+            <t>CN-ID of "im.example.com"</t>
           </list>
         </t>
       </section>
@@ -227,7 +227,7 @@
           <t>After performing the "to-ASCII" conversion with regard to an internationalized domain name, the DNS labels and names MUST be compared for equality according to the rules specified in Section 3 of <xref target='IDNA2003'/>, i.e. once all label separators are replaced with U+002E (dot) they are compared in a case-insensitive manner.</t>
         </section>
         <section title="Checking of Wildcard Labels" anchor="verify-domain-wildcards">
-          <t>Unless forbidden by an application protocol's own specification(s), an application protocol client employing this specification's rules MAY match the reference identifier against a presented identifier containing one instance of the wildcard character '*' (see <xref target='DNS-WILD'/>) as the left-most label of the domain name, e.g. *.example.com (following the definition of "label" from <xref target='RFC1035'/>).</t>
+          <t>Unless forbidden by a specification that profiles the best practices defined herein, a client employing this specification's rules MAY match the reference identifier against a presented identifier containing one instance of the wildcard character '*' (see <xref target='DNS-WILD'/>) as the left-most label of the domain name, e.g. *.example.com (following the definition of "label" from <xref target='RFC1035'/>).</t>
           <t>If such a wildcard identifier is presented, the wildcard MUST be used to match only the one position-wise corresponding label (thus *.example.com matches foo.example.com but not bar.foo.example.com or example.com).  The client MUST fail to match a presented identifier in which the wildcard character is contained within a label fragment (e.g., baz*.example.net is not allowed and MUST NOT be taken to match baz1.example.net and baz2.example.net), or in which the wildcard character does not comprise the left-most label in the presented identifier (e.g., neither bar.*.example.net nor bar.f*o.example.net are allowed).</t>
         </section>
         <section title="Checking of DNS Domain Names in Common Names" anchor="verify-domain-cn">
@@ -271,7 +271,7 @@ ou=Web Services, c=GB, cn=www.example.com
                 <t>Actively warn the user that the certificate is untrusted and encourage the user to terminate the connection, but give advanced users the option to (a) view the entire certificate chain, (b) accept the certificate either temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts), and then (c) continue with the connection attempt.</t>
               </list>
             </t>
-            <t>If a user permanently accepts a certificate (an action referred to in <xref target='WSC-UI'/> as "pinning"), the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts MUST behave as in "Case #2: No Match Found, Cached Certificate".</t>
+            <t>If a user permanently accepts a certificate (an action referred to in <xref target='WSC-UI'/> as "pinning"), the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts MUST behave as in "Case #2: No Match Found, Cached Certificate" <xref target='verify-outcome-cached'/>.</t>
             <t><list style='empty'><t>Security Note: It is the responsibility of the human user to verify the hash value or fingerprint of the certificate with the server over a trusted communication layer.</t></list></t> 
             <t><list style='empty'><t>Informational Note: The guidelines provided here are roughly consistent with those provided for web browsers and other HTTP-aware interactive clients in <xref target='WSC-UI'/>.</t></list></t> 
           </section>
