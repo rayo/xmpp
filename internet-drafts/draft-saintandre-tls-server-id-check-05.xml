@@ -61,24 +61,61 @@
       </section>
 
       <section title="Scope" anchor="scope">
-        <t>This document applies only to server identities associated with DNS domain names, only to TLS, and only to PKIX-based systems.  As a result, the following scenarios are out of scope for this document:</t>
-        <t>
-          <list style='symbols'>
-            <t>Client or end-user identities.  It is true that certificates containing such identities can be used for mutual authentication between a client and server or between two clients, thus enabling stronger client-server security or end-to-end security.  However, certification authorities, application developers, and service operators have less experience with client certificates than with server certificates, thus gives us fewer models from which to generalize.<vspace blankLines='1'/></t>
-            <t>Identifiers other than DNS domain names.  It is true that some certification authorities issue server certificates based on identifiers such as IP addresses.  However, most users find DNS domain names much easier to work with than IP addresses, which is why the domain name system was designed in the first place.<vspace blankLines='1'/></t>
-            <t>Security protocols other than <xref target='TLS'/> or <xref target='DTLS'/>.  It is true that some application technologies are built upon security foundations such as <xref target='IPSEC'/>.  However, here again the Internet community has less experience with such technologies.<vspace blankLines='1'/></t>
-            <t>Keys or certificates employed outside the context of PKIX-based systems.  It is true that some application technologies use a web of trust model based on <xref target='OPENPGP'/>, that some application technologies (mostly) use self-signed certificates, and that some networks are not directly connected to the public Internet and therefore cannot depend on Certificate Revocation Lists (CRLs) or the Online Certificate Status Protocol <xref target='OCSP'/> to check CA-issued certificates.  However, the syntax of OpenPGP keys differs significantly from X.509 certificates, the data in self-signed certificates has not been certified in any way, and checking of CA-issued certificates via CRLs or OSCP is critically important to maintaining the security of PKIX-based systems.<vspace blankLines='1'/></t> 
-          </list>
-        </t>
-        <t>Therefore, although the foregoing scenarios are of inherent interest and might be able to re-use many aspects of the representation and verification rules provided here, they are outside the scope of this document and need to be addressed by separate specifications.</t>
-        <t>Furthermore, this document also does not address various certification authority policies, such as:</t>
-        <t>
-          <list style='symbols'>
-            <t>Whether to issue certificates based on IP addresses instead of or in addition to DNS domain names.</t>
-            <t>What information will and will not be represented in a certificate (e.g., whether to support the SRVName and uniformResourceIdentifier extensions).</t>
-            <t>How to certify or validate the information contained in a certificate.</t>
-          </list>
-        </t>
+        <section anchor="in-scope" title="In Scope">
+          <t>This document applies only to server identities associated with DNS domain names, only to TLS, and only to PKIX-based systems.  As a result, the scenarios described in the following section are out of scope for this specification (although they might be addressed by future specifications).</t>
+        </section>
+        <section anchor="out-of-scope" title="Out of Scope">
+          <t>
+            <list style='symbols'>
+              <t>
+                Client or end-user identities.
+
+                <vspace blankLines="1"/> 
+
+                Certificates representing client or end-user identities (e.g., the rfc822Name identifier) can be used for mutual authentication between a client and server or between two clients, thus enabling stronger client-server security or end-to-end security.  However, certification authorities, application developers, and service operators have less experience with client certificates than with server certificates, thus gives us fewer models from which to generalize and a less solid basis for defining best practices.
+
+                <vspace blankLines="1"/> 
+              </t>
+              <t>
+                Identifiers other than DNS domain names (e.g., IP addresses).
+
+                <vspace blankLines="1"/> 
+
+                Some certification authorities issue server certificates based on IP addresses, but preliminary evidence indicates that such certificates are a very small percentage of issued certificates (e.g., less than 1%).  Furthermore, most users find DNS domain names much easier to work with than IP addresses, which is why the domain name system was designed in the first place.  We prefer to define best practices for the much more common use case and not to complicate the rules in this specification.
+
+                <vspace blankLines="1"/>
+              </t>
+              <t>
+                Security protocols other than <xref target='TLS'/> or <xref target='DTLS'/>.  
+
+                <vspace blankLines="1"/> 
+
+                Although other secure, lower-layer protocols exist and also at times employ PKIX certificates, e.g. <xref target='IPSEC'/>, their use cases can differ from those of TLS-based or DTLS-based application technologies.  Furtermore, application technologies have less experience with IPsec than with TLS, thus making it more difficult to gather feedback on proposed best practices.
+
+                <vspace blankLines="1"/> 
+              </t>
+              <t>
+                Keys or certificates employed outside the context of PKIX-based systems.  
+
+                <vspace blankLines="1"/> 
+                
+                Some deployed application technologies use a web of trust model based on or similar to <xref target='OPENPGP'/>, or use self-signed certificates, or are deployed on networks are not directly connected to the public Internet and therefore cannot depend on Certificate Revocation Lists (CRLs) or the Online Certificate Status Protocol <xref target='OCSP'/> to check CA-issued certificates.  However, the syntax of OpenPGP keys differs significantly from X.509 certificates, the data in self-signed certificates has not been certified by a third-party in any way, and checking of CA-issued certificates via CRLs or OSCP is critically important to maintaining the security of PKIX-based systems.  Attempting to define best practices for such technologies would unduly complicate the rules defined in this specification.
+
+                <vspace blankLines="1"/>  
+              </t>
+            </list>
+          </t>
+          <t>Furthermore, this document also does not address various certification authority policies, such as:</t>
+          <t>
+            <list style='symbols'>
+              <t>What classes and types of certificates to issue and whether to apply different policies for them (e.g., allow the wildcard character in Class 2 certificates but not in Class 1 or Extended Validation certificates).<vspace blankLines="1"/></t>
+              <t>Whether to issue certificates based on IP addresses in addition to DNS domain names.<vspace blankLines="1"/></t>
+              <t>Which identifiers to include (e.g., whether to include the SRVName and uniformResourceIdentifier extensions).<vspace blankLines="1"/></t>
+              <t>How to certify or validate the information contained in a certificate.<vspace blankLines="1"/></t>
+            </list>
+          </t>
+          <t>Finally, this specification is mostly silent about user interface issues, which in general are properly the responsibility of client software developers and standards development organizations dedicated to particular application technologies (see for example <xref target='WSC-UI'/>.</t>
+        </section>
       </section>
 
       <section title="Terminology" anchor="terminology">
@@ -109,17 +146,17 @@
         <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
       </section>
 
-      <section title="Discussion Venue" anchor="discuss">
-        <t>[[ RFC Editor: please remove this section. ]]</t>
-        <t>The editors are actively seeking input from certification authorities, application developers, and protocol designers regarding the recommendations in this document.  Please send feedback to the editors directly or post to the &lt;certid@ietf.org&gt; mailing list, for which archives and subscription information are available at <eref target='https://www.ietf.org/mailman/listinfo/certid'/>.</t>
-      </section>
-
       <section title="Contributors" anchor="contributors">
         <t>The following individuals made significant contributions to the text of this document: Shumon Huque, RL 'Bob' Morgan, and Kurt Zeilenga.</t>
       </section>
 
       <section title="Acknowledgements" anchor="acknowledgements">
         <t>The editors and contributors wish to thank the following individuals for their feedback and suggestions: Nelson Bolyard, Scott Cantor, Dave Crocker, Cyrus Daboo, Charles Gardiner, Philip Guenther, Bruno Harbulot, David Harrington, Paul Hoffman, Geoff Keating, Scott Lawrence, Alexey Melnikov, Eddy Nigg, Ludwig Nussel, Joe Orton, Tom Petch, Yngven Pettersen, Tim Polk, Pete Resnick, Martin Rex, Joe Salowey, Rob Stradling, Dan Wing, and Dan Winship.</t>
+      </section>
+
+      <section title="Discussion Venue" anchor="discuss">
+        <t>[[ RFC Editor: please remove this section. ]]</t>
+        <t>The editors are actively seeking input from certification authorities, application developers, and protocol designers regarding the recommendations in this document.  Please send feedback to the editors directly or post to the &lt;certid@ietf.org&gt; mailing list, for which archives and subscription information are available at <eref target='https://www.ietf.org/mailman/listinfo/certid'/>.</t>
       </section>
 
     </section>
