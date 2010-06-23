@@ -21,7 +21,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date month="March" day="22" year="2010"/>
+    <date month="June" day="23" year="2010"/>
     <area>Applications</area>
     <keyword>Internet-Draft</keyword>
     <keyword>XMPP</keyword>
@@ -50,29 +50,37 @@
       <t><list style="numbers">
         <t>Constructs a cleartext version of the stanza, S.</t>
         <t>Generates a session key R appropriate for the intended block cipher (e.g. AES-SHA-256).</t>
-        <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and including the seconds and fractions of a second to three digits (resulting in a datetime string 24 characters in length, such as "2010-02-28T18:00:00.314Z").</t>
-        <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., UTF8-encode(S) = S'. We call S' a "stanza-string" because for purposes of encryption and decryption it is treated not as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
-        <t>Hashes the session key R using the datetime N and stanza string S' using a cryptographic hashing algorithm, i.e., hmac(N + S', R) = R'.</t>
-        <t>Encrypts (N + S') using the intended block cipher, i.e. block-encrypt(N + S', ) = T.</t>
+        <t>Notes the current UTC date and time N when this stanza is constructed, formatted as per <xref target="DATETIME"/> and MUST include the seconds and fractions of a second to three digits (resulting in a datetime string 24 characters in length, such as "2010-02-28T18:00:00.314Z").</t>
+        <t>Converts the stanza to a UTF-8 encoded string, optionally removing line breaks and other insignificant whitespace between elements and attributes, i.e., S' = UTF8-encode(S). We call S' a "stanza-string" because for purposes of encryption and decryption it is treated not as XML but as an opaque string (this avoids the need for complex canonicalization of the XML input).</t>
+        <t>Base64-encodes S' to produce S". This is necessary to preserve the stanza-string in a canonicalized form.</t>
+        <t>Constructs a plaintext envelope &lt;plain/&gt; as follows:
+        <list style="hanging">
+          <t>The attribute 'timestamp' set to the UTC date and time value N</t>
+          <t>The XML character data to the base64-encoded form of S'. This encoding is necessary to preserve a canonicalized form of S'.</t>
+        </list></t>
+        <t>Converts the plaintext envelope to a UTF-8 encoded string, i.e., E' = UTF8-encode(E)</t>
+        <t>Encrypts (E) using the intended block cipher, i.e. T = block-encrypt(R, E').</t>
         <t>Base64-encodes T to produce the encrypted data T'.</t>
+        <t>Generates a message authenication code (MAC) with a cryptographic hashing algorithm (e.g. HMACSHA256) using the encrypted data T as the salt and the session block cipher key R as the message, i.e., M = mac-hash(T, R)</t>
+        <t>Base64-encodes M to produce the hash data M'</t>
         <t>Encrypts (R) using the recipient's public key to produce encrypted data K.  (Known issue: This step is under-specified and will be expanded in a later version of this document.)</t>
         <t>Base64-encodes K to produce the encrypted key K'.</t>
-        <t>Constructs an &lt;e2e/&gt; element qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
+        <t>Constructs an &lt;e2e/&gt; element qualified by the  "urn:ietf:params:xml:ns:xmpp-objenc:0" namespace as follows:
         <list style="hanging">
-          <t>The attribute 'stamp' set to the timestamp N from step 3;</t>
-          <t>The child element &lt;key/&gt; qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
+          <t>The child element &lt;key/&gt; qualified by the "urn:ietf:params:xml:ns:xmpp-objenc:0" namespace as follows:
           <list style="hanging">
-            <t>The attribute 'cipher' set to the encryption scheme used in step 8;</t>
-            <t>The XML character data K' from step 9.</t>
+            <t>The attribute 'cipher-algo' set to the encryption scheme used in step 8;</t>
+            <t>The XML character data K'.</t>
           </list></t>
-          <t>The child element &lt;data/&gt; qualified by the "urn:ietf:params:xml:ns:xmpp-objenc" namespace as follows:
+          <t>The child element &lt;data/&gt; qualified by the "urn:ietf:params:xml:ns:xmpp-objenc:0" namespace as follows:
           <list>
-            <t>The attribute 'mac' set to the cryptographic hashing algorithm used in step 5;</t>
-            <t>The attribute 'cipher' set to the encryption scheme used in step 6;</t>
-            <t>The XML character data as T' from step 7.</t>
+            <t>The attribute 'mac-algo' set to the cryptographic hashing algorithm used to generate M.</t>
+            <t>The attribute 'mac-hash' set to the result of the cryptographic hash, M'.</t>
+            <t>The attribute 'cipher-algo' set to the encryption scheme used to generate the encrypted data T.</t>
+            <t>The XML character data as T'.</t>
           </list></t>
         </list></t>
-        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that matches the stanza from step 1 in both kind (e.g., &lt;message/&gt;) and type (e.g., "chat").</t>
+        <t>Sends the &lt;e2e/&gt; element as the payload of a stanza that SHOULD match the stanza from step 1 in kind (e.g., &lt;message/&gt;), type (e.g., "chat"), and addressing (e.g. to="romeo@montague.net" from="juliet@capulet.net/balcony").</t>
       </list></t>
 
       <section title='Example of Securing Messages' anchor="ex-message">
@@ -97,9 +105,8 @@
           id='6410ed123'
           to='romeo@montague.net'
           type='chat'>
- <e2e   xmlns="urn:ietf:params:xml:ns:xmpp-objec"
-        stamp="2010-03-09T16:29:43.012Z">
-   <key     cipher="RSAES-OAEP-SHA-256-MFG1">
+ <e2e   xmlns="urn:ietf:params:xml:ns:xmpp-objenc:0">
+   <key     cipher-algo="RSAES-OAEP-SHA-256-MFG1">
      PrGA6extyYdY6sFWk7/+YAvTglZe4GSglWeTshada6+GOKqVViK17FIvR9TQcSTB
      Ak1YcKr5Oa8ok0bf9gQzscwastKho72NaJ9NplTuDOZ4I3e3ZXhcN5iXoJYkVMHf
      scz20vYK170b5FYKorlQ/cgXw62slxb51t6jgCKZ+bUDpcalUmepU56y7Wwy+OwE
@@ -107,8 +114,9 @@
      pelvYstXaCHbXkkWT03AY02p//L4pdoyGQK+ZbJJjOfRndFTGMx1DJApkySRaQhW
      P2+5HpJMJ6jeWCyPAawK8A==
    </key>
-   <data    cipher="AES-256-CBC-PKCS5-WITH-IV"
-            mac="HMACSHA256">
+   <data    cipher-algo="AES-256-CBC-PKCS5-WITH-IV"
+            mac-algo="HMACSHA256"
+             mac-hash="aGVyZSBpcyBhIGJ1bmNoIG9mIHJhbmRvbSBkYXRhIHRoYXQgSSdtIGdvaW5nIHRvIHByZXRlbmQgaXMgYSBNQUMgZ2VuZXJhdGVkIGZyb20gYSBjcnlwdG9ncmFwaGljIGhhc2hpbmcgYWxnb3JpdGhtIHdpdGggYXBwcm9wcmlhdGUgc2FsdCBhbmQgbWVzc2FnZSBkYXRh">
      lM06rZtX5YXi+jrlNOKdsydMjAcVkAcJCZ8lncIgIF1CatVVTtIoachMHFm3XV7a
      SyEjrVO1P8Sdd3MTdOn1o+ktJvI66zAVWFL/aCoJbcwO1BUKtIn4AOG76V7kSYBj
      CDzWD7Hus620TEah/h1K/9Au6RHjWB78qpVLPLiROlZSH9Pw5sg4eDOKeusffSyb
@@ -147,8 +155,7 @@
           id='a543bc3ee'
           to='romeo@montague.net/crypt'
           type='result'>
- <e2e   xmlns="urn:ietf:params:xml:ns:xmpp-objec"
-        stamp="2010-03-09T16:29:43.012Z">
+ <e2e   xmlns="urn:ietf:params:xml:ns:xmpp-objenc:0">
    <key     cipher="RSAES-OAEP-SHA-256-MFG1">
      PrGA6extyYdY6sFWk7/+YAvTglZe4GSglWeTshada6+GOKqVViK17FIvR9TQcSTB
      Ak1YcKr5Oa8ok0bf9gQzscwastKho72NaJ9NplTuDOZ4I3e3ZXhcN5iXoJYkVMHf
@@ -157,8 +164,9 @@
      pelvYstXaCHbXkkWT03AY02p//L4pdoyGQK+ZbJJjOfRndFTGMx1DJApkySRaQhW
      P2+5HpJMJ6jeWCyPAawK8A==
    </key>
-   <data    cipher="AES-256-CBC-PKCS5-WITH-IV"
-            mac="HMACSHA256">
+   <data    cipher-algo="AES-256-CBC-PKCS5-WITH-IV"
+            mac-algo="HMACSHA256"
+             mac-hash="aGVyZSBpcyBhIGJ1bmNoIG9mIHJhbmRvbSBkYXRhIHRoYXQgSSdtIGdvaW5nIHRvIHByZXRlbmQgaXMgYSBNQUMgZ2VuZXJhdGVkIGZyb20gYSBjcnlwdG9ncmFwaGljIGhhc2hpbmcgYWxnb3JpdGhtIHdpdGggYXBwcm9wcmlhdGUgc2FsdCBhbmQgbWVzc2FnZSBkYXRhIGFuZCBvdGhlciBzdHVmZiB0aGF0IG1heSBiZSBhcHByb3ByaWF0ZQ==">
      lM06rZtX5YXi+jrlNOKdsydMjAcVkAcJCZ8lncIgIF1CatVVTtIoachMHFm3XV7a
      SyEjrVO1P8Sdd3MTdOn1o+ktJvI66zAVWFL/aCoJbcwO1BUKtIn4AOG76V7kSYBj
      CDzWD7Hus620TEah/h1K/9Au6RHjWB78qpVLPLiROlZSH9Pw5sg4eDOKeusffSyb
@@ -197,7 +205,7 @@
          id='6410ed123' 
          to='juliet@capulet.net/balcony'
          type='error'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc:0'>
     XML-character-data-here
   </e2e>
   <error type='modify'>
@@ -214,7 +222,7 @@
          id='6410ed123' 
          to='juliet@capulet.net/balcony'
          type='error'>
-  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc'>
+  <e2e xmlns='urn:ietf:params:xml:ns:xmpp-objenc:0'>
     XML-character-data-here
   </e2e>
   <error type='modify'>
@@ -258,7 +266,7 @@
       <section title="XML Namespace Name for e2e Data in XMPP" anchor="iana-ns-e2e">
         <t>A URN sub-namespace of signed and encrypted content for the Extensible Messaging and Presence Protocol (XMPP) is defined as follows.</t>
         <t><list style='hanging'> 
-          <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-objenc</t> 
+          <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-objenc:0</t> 
           <t hangText='Specification:'>RFC XXXX</t>
           <t hangText='Description:'>This is an XML namespace name of signed and encrypted content for the Extensible Messaging and Presence Protocol as defined by RFC XXXX.</t>
           <t hangText='Registrant Contact:'>IESG, &lt;iesg@ietf.org&gt;</t> 
@@ -423,7 +431,7 @@
 
     </references>
 
-    <section title="Schema for urn:ietf:params:xml:ns:xmpp-objenc" anchor="schemas-e2e">
+    <section title="Schema for urn:ietf:params:xml:ns:xmpp-objenc:0" anchor="schemas-e2e">
       <t>The following XML schema is descriptive, not normative.</t>
       <figure>
         <artwork><![CDATA[
@@ -431,25 +439,53 @@
 
 <xs:schema
     xmlns:xs='http://www.w3.org/2001/XMLSchema'
-    targetNamespace='urn:ietf:params:xml:ns:xmpp-objenc'
-    xmlns='urn:ietf:params:xml:ns:xmpp-objenc'
+    targetNamespace='urn:ietf:params:xml:ns:xmpp-objenc:0'
+    xmlns='urn:ietf:params:xml:ns:xmpp-objenc:0'
     elementFormDefault='qualified'>
 
   <xs:element name='e2e'>
     <xs:complexType>
-      <xs:simpleContent>
+      <xs:sequence>
+        <xs:element ref='key' minOccurs='1' maxOccurs='1'/>
+        <xs:element ref='data' minOccurs='1' maxOccurs='1'/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+  
+  <xs:element name='key'>
+    <xs:complexType>
+      <xs:simpleType>
         <xs:extension base='xs:string'>
-          <xs:attribute name='cipher'
-                        type='xs:string'
-                        use='optional'/>
-          <xs:attribute name='hash'
-                        type='xs:string'
-                        use='optional'/>
-          <xs:attribute name='timestamp'
-                        type='xs:string'
-                        use='optional'/>
+          <xs:attribute name='cipher-algo'
+                        type='xs:string'/>
         </xs:extension>
-      </xs:simpleContent>
+      </xs:simpleType>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='data'>
+    <xs:complexType>
+      <xs:simpleType>
+        <xs:extension base='xs:string'>
+          <xs:attribute name='cipher-algo'
+                        type='xs:string'/>
+          <xs:attribute name='mac-algo'
+                        type='xs:string'/>
+          <xs:attribute name='mac-hash'
+                        type='xs:string'/>
+        </xs:extension>
+      </xs:simpleType>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='plain'>
+    <xs:complexType>
+      <xs:simpleType>
+        <xs:extension base='xs:string'>
+          <xs:attribute name='timestamp'
+                        type='xs:string'/>
+        </xs:extension>
+      </xs:simpleType>
     </xs:complexType>
   </xs:element>
 
