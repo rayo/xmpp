@@ -82,7 +82,7 @@
     </section>
     <section title="Terminology" anchor="intro-terms">
       <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>Certain security-related terms are to be understood in the sense defined in <xref target="SEC-TERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
+      <t>Certain security-related terms are to be understood in the sense defined in <xref target="SEC-TERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "certification path", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
       <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, or LF.</t>
       <t>We define the following terms with regard to XML stanzas or parts thereof:</t>
       <t>
@@ -623,31 +623,68 @@ R: <?xml version='1.0'?>
       </section>
     </section>
 
-    <section title="Namespace Declarations" anchor="streams-ns">
-      <section title="Declaration of Streams Namespace" anchor="streams-ns-stream">
-        <t>A streams namespace declaration is REQUIRED in all XML stream headers, and the name of the streams namespace MUST be 'http://etherx.jabber.org/streams'.  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t>
-        <t>The element names of the &lt;stream/&gt; element and its &lt;features/&gt; and &lt;error/&gt; children MUST be qualified by the streams namespace prefix in all instances.  If this rule is violated, the entity that receives the offending element MUST return a stream error to the sending entity, which SHOULD be &lt;bad-format/&gt;.</t>
-        <t><list style='empty'><t>Interoperability Note: For historical reasons, an implementation MAY accept only the 'stream:' prefix for these elements.  If an entity receives a stream header with a streams namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t></list></t>
+    <section title="Namespaces" anchor="streams-ns">
+      <t>Readers are referred to the specification of XML namespaces <xref target='XML-NAMES'/> for a full understanding of the concepts used in this section.</t>
+      <section title="Streams Namespace" anchor="streams-ns-stream">
+        <t>The root &lt;stream/&gt; element ("stream header") MUST be qualified by the namespace 'http://etherx.jabber.org/streams' (the "streams namespace").  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t>
       </section>
-      <section title="Declaration of Default Namespace" anchor="streams-ns-default">
-        <t>A default namespace declaration is REQUIRED and defines the allowable first-level children of the root stream element.  This namespace declaration MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The default namespace declaration applies to the stream and all first-level child elements sent over a stream unless explicitly qualified by the streams namespace or another namespace.</t>
-        <t>A server implementation MUST support the following two default namespaces:</t>
+      <section title="Default Namespace" anchor="streams-ns-default">
+        <t>An entity MAY declare a default namespace for data sent over the stream.  If so, (1) the default namespace MUST be other than the streams namespace, and (2) the default namespace MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The default namespace applies to all first-level child elements sent over the stream unless explicitly qualified by another namespace.</t>
+        <t>Alternatively (i.e., instead of declaring a default namespace), an entity MAY explicitly qualify the namespace for each first-level child element of the stream, using so-called "prefix-free canonicalization".</t>
+        <t>When a default namespace is declared, in rough outline a stream will look something like the following.</t>
+        <figure>
+          <artwork><![CDATA[
+<stream:stream
+    from='juliet@im.example.com'
+    to='im.example.com'
+    version='1.0'
+    xml:lang='en'
+    xmlns='jabber:client'
+    xmlns:stream='http://etherx.jabber.org/streams'>
+  <message>
+    <body>foo</body>
+  </message>
+</stream:stream>
+          ]]></artwork>
+        </figure>
+        <t>When a default namespace is not declared and so-called "prefix-free canonicalization" is used instead, in rough outline a stream will look something like the following.</t>
+        <figure>
+          <artwork><![CDATA[
+<stream
+    from='juliet@im.example.com'
+    to='im.example.com'
+    version='1.0'
+    xml:lang='en'
+    xmlns='http://etherx.jabber.org/streams'>
+  <message xmlns='jabber:client'>
+    <body>foo</body>
+  </message>
+</stream:stream>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Other Namespaces" anchor="streams-ns-other">
+        <t>Either party to a stream MAY send data qualified by namespaces other than the default namespace (if declared) and the streams namespace.  For example, this is how data related to TLS negotiation and SASL negotiation are exchanged, as well as XMPP extensions such as server dialback <xref target='XEP-0220'/> and stream management <xref target='XEP-0198'/>.</t>
+      </section>
+      <section title="Namespace Declarations and Prefixes" anchor="streams-ns-declarations">
+        <t>Because the default namespace is other than the streams namespace, if a default namespace is declared then the following statements are true:</t>
         <t>
-          <list style='symbols'>
-            <t>jabber:client -- this default namespace is declared when the stream is used for communication between a client and a server<vspace blankLines='1'/></t>
-            <t>jabber:server -- this default namespace is declared when the stream is used for communication between two servers</t>
+          <list style='numbers'>
+            <t>The stream header needs to contain a namespace declaration for both the default namespace and the streams namespace.<vspace blankLines='1'/></t>
+            <t>The streams namespace declaration needs to include a namespace prefix for the streams namespace.</t>
           </list>
         </t>
-        <t>A client implementation MUST support the 'jabber:client' default namespace.</t>
-        <t><list style='empty'><t>Informational Note: The 'jabber:client' and 'jabber:server' namespaces are nearly identical but are used in different contexts (client-to-server communication for 'jabber:client' and server-to-server communication for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent over XML streams qualified by the 'jabber:client' namespace, whereas they are REQUIRED on stanzas sent over XML streams qualified by the 'jabber:server' namespace.</t></list></t>
-        <t>If an implementation accepts a stream that is qualified by the 'jabber:client' or 'jabber:server' namespace, it MUST support the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza types (message, presence, and IQ).</t>
-        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.</t>
-        <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose default namespace is 'jabber:client', if the server to which the client is connected needs to route a client-generated stanza to another server then it MUST "re-scope" the stanza so that its default namespace is 'jabber:server' (i.e., it MUST NOT send a stanza qualified by the 'jabber:client' namespace over a stream whose default namespace is 'jabber:server').  Similarly, a routing server MUST "re-scope" a stanza received over a server-to-server stream (whose default namespace is 'jabber:server') so that the stanza is qualified by the 'jabber:client' namespace before sending it over a client-to-server stream (whose default namespace is 'jabber:client').</t></list></t>
-        <t>An implementation MAY support a default namespace other than 'jabber:client' or 'jabber:server'.  However, because such namespaces would define applications other than XMPP, they are to be defined in separate specifications.</t>
-        <t><list style='empty'><t>Interoperability Note: For historical reasons, an implementation MAY refuse to support any other default namespaces.  If an entity receives a stream header with a default namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t></list></t>
+        <t><list style='empty'><t>Interoperability Note: For historical reasons, an implementation MAY accept only the prefix 'stream' for the streams namespace (resulting in prefixed names such as &lt;stream:stream&gt; and &lt;stream:features&gt;).  If an entity receives a stream header with a streams namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t></list></t>
+        <t>By definition, the namespace declaration for the default namespace will not include a namespace prefix (e.g., "xmlns='jabber:client'").  Furthermore, an implementation MUST NOT generate namespace prefixes for elements qualified by the default namespace if the default namespace is 'jabber:client' or 'jabber:server'.</t>
+        <t>Namespaces declared in a stream header MUST apply only to that stream (e.g., the 'jabber:server:dialback' namespace used in server dialback <xref target='XEP-0220'/>).  In particular, because XML stanzas intended for routing or delivery over streams with other entities will lose the namespace context declared in the header of the stream in which those stanzas originated, namespaces for extended content within such stanzas MUST NOT be declared in that stream header (see also <xref target='stanzas-extended'/>).  If either party to a stream declares such namespaces, the other party to the stream SHOULD close the stream with a stream error of &lt;invalid-namespace/&gt;.  In any case, an entity MUST ensure that such namespaces are properly declared (according to this section) when routing or delivering stanzas originating from such a stream over streams with other entities.</t>
       </section>
-      <section title="Declaration of Other Namespaces" anchor="streams-ns-other">
-        <t>Namespaces declared in a stream header MUST apply only to the stream itself.  In particular, because XML stanzas intended for routing or delivery over streams with other entities will lose the namespace context declared in the header of the stream in which those stanzas originated, namespaces for extended content within such stanzas MUST NOT be declared in that stream header (see also <xref target='stanzas-extended'/>).  If either party to a stream declares such namespaces, the other party to the stream SHOULD close the stream with a stream error of &lt;invalid-namespace/&gt;.  In any case, an entity MUST ensure that such namespaces are properly declared (according to this section) when routing or delivering stanzas originating from such a stream over streams with other entities.</t>
+      <section title="Mandatory-to-Implement Default Namespaces" anchor="streams-ns-mti">
+        <t>XMPP as defined in this specification uses two default namespaces: 'jabber:client' and 'jabber:server'.  These namespaces are nearly identical but are used in different contexts (client-to-server communication for 'jabber:client' and server-to-server communication for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent over XML streams qualified by the 'jabber:client' namespace, whereas they are REQUIRED on stanzas sent over XML streams qualified by the 'jabber:server' namespace.  Support for these default namespaces implies support for the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza types (message, presence, and IQ).</t>
+        <t>An implementation MAY support default namespaces other than 'jabber:client' or 'jabber:server'.  However, because such namespaces would define applications other than XMPP, they are to be defined in separate specifications.</t>
+        <t>An implementation MAY refuse to support any other default namespaces.  If an entity receives a first-level child element qualified by a default namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t>
+        <t>Client implementations MUST support the 'jabber:client' default namespace.</t>
+        <t>Server implementations MUST support both the 'jabber:client' default namespace (when the stream is used for communication between a client and a server) and the 'jabber:server' default namespace (when the stream is used for communication between two servers).</t>
+        <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose default namespace is 'jabber:client', if the server to which the client is connected needs to route a client-generated stanza to another server then it MUST "re-scope" the stanza so that its default namespace is 'jabber:server' (i.e., it MUST NOT send a stanza qualified by the 'jabber:client' namespace over a stream whose default namespace is 'jabber:server').  Similarly, a routing server MUST "re-scope" a stanza received over a server-to-server stream (whose default namespace is 'jabber:server') so that the stanza is qualified by the 'jabber:client' namespace before sending it over a client-to-server stream (whose default namespace is 'jabber:client').</t></list></t>
       </section>
     </section>
 
@@ -847,7 +884,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="connection-timeout" anchor="streams-error-conditions-connection-timeout">
-          <t>A connected client or peer server has not responded to stanzas or other data (e.g., whitespace keepalives as described under <xref target='streams-close-idle'/>) for some configurable period of time and therefore the stream is being closed.</t>
+          <t>One party is closing the stream because it has reason to believe that the other party has permanently lost the ability to communicate over the stream.  The lack of ability to communicate can be discovered using various methods, such as whitespace keepalives as specified under <xref target='streams-close-idle'/>, XMPP-level pings as defined in <xref target='XEP-0199'/>, and XMPP stream management as defined in <xref target='XEP-0198'/>.</t>
           <figure>
             <artwork><![CDATA[
 P: <stream:error>
@@ -3121,7 +3158,7 @@ E: <iq from='pubsub.example.com'
       <t>
         <list style='symbols'>
           <t>If an entity receives a message or presence stanza that contains XML data qualified by a namespace it does not understand, then it MUST ignore the portion of the stanza qualified by the unknown namespace.<vspace blankLines='1'/></t>
-          <t>If an entity receives a message stanza whose only child element is qualified by a namespace it does not understand, then if the sender is trusted by the recipient then the entity SHOULD return a message stanza of type "error" with an error condition of &lt;feature-not-implemented/&gt;; however, if the sender is not trusted by the receipient then the entity SHOULD ignore the entire stanza.<vspace blankLines='1'/></t>
+          <t>If an entity receives a message stanza whose only child element is qualified by a namespace it does not understand, then it MUST either ignore the entire stanza or return a stanza error, which SHOULD be &lt;service-unavailable/&gt;.</t>
           <t>If an entity receives an IQ stanza of type "get" or "set" containing a child element qualified by a namespace it does not understand, then the entity MUST return an IQ stanza of type "error" with an error condition of &lt;service-unavailable/&gt;.</t>
         </list>
       </t>
@@ -3881,17 +3918,17 @@ XmppAddr ::= UTF8String
       </section>
       <section title="Certificate Validation" anchor="security-certificates-validation">
         <t>When an XMPP entity is presented with a server certificate or client certificate by a peer for the purpose of encryption or authentication of XML streams as described under <xref target='tls'/> and <xref target='sasl'/>, the entity MUST attempt to validate the certificate to determine if the certificate will be considered a TRUSTED CERTIFICATE, i.e., a certificate that is acceptable for encryption and/or authentication in accordance with the XMPP entity's local service policies or configured settings.</t>
-        <t>For both server certificates and client certificates, the validating entity MUST attempt to verify the integrity of the certificate, MUST attempt to verify that the certificate has been properly signed by the issuing Certificate Authority, and MUST support certificate revocation messages.  An implementation MUST enable a human user to view information about the full chain of certificates.</t>
+        <t>For both server certificates and client certificates, the validating entity MUST attempt to verify the integrity of the certificate, MUST attempt to verify that the certificate has been properly signed by the issuing Certificate Authority, MUST attempt to validate the full certification path, and MUST support certificate revocation messages.  An implementation MUST enable a human user to view information about the certification path.</t>
         <t>If these validation attempts fail, either entity MAY choose to unilaterally terminate the session.</t>
         <t>The following sections describe certificate validation rules for server-to-server and client-to-server streams.</t>
         <section title="Server Certificates" anchor="security-certificates-validation-server">
           <t>When an entity (client or server) validates a certificate presented by an XMPP server, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-server-case1">
-            <t>If the server certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the entity MUST check the certificate for any instances of the SRVName, dNSName, and XmppAddr (in that order of preference) as described under <xref target='security-certificates-generation-server-srvname'/>, <xref target='security-certificates-generation-server-dnsname'/>, and <xref target='security-certificates-generation-server-xmppaddr'/>.  There are three possible sub-cases:</t>
+            <t>If the server certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the entity MUST check the certificate for any instances of the SRVName, dNSName, and XmppAddr (in that order of preference) as described under <xref target='security-certificates-generation-server-srvname'/>, <xref target='security-certificates-generation-server-dnsname'/>, and <xref target='security-certificates-generation-server-xmppaddr'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
                 <t hangText='Sub-Case #1:'>The server's certificate includes at least one presented identity that matches the reference identity to which the entity attempted to connect, in accordance with the matching rules specified in <xref target='TLS-CERTS'/>.  In this case, the entity MUST use the matched domainpart as the validated identity of the XMPP server.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #2:'>The server's certificate includes no presented identity that matches the reference identity to which the entity attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt.  In this case, the entity MUST NOT use the presented domainpart (if any) as the validated identity of the XMPP server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certificate chain) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts behave as in Sub-Case #3.  (It is the responsibility of the human user to verify the hash value or fingerprint of the certificate with the peer over a trusted communication layer.)  If the connecting entity is an XMPP server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; an XMPP server or automated client MAY provide a configuration setting that disables this check, but MUST enable the check by default.<vspace blankLines='1'/></t>
+                <t hangText='Sub-Case #2:'>The server's certificate includes no presented identity that matches the reference identity to which the entity attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt.  In this case, the entity MUST NOT use the presented domainpart (if any) as the validated identity of the XMPP server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certification path) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts behave as in Sub-Case #3.  (It is the responsibility of the human user to verify the hash value or fingerprint of the certificate with the peer over a trusted communication layer.)  If the connecting entity is an XMPP server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; an XMPP server or automated client MAY provide a configuration setting that disables this check, but MUST enable the check by default.<vspace blankLines='1'/></t>
                 <t hangText='Sub-Case #3:'>The server's certificate includes no presented identity that matches the reference identity to which the entity attempted to connect but a human user has permanently accepted the certificate during a previous connection attempt; the entity MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed.</t>
               </list>
             </t>
@@ -3906,7 +3943,7 @@ XmppAddr ::= UTF8String
         <section title="Client Certificates" anchor="security-certificates-validation-client">
           <t>When an XMPP server validates a certificate presented by a client, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-client-case1">
-            <t>If the client certificate appears to be certified by a chain of certificates terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server MUST check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-oid'/>.  There are three possible sub-cases:</t>
+            <t>If the client certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server MUST check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-oid'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
                 <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use this represented JID as the validated identity of the client.<vspace blankLines='1'/></t>
@@ -4004,7 +4041,7 @@ XmppAddr ::= UTF8String
           <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connections that it will accept from a given IP address at any one time.  If an entity attempts to connect but the maximum number of TCP connections has been reached, the receiving server MUST NOT allow the new connection to proceed.<vspace blankLines='1'/></t>
           <t>A server implementation SHOULD enable a server administrator to limit the number of TCP connection attempts that it will accept from a given IP address in a given time period.  If an entity attempts to connect but the maximum number of connection attempts has been reached, the receiving server MUST NOT allow the new connection to proceed.<vspace blankLines='1'/></t>
           <t>A server implementation SHOULD enable a server administrator to limit the number of connected resources it will allow an account to bind at any one time.  If a client attempts to bind a resource but it has already reached the configured number of allowable resources, the receiving server MUST return a &lt;resource-constraint/&gt; stanza error.<vspace blankLines='1'/></t>
-          <t>A server implementation SHOULD enable a server administrator to limit the size of stanzas it will accept from a connected client or peer server (where "size" is inclusive of all XML markup as defined in Section 2.4 of <xref target='XML'/>, from the opening "&lt;" character of the stanza to the closing "&gt;" character).  An entity's maximum stanza size SHOULD NOT be smaller than 65536 bytes.  If a connected resource or peer server sends a stanza that violates the upper limit, the receiving server MUST either return a &lt;policy-violation/&gt; stanza error (thus allowing the sender to recover) or close the stream with a &lt;policy-violation/&gt; stream error.<vspace blankLines='1'/></t>
+          <t>A server implementation SHOULD enable a server administrator to limit the size of stanzas it will accept from a connected client or peer server (where "size" is inclusive of all XML markup as defined in Section 2.4 of <xref target='XML'/>, from the opening "&lt;" character of the stanza to the closing "&gt;" character).  An entity's maximum stanza size MUST NOT be smaller than 10000 bytes.  If a connected resource or peer server sends a stanza that violates the upper limit, the receiving server MUST either return a &lt;policy-violation/&gt; stanza error (thus allowing the sender to recover) or close the stream with a &lt;policy-violation/&gt; stream error.<vspace blankLines='1'/></t>
           <t>A server implementation SHOULD enable a server administrator to limit the number of XML stanzas that a connected client is allowed to send to distinct recipients within a given time period.  If a connected client sends too many stanzas to distinct recipients in a given time period, the receiving server SHOULD NOT process the stanza and instead SHOULD return a &lt;policy-violation/&gt; stanza error.<vspace blankLines='1'/></t>
           <t>A server implementation SHOULD enable a server administrator to limit the amount of bandwidth it will allow a connected client or peer server to use in a given time period.<vspace blankLines='1'/></t>
           <t>A server implementation MAY enable a server administrator to limit the types of stanzas (based on the extended content "payload") that it will allow a connected resource or peer server send over an active connection.  Such limits and restrictions are a matter of deployment policy.<vspace blankLines='1'/></t>
