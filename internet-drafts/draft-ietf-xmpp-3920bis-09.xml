@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="June" day="28"/>
+    <date year="2010" month="June" day="29"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -81,7 +81,7 @@
       <t>This document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, those payloads are defined by various XMPP extensions.  For example, <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality.  In addition, various specifications produced in the XSF's XEP series <xref target='XEP-0001'/> define extensions for a wide range of applications.</t>
     </section>
     <section title="Terminology" anchor="intro-terms">
-      <t>The following capitalized keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
+      <t>The following capitalized keywords are to be interpreted as described in <xref target="KEYWORDS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
       <t>Certain security-related terms are to be understood in the sense defined in <xref target="SEC-TERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "certification path", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".  Other security-related terms (for example, "denial of service") are to be understood in the sense defined in the referenced specifications.</t>
       <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, or LF.</t>
       <t>We define the following terms with regard to XML stanzas or parts thereof:</t>
@@ -356,7 +356,7 @@ R: <stream:features/>
       </section>
 
       <section title="Flow Chart" anchor="streams-negotiation-flowchart">
-        <t>We summarize the foregoing rules in the following non-normative state chart for the stream negotiation process, presented from the perspective of the initiating entity.</t>
+        <t>We summarize the foregoing rules in the following non-normative flow chart for the stream negotiation process, presented from the perspective of the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
                      +------------+
@@ -364,44 +364,47 @@ R: <stream:features/>
                      | connection |
                      +------------+
                            |
+                           v
                     +---------------+
                     | send initial  |<-------------------------+
                     | stream header |                          ^
                     +---------------+                          |
                            |                                   |
+                           v                                   |
                    +------------------+                        |
                    | receive response |                        |
                    | stream header    |                        |
                    +------------------+                        |
                            |                                   |
+                           v                                   |
                     +----------------+                         |
                     | receive stream |                         |
 +------------------>| features       |                         |
 ^                   +----------------+                         |
 |                          |                                   |
-|                          |                                   |
-|                          |                                   |
+|                          v                                   |
 |       +<-----------------+                                   |
 |       |                                                      |
 |    {empty?} ----> {all voluntary?} ----> {some mandatory?}   |
 |       |      no          |          no         |             |
 |       | yes              | yes                 | yes         |
-|       |                  |                     |             |
+|       |                  v                     v             |
 |       |           +---------------+    +----------------+    |
 |       |           | MAY negotiate |    | MUST negotiate |    |
 |       |           | any or none   |    | one feature    |    |
 |       |           +---------------+    +----------------+    |
 |       |                  |                     |             |
+|       v                  v                     |             |
 |   +----------+      +-----------+              |             |
 |   | process  |<-----| negotiate |              |             |
 |   | complete |  no  | a feature |              |             |
 |   +----------+      +-----------+              |             |
 |                          |                     |             |
 |                     yes  |                     |             |
-|                          |                     |             |
+|                          v                     v             |
 |                          +--------->+<---------+             |
 |                                     |                        |
-|                                     |                        |
+|                                     v                        |
 +<-------------------------- {restart mandatory?} ------------>+
                no                                     yes
 
@@ -662,6 +665,7 @@ R: <?xml version='1.0'?>
 </stream:stream>
           ]]></artwork>
         </figure>
+        <t>Historically, most XMPP implementations have used the default namespace style rather than the prefix-free canonicalization style for stream headers; however, both styles are acceptable since they are semantically equivalent.</t>
       </section>
       <section title="Other Namespaces" anchor="streams-ns-other">
         <t>Either party to a stream MAY send data qualified by namespaces other than the default namespace (if declared) and the streams namespace.  For example, this is how data related to TLS negotiation and SASL negotiation are exchanged, as well as XMPP extensions such as server dialback <xref target='XEP-0220'/> and stream management <xref target='XEP-0198'/>.</t>
@@ -1787,6 +1791,7 @@ I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
          mechanism='PLAIN'>AGp1bGlldAByMG0zMG15cjBtMzA=</auth>
           ]]></artwork>
         </figure>
+        <t>If the initiating entity subsequently sends another &lt;auth/&gt; element (even if the ongoing authentication handshake has not yet completed), the server SHOULD discard the ongoing handshake and begin a new handshake for the subsequently requested SASL mechanism.</t>
       </section>
       <section title="Challenge-Response Sequence" anchor="sasl-process-neg-challengeresponse">
         <t>If necessary, the receiving entity challenges the initiating entity by sending a &lt;challenge/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be generated in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
@@ -2051,6 +2056,26 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
           ]]></artwork>
         </figure>
         <t><list style='empty'><t>Security Note: An XMPP client MUST treat a &lt;transition-needed/&gt; SASL error with extreme caution, SHOULD NOT provide a plaintext password over an XML stream that is not encrypted via Transport Layer Security, and MUST warn a human user before allowing the user to provide a plaintext password over an unencrypted connection.  Even so, the attacker could be located on the server, attempting to capture the plaintext password.</t></list></t>
+      </section>
+      <section title="unexpected-command" anchor="sasl-errors-unexpected-command">
+        <t>During SASL negotiation, the initiating entity sent a command that is unexpected, as follows:</t>
+        <t>
+          <list style='symbols'>
+            <t>Sending &lt;challenge/&gt;, &lt;failure/&gt;, or &lt;success/&gt;.</t>
+            <t>Sending &lt;abort/&gt; or &lt;response/&gt; before sending &lt;auth/&gt;.</t>
+            <t>Sending non-SASL data before the SASL negotiation completed.</t>
+          </list>
+        </t>
+        <t>However, the receiving entity MAY (1) ignore unexpected commands instead of returning a SASL error, or (2) return an appropriate stream error (e.g., &lt;not-authorized/&gt;).  In addition, the initiating entity SHOULD ignore unexpected commands (e.g., &lt;abort/&gt;, &lt;auth/&gt;, or &lt;response/&gt;) from the receiving entity.</t>
+        <figure>
+          <artwork><![CDATA[
+I: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
+
+R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
+     <unexpected-command/>
+   </failure>
+          ]]></artwork>
+        </figure>
       </section>
     </section>
     <section title="SASL Definition" anchor="sasl-def">
@@ -3803,7 +3828,7 @@ S2: </stream:stream>
     </section>
     <section title="Certificates" anchor="security-certificates">
       <t>Channel encryption of an XML stream using Transport Layer Security as described under <xref target='tls'/>, and in some cases also authentication as described under <xref target='sasl'/>, is commonly based on a digital certificate presented by the receiving entity (or, in the case of mutual authentication, both the receiving entity and the initiating entity).  This section describes best practices regarding the generation of digital certificates to be presented by XMPP entities and the verification of digital certificates presented by XMPP entities.</t>
-      <t>Considerations specific to certificate generation and validation with regard to client certificates or server certificates are described in the following sections.</t> 
+      <t>In general, the following sections rely on and extend the rules and guidelines provided in <xref target='X509'/> and <xref target='TLS-CERTS'/>.  The reader is referred to those specifications for a detailed understanding of certificates and their use in TLS.</t>
       <section title="Certificate Generation" anchor="security-certificates-generation">
         <section title="General Considerations" anchor="security-certificates-generation-general">
           <t>The following rules apply to public key certificates that are issued to XMPP entities:</t>
@@ -3829,19 +3854,16 @@ S2: </stream:stream>
           </t>
         </section>
         <section title="Server Certificates" anchor="security-certificates-generation-server">
-          <t>In a digital certificate to be presented by an XMPP server (i.e., a SERVER CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs (i.e., domainparts) associated with domains serviced at the server.  The representations described in the following sections are RECOMMENDED.  These representations are provided in preference order.</t>
-          <section title="SRVName" anchor="security-certificates-generation-server-srvname">
-            <t>A server's domainpart SHOULD be represented as an SRVName, i.e., as the SRVName form of otherName from the GeneralName structure in SubjectAltName as specified in <xref target='X509-SRV'/>.</t>
-          </section>
-          <section title="dNSName" anchor="security-certificates-generation-server-dnsname">
-            <t>A server's domainpart SHOULD be represented as a dNSName, i.e., as a subjectAltName extension of type dNSName.</t>
-            <t>The dNSName MAY contain one instance of the wildcard character '*'.  The wildcard character applies only to the left-most domain name component and matches any single component (thus a dNSName of *.example.com matches foo.example.com but not bar.foo.example.com or example.com itself).  The wildcard character is not allowed in component fragments (thus a dNSName of im*.example.net is not allowed and SHALL NOT be taken to match im1.example.net and im2.example.net).</t>
-          </section>
-          <section title="XmppAddr" anchor="security-certificates-generation-server-xmppaddr">
-            <t>A server's domainpart MAY be represented as an XmppAddr, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.  In server certificates, this representation is included only for the sake of backward-compatibility.</t>
-          </section>
-          <section title="Common Name" anchor="security-certificates-generation-server-cn">
-            <t>A server's domainpart SHOULD NOT be represented as a Common Name; instead, the Common Name field SHOULD be reserved for representation of a human-friendly name.</t>
+          <section title="Rules" anchor="security-certificates-generation-server-rules">
+            <t>In a digital certificate to be presented by an XMPP server (i.e., a SERVER CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs (i.e., domainparts) associated with domains serviced at the server.  The rules and guidelines defined in <xref target='TLS-CERTS'/> apply to XMPP server certificates.  The following preference order of identifiers is RECOMMENDED, where the identifier types are as described in <xref target='TLS-CERTS'/> unless otherwise noted.</t>
+            <t>
+              <list style='numbers'>
+                <t>SRV-ID (see also <xref target='X509-SRV'/></t>
+                <t>DNS-ID</t>
+                <t>XmppAddr as specified under <xref target='security-certificates-generation-xmppaddr'/></t>
+                <t>CN-ID</t>
+              </list>
+            </t>
           </section>
           <section title="Examples" anchor="security-certificates-generation-server-examples">
             <t>For our first (relatively simple) example, consider a company called "Example Products, Inc."  It hosts an XMPP service at "im.example.com" (i.e., user addresses at the service are of the form "user@im.example.com"), and SRV lookups for the xmpp-client and xmpp-server services at "im.example.com" yield one machine, called "x.example.com", as follows:</t>
@@ -3887,10 +3909,10 @@ _xmpp-server._tcp.example.net. 68400 IN SRV 20 0 5269 x2.example.net.
           </section>
         </section>
         <section title="Client Certificates" anchor="security-certificates-generation-client">
-          <t>In a digital certificate to be presented by an XMPP client controlled by a human user (i.e., a CLIENT CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs associated with an XMPP user.  If included, a JID MUST be represented as an XmppAddr, i.e., as a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified under <xref target='security-certificates-generation-oid'/>.</t>
+          <t>In a digital certificate to be presented by an XMPP client controlled by a human user (i.e., a CLIENT CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs associated with an XMPP user.  If included, a JID MUST be represented as an XmppAddr as specified under <xref target='security-certificates-generation-xmppaddr'/>.</t>
         </section>
-        <section title="ASN.1 Object Identifier" anchor="security-certificates-generation-oid">
-          <t>The <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" (also called an XmppAddr) is defined as follows.</t>
+        <section title="XmppAddr Identifier Type" anchor="security-certificates-generation-xmppaddr">
+          <t>The XmppAddr identifier type is a UTF8String within an otherName entity inside the subjectAltName, using the <xref target="ASN.1"/> Object Identifier "id-on-xmppAddr" specified below.</t>
           <figure>
             <artwork><![CDATA[
 id-pkix OBJECT IDENTIFIER ::= { iso(1) identified-organization(3)
@@ -3922,28 +3944,20 @@ XmppAddr ::= UTF8String
         <t>If these validation attempts fail, either entity MAY choose to unilaterally terminate the session.</t>
         <t>The following sections describe certificate validation rules for server-to-server and client-to-server streams.</t>
         <section title="Server Certificates" anchor="security-certificates-validation-server">
-          <t>When an entity (client or server) validates a certificate presented by an XMPP server, there are three possible cases, as discussed in the following sections.</t>
-          <section title="Case #1" anchor="security-certificates-validation-server-case1">
-            <t>If the server certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the entity MUST check the certificate for any instances of the SRVName, dNSName, and XmppAddr (in that order of preference) as described under <xref target='security-certificates-generation-server-srvname'/>, <xref target='security-certificates-generation-server-dnsname'/>, and <xref target='security-certificates-generation-server-xmppaddr'/>.  There are three possible sub-cases:</t>
-            <t>
-              <list style='hanging'>
-                <t hangText='Sub-Case #1:'>The server's certificate includes at least one presented identity that matches the reference identity to which the entity attempted to connect, in accordance with the matching rules specified in <xref target='TLS-CERTS'/>.  In this case, the entity MUST use the matched domainpart as the validated identity of the XMPP server.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #2:'>The server's certificate includes no presented identity that matches the reference identity to which the entity attempted to connect and a human user has not permanently accepted the certificate during a previous connection attempt.  In this case, the entity MUST NOT use the presented domainpart (if any) as the validated identity of the XMPP server.  Instead, if the connecting entity is a user-oriented client then it MUST either (1) automatically terminate the connection with a bad certificate error or (2) show the certificate (including the entire certification path) to the user and give the user the choice of terminating the connecting or accepting the certificate temporarily (i.e., for this connection attempt only) or permanently (i.e., for all future connection attempts) and then continuing with the connection; if a user permanently accepts a certificate in this way, the client MUST cache the certificate (or some non-forgeable representation such as a hash value) and in future connection attempts behave as in Sub-Case #3.  (It is the responsibility of the human user to verify the hash value or fingerprint of the certificate with the peer over a trusted communication layer.)  If the connecting entity is an XMPP server or an automated client, the application SHOULD terminate the connection (with a bad certificate error) and log the error to an appropriate audit log; an XMPP server or automated client MAY provide a configuration setting that disables this check, but MUST enable the check by default.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #3:'>The server's certificate includes no presented identity that matches the reference identity to which the entity attempted to connect but a human user has permanently accepted the certificate during a previous connection attempt; the entity MUST verify that the cached certificate was presented and MUST notify the user if the certificate has changed.</t>
-              </list>
-            </t>
-          </section>
-          <section title="Case #2" anchor="security-certificates-validation-server-case2">
-            <t>If the server certificate is certified by a Certificate Authority not known to the entity, the entity MUST proceed as under Case #1, Sub-Case #2 or Case #1, Sub-Case #3 as appropriate.</t>
-          </section>
-          <section title="Case #3" anchor="security-certificates-validation-server-case3">
-            <t>If the server certificate is self-signed, the entity MUST proceed as under Case #1, Sub-Case #2 or Case #1, Sub-Case #3 as appropriate.</t>
-          </section>
+          <t>For server certificates, the rules and guidelines defined in <xref target='TLS-CERTS'/> apply.  The following preference order of identifiers is RECOMMENDED, where the identifier types are as described in <xref target='TLS-CERTS'/> unless otherwise noted.</t>
+          <t>
+            <list style='numbers'>
+              <t>SRV-ID (see also <xref target='X509-SRV'/></t>
+              <t>DNS-ID</t>
+              <t>XmppAddr as specified under <xref target='security-certificates-generation-xmppaddr'/></t>
+              <t>CN-ID</t>
+            </list>
+          </t>
         </section>
         <section title="Client Certificates" anchor="security-certificates-validation-client">
           <t>When an XMPP server validates a certificate presented by a client, there are three possible cases, as discussed in the following sections.</t>
           <section title="Case #1" anchor="security-certificates-validation-client-case1">
-            <t>If the client certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server MUST check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-oid'/>.  There are three possible sub-cases:</t>
+            <t>If the client certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server MUST check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-xmppaddr'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
                 <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use this represented JID as the validated identity of the client.<vspace blankLines='1'/></t>
@@ -4127,7 +4141,7 @@ XmppAddr ::= UTF8String
         <t>An informational description<vspace blankLines='1'/></t>
         <t>A reference to the particular section of this document that normatively defines the feature<vspace blankLines='1'/></t>
         <t>Whether the feature applies to the Client role, the Server role, or both (where "N/A" signifies that the feature is not applicable to the specified role)<vspace blankLines='1'/></t>
-        <t>Whether the feature MUST or SHOULD be implemented, where the capitalized terms are to be understood as described in <xref target='TERMS'/></t>
+        <t>Whether the feature MUST or SHOULD be implemented, where the capitalized terms are to be understood as described in <xref target='KEYWORDS'/></t>
       </list>
     </t>
     <t>The feature set specified here attempts to adhere to the concepts and formats proposed by Larry Masinter within the IETF's NEWTRK Working Group in 2005, as captured in <xref target='INTEROP'/>.  Although this feature set is more detailed than called for by <xref target="REPORTS"/>, it provides a suitable basis for the generation of implementation reports to be submitted in support of advancing this specification from Proposed Standard to Draft Standard in accordance with <xref target="PROCESS"/>.</t>
@@ -4729,6 +4743,47 @@ XmppAddr ::= UTF8String
 <format type='TXT' octets='24013' target='ftp://ftp.isi.edu/in-notes/rfc2782.txt' />
 </reference>
 
+<reference anchor="KEYWORDS">
+<front>
+<title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
+<author initials='S.' surname='Bradner' fullname='Scott Bradner'>
+<organization>Harvard University</organization>
+<address>
+<postal>
+<street>1350 Mass.  Ave.</street>
+<street>Cambridge</street>
+<street>MA 02138</street></postal>
+<phone>- +1 617 495 3864</phone>
+<email>sob@harvard.edu</email></address></author>
+<date month='March' year='1997' />
+<area>General</area>
+<keyword>keyword</keyword>
+<abstract>
+<t>
+   In many standards track documents several words are used to signify
+   the requirements in the specification.  These words are often
+   capitalized.  This document defines these words as they should be
+   interpreted in IETF documents.  Authors who follow these guidelines
+   should incorporate this phrase near the beginning of their document:
+
+<list>
+<t>
+      The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL
+      NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;,  &quot;MAY&quot;, and
+      &quot;OPTIONAL&quot; in this document are to be interpreted as described in
+      RFC 2119.
+</t></list></t>
+<t>
+   Note that the force of these words is modified by the requirement
+   level of the document in which they are used.
+</t></abstract></front>
+<seriesInfo name='BCP' value='14' />
+<seriesInfo name='RFC' value='2119' />
+<format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
+<format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
+<format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
+</reference>
+
 <reference anchor="LANGTAGS">
 <front>
 <title>Tags for Identifying Languages</title>
@@ -4901,47 +4956,6 @@ XmppAddr ::= UTF8String
 <seriesInfo name='STD' value='7' />
 <seriesInfo name='RFC' value='793' />
 <format type='TXT' octets='172710' target='ftp://ftp.isi.edu/in-notes/rfc793.txt' />
-</reference>
-
-<reference anchor="TERMS">
-<front>
-<title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
-<author initials='S.' surname='Bradner' fullname='Scott Bradner'>
-<organization>Harvard University</organization>
-<address>
-<postal>
-<street>1350 Mass.  Ave.</street>
-<street>Cambridge</street>
-<street>MA 02138</street></postal>
-<phone>- +1 617 495 3864</phone>
-<email>sob@harvard.edu</email></address></author>
-<date month='March' year='1997' />
-<area>General</area>
-<keyword>keyword</keyword>
-<abstract>
-<t>
-   In many standards track documents several words are used to signify
-   the requirements in the specification.  These words are often
-   capitalized.  This document defines these words as they should be
-   interpreted in IETF documents.  Authors who follow these guidelines
-   should incorporate this phrase near the beginning of their document:
-
-<list>
-<t>
-      The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL
-      NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;,  &quot;MAY&quot;, and
-      &quot;OPTIONAL&quot; in this document are to be interpreted as described in
-      RFC 2119.
-</t></list></t>
-<t>
-   Note that the force of these words is modified by the requirement
-   level of the document in which they are used.
-</t></abstract></front>
-<seriesInfo name='BCP' value='14' />
-<seriesInfo name='RFC' value='2119' />
-<format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
-<format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
-<format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
 </reference>
 
 <reference anchor='TLS'>
@@ -6911,7 +6925,7 @@ specifications of each URI scheme.
           <t>Removed the hard two-connection rule for server-to-server streams.</t>
           <t>More clearly specified the certificate profile for both public key certificates and issuer certificates.</t>
           <t>Added the &lt;reset/&gt; streams error condition to handle expired/revoked certificates or the addition of security-critical features to an existing stream.</t>
-          <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
+          <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, &lt;transition-needed/&gt;, and &lt;unexpected-command/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified the process of DNS SRV lookups and fallbacks.</t>
           <t>Clarified the handling of SASL security layers.</t>
