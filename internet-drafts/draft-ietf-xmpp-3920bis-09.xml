@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="June" day="29"/>
+    <date year="2010" month="June" day="30"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -3427,7 +3427,7 @@ S: </stream:stream>
       </section>
     </section>
     <section title="Server-to-Server Examples" anchor="examples-s2s">
-      <t>The following examples show the data flow for a server negotiating an XML stream with another server, exchanging XML stanzas, and closing the negotiated stream.  The initiating server ("Server1") is im.example.com; the receiving server ("Server2") is example.net and it requires use of TLS; im.example.com presents a certificate and authenticates via the SASL EXTERNAL mechanism.  It is assumed that before sending the initial stream header, Server1 has already resolved an SRV record of _xmpp-server._tcp.example.net and has opened a TCP connection to the advertised port at the resolved IP address.</t>
+      <t>The following examples show the data flow for a server negotiating an XML stream with another server, exchanging XML stanzas, and closing the negotiated stream.  The initiating server ("Server1") is im.example.com; the receiving server ("Server2") is example.net and it requires use of TLS; im.example.com presents a certificate and authenticates via the SASL EXTERNAL mechanism.  It is assumed that before sending the initial stream header, Server1 has already resolved an SRV record of _xmpp-server._tcp.example.net and has opened a TCP connection to the advertised port at the resolved IP address. Note how Server1 uses a default namespace ("jabber:server") and prefixes for stream-related elements, whereas Server2 uses prefix-free canonicalization.</t>
       <section title="TLS" anchor="examples-s2s-tls">
         <figure>
           <preamble>Step 1: Server1 initiates stream to Server2:</preamble>
@@ -3443,23 +3443,22 @@ S1: <stream:stream
         <figure>
           <preamble>Step 2: Server2 responds by sending a response stream header to Server1:</preamble>
           <artwork><![CDATA[
-S2: <stream:stream
+S2: <stream
       from='example.net'
       id='hTiXkW+ih9k2SqdGkk/AZi0OJ/Q='
       to='im.example.com'
       version='1.0'
-      xmlns='jabber:server'
-      xmlns:stream='http://etherx.jabber.org/streams'>
+      xmlns='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
         <figure>
           <preamble>Step 3: Server2 sends stream features to Server1 (only the STARTTLS extension at this point):</preamble>
           <artwork><![CDATA[
-S2: <stream:features>
+S2: <features xmlns='http://etherx.jabber.org/streams'>
       <starttls xmlns='urn:ietf:params:xml:ns:xmpp-tls'>
         <required/>
       </starttls>
-    </stream:features>
+    </features>
           ]]></artwork>
         </figure>
         <figure>
@@ -3479,7 +3478,7 @@ S2: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
           <artwork><![CDATA[
 S2: <failure xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
 
-S2: </stream:stream>
+S2: </stream>
           ]]></artwork>
         </figure>
         <t>Step 6: Server1 and Server2 attempt to complete TLS negotiation via TCP (see <xref target='TLS'/> for details).</t>
@@ -3500,19 +3499,18 @@ S1: <stream:stream
         <figure>
           <preamble>Step 8: Server2 sends a response stream header to Server1 along with available stream features (including a preference for the SASL EXTERNAL mechanism):</preamble>
           <artwork><![CDATA[
-S2: <stream:stream
+S2: <stream
       from='example.net'
       id='RChdjlgj/TIBcbT9Keu31zDihH4='
       to='im.example.com'
       version='1.0'
-      xmlns='jabber:server'
-      xmlns:stream='http://etherx.jabber.org/streams'>
+      xmlns='http://etherx.jabber.org/streams'>
 
-S2: <stream:features>
+S2: <features xmlns='http://etherx.jabber.org/streams'>
       <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
         <mechanism>EXTERNAL</mechanism>
       </mechanisms>
-    </stream:features>
+    </features>
           ]]></artwork>
         </figure>
         <figure>
@@ -3535,7 +3533,7 @@ S2: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
       <not-authorized/>
     </failure>
 
-S2: </stream:stream>
+S2: </stream>
           ]]></artwork>
          </figure>
         <figure>
@@ -3552,15 +3550,14 @@ S1: <stream:stream
         <figure>
           <preamble>Step 12: Server2 responds by sending a stream header to Server1 along with any additional features (or, in this case, an empty features element):</preamble>
           <artwork><![CDATA[
-S2: <stream:stream
+S2: <stream
       from='example.net'
       id='MbbV2FeojySpUIP6J91qaa+TWHM='
       to='im.example.com'
       version='1.0'
-      xmlns='jabber:server'
-      xmlns:stream='http://etherx.jabber.org/streams'>
+      xmlns='http://etherx.jabber.org/streams'>
 
-S2: <stream:features/>
+S2: <features xmlns='http://etherx.jabber.org/streams'/>
           ]]></artwork>
         </figure>
       </section>
@@ -3589,7 +3586,7 @@ S1: </stream:stream>
         <t>Consistent with the recommended stream closing handshake, Server2 closes the stream as well:</t>
         <figure>
           <artwork><![CDATA[
-S2: </stream:stream>
+S2: </stream>
           ]]></artwork>
         </figure>
         <t>Server1 now terminates the underlying TCP connection.</t>
@@ -3796,7 +3793,7 @@ S2: </stream:stream>
       <t>This order has important security characteristics, as described throughout these security considerations.</t>
     </section>
     <section title="Confidentiality and Integrity" anchor="security-confidentiality">
-      <t>The use of Transport Layer Security (TLS) for encrypting XML streams provides a reliable mechanism for the ensuring the confidentiality and integrity of data exchanged between a client and a server or between two servers.  Therefore TLS helps to protect against eavesdropping, password sniffing, man-in-the-middle attacks, and stanza replays, insertion, deletion, and modification over an XML stream.  XMPP clients and servers MUST support TLS as defined under <xref target='tls'/>.</t>
+      <t>The use of Transport Layer Security (TLS) with non-null cipher suites provides a reliable mechanism for the ensuring the confidentiality and integrity of data exchanged between a client and a server or between two servers.  Therefore TLS helps to protect against eavesdropping, password sniffing, man-in-the-middle attacks, and stanza replays, insertion, deletion, and modification over an XML stream.  XMPP clients and servers MUST support TLS as defined under <xref target='tls'/>.</t>
       <t><list style='empty'><t>Security Note: The confidentiality and integrity of a stream can be ensured by methods other than TLS, e.g. by means of a SASL mechanism that involves negotiation of a security layer.</t></list></t>
     </section>
     <section title="Peer Entity Authentication" anchor="security-authentication">
