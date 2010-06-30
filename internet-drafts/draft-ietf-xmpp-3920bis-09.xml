@@ -1305,11 +1305,11 @@ I: <stream:error>
           </figure>
         </section>
         <section title="unsupported-stanza-type" anchor="streams-error-conditions-unsupported-stanza-type">
-          <t>The initiating entity has sent a first-level child of the stream that is not supported by the server or consistent with the default namespace.</t>
-          <t>(In the following example, the client attempts to send an XML stanza of &lt;pubsub/&gt; when the default namespace is "jabber:client".)</t>
+          <t>The initiating entity has sent a first-level child of the stream that is not supported by the server, either because the receiving entity does not understand the namespace or because receiving entity does not understand the element name for the applicable namespace (which might be the default namespace).</t>
+          <t>(In the following example, the client attempts to send a first-level child element of &lt;pubsub/&gt; qualified by the 'jabber:client' namespace, but the schema for that namespace defines no such element.)</t>
           <figure>
             <artwork><![CDATA[
-C: <pubsub>
+C: <pubsub xmlns='jabber:client'>
      <publish node='princely_musings'>
        <item id='ae890ac52d0df67ed7cfdf51b644e901'>
          <entry xmlns='http://www.w3.org/2005/Atom'>
@@ -1703,7 +1703,7 @@ R: <stream:features>
       </section>
       <section title="Mechanism Offers" anchor="sasl-rules-offers">
         <t>If the receiving entity considers <xref target='tls'>TLS negotiation</xref> to be mandatory before use of a particular SASL authentication mechanism will be acceptable, the receiving entity MUST NOT advertise that mechanism in its list of available SASL authentication mechanisms prior to successful TLS negotiation.</t>
-        <t>If during prior TLS negotiation the initiating entity presented a certificate that is acceptable to the receiving entity for purposes of strong identity verification in accordance with local service policies, the receiving entity MUST offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>) and SHOULD prefer that mechanism to enable mutual authentication.  However, the EXTERNAL mechanism MAY be offered under other circumstances as well.</t>
+        <t>If during prior TLS negotiation the initiating entity presented a certificate that is acceptable to the receiving entity for purposes of strong identity verification in accordance with local service policies (e.g., because the receiving entity expects that the initiating entity will be able to authenticate and authorize as the identity provided in an unexpired, unrevoked certificate that is anchored to a root trusted by the receiving entity), then the receiving entity MUST offer the SASL EXTERNAL mechanism to the initiating entity during SASL negotiation (refer to <xref target="SASL"/>) and SHOULD prefer that mechanism to enable mutual authentication.  However, the EXTERNAL mechanism MAY be offered under other circumstances as well.</t>
         <t>See <xref target="security-mti"/> regarding mechanisms that MUST be supported; naturally, other SASL mechanisms MAY be supported as well.  Best practices for the use of SASL in the context of XMPP are described in <xref target='XEP-0175'/> for the ANONYMOUS mechanism and in <xref target='XEP-0178'/> for the EXTERNAL mechanism.</t>
       </section>
       <section title="Data Formatting" anchor="sasl-rules-data">
@@ -2056,26 +2056,6 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
           ]]></artwork>
         </figure>
         <t><list style='empty'><t>Security Note: An XMPP client MUST treat a &lt;transition-needed/&gt; SASL error with extreme caution, SHOULD NOT provide a plaintext password over an XML stream that is not encrypted via Transport Layer Security, and MUST warn a human user before allowing the user to provide a plaintext password over an unencrypted connection.  Even so, the attacker could be located on the server, attempting to capture the plaintext password.</t></list></t>
-      </section>
-      <section title="unexpected-command" anchor="sasl-errors-unexpected-command">
-        <t>During SASL negotiation, the initiating entity sent a command that is unexpected, as follows:</t>
-        <t>
-          <list style='symbols'>
-            <t>Sending &lt;challenge/&gt;, &lt;failure/&gt;, or &lt;success/&gt;.</t>
-            <t>Sending &lt;abort/&gt; or &lt;response/&gt; before sending &lt;auth/&gt;.</t>
-            <t>Sending non-SASL data before the SASL negotiation completed.</t>
-          </list>
-        </t>
-        <t>However, the receiving entity MAY (1) ignore unexpected commands instead of returning a SASL error, or (2) return an appropriate stream error (e.g., &lt;not-authorized/&gt;).  In addition, the initiating entity SHOULD ignore unexpected commands (e.g., &lt;abort/&gt;, &lt;auth/&gt;, or &lt;response/&gt;) from the receiving entity.</t>
-        <figure>
-          <artwork><![CDATA[
-I: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
-
-R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-     <unexpected-command/>
-   </failure>
-          ]]></artwork>
-        </figure>
       </section>
     </section>
     <section title="SASL Definition" anchor="sasl-def">
@@ -2727,7 +2707,7 @@ E: <presence
    </presence>
             ]]></artwork>
           </figure>
-          <t><list style='empty'><t>Implementation Note: Enforcement of the format for XMPP localparts is the responsibility of the service at which the associated account or entity is located (e.g., the example.com service is responsible for returning &lt;jid-malformed/&gt; errors related to all JIDs of the form &lt;localpart@example.com&gt;), whereas enforcement of the format for XMPP domainparts is the responsibility of the service that seeks to route a stanza to the service identified by that domainpart (e.g., the example.org service is responsible for returning &lt;jid-malformed/&gt; errors related to stanzas that users of that service have to tried send to JIDs of the form &lt;localpart@example.com&gt;).</t></list></t>
+          <t><list style='empty'><t>Implementation Note: Enforcement of the format for XMPP localparts is primarily the responsibility of the service at which the associated account or entity is located (e.g., the example.com service is responsible for returning &lt;jid-malformed/&gt; errors related to all JIDs of the form &lt;localpart@example.com&gt;), whereas enforcement of the format for XMPP domainparts is primarily the responsibility of the service that seeks to route a stanza to the service identified by that domainpart (e.g., the example.org service is responsible for returning &lt;jid-malformed/&gt; errors related to stanzas that users of that service have to tried send to JIDs of the form &lt;localpart@example.com&gt;).  However, any entity that detects a malformed JID MAY return this error.</t></list></t>
         </section>
         <section title="not-acceptable" anchor="stanzas-error-conditions-not-acceptable">
           <t>The recipient or server understands the request but cannot process it because the request does not meet criteria defined by the recipient or server (e.g., a request to subscribe to information that does not simultaneously include configuration parameters needed by the recipient); the associated error type SHOULD be "modify".</t>
@@ -3680,7 +3660,7 @@ S2: </stream:stream>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
       <t>If the domainpart of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server itself, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  As described in the following sections, there are two possible cases.</t>
-      <t><list style='empty'><t>Security Note: These rules apply only client-to-server streams.  As described under <xref target='stanzas-attributes-to-s2s'/>, a server MUST NOT accept a stanza over a server-to-server stream if the domainpart of the JID in the 'to' atttribute does not match a hostname serviced by the receiving server.</t></list></t>
+      <t><list style='empty'><t>Security Note: These rules apply only client-to-server streams.  As described under <xref target='stanzas-attributes-to-s2s'/>, a server MUST NOT accept a stanza over a server-to-server stream if the domainpart of the JID in the 'to' attribute does not match a hostname serviced by the receiving server.</t></list></t>
       <section title="Existing Stream" anchor="rules-remote-existing">
         <t>If a server-to-server stream already exists between the two domains, the sender's server will attempt to route the stanza to the authoritative server for the remote domain over the existing stream.</t>
       </section>
@@ -6926,7 +6906,7 @@ specifications of each URI scheme.
           <t>Removed the hard two-connection rule for server-to-server streams.</t>
           <t>More clearly specified the certificate profile for both public key certificates and issuer certificates.</t>
           <t>Added the &lt;reset/&gt; streams error condition to handle expired/revoked certificates or the addition of security-critical features to an existing stream.</t>
-          <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, &lt;transition-needed/&gt;, and &lt;unexpected-command/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
+          <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified the process of DNS SRV lookups and fallbacks.</t>
           <t>Clarified the handling of SASL security layers.</t>
