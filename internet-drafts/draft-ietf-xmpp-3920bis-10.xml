@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3920bis-09" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-ietf-xmpp-3920bis-10" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="June" day="30"/>
+    <date year="2010" month="July" day="6"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -350,7 +350,7 @@ R: <stream:features/>
       </section>
       <section title="Determination of Addresses" anchor="streams-negotiation-address">
         <t>After the parties to an XML stream have completed the appropriate aspects of stream negotiation (typically <xref target='sasl'>SASL negotiation</xref> and, for client-to-server streams, <xref target="bind">resource binding</xref>) the receiving entity for a stream MUST determine the initiating entity's JID.</t>
-        <t>For client-to-server communication, the client's bare JID (&lt;localpart@domainpart&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resourcepart of the full JID (&lt;localpart@domainpart/resource&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.  A client MUST NOT attempt to guess at its JID but instead MUST consider its JID to be whatever the server returns to it during SASL negotiation (bare JID) or resource binding (full JID).</t>
+        <t>For client-to-server communication, the client's bare JID (&lt;localpart@domainpart&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during <xref target='sasl'>SASL negotiation</xref>.  The resourcepart of the full JID (&lt;localpart@domainpart/resource&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.  A client MUST NOT attempt to guess at its JID but instead MUST consider its JID to be whatever the server returns to it during resource binding.</t>
         <t>For server-to-server communication, the initiating server's JID MUST be the authentication identity communicated by the initiating entity during <xref target='sasl'>SASL negotiation</xref>; in the absence of SASL negotiation (e.g., when the older server dialback protocol is used as specified in <xref target='XEP-0220'/>), the receiving server MAY consider the authentication identity to be the 'from' address on the initial stream header sent after TLS negotiation (information contained in stream headers sent before successful TLS negotation can be modified in transit by a third party).  Note that authorization identities are not allowed during SASL negotiation for server-to-server streams; for details, see under <xref target="sasl-rules-authzid"/>.</t>
         <t>The receiving entity MUST ensure that the resulting JID (including localpart, domainpart, resourcepart, and separator characters) conforms to the canonical format for XMPP addresses defined in <xref target='XMPP-ADDR'/>; to meet this restriction, the receiving entity MAY replace the JID sent by the initiating entity with the canonicalized JID as determined by the receiving entity.</t>
       </section>
@@ -414,29 +414,46 @@ R: <stream:features/>
     </section>
 
     <section title="Closing a Stream" anchor="streams-close">
-      <section title="Process" anchor="streams-close-process">
-        <t>An XML stream between two entities can be closed at any time, either because a specific stream error has occurred or in the absence of an error (e.g., when a client simply ends its session).</t>
-        <t>A stream is closed by sending a closing &lt;/stream&gt; tag.</t>
-        <figure>
-          <artwork><![CDATA[
+      <t>An XML stream between two entities can be closed at any time, either because a specific stream error has occurred or in the absence of an error (e.g., when a client simply ends its session).</t>
+      <t>A stream is closed by sending a closing &lt;/stream&gt; tag.</t>
+      <figure>
+        <artwork><![CDATA[
 S: </stream:stream>
-          ]]></artwork>
-        </figure>
-        <t>The entity that sends the closing stream tag SHOULD behave as follows:</t>
-        <t>
-          <list style='numbers'>
-            <t>Wait for the other party to also close its stream before terminating the underlying TCP connection (this gives the other party an opportunity to finish transmitting any data in the opposite direction before the TCP connection is terminated).<vspace blankLines='1'/></t>
-            <t>Refrain from initiating the sending of further data over that stream but continue to process data sent by the other entity (and, if necessary, react to such data).<vspace blankLines='1'/></t>
-            <t>Consider both streams to be void if the other party does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is a matter of implementation or deployment).<vspace blankLines='1'/></t>
-            <t>After receiving a reciprocal closing stream tag from the other party or waiting a reasonable amount of time with no response, MUST terminate the underlying TCP connection or connections.</t>
-          </list>
-        </t>
+        ]]></artwork>
+      </figure>
+      <t>The entity that sends the closing stream tag SHOULD behave as follows:</t>
+      <t>
+        <list style='numbers'>
+          <t>Wait for the other party to also close its stream before terminating the underlying TCP connection (this gives the other party an opportunity to finish transmitting any data in the opposite direction before the TCP connection is terminated).<vspace blankLines='1'/></t>
+          <t>Refrain from initiating the sending of further data over that stream but continue to process data sent by the other entity (and, if necessary, react to such data).<vspace blankLines='1'/></t>
+          <t>Consider both streams to be void if the other party does not send its closing stream tag within a reasonable amount of time (where the definition of "reasonable" is a matter of implementation or deployment).<vspace blankLines='1'/></t>
+          <t>After receiving a reciprocal closing stream tag from the other party or waiting a reasonable amount of time with no response, MUST terminate the underlying TCP connection.</t>
+        </list>
+      </t>
+    </section>
+
+    <section title="Handling of Silent Peers" anchor="streams-silence">
+      <t>When an entity that is a party to a stream has not received any XMPP traffic from its stream peer for some period of time, the peer might appear to be silent.  There are several reasons why this might happen:</t>
+      <t>
+        <list style='numbers'>
+          <t>The peer is idle and simply has not sent any XMPP traffic over the XML stream.<vspace blankLines='1'/></t>
+          <t>The XML stream is broken despite the fact that the underlying TCP connection is alive.<vspace blankLines='1'/></t>
+          <t>The underlying TCP connection is dead.</t>
+        </list>
+      </t>
+      <t>These three conditions are best handled separately, as described in the following sections.</t>
+      <section title="Idle Peer" anchor="streams-silence-idle">
+        <t>If the stream peer is idle at the XMPP application layer, it is appropriate for the entity to simply close the stream using the handshake described under <xref target='streams-close'/>.  The timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle peers, since experience has shown that doing so improves the reliability of communication over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='XMPP-IM'/>; therefore it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established fairly frequently (e.g. at least every 24 hours) if they are timed out because the peer is idle.</t> 
       </section>
-      <section title="Handling of Idle Streams" anchor="streams-close-idle">
-        <t>An XML stream can become idle when neither entity has sent XMPP traffic over the stream for some period of time.  There are many reasons why a stream might be, or appear to be, idle (e.g., simple inactivity or a lost network connection at a level below XMPP).</t>
-        <t>One common method for preventing a stream from going idle is to send a space character (U+0020) between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>; the sending of such a space character is properly called a WHITESPACE KEEPALIVE (the term "whitespace ping" is often used, despite the fact that it is not a ping since no "pong" is possible).  Other connection-testing methods include the application-level pings described in <xref target="XEP-0199"/> and the more comprehensive stream management protocol described in <xref target="XEP-0198"/>.</t>
-        <t>Implementers are advised to support whichever connection-testing methods they deem appropriate, but to carefully weigh the network impact of such methods against the benefits of discovering idle streams in a timely manner.  The length of time between the use of any particular connection test is very much a matter of local service policy and depends strongly on the network environment and usage scenarios of a given deployment and connection type; at the time of writing, it is RECOMMENDED that any such test be performed not more than once every 5 minutes and that, ideally, such checks will be initiated by clients rather than servers.  Those who implement XMPP software and deploy XMPP services are encouraged to seek additional advice regarding appropriate timing of stream-level keepalives, particularly when power-constrained devices are used (e.g., in mobile environments).</t>
-        <t>In the absence of such methods, an entity MAY time out the stream after some period of time.  The timeout period is a matter of implementation and local service policy;  however, it is RECOMMENDED to be liberal in accepting idle streams, since experience has shown that doing so improves the reliability of communication over XMPP networks.  In particular, it is typically more efficient to maintain a stream between two servers than it is to aggressively timeout such a stream, especially with regard to synchronization of presence information as described in <xref target='XMPP-IM'/>; therefore it is RECOMMENDED to maintain such a stream since experience has shown that server-to-server streams are cyclical and typically need to be re-established fairly frequently (e.g. at least every 24 hours) if they are timed out.</t> 
+      <section title="Broken Stream" anchor="streams-silence-broken">
+        <t>In this case, the peer never responds to XMPP traffic that the entity sends, whether normal stanzas or specialized stream-checking traffic such as the application-level pings defined in <xref target="XEP-0199"/> or the more comprehensive stream management protocol defined in <xref target="XEP-0198"/>.  It is appropriate for the entity to terminate a broken stream using the &lt;connection-timeout/&gt; stream error described under <xref target='streams-error-conditions-connection-timeout'/>.</t>
+      </section>
+      <section title="Dead Connection" anchor="streams-silence-dead">
+        <t>If the underlying TCP connection is dead, stream-level checks (e.g., <xref target="XEP-0199"/> and <xref target="XEP-0198"/>) are ineffective.  Therefore it is unnecessary to close the stream with or without an error, and it is appropriate instead to simply close the TCP connection.</t>
+        <t>One common method for checking the TCP connection is to send a space character (U+0020) between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>; the sending of such a space character is properly called a WHITESPACE KEEPALIVE (the term "whitespace ping" is often used, despite the fact that it is not a ping since no "pong" is possible).</t>
+      </section>
+      <section title="Use of Checking Methods" anchor="streams-silence-check">
+        <t>Implementers are advised to support whichever stream-checking and connection-checking methods they deem appropriate, but to carefully weigh the network impact of such methods against the benefits of discovering broken streams and dead TCP connections in a timely manner.  The length of time between the use of any particular check is very much a matter of local service policy and depends strongly on the network environment and usage scenarios of a given deployment and connection type; at the time of writing, it is RECOMMENDED that any such check be performed not more than once every 5 minutes and that, ideally, such checks will be initiated by clients rather than servers.  Those who implement XMPP software and deploy XMPP services are encouraged to seek additional advice regarding appropriate timing of stream-checking and connection-checking methods, particularly when power-constrained devices are being used (e.g., in mobile environments).</t>
       </section>
     </section>
 
@@ -888,7 +905,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="connection-timeout" anchor="streams-error-conditions-connection-timeout">
-          <t>One party is closing the stream because it has reason to believe that the other party has permanently lost the ability to communicate over the stream.  The lack of ability to communicate can be discovered using various methods, such as whitespace keepalives as specified under <xref target='streams-close-idle'/>, XMPP-level pings as defined in <xref target='XEP-0199'/>, and XMPP stream management as defined in <xref target='XEP-0198'/>.</t>
+          <t>One party is closing the stream because it has reason to believe that the other party has permanently lost the ability to communicate over the stream.  The lack of ability to communicate can be discovered using various methods, such as whitespace keepalives as specified under <xref target='streams-close'/>, XMPP-level pings as defined in <xref target='XEP-0199'/>, and XMPP stream management as defined in <xref target='XEP-0198'/>.</t>
           <figure>
             <artwork><![CDATA[
 P: <stream:error>
@@ -1526,7 +1543,16 @@ S: <stream:error>
         <t>If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is necessary to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
       </section>
       <section title="Renegotiation" anchor="tls-rules-renegotiation">
-        <t>XMPP entities MUST NOT attempt TLS renegotiation, and if either party to a TLS-protected stream detects a TLS renegotiation attempt it MUST immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
+        <t>The TLS protocol allows either party in a TLS-protected channel to initiate a new handshake that establishes new cryptographic parameters.  There are some rare cases in which such a TLS renegotiation might be justified, including (1) refreshing encryption keys, (2) wrapping the TLS sequence number as explained in Section 6.1 of <xref target='TLS'/>, and (3) protecting client credentials by completing server authentication first and then completing client authentication over the protected channel.  In XMPP, for the first two cases it is preferable to use an XMPP stream reset (as described under <xref target='streams-error-conditions-reset'/>) instead of performing TLS renegotiation.  The third case has slightly improved security characteristics when the TLS client (which might be an XMPP server) presents credentials to the TLS server, however that slight benefit is in general outweighed by the complexity of supporting TLS renegotiation.</t>
+        <t>Therefore:</t>
+        <t>
+          <list style='numbers'>
+            <t>XMPP entities SHOULD NOT attempt TLS renegotiation.</t>
+            <t>If a party that does not support TLS renegotiation detects a TLS renegotiation attempt, it SHOULD immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
+            <t>If a party that does support TLS Renegotiation Extension <xref target='TLS-NEG'/> detects a TLS renegotiation attempt not using the TLS Renegotiation Extension, it SHOULD immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
+            <t>Support for TLS renegotiation is OPTIONAL; however, if an XMPP implementation supports TLS renegotiation, it MUST implement and make use of the TLS Renegotiation Extension defined in <xref target='TLS-NEG'/>.</t>
+          </list>
+        </t>
       </section>
       <section title="TLS Extensions" anchor="tls-rules-extensions">
         <t>Either party to a stream MAY include any TLS extension during the TLS negotiation itself.  This is a matter for the TLS layer, not the XMPP layer.</t>
@@ -3732,7 +3758,7 @@ S2: </stream>
     </section>
 
     <section title="Whitespace" anchor="xml-whitespace">
-      <t>Except where explicitly disallowed (e.g., during <xref target='tls'>TLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref>), either entity MAY send whitespace as separators between XML stanzas or between any other first-level elements sent over the stream.  One common use for sending such whitespace is explained under <xref target='streams-close-idle'/>.</t>
+      <t>Except where explicitly disallowed (e.g., during <xref target='tls'>TLS negotiation</xref> and <xref target='sasl'>SASL negotiation</xref>), either entity MAY send whitespace as separators between XML stanzas or between any other first-level elements sent over the stream.  One common use for sending such whitespace is explained under <xref target='streams-close'/>.</t>
     </section>
 
     <section title="XML Versions" anchor="xml-versions">
@@ -5995,6 +6021,24 @@ specifications of each URI scheme.
 <t>This document describes extensions that may be used to add functionality to Transport Layer Security (TLS). It provides both generic extension mechanisms for the TLS handshake client and server hellos, and specific extensions using these generic mechanisms.&lt;/t>&lt;t> The extensions may be used by TLS clients and servers. The extensions are backwards compatible: communication is possible between TLS clients that support the extensions and TLS servers that do not support the extensions, and vice versa. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='4366' />
 <format type='TXT' octets='66344' target='ftp://ftp.isi.edu/in-notes/rfc4366.txt' />
+</reference>
+
+<reference anchor='TLS-NEG'>
+<front>
+<title>Transport Layer Security (TLS) Renegotiation Indication Extension</title>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<author initials='M.' surname='Ray' fullname='M. Ray'>
+<organization /></author>
+<author initials='S.' surname='Dispensa' fullname='S. Dispensa'>
+<organization /></author>
+<author initials='N.' surname='Oskov' fullname='N. Oskov'>
+<organization /></author>
+<date year='2010' month='February' />
+<abstract>
+<t>Secure Socket Layer (SSL) and Transport Layer Security (TLS) renegotiation are vulnerable to an attack in which the attacker forms a TLS connection with the target server, injects content of his choice, and then splices in a new TLS connection from a client.  The server treats the client's initial TLS handshake as a renegotiation and thus believes that the initial data transmitted by the attacker is from the same entity as the subsequent client data.  This specification defines a TLS extension to cryptographically tie renegotiations to the TLS connections they are being performed over, thus preventing this attack. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5746' />
+<format type='TXT' octets='33790' target='http://www.rfc-editor.org/rfc/rfc5746.txt' />
 </reference>
 
 <reference anchor='URN-OID'>
