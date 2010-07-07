@@ -10,12 +10,20 @@
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization>Cisco</organization>
+      <organization>Cisco Systems, Inc.</organization>
       <address>
+        <postal>
+          <street>1899 Wyknoop Street, Suite 600</street>
+          <city>Denver</city>
+          <region>CO</region>
+          <code>80202</code>
+          <country>USA</country>
+        </postal>
+        <phone>+1-303-308-3282</phone>
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="April" day="25"/>
+    <date year="2010" month="July" day="7"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -26,8 +34,7 @@
     <keyword>XML</keyword>
     <keyword>Extensible Markup Language</keyword>
     <abstract>
-      <t>This document defines extensions to core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779.</t>
-      <t>This document obsoletes RFC 3921.</t>
+      <t>This document defines extensions to core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779.  This document obsoletes RFC 3921.</t>
     </abstract>
   </front>
 
@@ -35,46 +42,36 @@
 
   <section title="Introduction" anchor="intro">
     <section title="Overview" anchor="intro-overview">
-      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language <xref target="XML"/> for streaming XML data in close to real time between any two (or more) network-aware entities.  XMPP is typically used to exchange messages, share presence information, and engage in structured request-response interactions.  The core features of XMPP defined in <xref target="XMPP-CORE"/> provide the building blocks for many types of near-real-time applications, which can be layered on top of the core by sending application-specific data qualified by particular XML namespaces (refer to <xref target="XML-NAMES"/>).  This document defines XMPP extensions that provide the basic functionality expected of an instant messaging (IM) and presence application as defined in <xref target="IMP-REQS"/>.</t>
-      <t>As a result of extensive implementation and deployment experience with XMPP since 2004, as well as more formal interoperability testing carried out under the auspices of the XMPP Standards Foundation (XSF), this document reflects consensus from the XMPP developer community regarding XMPP's basic instant messaging and presence features.  In particular, this document incorporates the following backward-compatible changes from RFC 3921:</t>
-      <t>
-        <list style='symbols'>
-          <t>Incorporated corrections and errata</t>
-          <t>Added examples throughout</t>
-          <t>Clarified and more completely specified matters that were underspecified</t>
-          <t>Removed the protocol for session establishment, which was deemed unnecessary</t>
-          <t>Modified error handling related to presence stanzas to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers</t>
-          <t>Added optional server support for pre-approved presence subscriptions</t>
-          <t>Added optional 'parent' attribute to &lt;thread/&gt; element</t>
-          <t>Transferred documentation for the communications blocking protocol from this specification to a separate specification</t>
-        </list>
-      </t>
-      <t>Therefore, this document defines the basic instant messaging and presence features of XMPP 1.0, thus obsoleting RFC 3921.</t>
+      <t>The Extensible Messaging and Presence Protocol (XMPP) is an application profile of the Extensible Markup Language <xref target="XML"/> that enables the near-real-time exchange of structured yet extensible data between any two or more network entities.  The core features of XMPP defined in <xref target="XMPP-CORE"/> provide the building blocks for many types of near-real-time applications, which can be layered on top of the core by sending application-specific data qualified by particular XML namespaces (refer to <xref target="XML-NAMES"/>).  This document defines XMPP extensions that provide the basic functionality expected of an instant messaging (IM) and presence application as described in <xref target="IMP-REQS"/>.</t>
+    </section>
+    <section title="History" anchor="intro-history">
+      <t>The basic syntax and semantics of XMPP were developed originally within the Jabber open-source community, mainly in 1999.  In late 2002, the XMPP Working Group was chartered with developing an adaptation of the core Jabber protocol that would be suitable as an IETF instant messaging (IM) and presence technology in accordance with <xref target='IMP-REQS'/>.  In October 2004, <xref target='RFC3920'/> and <xref target='RFC3921'/> were published, representing the most complete definition of XMPP at that time.</t>
+      <t>Since 2004 the Internet community has gained extensive implementation and deployment experience with XMPP, including formal interoperability testing carried out under the auspices of the XMPP Standards Foundation (XSF).  This document incorporates comprehensive feedback from software developers and service providers, including a number of backward-compatible modifications summarized under <xref target='diffs'/>.  As a result, this document reflects the rough consensus of the Internet community regarding the instant messaging and presence features of XMPP 1.0, thus obsoleting RFC 3921.</t>
     </section>
     <section title="Requirements" anchor="intro-requirements">
       <t>Traditionally, instant messaging applications have combined the following factors:</t>
       <t>
         <list style='numbers'>
-          <t><iref item='Roster'/>The central point of focus is a list of one's contacts or "buddies" (in XMPP this list is called a ROSTER).<vspace blankLines='1'/></t>
+          <t>The central point of focus is a list of one's contacts or "buddies" (in XMPP this list is called a ROSTER).<vspace blankLines='1'/></t>
           <t>The purpose of using such an application is to exchange relatively brief text messages with particular contacts in close to real time -- often relatively large numbers of such messages in rapid succession, in the form of a one-to-one CHAT SESSION as described under <xref target='message-chat'/>.<vspace blankLines='1'/></t>
-          <t><iref item='Presence'/>The catalyst for exchanging messages is PRESENCE -- i.e., information about the network availability of particular contacts (thus knowing who is online and available for a one-to-one chat session).<vspace blankLines='1'/></t>
+          <t>The catalyst for exchanging messages is PRESENCE -- i.e., information about the network availability of particular contacts (thus knowing who is online and available for a one-to-one chat session).<vspace blankLines='1'/></t>
           <t>Presence information is provided only to contacts that one has authorized by means of an explicit agreement called a PRESENCE SUBSCRIPTION.<vspace blankLines='1'/></t>
         </list>
       </t>
-      <t>Thus at a high level this document assumes that a user must be able to complete the following use cases:</t>
+      <t>Thus at a high level this document assumes that a user needs to be able to complete the following use cases:</t>
       <t><list style='symbols'>
         <t>Manage items in one's contact list</t>
         <t>Exchange messages with one's contacts</t>
         <t>Exchange presence information with one's contacts</t>
         <t>Manage presence subscriptions to and from one's contacts</t>
       </list></t>
-      <t>Detailed definitions of these functionality areas are contained in RFC 2779 <xref target="IMP-REQS"/>, and the interested reader is referred to that document regarding the requirements addressed herein.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of RFC 2779, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Although XMPP protocol extensions addressing many other functionality areas have been defined in the XMPP Standards Foundation's XEP series (e.g., multi-user text chat as specified in <xref target='XEP-0045'/>), such extensions are not specified in this document because they are not mandated by RFC 2779.</t>
-      <t><list style='empty'><t>Note: RFC 2779 stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, there is no requirement that a service must offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return a &lt;service-unavailable/&gt; stanza error if a client attempt to send a &lt;message/&gt; stanza.)</t></list></t>
+      <t>Detailed definitions of these functionality areas are contained in RFC 2779 <xref target="IMP-REQS"/>, and the interested reader is referred to that document regarding detailed requirements.  While the XMPP instant messaging and presence extensions specified herein meet the requirements of RFC 2779, they were not designed explicitly with that specification in mind, since the base protocol evolved through an open development process within the Jabber open-source community before RFC 2779 was written.  Although XMPP protocol extensions addressing many other functionality areas have been defined in the XMPP Standards Foundation's XEP series (e.g., multi-user text chat as specified in <xref target='XEP-0045'/>), such extensions are not specified in this document because they are not mandated by RFC 2779.</t>
+      <t><list style='empty'><t>Implementation Note: RFC 2779 stipulates that presence services must be separable from instant messaging services and vice-versa; i.e., it must be possible to use the protocol to provide a presence service, an instant messaging service, or both.  Although the text of this document assumes that implementations and deployments will want to offer a unified instant messaging and presence service, it is not mandatory for an XMPP service to offer both a presence service and an instant messaging service, and the protocol makes it possible to offer separate and distinct services for presence and for instant messaging.  (For example, a presence-only service could return a &lt;service-unavailable/&gt; stanza error if a client attempts to send a &lt;message/&gt; stanza.)</t></list></t>
     </section>
     <section title="Functional Summary" anchor="intro-summary">
       <t>This non-normative section provides a developer-friendly, functional summary of XMPP-based instant messaging and presence features; consult the sections that follow for a normative definition of these features.</t>
-      <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions that must be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  These preconditions comprise negotiation of the XML stream and include XML stream establishment, optional channel encryption via Transport Layer Security <xref target='TLS'/>, mandatory authentication via Simple Authentication and Security Layer <xref target='SASL'/>, and binding of a resource to the stream for client addressing.  The reader is referred to <xref target="XMPP-CORE"/> for details regarding these preconditions, and knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
-      <t><list style='empty'><t>Note: <xref target='RFC3921'/> specified one additional precondition: formal establishment of an instant messaging and presence session.  Implementation and deployment experience has shown that this additional step is unnecessary.  However, for backward compatibility an implementation SHOULD still offer that feature and note in the stream feature that negotiation of the feature is discretionary (via the &lt;optional/&gt; child element).  This enables older software to connect while saving newer software to skip a round trip.</t></list></t>
+      <t><xref target="XMPP-CORE"/> specifies how an XMPP client connects to an XMPP server.  In particular, it specifies the preconditions that need to be fulfilled before a client is allowed to send XML stanzas (the basic unit of meaning in XMPP) to other entities on an XMPP network.  These preconditions comprise negotiation of the XML stream and include exchange of XML stream headers, optional channel encryption via Transport Layer Security <xref target='TLS'/>, mandatory authentication via Simple Authentication and Security Layer <xref target='SASL'/>, and binding of a resource to the stream for client addressing.  The reader is referred to <xref target="XMPP-CORE"/> for details regarding these preconditions, and knowledge of <xref target="XMPP-CORE"/> is assumed herein.</t>
+      <t><list style='empty'><t>Interoperability Note: <xref target='RFC3921'/> specified one additional precondition: formal establishment of an instant messaging and presence session.  Implementation and deployment experience has shown that this additional step is unnecessary.  However, for backward compatibility an implementation SHOULD still offer that feature.  This enables older software to connect while letting newer software skip a round trip.</t></list></t>
       <t>Upon fulfillment of the preconditions specified in <xref target="XMPP-CORE"/>, an XMPP client has a long-lived XML stream with an XMPP server, which enables the user controlling that client to send and receive a potentially unlimited number of XML stanzas over the stream.  Such a stream can be used to exchange messages, share presence information, and engage in structured request-response interactions in close to real time.  After negotiation of the XML stream, the typical flow for an instant messaging and presence session is as follows:</t>
       <t>
         <list style='numbers'>
@@ -87,8 +84,8 @@
     </section>
     <section title="Conventions" anchor="intro-conventions">
       <t>This document inherits the terminology defined in <xref target="XMPP-CORE"/>.</t>
-      <t>The following keywords are to be interpreted as described in <xref target="TERMS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
-      <t>For convenience, this document employs the term "user" to refer to the owner of an XMPP account; however, account owners need not be human persons and can be bots, devices, or other non-human applications.</t>
+      <t>The following capitalized keywords are to be interpreted as described in <xref target="KEYWORDS"/>: "MUST", "SHALL", "REQUIRED"; "MUST NOT", "SHALL NOT"; "SHOULD", "RECOMMENDED"; "SHOULD NOT", "NOT RECOMMENDED"; "MAY", "OPTIONAL".</t>
+      <t>For convenience, this document employs the term "user" to refer to the owner of an XMPP account; however, account owners need not be natural persons and can be bots, devices, or other automated applications.</t>
       <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent Unicode characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON).</t>
       <t>In examples, lines have been wrapped for improved readability, "[...]" means elision, and the following prepended strings are used (these prepended strings are not to be sent over the wire):</t>
       <t>
@@ -103,17 +100,17 @@
       </t>
     </section>
     <section title="Acknowledgements" anchor="intro-ack">
-      <t>The editor of this document finds it impossible to appropriately acknowledge the many individuals who have provided comments regarding the protocols defined herein.  However, thanks are due to those who have who have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since the publication of the RFC this document supersedes.  The editor has endeavored to address all such feedback, but is solely responsible for any remaining errors and ambiguities.</t>
-      <t>Portions of the text about roster versioning has been borrowed from <xref target='XEP-0237'/>.</t>
+      <t>The editor of this document finds it impossible to appropriately acknowledge the many individuals who have provided comments regarding the protocols defined in this specification.  However, thanks are due to those who have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since the publication of the RFC this document supersedes.  The editor has endeavored to address all such feedback, but is solely responsible for any remaining errors and ambiguities.</t>
+      <t>Some of the text about roster versioning was borrowed from <xref target='XEP-0237'/> and some of the text about message threads was borrowed from <xref target='XEP-0201'/>.</t>
     </section>
     <section title="Discussion Venue" anchor="intro-discuss">
-      <t>[[ RFC Editor: please remove this section. ]]</t>
       <t>The document editor and the broader XMPP developer community welcome discussion and comments related to the topics presented in this document.  The primary and preferred venue is the &lt;xmpp@ietf.org&gt; mailing list, for which archives and subscription information are available at <eref target='https://www.ietf.org/mailman/listinfo/xmpp'/>.  Related discussions often occur on the &lt;standards@xmpp.org&gt; mailing list, for which archives and subscription information are available at <eref target='http://mail.jabber.org/mailman/listinfo/standards'/>.</t>
     </section>
   </section>
 
   <section title="Managing the Roster" anchor="roster">
-    <t>In XMPP, one's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user can access roster information from any resource.  Because the user's roster can contain confidential data, the server MUST restrict access to this data so that only authorized entities (typically limited to the account owner) are able to retrieve, modify, or delete it.</t>
+    <t>In XMPP, a user's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user can access roster information from any device.</t>
+    <t><list style='empty'><t>Security Note: Because the user's roster can contain confidential data, the server MUST restrict access to this data so that only authorized entities (typically limited to the account owner) are able to retrieve, modify, or delete it.</t></list></t>
     <section title="Syntax and Semantics" anchor="roster-syntax">
       <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The detailed syntax and semantics are defined in the following sections.</t>
       <section title="Ver Attribute" anchor="roster-syntax-ver">
@@ -122,35 +119,46 @@
         <t>Use of the 'ver' attribute is described more fully under <xref target='roster-versioning'/>.</t>
       </section>
       <section title="Roster Items" anchor="roster-syntax-items">
-        <t>The &lt;query/&gt; element MAY contain one or more &lt;item/&gt; children, each describing a unique ROSTER ITEM or "contact".</t>
+        <t>The &lt;query/&gt; element inside a <xref target='roster-syntax-actions-set'>roster set</xref> contains one &lt;item/&gt; child, and a <xref target='roster-syntax-actions-result'>roster result</xref> typically contains multiple &lt;item/&gt; children.  Each &lt;item/&gt; element describes a unique ROSTER ITEM or "contact".</t>
         <t>The syntax of the &lt;item/&gt; element is described in the following sections.</t>
         <section title="Ask Attribute" anchor="roster-syntax-items-ask">
           <t>The 'ask' attribute is used to specify certain subscription sub-states; for details, see <xref target='sub-request-outbound'/>.</t>
           <t>Inclusion of the 'ask' attribute is OPTIONAL.</t>
         </section>
-        <section title="Jid Attribute" anchor="roster-syntax-items-jid">
+        <section title="JID Attribute" anchor="roster-syntax-items-jid">
           <t>The 'jid' attribute specifies the Jabber Identifier (JID) that uniquely identifies the roster item.</t>
           <t>Inclusion of the 'jid' attribute is REQUIRED.</t>
         </section>
         <section title="Name Attribute" anchor="roster-syntax-items-name">
-          <t>The 'name' attribute specifies the "handle" to be associated with the JID, as determined by the user (not the contact).  Although the value of the 'name' attribute MAY have meaning to a human user, it is opaque to the server.  However, the 'name' attribute MAY be used by the server for matching purposes within the context of various XMPP extensions, in which case the values MUST be compared only after application of the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>.</t>
+          <t>The 'name' attribute specifies the "handle" to be associated with the JID, as determined by the user (not the contact).  Although the value of the 'name' attribute MAY have meaning to a human user, it is opaque to the server.  However, the 'name' attribute MAY be used by the server for matching purposes within the context of various XMPP extensions (one possible comparison method is that described for XMPP resourceparts in <xref target='XMPP-ADDR'/>).</t>
           <t>Inclusion of the 'name' attribute is OPTIONAL.</t>
         </section>
         <section title="Subscription Attribute" anchor="roster-syntax-items-subscription">
-          <t>The 'subscription' attribute is OPTIONAL; see <xref target='roster-syntax-subscription'/>.</t>
+          <t>The state of the presence subscription is captured in the 'subscription' attribute of the &lt;item/&gt; element.  The defined subscription-related values are:</t>
+          <t>
+            <list style='hanging'>
+              <t hangText="none:">the user does not have a subscription to the contact's presence, and the contact does not have a subscription to the user's presence; this is the default value, so if the subscription attribute is not included then the state is to be understood as "none"<vspace blankLines='1'/></t>
+              <t hangText="to:">the user has a subscription to the contact's presence, but the contact does not have a subscription to the user's presence<vspace blankLines='1'/></t>
+              <t hangText="from:">the contact has a subscription to the user's presence, but the user does not have a subscription to the contact's presence<vspace blankLines='1'/></t>
+              <t hangText="both:">the user and the contact have subscriptions to each other's presence (also called a "mutual subscription")</t>
+            </list>
+          </t>
+          <t>In a <xref target='roster-syntax-actions-result'>roster result</xref>, the client MUST ignore values of the 'subscription' attribute other than "none", "to", "from", or "both".</t>
+          <t>In a <xref target='roster-syntax-actions-push'>roster push</xref>, the client MUST ignore values of the 'subscription' attribute other than "none", "to", "from", "both", or "remove".</t>
+          <t>In a <xref target='roster-syntax-actions-set'>roster set</xref>, the 'subscription' attribute MAY be included with a value of "remove", which indicates that the item is to be removed from the roster; in a roster set the server MUST ignore all values of the 'subscription' attribute other than "remove".</t>
           <t>Inclusion of the 'subscription' attribute is OPTIONAL.</t>
         </section>
         <section title="Group Element" anchor="roster-syntax-items-group">
-          <t>The &lt;group/&gt; child element specifies a category or "bucket" into which the roster item is to be grouped by a client.  An &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, so that roster groups are not exclusive.  Although the XML character data of the &lt;group/&gt; element MAY have meaning to a human user, it is opaque to the server.  However, the &lt;group/&gt; element MAY be used by the server for matching purposes within the context of various XMPP extensions, in which case the data MUST be compared only after application of the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>.</t>
-          <t>Inclusion of the &lt;group/&gt; child element is OPTIONAL.</t>
+          <t>The &lt;group/&gt; child element specifies a category or "bucket" into which the roster item is to be grouped by a client.  An &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, which means that roster groups are not exclusive.  Although the XML character data of the &lt;group/&gt; element MAY have meaning to a human user, it is opaque to the server.  However, the &lt;group/&gt; element MAY be used by the server for matching purposes within the context of various XMPP extensions (one possible comparison method is that described for XMPP resourceparts in <xref target='XMPP-ADDR'/>).</t>
+          <t>Inclusion of the &lt;group/&gt; element is OPTIONAL.  If a <xref target='roster-syntax-actions-set'>roster set</xref> includes no &lt;group/&gt; element, then the item is to be interpreted being affiliated with no group.</t>
         </section>
       </section>
       <section title="Roster Get" anchor="roster-syntax-actions-get">
-        <t><iref item='Roster Get'/>A ROSTER GET is a client's request for the server to send the roster; syntactically it is an IQ stanza of type "get" sent from client to server and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace, where the &lt;query/&gt; element MUST NOT contain any &lt;item/&gt; child elements.</t>
+        <t>A ROSTER GET is a client's request for the server to return the roster; syntactically it is an IQ stanza of type "get" sent from client to server and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace, where the &lt;query/&gt; element MUST NOT contain any &lt;item/&gt; child elements.</t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
-       id='rg1'
+       id='bv1bs71f'
        type='get'>
     <query xmlns='jabber:iq:roster'/>
   </iq>
@@ -158,13 +166,52 @@ C: <iq from='juliet@example.com/balcony'
         </figure>
         <t>The expected outcome of sending a roster get is for the server to return a roster result.</t>
       </section>
+      <section title="Roster Result" anchor="roster-syntax-actions-result">
+        <t>A ROSTER RESULT is the server's response to a roster get; syntactically it is an IQ stanza of type "result" sent from server to client and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace.</t>
+        <t>The &lt;query/&gt; element in a roster result contains one &lt;item/&gt; element for each contact and therefore can contain more than one &lt;item/&gt; element.</t>
+        <figure>
+          <artwork><![CDATA[
+S: <iq id='bv1bs71f'
+       to='juliet@example.com/chamber'
+       type='result'>
+    <query xmlns='jabber:iq:roster' ver='ver7'>
+      <item jid='nurse@example.com'/>
+      <item jid='romeo@example.net'/>
+    </query>
+  </iq>
+          ]]></artwork>
+        </figure>
+        <t>If the roster exists but there are no contacts in the roster, then the server MUST return an IQ-result containing a child &lt;query/&gt; element that in turn contains no &lt;item/&gt; children (i.e. , the server MUST NOT return an empty &lt;iq/&gt; stanza of type 'error').</t>
+        <figure>
+          <artwork><![CDATA[
+S: <iq id='bv1bs71f'
+       to='juliet@example.com/chamber' 
+       type='result'>
+    <query xmlns='jabber:iq:roster' ver='ver9'/>
+  </iq>
+          ]]></artwork>
+        </figure>
+        <t>If the roster does not exist, then the server MUST return a stanza error with a condition of &lt;item-not-found/&gt;.</t>
+        <figure>
+          <artwork><![CDATA[
+S: <iq id='bv1bs71f'
+       to='juliet@example.com/chamber' 
+       type='error'>
+    <error type='auth'>
+      <item-not-found 
+          xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    </error>
+  </iq>
+          ]]></artwork>
+        </figure>
+      </section>
       <section title="Roster Set" anchor="roster-syntax-actions-set">
-        <t><iref item='Roster Set'/>A ROSTER SET is a client's request for the server to modify (i.e., create, update, or delete) a roster item; syntactically it is an IQ stanza of type "set" sent from client to server and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace.</t>
+        <t>A ROSTER SET is a client's request for the server to modify (i.e., create, update, or delete) a roster item; syntactically it is an IQ stanza of type "set" sent from client to server and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace.</t>
         <t>The following rules apply to roster sets:</t>
         <t>
           <list style='numbers'>
             <t>The &lt;query/&gt; element MUST contain one and only one &lt;item/&gt; element.<vspace blankLines='1'/></t>
-            <t>The server MUST ignore any value of the 'subscription' attribute other than "remove" (see <xref target='roster-syntax-subscription'/>).<vspace blankLines='1'/></t>
+            <t>The server MUST ignore any value of the 'subscription' attribute other than "remove" (see <xref target='roster-syntax-items-subscription'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
         <t><list style='empty'><t>Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource of the account whose roster was being updated.  Furthermore, the predecessor to this specification required a server to perform special-case checking of roster set stanzas to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set stanza might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set stanza is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
@@ -181,7 +228,7 @@ C: <iq from='juliet@example.com/balcony'
         </figure>
       </section>
       <section title="Roster Push" anchor="roster-syntax-actions-push">
-        <t><iref item='Roster Push'/>A ROSTER PUSH is a newly created, updated, or deleted roster item that is sent from the server to the client; syntactically it is an IQ stanza of type "set" sent from server to client and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace.</t>
+        <t>A ROSTER PUSH is a newly created, updated, or deleted roster item that is sent from the server to the client; syntactically it is an IQ stanza of type "set" sent from server to client and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace.</t>
         <t>The following rules apply to roster pushes:</t>
         <t>
           <list style='numbers'>
@@ -214,56 +261,16 @@ C: <iq from='juliet@example.com/chamber'
         </figure>
         <t><list style='empty'><t>Note: There is no error case for client processing of roster pushes; if the server receives an IQ of type "error" in response to a roster push it SHOULD ignore the error.</t></list></t>
       </section>
-      <section title="Roster Result" anchor="roster-syntax-actions-result">
-        <t><iref item='Roster Result'/>A ROSTER RESULT is the server's response to a roster get; syntactically it is an IQ stanza of type "result" sent from server to client and containing a &lt;query/&gt; element qualified by the 'jabber:iq:roster' namespace.</t>
-        <t>The &lt;query/&gt; element in a roster result contains one &lt;item/&gt; element for each contact and therefore can contain more than one &lt;item/&gt; element.</t>
-        <figure>
-          <artwork><![CDATA[
-S: <iq id='rg1'
-       to='juliet@example.com/chamber'
-       type='result'>
-    <query xmlns='jabber:iq:roster' ver='ver7'>
-      <item jid='nurse@example.com'/>
-      <item jid='romeo@example.net'/>
-    </query>
-  </iq>
-          ]]></artwork>
-        </figure>
-        <t>If there are no contacts in the roster, then the server MUST return an IQ-result containing a child &lt;query/&gt; element that in turn contains no &lt;item/&gt; children (e.g., the server MUST NOT return an empty &lt;iq/&gt; stanza element).</t>
-        <figure>
-          <artwork><![CDATA[
-S: <iq to='juliet@example.com/chamber' 
-       id='roster_result'
-       type='result'>
-    <query xmlns='jabber:iq:roster' ver='ver9'/>
-  </iq>
-          ]]></artwork>
-        </figure>
-      </section>
-      <section title="Subscription Attribute" anchor="roster-syntax-subscription">
-        <t>The state of the presence subscription in relation to a roster item is captured in the 'subscription' attribute of the &lt;item/&gt; element.  Allowable subscription-related values for this attribute are:</t>
-        <t>
-          <list style='symbols'>
-            <t>"none" -- the user does not have a subscription to the contact's presence, and the contact does not have a subscription to the user's presence; this is the default value, so if the subscription attribute is not included then the state is to be understood as "none"<vspace blankLines='1'/></t>
-            <t>"to" -- the user has a subscription to the contact's presence, but the contact does not have a subscription to the user's presence<vspace blankLines='1'/></t>
-            <t>"from" -- the contact has a subscription to the user's presence, but the user does not have a subscription to the contact's presence<vspace blankLines='1'/></t>
-            <t>"both" -- both the user and the contact have subscriptions to each other's presence (also called a "mutual subscription")<vspace blankLines='1'/></t>
-          </list>
-        </t>
-        <t>In a roster result, the client MUST ignore values of the 'subscription' attribute other than "none", "to", "from", or "both".</t>
-        <t>In a roster push, the client MUST ignore values of the 'subscription' attribute other than "none", "to", "from", "both", or "remove".</t>
-        <t>In a roster set, the value of the 'subscription' attribute MAY be included with a value of "remove", which indicates that the item is to be removed from the roster; the server MUST ignore all values of the 'subscription' attribute other than "remove".</t>
-      </section>
     </section>
 
     <section title="Retrieving the Roster on Login" anchor="roster-login">
-      <t>Upon authenticating with a server and binding a resource (thus becoming a connected resource), a client SHOULD request the roster before sending initial presence (however, because receiving the roster is not necessarily desirable for all resources, e.g., a connection with limited bandwidth, the client's request for the roster is not mandatory).  After a connected resource sends initial presence (see <xref target='presence-initial'/>), it is referred to as an available resource.  If a connected resource or available resource requests the roster, it is referred to as an INTERESTED RESOURCE.  The server MUST send roster pushes to all interested resources.</t>
-      <t><list style='empty'><t>Note: Presence subscription requests are sent to available resources, whereas the roster pushes associated with subscription state changes are sent to interested resources.  Therefore if a resource wishes to receive both subscription requests and roster pushes, it MUST both send initial presence and request the roster.</t></list></t>
-      <t>A client requests the roster by sending a roster get over its stream to the server.</t>
+      <t>Upon authenticating with a server and binding a resource (thus becoming a connected resource as defined in <xref target='XMPP-CORE'/>), a client SHOULD request the roster before sending initial presence (however, because receiving the roster is not necessarily desirable for all resources, e.g., a connection with limited bandwidth, the client's request for the roster is not mandatory).  After a connected resource sends initial presence (see <xref target='presence-initial'/>), it is referred to as an AVAILABLE RESOURCE.  If a connected resource or available resource requests the roster, it is referred to as an INTERESTED RESOURCE.  The server MUST send roster pushes to all interested resources.</t>
+      <t><list style='empty'><t>Implementation Note: Presence subscription requests are sent to available resources, whereas the roster pushes associated with subscription state changes are sent to interested resources.  Therefore if a resource wishes to receive both subscription requests and roster pushes, it MUST both send initial presence and request the roster.</t></list></t>
+      <t>A client requests the roster by sending a roster get over its stream with the server.</t>
       <figure>
         <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
-       id='roster_1'
+       id='hu2bac18'
        type='get'>
      <query xmlns='jabber:iq:roster'/>
    </iq>
@@ -271,7 +278,7 @@ C: <iq from='juliet@example.com/balcony'
       </figure>
       <figure>
         <artwork><![CDATA[
-S: <iq id='roster_1'
+S: <iq id='hu2bac18'
        to='juliet@example.com/balcony'
        type='result'> 
      <query xmlns='jabber:iq:roster' ver='ver11'>
@@ -299,7 +306,7 @@ S: <iq id='roster_1'
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_2'
+       id='ph1xaz53'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='nurse@example.com'
@@ -310,14 +317,13 @@ C: <iq from='juliet@example.com/balcony'
    </iq>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>Note: When a user adds a contact for the purpose of tracking the user's presence subscription to a contact, the user's client SHOULD send a presence subscription request to the contact before generating any roster set related to the contact.  This enables the user's server to enforce any policies relevant to presence subscriptions (e.g., a prohibition on presence subscriptions to full JIDs).  For details, see <xref target='sub'/>.</t></list></t>
       </section>
       <section title="Success Case" anchor="roster-add-success">
-        <t>If the server can successfully process the roster set (i.e., if none of the error cases occurs), it MUST create the roster item in persistent storage.</t>
+        <t>If the server can successfully process the roster set for the new item (i.e., if no error occurs), it MUST create the roster item in persistent storage.</t>
         <t>The server MUST then return an IQ stanza of type "result" to the connected resource that sent the roster set.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq id='roster_2'
+S: <iq id='ph1xaz53'
        to='juliet@example.com/balcony'
        type='result'/>
           ]]></artwork>
@@ -366,27 +372,27 @@ C: <iq from='juliet@example.com/chamber'
       <section title="Error Cases" anchor="roster-add-errors">
         <t>If the server cannot successfully process the roster set, it MUST return a stanza error.  The following error cases are defined (naturally, other stanza errors can occur, such as &lt;internal-server-error/&gt;).</t>
         <t>The server MUST return a &lt;forbidden/&gt; stanza error to the client if the sender of the roster set is not authorized to update the roster (where typically only an authenticated resource of the account itself is so authorized).</t>
-        <t>The server SHOULD return a &lt;bad-request/&gt; stanza error to the client if the roster set violates any of the following conditions:</t>
+        <t>The server SHOULD return a &lt;bad-request/&gt; stanza error to the client if the roster set contains any of the following violations:</t>
         <t>
           <list style='numbers'>
             <t>The &lt;query/&gt; element contains more than one &lt;item/&gt; child element.<vspace blankLines='1'/></t>
-            <t>The &lt;item/&gt; element contains more than one &lt;group/&gt; element, but there are duplicate groups (where duplicates are determined using the Resourceprep profile of stringprep as defined in <xref target='XMPP-CORE'/>).<vspace blankLines='1'/></t>
+            <t>The &lt;item/&gt; element contains more than one &lt;group/&gt; element, but there are duplicate groups (one possible comparison method for determining duplicates is that described for XMPP resourceparts in <xref target='XMPP-ADDR'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>The server SHOULD return a &lt;not-acceptable/&gt; stanza error to the client if the roster set violates any of the following conditions:</t>
+        <t>The server SHOULD return a &lt;not-acceptable/&gt; stanza error to the client if the roster set contains any of the following violations:</t>
         <t>
           <list style='numbers'>
             <t>The value of the 'name' attribute is greater than a server-configured limit.<vspace blankLines='1'/></t>
-            <t>The XML character data of the &lt;group/&gt; element is of zero length.<vspace blankLines='1'/></t>
+            <t>The XML character data of the &lt;group/&gt; element is of zero length (to remove an item from all groups, the client instead needs to exclude any &lt;group/&gt; element from the roster set).<vspace blankLines='1'/></t>
             <t>The XML character data of the &lt;group/&gt; element is greater than a server-configured limit.<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>Alternatively, the server MAY ignore the foregoing violations and process the roster set as best as possible (e.g., process only the first &lt;item/&gt; element, ignore duplicate &lt;group/&gt; elements, place the roster item in no group or a default group if the &lt;group/&gt; element is empty, and truncate 'name' attributes and &lt;group/&gt; elements that are too long).</t>
+        <t>As an alternative to returning a &lt;bad-request/&gt; or &lt;not-acceptable/&gt; stanza error, the server MAY ignore the foregoing violations and process the roster set as best as possible (e.g., process only the first &lt;item/&gt; element, ignore duplicate &lt;group/&gt; elements, place the roster item in no group or a default group if the &lt;group/&gt; element is empty, and truncate 'name' attributes and &lt;group/&gt; elements that are too long).</t>
         <figure>
           <preamble>Error: Roster set initiated by unauthorized entity</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_3'
+       id='ix7s53v2'
        to='romeo@example.net'
        type='set'>
      <query xmlns='jabber:iq:roster'>
@@ -394,7 +400,7 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='roster_3'
+S: <iq id='ix7s53v2'
        to='juliet@example.com/balcony'
        type='error'>
     <error type='auth'>
@@ -407,7 +413,7 @@ S: <iq id='roster_3'
           <preamble>Error: Roster set contains more than one item</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_4'
+       id='nw83vcj4'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='nurse@example.com'
@@ -421,7 +427,7 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='roster_4'
+S: <iq id='nw83vcj4'
        to='juliet@example.com/balcony'
        type='error'>
     <error type='modify'>
@@ -434,7 +440,7 @@ S: <iq id='roster_4'
           <preamble>Error: Roster set contains item with oversized handle</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_5'
+       id='yl491b3d'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='nurse@example.com'
@@ -444,7 +450,7 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='roster_5'
+S: <iq id='yl491b3d'
        to='juliet@example.com/balcony'
        type='error'>
      <error type='modify'>
@@ -457,7 +463,7 @@ S: <iq id='roster_5'
           <preamble>Error: Roster set contains duplicate groups</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_6'
+       id='tk3va749'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='nurse@example.com'
@@ -468,7 +474,7 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='roster_6'
+S: <iq id='tk3va749'
        to='juliet@example.com/balcony'
        type='error'>
      <error type='modify'>
@@ -481,7 +487,7 @@ S: <iq id='roster_6'
           <preamble>Error: Roster set contains empty group</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_7'
+       id='fl3b486u'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='nurse@example.com'
@@ -491,7 +497,7 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='roster_7'
+S: <iq id='fl3b486u'
        to='juliet@example.com/balcony'
        type='error'>
      <error type='modify'>
@@ -501,10 +507,10 @@ S: <iq id='roster_7'
           ]]></artwork>
         </figure>
         <figure>
-          <preamble>Error: Roster set contains oversized group</preamble>
+          <preamble>Error: Roster set contains oversized group name</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_8'
+       id='qh3b4v19'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='nurse@example.com'
@@ -514,7 +520,7 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='roster_8'
+S: <iq id='qh3b4v19'
        to='juliet@example.com/balcony'
        type='error'>
      <error type='modify'>
@@ -528,14 +534,14 @@ S: <iq id='roster_8'
           <preamble>Error: Roster set contains sender's JID</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='roster_9'
+       id='ry3vs714'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='juliet@example.com'/>
       </query>
     </iq>
 
-S: <iq id='roster_9'
+S: <iq id='ry3vs714'
        to='juliet@example.com/balcony'
        type='error'>
       <error type='cancel'>
@@ -572,7 +578,7 @@ S: <iq id='roster_9'
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='update_1'
+       id='di43b2x9'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='romeo@example.net'
@@ -584,11 +590,11 @@ C: <iq from='juliet@example.com/balcony'
    </iq>
           ]]></artwork>
         </figure>
-        <t>The user might then want to remove the item from the original group.</t>
+        <t>Sometime later, the user might want to remove the item from the original group.</t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='update_2'
+       id='lf72v157'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='romeo@example.net'
@@ -599,44 +605,41 @@ C: <iq from='juliet@example.com/balcony'
    </iq>
           ]]></artwork>
         </figure>
-        <t>The user might then want to change the handle for the item.</t>
+        <t>The user might want to remove the item from all groups.</t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='update_3'
-       type='set'>
-     <query xmlns='jabber:iq:roster'>
-       <item jid='romeo@example.net'
-             name='MyRomeo'>
-         <group>Lovers</group>
-       </item>
-     </query>
-   </iq>
-          ]]></artwork>
-        </figure>
-        <t>The user might then want to remove the handle altogether (note: including an empty 'name' attribute is equivalent to including no 'name' attribute).</t>
-        <figure>
-          <artwork><![CDATA[
-C: <iq from='juliet@example.com/balcony'
-       id='update_4'
-       type='set'>
-     <query xmlns='jabber:iq:roster'>
-       <item jid='romeo@example.net'
-             name=''>
-         <group>Lovers</group>
-       </item>
-     </query>
-   </iq>
-          ]]></artwork>
-        </figure>
-        <t>The user might then want to remove the item from all groups.</t>
-        <figure>
-          <artwork><![CDATA[
-C: <iq from='juliet@example.com/balcony'
-       id='update_5'
+       id='ju4b62a5'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='romeo@example.net'/>
+     </query>
+   </iq>
+          ]]></artwork>
+        </figure>
+        <t>The user might also want to change the handle for the item.</t>
+        <figure>
+          <artwork><![CDATA[
+C: <iq from='juliet@example.com/balcony'
+       id='gb3sv487'
+       type='set'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'
+             name='MyRomeo'/>
+     </query>
+   </iq>
+          ]]></artwork>
+        </figure>
+        <t>The user might then want to remove the handle altogether.</t>
+        <t><list style='empty'><t>Implementation Note: Including an empty 'name' attribute is equivalent to including no 'name' attribute; both actions set the name to the empty string.</t></list></t>
+        <figure>
+          <artwork><![CDATA[
+C: <iq from='juliet@example.com/balcony'
+       id='o3bx66s5'
+       type='set'>
+     <query xmlns='jabber:iq:roster'>
+       <item jid='romeo@example.net'
+             name=''/>
      </query>
    </iq>
           ]]></artwork>
@@ -652,14 +655,15 @@ C: <iq from='juliet@example.com/balcony'
 
     <section title="Deleting a Roster Item" anchor="roster-delete">
       <section title="Request" anchor="roster-delete-request">
-        <t>At any time, a client can delete an item from his or her roster by sending a roster set and specifying the value of the 'subscription' attribute to be "remove".</t>
+        <t>At any time, a client can delete an item from his or her roster by sending a roster set and specifying a value of "remove" for the 'subscription' attribute.</t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
-       id='delete_1'
+       id='hm4hs97y'
        type='set'>
      <query xmlns='jabber:iq:roster'>
-       <item jid='nurse@example.com' subscription='remove'/>
+       <item jid='nurse@example.com'
+             subscription='remove'/>
      </query>
    </iq>
           ]]></artwork>
@@ -667,7 +671,14 @@ C: <iq from='juliet@example.com/balcony'
       </section>
       <section title="Success Case" anchor="roster-delete-success">
         <t>As with adding a roster item, if the server can successfully process the roster set then it MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource; for details, see <xref target='roster-add'/>.</t>
-        <t>If the user has a presence subscription to the contact or the contact has a presence subscription to the user, the user's server MUST also generate a presence stanza of type "unsubscribe" (to unsubscribe from the contact's presence) or a presence stanza of type "unsubscribed" (to cancel the contact's subscription to the user), or both.</t>
+        <t>In addition, the user's server might need to generate one or more subscription-related presence stanzas, as follows:</t>
+        <t>
+          <list style='numbers'>
+            <t>If the user has a presence subscription to the contact, then the user's server MUST send a presence stanza of type "unsubscribe" to the contact (to unsubscribe from the contact's presence).</t>
+            <t>If the contact has a presence subscription to the user, then the user's server MUST send a presence stanza of type "unsubscribed" to the contact (to cancel the contact's subscription to the user), or both.</t>
+            <t>If the presence subscription is mutual, then the user's server MUST send both a presence stanza of type "unsubscribe" and a presence stanza of type "unsubscribed" to the contact.</t>
+          </list>
+        </t>
         <figure>
           <artwork><![CDATA[
 S: <presence from='juliet@example.com'
@@ -686,7 +697,7 @@ S: <presence from='juliet@example.com'
           <preamble>Error: Roster item not found</preamble>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
-       id='delete_2'
+       id='uj4b1ca8'
        type='set'>
      <query xmlns='jabber:iq:roster'>
        <item jid='[ ... non-existent-jid ... ]' 
@@ -694,17 +705,19 @@ C: <iq from='juliet@example.com/balcony'
      </query>
    </iq>
 
-S: <iq id='delete_2'
+S: <iq id='uj4b1ca8'
        to='juliet@example.com/balcony'
        type='error'>
      <error type='modify'>
-       <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+       <item-not-found 
+           xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
      </error>
    </iq>
           ]]></artwork>
         </figure>
       </section>
     </section>
+
     <section title="Roster Versioning" anchor="roster-versioning">
       <section title="Stream Feature" anchor="roster-versioning-feature">
         <t>If a server supports roster versioning, then it MUST advertise the following stream feature during stream negotiation.</t>
@@ -721,9 +734,9 @@ S: <iq id='delete_2'
         <t>If a client supports roster versioning and the server to which it has connected advertises support for roster versioning as described in the foregoing section, then the client MUST include the 'ver' element in its request for the roster. If the server does not advertise support for roster versioning, the client MUST NOT include the 'ver' attribute. If the client includes the 'ver' attribute in its roster get, it sets the attribute's value to the version ID associated with its last cache of the roster.</t>
         <figure>
           <artwork><![CDATA[
-C: <iq from='romeo@montague.lit/home'
+C: <iq from='romeo@example.net/home'
        id='r1h3vzp7'
-       to='romeo@montague.lit'
+       to='romeo@example.net'
        type='get'>
      <query xmlns='jabber:iq:roster' ver='ver14'/>
    </iq>
@@ -736,42 +749,42 @@ C: <iq from='romeo@montague.lit/home'
         <t>Whether or not the roster has been modified since the version ID enumerated by the client, the server MUST either return the complete roster as described under <xref target='roster-syntax-actions-result'/> (including a 'ver' attribute that signals the latest version) or return an empty IQ-result (thus indicating that any roster modifications will be sent via roster pushes, as described below). In general, unless returning the complete roster would (1) use less bandwidth than sending individual roster pushes to the client (e.g., if the roster contains only a few items) or (2) the server cannot associate the version ID with any previous version it has on file, the server SHOULD send an empty IQ-result and then send the modifications (if any) via roster pushes.</t>
         <figure>
           <artwork><![CDATA[
-S: <iq from='romeo@montague.lit'
+S: <iq from='romeo@example.net'
        id='r1h3vzp7'
-       to='romeo@montague.lit/home'
+       to='romeo@example.net/home'
        type='result'/>
           ]]></artwork>
         </figure>
-        <t>Note: This empty IQ-result is different from an empty &lt;query/&gt; element, thus disambiguating this usage from an empty roster.</t>
-        <t>If the roster has not been modified since the version ID enumerated by the client, the server will simply not send any roster pushes to the client (until and unless some relevant event triggers a roster push during the lifetime of the client's session).</t>
+        <t><list style='empty'><t>Implementation Note: This empty IQ-result is different from an empty &lt;query/&gt; element, thus disambiguating this usage from an empty roster.</t></list></t>
+        <t>If roster versioning is enabled and the roster has not been modified since the version ID enumerated by the client, the server will simply not send any roster pushes to the client (until and unless some relevant event triggers a roster push during the lifetime of the client's session).</t>
         <t>If the roster has been modified since the version ID enumerated by the client, the server MUST then send one roster push to the client for each roster item that has been modified since the version ID enumerated by the client. (We call a roster push that is sent for purposes of roster version synchronization an "interim roster push".)</t>
         <t><list style='empty'><t>Definition: A ROSTER MODIFICATION is any modification to the roster data that would result in a roster push to a connected client. Therefore internal states related to roster processing within the server that would not result in a roster push to a connected client do not necessitate a change to the version.</t></list></t>
         <figure>
           <artwork><![CDATA[
-S: <iq from='romeo@montague.lit'
+S: <iq from='romeo@example.net'
        id='ah382g67'
-       to='romeo@montague.lit/home'
+       to='romeo@example.net/home'
        type='set'>
      <query xmlns='jabber:iq:roster' ver='ver34'>
-       <item jid='tybalt@shakespeare.lit' subscription='remove'/>
+       <item jid='tybalt@example.org' subscription='remove'/>
      </query>
    </iq>
 
-S: <iq from='romeo@montague.lit'
+S: <iq from='romeo@example.net'
        id='b2gs90j5'
-       to='romeo@montague.lit/home'
+       to='romeo@example.net/home'
        type='set'>
      <query xmlns='jabber:iq:roster' ver='ver42'>
-       <item jid='bill@shakespeare.lit' subscription='both'/>
+       <item jid='bill@example.org' subscription='both'/>
      </query>
    </iq>
 
-S: <iq from='romeo@montague.lit'
+S: <iq from='romeo@example.net'
        id='c73gs419'
-       to='romeo@montague.lit/home'
+       to='romeo@example.net/home'
        type='set'>
      <query xmlns='jabber:iq:roster' ver='ver72'>
-       <item jid='nurse@shakespeare.lit'
+       <item jid='nurse@example.org'
              name='Nurse'
              subscription='to'>
          <group>Servants</group>
@@ -779,12 +792,12 @@ S: <iq from='romeo@montague.lit'
      </query>
    </iq>
 
-S: <iq from='romeo@montague.lit'
+S: <iq from='romeo@example.net'
        id='dh361f35'
-       to='romeo@montague.lit/home'
+       to='romeo@example.net/home'
        type='set'>
      <query xmlns='jabber:iq:roster' ver='ver96'>
-       <item jid='juliet@shakespeare.lit'
+       <item jid='juliet@example.org'
              name='Juliet'
              subscription='both'>
          <group>VIPs</group>
@@ -797,26 +810,26 @@ S: <iq from='romeo@montague.lit'
         <t>
           <list style='numbers'>
             <t>Imagine that the client had an active presence session for the entire time between its cached roster version (say, "ver14") and the new roster version (say, "ver96").<vspace blankLines='1'/></t>
-            <t>During that time, the client might have received roster pushes related to various roster versions. However, some of those roster pushes might have contained intermediate updates to the same roster item (e.g., modifications to the subscription state for bill@shakespeare.lit from "none" to "to" and from "to" to "both").<vspace blankLines='1'/></t>
-            <t>The interim roster pushes would not include all of the intermediate steps, only the final result of all modifications applied to each item while the client was in fact offline (say, "ver34", "ver42", "ver72", and "ver96").<vspace blankLines='1'/></t>
+            <t>During that time, the client might have received roster pushes related to various roster versions (which might have been, say, "ver27" and "ver49"). However, some of those roster pushes might have contained intermediate updates to the same roster item (e.g., modifications to the subscription state for bill@example.org from "none" to "to" and from "to" to "both").<vspace blankLines='1'/></t>
+            <t>The interim roster pushes would not include all of the intermediate steps, only the final result of all modifications applied to each item while the client was in fact offline (which might have been, say, "ver34", "ver42", "ver72", and "ver96").<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>The client MUST handle an "interim roster push" in the same way it handles any roster push (indeed, from the client's perspective it cannot tell the difference between an "interim" roster push and a "live" roster push). If the client's session ends before it receives all of the interim roster pushes, when requesting the roster after reconnection it SHOULD request the version associated with the last roster push it received during the session that was disconnected, not the version associated with the roster result it received at the start of the session that was disconnected.</t>
+        <t>The client MUST handle an "interim roster push" in the same way it handles any roster push (indeed, from the client's perspective it cannot tell the difference between an "interim" roster push and a "live" roster push). If the client's session ends before it receives all of the interim roster pushes, when requesting the roster after reconnection it SHOULD request the version associated with the last roster push it received during the session that was disconnected, not the version associated with the roster result it received at the start of that session.</t>
         <t>When roster versioning is enabled, the server MUST include the updated roster version with each roster push. Roster pushes MUST occur in order of modification and the version contained in a roster push MUST be unique.  Even if the client has not included the 'ver' attribute in its roster gets or sets, the server SHOULD include the 'ver' attribute on all roster pushes and results that it sends to the client.</t>
-        <t><list style='empty'><t>Note: Implementation guidelines and more detailed examples for roster versioning are provided in <xref target='XEP-0237'/>.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: Guidelines and more detailed examples for roster versioning are provided in <xref target='XEP-0237'/>.</t></list></t>
       </section>
     </section>
   </section>
 
   <section title="Managing Presence Subscriptions" anchor="sub">
-    <t><iref item='Presence Subscription'/>In order to protect the privacy of instant messaging users, presence information is disclosed only to other entities that a user has approved.  When a user has agreed that another entity is allowed to view its presence, the entity is said to have a SUBSCRIPTION to the user's presence.  <iref item='Contact'/>An entity that has a subscription to a user's presence or to which a user has a presence subscription is called a CONTACT (in this document the term "contact" is also used in a less strict sense to refer to a potential contact or an item in a user's roster).</t>
+    <t>In order to protect the privacy of instant messaging users, presence information is disclosed only to other entities that a user has approved.  When a user has agreed that another entity is allowed to view its presence, the entity is said to have a SUBSCRIPTION to the user's presence.  An entity that has a subscription to a user's presence or to which a user has a presence subscription is called a CONTACT (in this document the term "contact" is also used in a less strict sense to refer to a potential contact or an item in a user's roster).</t>
     <t>In XMPP, a subscription lasts across presence sessions; indeed, it lasts until the contact unsubscribes or the user cancels the previously-granted subscription.</t>
     <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes ("subscribe", "unsubscribe", "subscribed", and "unsubscribed").</t>
     <t><list style='empty'><t>Note: When a server processes or generates an outbound presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST stamp the outgoing presence stanza with the bare JID &lt;node@domain&gt; of the sending entity, not the full JID &lt;node@domain/resource&gt;.  Enforcement of this rule simplifies the presence subscription model and helps to prevent presence leaks; for information about presence leaks, refer to the security considerations of <xref target='XMPP-CORE'/>.</t></list></t>
     <t>Subscription states are reflected in the rosters of both the user and the contact.  Complete details regarding these subscription states can be found <xref target='substates'/>; those details are not provided in this section, which simply narrates the protocol flows for common use cases related to presence subscriptions.</t>
 
     <section title="Requesting a Subscription" anchor="sub-request">
-      <t><iref item='Subscription Request'/>A SUBSCRIPTION REQUEST is a request from a user for authorization to permanently subscribe to a contact's presence information; syntactically it is a presence stanza whose 'type' attribute has a value of "subscribe".  A subscription request is generated by a user's client, processed by the (potential) contact's server, and acted on by the contact via the contact's client.  The workflow is described in the following sections.</t>
+      <t>A SUBSCRIPTION REQUEST is a request from a user for authorization to permanently subscribe to a contact's presence information; syntactically it is a presence stanza whose 'type' attribute has a value of "subscribe".  A subscription request is generated by a user's client, processed by the (potential) contact's server, and acted on by the contact via the contact's client.  The workflow is described in the following sections.</t>
       <t><list style='empty'><t>Note: Presence subscription requests are sent to available resources, whereas the roster pushes associated with subscription state changes are sent to interested resources.  Therefore if a resource wishes to receive both subscription requests and roster pushes, it MUST both send initial presence and request the roster.</t></list></t>
       <section title="Client Generation of Outbound Subscription Request" anchor="sub-request-gen">
         <t>A user's client generates a subscription request by sending a presence stanza of type "subscribe" and specifying a 'to' address of the potential contact's bare JID &lt;contact@domain&gt;.</t>
@@ -1256,15 +1269,15 @@ CS: <presence from='romeo@example.net'
 
     <section title="Overview" anchor="presence-overview">
       <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication (the terms "online" and "offline" are also used).  In XMPP, a user's availability is signalled when a client controlled by the user generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when a client generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".</t>
-      <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence to its server, and its server then broadcasts that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL"/>, an entity that generates presence is a "presentity" and the entities that receive presence are "subscribers").  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable". <iref item='Presence Broadcast'/> This kind of presence is called BROADCAST PRESENCE. <iref item='Directed Presence'/> (A client can also send DIRECTED PRESENCE, i.e., a presence stanza with a 'to' address; this is less common but is sometimes used to send presence to entities that are not subscribed to the user's presence; see <xref target='presence-directed'/>.)</t>
-      <t><iref item='Presence Session'/>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a PRESENCE SESSION at its server by sending <xref target='presence-initial'>initial presence</xref>, where the presence session is terminated by sending <xref target='presence-unavailable'>unavailable presence</xref>.  <iref item='Available Resource'/> For the duration of its presence session, a connected resource (in the terminology of <xref target="XMPP-CORE"/>) is said to be an AVAILABLE RESOURCE.</t>
+      <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence to its server, and its server then broadcasts that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL"/>, an entity that generates presence is a "presentity" and the entities that receive presence are "subscribers").  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable".  This kind of presence is called BROADCAST PRESENCE.  (A client can also send DIRECTED PRESENCE, i.e., a presence stanza with a 'to' address; this is less common but is sometimes used to send presence to entities that are not subscribed to the user's presence; see <xref target='presence-directed'/>.)</t>
+      <t>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a PRESENCE SESSION at its server by sending <xref target='presence-initial'>initial presence</xref>, where the presence session is terminated by sending <xref target='presence-unavailable'>unavailable presence</xref>.  For the duration of its presence session, a connected resource (in the terminology of <xref target="XMPP-CORE"/>) is said to be an AVAILABLE RESOURCE.</t>
       <t>In XMPP-based applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, it is not necessary for XMPP-based applications to combine messaging and presence functionality, and can provide standalone presence features without messaging (in addition, XMPP servers do not require information about network availability in order to successfully route message and IQ stanzas).</t>
       <t><list style='empty'><t>Note: In the following examples, the "user" is juliet@example.com and the user has three contacts in her roster with a subscription state of "from" or "both": romeo@example.net, mercutio@example.com, and benvolio@example.net.</t></list></t>
     </section>
 
     <section title="Initial Presence" anchor="presence-initial">
       <section title="Client Generation of Initial Presence" anchor="presence-initial-gen">
-        <t><iref item='Initial Presence'/>After completing the preconditions described in <xref target="XMPP-CORE"/> (REQUIRED) and requesting the roster (RECOMMENDED), a client signals its availability for communication by sending INITIAL PRESENCE to its server, i.e., a presence stanza with no 'to' address (indicating that it is meant to be broadcast by the server on behalf of the client) and no 'type' attribute (indicating the user's availability).</t>
+        <t>After completing the preconditions described in <xref target="XMPP-CORE"/> (REQUIRED) and requesting the roster (RECOMMENDED), a client signals its availability for communication by sending INITIAL PRESENCE to its server, i.e., a presence stanza with no 'to' address (indicating that it is meant to be broadcast by the server on behalf of the client) and no 'type' attribute (indicating the user's availability).</t>
         <figure>
           <artwork><![CDATA[
 UC: <presence/>
@@ -1273,7 +1286,7 @@ UC: <presence/>
         <t>The initial presence stanza MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content.</t>
       </section>
 
-      <section title="Server Processing of Outbound Presence" anchor="presence-initial-outbound">
+      <section title="Server Processing of Outbound Initial Presence" anchor="presence-initial-outbound">
         <t>Upon receiving initial presence from a client, the user's server MUST send the initial presence stanza from the full JID &lt;user@domain/resource&gt; of the user to all contacts that are subscribed to the user's presence; such contacts are those for which a JID is present in the user's roster with the 'subscription' attribute set to a value of "from" or "both".</t>
         <figure>
           <artwork><![CDATA[
@@ -1300,7 +1313,7 @@ US: <presence from='juliet@example.com/balcony'
         <t>In the absence of presence information about the user's contacts, the user's server MUST also send presence probes to the user's contacts on behalf of the user as specified under <xref target='presence-probe'/>.</t>
       </section>
 
-      <section title="Server Processing of Inbound Presence" anchor="presence-initial-inbound">
+      <section title="Server Processing of Inbound Initial Presence" anchor="presence-initial-inbound">
         <t>Upon receiving presence from the user, the contact's server MUST deliver the user's presence stanza to all of the contact's available resources.</t>
         <figure>
           <artwork><![CDATA[
@@ -1318,7 +1331,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>If there is no such contact, the contact's server MUST silently ignore the presence stanza.</t>
       </section>
 
-      <section title="Client Processing of Inbound Presence" anchor="presence-initial-client">
+      <section title="Client Processing of Initial Presence" anchor="presence-initial-client">
         <t>When the contact's client receives presence from the user, it SHOULD proceed as follows:</t>
         <t>
           <list style='numbers'>
@@ -1331,7 +1344,7 @@ CS: <presence from='juliet@example.com/balcony'
     </section>
 
     <section title="Presence Probes" anchor="presence-probe">
-      <t><iref item='Presence Probe'/>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare or full JID of the subscribed user and the value of the 'to' address SHOULD be the bare JID of the contact to which the user is subscribed (since presence subscriptions are based on the bare JID) but MAY be a full JID for the contact.  (Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>.)</t>
+      <t>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare or full JID of the subscribed user and the value of the 'to' address SHOULD be the bare JID of the contact to which the user is subscribed (since presence subscriptions are based on the bare JID) but MAY be a full JID for the contact.  (Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>.)</t>
       <figure>
         <artwork><![CDATA[
 US: <presence from='juliet@example.com/balcony' 
@@ -1436,7 +1449,7 @@ CS: <presence from='romeo@example.net/bar'
     </section>
 
     <section title="Subsequent Presence Broadcast" anchor="presence-broadcast">
-      <section title="Client Generation of Presence Broadcast" anchor="presence-broadcast-gen">
+      <section title="Client Generation of Subsequent Presence Broadcast" anchor="presence-broadcast-gen">
         <t>After sending initial presence, the user's client can update its availability for broadcasting at any time during its session by sending a presence stanza with no 'to' address and no 'type' attribute.</t>
         <figure>
           <artwork><![CDATA[
@@ -1514,7 +1527,7 @@ CS: <presence from='juliet@example.com/balcony'
         </figure>
       </section>
 
-      <section title="Client Processing of Inbound Presence" anchor="presence-broadcast-client">
+      <section title="Client Processing of Subsequent Presence" anchor="presence-broadcast-client">
         <t>When the contact's client receives presence from the user, it SHOULD proceed as follows:</t>
         <t>
           <list style='numbers'>
@@ -1528,7 +1541,7 @@ CS: <presence from='juliet@example.com/balcony'
 
     <section title="Unavailable Presence" anchor="presence-unavailable">
       <section title="Client Generation of Unavailable Presence" anchor="presence-unavailable-gen">
-        <t><iref item='Unavailable Presence'/>Before ending its presence session with a server, the user's client SHOULD gracefully become unavailable by sending UNAVAILABLE PRESENCE, i.e., a presence stanza that possesses no 'to' attribute and that possesses a 'type' attribute whose value is "unavailable".</t>
+        <t>Before ending its presence session with a server, the user's client SHOULD gracefully become unavailable by sending UNAVAILABLE PRESENCE, i.e., a presence stanza that possesses no 'to' attribute and that possesses a 'type' attribute whose value is "unavailable".</t>
         <figure>
           <artwork><![CDATA[
 UC: <presence type='unavailable'/>
@@ -1616,7 +1629,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>If the contact's server is optimizing subsequent presence delivery as described under <xref target='presence-broadcast'/>, it MUST also note that the user is unavailable and appropriately update its internal representation of which entities are online.</t>
       </section>
 
-      <section title="Client Processing of Inbound Unavailable Presence" anchor="presence-unavailable-client">
+      <section title="Client Processing of Unavailable Presence" anchor="presence-unavailable-client">
         <t>When the contact's client receives an unavailable notification from the user, it SHOULD proceed as follows:</t>
         <t>
           <list style='numbers'>
@@ -1684,78 +1697,78 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
       <section title="Child Elements" anchor="presence-syntax-children">
         <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are provided only if the presence stanza possesses no 'type' attribute, although exceptions are noted in the text that follows.</t>
-      </section>
-      <section title="Show Element" anchor="presence-show">
-        <t>The OPTIONAL &lt;show/&gt; element specifies the particular availability sub-state of an entity or a specific resource thereof.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  There are no attributes defined for the &lt;show/&gt; element.  The XML character data of the &lt;show/&gt; element is not human-readable.  The XML character data MUST be one of the following (additional availability states could be defined through a child element of the presence stanza that is qualified by a namespace other than the default namespace):</t>
-        <t>
-          <list style='symbols'>
-            <t>away -- The entity or resource is temporarily away.<vspace blankLines='1'/></t>
-            <t>chat -- The entity or resource is actively interested in chatting.<vspace blankLines='1'/></t>
-            <t>dnd -- The entity or resource is busy (dnd = "Do Not Disturb").<vspace blankLines='1'/></t>
-            <t>xa -- The entity or resource is away for an extended period (xa = "eXtended Away").<vspace blankLines='1'/></t>
-          </list>
-        </t>
-        <t>If no &lt;show/&gt; element is provided, the entity is assumed to be online and available.</t>
-        <t>Any specialized processing of availability states by recipients and intermediate routers is up to the implementation (e.g., incorporation of availability states into stanza routing and delivery logic).</t>
-      </section>
-      <section title="Status Element" anchor="presence-status">
-        <t>The OPTIONAL &lt;status/&gt; element contains human-readable XML character data specifying a natural-language description of an entity's availability.  It is normally used in conjunction with the show element to provide a detailed description of an availability state (e.g., "In a meeting") when the presence stanza has no 'type' attribute.</t>
-        <figure>
-          <artwork><![CDATA[
+        <section title="Show Element" anchor="presence-syntax-children-show">
+          <t>The OPTIONAL &lt;show/&gt; element specifies the particular availability sub-state of an entity or a specific resource thereof.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  There are no attributes defined for the &lt;show/&gt; element.  The XML character data of the &lt;show/&gt; element is not human-readable.  The XML character data MUST be one of the following (additional availability states could be defined through a child element of the presence stanza that is qualified by a namespace other than the default namespace):</t>
+          <t>
+            <list style='symbols'>
+              <t>away -- The entity or resource is temporarily away.<vspace blankLines='1'/></t>
+              <t>chat -- The entity or resource is actively interested in chatting.<vspace blankLines='1'/></t>
+              <t>dnd -- The entity or resource is busy (dnd = "Do Not Disturb").<vspace blankLines='1'/></t>
+              <t>xa -- The entity or resource is away for an extended period (xa = "eXtended Away").<vspace blankLines='1'/></t>
+            </list>
+          </t>
+          <t>If no &lt;show/&gt; element is provided, the entity is assumed to be online and available.</t>
+          <t>Any specialized processing of availability states by recipients and intermediate routers is up to the implementation (e.g., incorporation of availability states into stanza routing and delivery logic).</t>
+        </section>
+        <section title="Status Element" anchor="presence-syntax-children-status">
+          <t>The OPTIONAL &lt;status/&gt; element contains human-readable XML character data specifying a natural-language description of an entity's availability.  It is normally used in conjunction with the show element to provide a detailed description of an availability state (e.g., "In a meeting") when the presence stanza has no 'type' attribute.</t>
+          <figure>
+            <artwork><![CDATA[
 <presence from='romeo@example.net/orchard'
           xml:lang='en'>
   <show>dnd</show>
   <status>Wooing Juliet</status>
 </presence>
-          ]]></artwork>
-        </figure>
-        <t>There are no attributes defined for the &lt;status/&gt; element, with the exception of the 'xml:lang' attribute inherited from XML.  Multiple instances of the &lt;status/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
-        <figure>
-          <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+          <t>There are no attributes defined for the &lt;status/&gt; element, with the exception of the 'xml:lang' attribute inherited from XML.  Multiple instances of the &lt;status/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
+          <figure>
+            <artwork><![CDATA[
 <presence from='romeo@example.net/orchard'
           xml:lang='en'>
   <show>dnd</show>
   <status>Wooing Juliet</status>
   <status xml:lang='cs'>Dvo&#x0159;&#x00ED;m se Julii</status>
 </presence>
-          ]]></artwork>
-        </figure>
-        <t>A presence stanza of type "unavailable" MAY also include a &lt;status/&gt; element to provide detailed information about why the entity is going offline.</t>
-        <figure>
-          <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+          <t>A presence stanza of type "unavailable" MAY also include a &lt;status/&gt; element to provide detailed information about why the entity is going offline.</t>
+          <figure>
+            <artwork><![CDATA[
 <presence from='romeo@example.net/orchard'
           type='unavailable'
           xml:lang='en'>
   <status>Busy IRL</status>
 </presence>
-          ]]></artwork>
-        </figure>
-        <t>The &lt;status/&gt; child MAY also be sent in a subscription-related presence stanza (i.e., type "subscribe", "subscribed", "unsubscribe", or "unsubscribed") to provide a description of the action.  The receiving client MAY present this &lt;status/&gt; information to a human user (see <xref target='security'/>).</t>
-        <figure>
-          <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+          <t>The &lt;status/&gt; child MAY also be sent in a subscription-related presence stanza (i.e., type "subscribe", "subscribed", "unsubscribe", or "unsubscribed") to provide a description of the action.  The receiving client MAY present this &lt;status/&gt; information to a human user (see <xref target='security'/>).</t>
+          <figure>
+            <artwork><![CDATA[
 <presence from='romeo@example.net'
           to='nurse@example.com'
           type='subscribe'>
   <status>Hi, Juliet told to add you to my buddy list.</status>
 </presence>
-          ]]></artwork>
-        </figure>
-      </section>
-      <section title="Priority Element" anchor="presence-priority">
-        <t>The OPTIONAL &lt;priority/&gt; element contains non-human-readable XML character data that specifies the priority level of the resource.  The value MUST be an integer between -128 and +127.  A presence stanza MUST NOT contain more than one &lt;priority/&gt; element.  There are no attributes defined for the &lt;priority/&gt; element.</t>
-        <figure>
-          <artwork><![CDATA[
+            ]]></artwork>
+          </figure>
+        </section>
+        <section title="Priority Element" anchor="presence-syntax-children-priority">
+          <t>The OPTIONAL &lt;priority/&gt; element contains non-human-readable XML character data that specifies the priority level of the resource.  The value MUST be an integer between -128 and +127.  A presence stanza MUST NOT contain more than one &lt;priority/&gt; element.  There are no attributes defined for the &lt;priority/&gt; element.</t>
+          <figure>
+            <artwork><![CDATA[
 <presence xml:lang='en'>
   <show>dnd</show>
   <status>Wooing Juliet</status>
   <status xml:lang='cs'>Dvo&#x0159;&#x00ED;m se Julii</status>
   <priority>1</priority>
 </presence>
-          ]]></artwork>
-        </figure>
-        <t>If no priority is provided, the processing server or client MUST consider the priority to be zero ("0").</t>
-        <t>The client's server MAY override the priority value provided by the client (e.g., in order to impose a message handling rule of delivering a message intended for the account's bare JID to all of the account's available resources); if the server does so, it MUST include the modified priority value (typically zero) when it echoes the client's presence back to itself.</t>
-        <t>For information regarding the semantics of priority values in stanza processing within instant messaging and presence applications, refer to <xref target="rules"/>.</t>
+            ]]></artwork>
+          </figure>
+          <t>If no priority is provided, the processing server or client MUST consider the priority to be zero ("0").</t>
+          <t>The client's server MAY override the priority value provided by the client (e.g., in order to impose a message handling rule of delivering a message intended for the account's bare JID to all of the account's available resources); if the server does so, it MUST include the modified priority value (typically zero) when it echoes the client's presence back to itself.</t>
+          <t>For information regarding the semantics of priority values in stanza processing within instant messaging and presence applications, refer to <xref target="rules"/>.</t>
+        </section>
       </section>
       <section title="Extended Content" anchor="presence-extended">
         <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any child element that is qualified by a namespace other than the default namespace; this applies to the presence stanza as well.</t>
@@ -1778,7 +1791,7 @@ CS: <presence from='juliet@example.com/balcony'
   <section title="Exchanging Messages" anchor="message">
     <t>Once a client has authenticated with a server and bound a resource to an XML stream as described in <xref target="XMPP-CORE"/>, an XMPP server will route XML stanzas to and from that client.  One kind of stanza that can be exchanged is &lt;message/&gt; (if, that is, messaging functionality is enabled and the server is not a presence-only service).  Exchanging messages is a basic use of XMPP and occurs when a user generates a message stanza that is addressed to another entity.  As defined under <xref target="rules"/>, the sender's server is responsible for delivering the message to the intended recipient (if the recipient is on the same local server) or for routing the message to the recipient's server (if the recipient is on a remote server).  Thus a message stanza is used to "push" information to another entity.</t>
     <section title="One-to-One Chat Sessions" anchor="message-chat">
-      <t>In practice, instant messaging activity between human users tends to occur in form of a conversational burst that we call <iref item='Chat Session'/> a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
+      <t>In practice, instant messaging activity between human users tends to occur in form of a conversational burst that we call a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
       <t>When a human user intends to engage in such a chat session with a contact (rather than sending a single message to which no reply is expected), the user's client SHOULD send a message of type "chat" and the contact's client SHOULD preserve that message type in subsequent replies.   The user's client also SHOULD include a &lt;thread/&gt; element with its initial message, which the contact's client SHOULD also preserve during the life of the chat session.</t>
       <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; of the contact (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt; based on the &lt;show/&gt;, &lt;status/&gt;, or &lt;priority/&gt; value of any presence notifications it has received from the contact).  Until and unless the user's client receives a reply from the contact, it MUST continue sending any further messages to the contact's bare JID.  The contact's client SHOULD address its subsequent replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies, thus "locking in" on that full JID.</t>
       <t>When two parties engage in a chat session but do not share presence with each other based on a presence subscription, they SHOULD send directed presence to each other so that either party can easily discover if the peer changes its availability or goes offline during the course of the chat session.  However, a client MUST provide a way for a user to disable such presence sharing globally or to enable it only with particular entities.  Furthermore, a party SHOULD send directed unavailable to the peer when it has reason to believe that the chat session is over (e.g., if, after some reasonable amount of time, no subsequent messages have been exchanged between the parties).</t>
@@ -2312,7 +2325,7 @@ US: </stream:stream>
       <section title="No Available or Connected Resources" anchor="rules-barejid-noresource">
         <t>If there are no available or connected resources associated with the user, how the stanza is processed depends on the stanza type.</t>
         <section title="Message" anchor="rules-barejid-noresource-message">
-          <t><iref item='Offline Message Storage'/>In order to properly handle message stanzas, it is RECOMMENDED for an implementation to support OFFLINE STORAGE, i.e., the server SHOULD store the message stanza on behalf of the user and deliver it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
+          <t>In order to properly handle message stanzas, it is RECOMMENDED for an implementation to support OFFLINE STORAGE, i.e., the server SHOULD store the message stanza on behalf of the user and deliver it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
           <t>For a message stanza of type "chat" or "normal", the server SHOULD add the message to offline storage or forward the message to the user via a non-XMPP messaging system (e.g., to the user's email account).  However, if offline message storage or message forwarding is not enabled or available (e.g., because a size limit has been reached on offline messages), then the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
           <t>For a message stanza of type "headline", according to local service policies the server MUST either (a) add the message to offline storage or (b) silently discard the message (i.e., neither deliver it to the intended recipient nor return an error to the sender).</t>
           <t>For a message stanza of type "groupchat", the server SHOULD NOT add the message to offline storage but instead SHOULD return an error to the sender.</t>
@@ -2394,7 +2407,7 @@ US: </stream:stream>
         <t>An informational description<vspace blankLines='1'/></t>
         <t>A reference to the particular section of this document that normatively defines the feature<vspace blankLines='1'/></t>
         <t>Whether the feature applies to the Client role, the Server role, or both (where "N/A" signifies that the feature is not applicable to the specified role)<vspace blankLines='1'/></t>
-        <t>Whether the feature MUST or SHOULD be implemented, where the capitalized terms are to be understood as described in <xref target='TERMS'/><vspace blankLines='1'/></t>
+        <t>Whether the feature MUST or SHOULD be implemented, where the capitalized terms are to be understood as described in <xref target='KEYWORDS'/><vspace blankLines='1'/></t>
       </list>
     </t>
     <t>Note: The feature set specified here attempts to adhere to the concepts and formats proposed by Larry Masinter within the IETF's NEWTRK Working Group in 2005, as captured in <xref target='INTEROP'/>.  Although this feature set is more detailed than called for by <xref target="REPORTS"/>, it provides a suitable basis for the generation of implementation reports to be submitted in support of advancing this specification from Proposed Standard to Draft Standard in accordance with <xref target="PROCESS"/>.</t>
@@ -2536,6 +2549,47 @@ US: </stream:stream>
 <format type='TXT' octets='15764' target='ftp://ftp.isi.edu/in-notes/rfc3861.txt' />
 </reference>
 
+<reference anchor="KEYWORDS">
+<front>
+<title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
+<author initials='S.' surname='Bradner' fullname='Scott Bradner'>
+<organization>Harvard University</organization>
+<address>
+<postal>
+<street>1350 Mass.  Ave.</street>
+<street>Cambridge</street>
+<street>MA 02138</street></postal>
+<phone>- +1 617 495 3864</phone>
+<email>sob@harvard.edu</email></address></author>
+<date month='March' year='1997' />
+<area>General</area>
+<keyword>keyword</keyword>
+<abstract>
+<t>
+   In many standards track documents several words are used to signify
+   the requirements in the specification.  These words are often
+   capitalized.  This document defines these words as they should be
+   interpreted in IETF documents.  Authors who follow these guidelines
+   should incorporate this phrase near the beginning of their document:
+
+<list>
+<t>
+      The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL
+      NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;,  &quot;MAY&quot;, and
+      &quot;OPTIONAL&quot; in this document are to be interpreted as described in
+      RFC 2119.
+</t></list></t>
+<t>
+   Note that the force of these words is modified by the requirement
+   level of the document in which they are used.
+</t></abstract></front>
+<seriesInfo name='BCP' value='14' />
+<seriesInfo name='RFC' value='2119' />
+<format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
+<format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
+<format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
+</reference>
+
 <reference anchor='SRV'>
 <front>
 <title abbrev='DNS SRV RR'>A DNS RR for specifying the location of services (DNS SRV)</title>
@@ -2577,47 +2631,6 @@ US: </stream:stream>
    server(s) for a specific protocol and domain.</t></abstract></front>
 <seriesInfo name='RFC' value='2782' />
 <format type='TXT' octets='24013' target='ftp://ftp.isi.edu/in-notes/rfc2782.txt' />
-</reference>
-
-<reference anchor="TERMS">
-<front>
-<title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
-<author initials='S.' surname='Bradner' fullname='Scott Bradner'>
-<organization>Harvard University</organization>
-<address>
-<postal>
-<street>1350 Mass.  Ave.</street>
-<street>Cambridge</street>
-<street>MA 02138</street></postal>
-<phone>- +1 617 495 3864</phone>
-<email>sob@harvard.edu</email></address></author>
-<date month='March' year='1997' />
-<area>General</area>
-<keyword>keyword</keyword>
-<abstract>
-<t>
-   In many standards track documents several words are used to signify
-   the requirements in the specification.  These words are often
-   capitalized.  This document defines these words as they should be
-   interpreted in IETF documents.  Authors who follow these guidelines
-   should incorporate this phrase near the beginning of their document:
-
-<list>
-<t>
-      The key words &quot;MUST&quot;, &quot;MUST NOT&quot;, &quot;REQUIRED&quot;, &quot;SHALL&quot;, &quot;SHALL
-      NOT&quot;, &quot;SHOULD&quot;, &quot;SHOULD NOT&quot;, &quot;RECOMMENDED&quot;,  &quot;MAY&quot;, and
-      &quot;OPTIONAL&quot; in this document are to be interpreted as described in
-      RFC 2119.
-</t></list></t>
-<t>
-   Note that the force of these words is modified by the requirement
-   level of the document in which they are used.
-</t></abstract></front>
-<seriesInfo name='BCP' value='14' />
-<seriesInfo name='RFC' value='2119' />
-<format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
-<format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
-<format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
 </reference>
 
 <reference anchor='UUID'>
@@ -2954,16 +2967,64 @@ US: </stream:stream>
 <format type='TXT' octets='29327' target='ftp://ftp.isi.edu/in-notes/rfc5657.txt' />
 </reference>
 
-<reference anchor="RFC3921">
-  <front>
-    <title>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
-    <author initials='P.' surname='Saint-Andre' fullname='P.  Saint-Andre'>
-      <organization>XMPP Standards Foundation</organization>
-    </author>
-    <date year='2004' month='October' />
-  </front>
-  <seriesInfo name='RFC' value='3921' />
-  <format type='TXT' octets='217527' target='ftp://ftp.isi.edu/in-notes/rfc3921.txt' />
+<reference anchor='RFC3920'>
+<front>
+<title abbrev='XMPP Core'>Extensible Messaging and Presence Protocol (XMPP): Core</title>
+<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre' role='editor'>
+<organization>Jabber Software Foundation</organization>
+<address>
+<email>stpeter@jabber.org</email></address></author>
+<date year='2004' month='October' />
+<area>Applications</area>
+<workgroup>XMPP Working Group</workgroup>
+<keyword>RFC</keyword>
+<keyword>Request for Comments</keyword>
+<keyword>I-D</keyword>
+<keyword>Internet-Draft</keyword>
+<keyword>XMPP</keyword>
+<keyword>Extensible Messaging and Presence Protocol</keyword>
+<keyword>Jabber</keyword>
+<keyword>IM</keyword>
+<keyword>Instant Messaging</keyword>
+<keyword>Presence</keyword>
+<keyword>XML</keyword>
+<keyword>Extensible Markup Language</keyword>
+<abstract>
+<t>This memo defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a protocol for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two network endpoints.  While XMPP provides a generalized, extensible framework for exchanging XML data, it is used mainly for the purpose of building instant messaging and presence applications that meet the requirements of RFC 2779.</t></abstract></front>
+<seriesInfo name='RFC' value='3920' />
+<format type='TXT' octets='194313' target='http://www.rfc-editor.org/rfc/rfc3920.txt' />
+<format type='HTML' octets='279912' target='http://xml.resource.org/public/rfc/html/rfc3920.html' />
+<format type='XML' octets='234610' target='http://xml.resource.org/public/rfc/xml/rfc3920.xml' />
+</reference>
+
+<reference anchor='RFC3921'>
+<front>
+<title abbrev='XMPP IM'>Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
+<author initials='P.' surname='Saint-Andre' fullname='Peter Saint-Andre' role='editor'>
+<organization>Jabber Software Foundation</organization>
+<address>
+<email>stpeter@jabber.org</email></address></author>
+<date year='2004' month='October' />
+<area>Applications</area>
+<workgroup>XMPP Working Group</workgroup>
+<keyword>RFC</keyword>
+<keyword>Request for Comments</keyword>
+<keyword>I-D</keyword>
+<keyword>Internet-Draft</keyword>
+<keyword>XMPP</keyword>
+<keyword>Extensible Messaging and Presence Protocol</keyword>
+<keyword>Jabber</keyword>
+<keyword>IM</keyword>
+<keyword>Instant Messaging</keyword>
+<keyword>Presence</keyword>
+<keyword>XML</keyword>
+<keyword>Extensible Markup Language</keyword>
+<abstract>
+<t>This memo describes extensions to and applications of the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide the basic instant messaging (IM) and presence functionality defined in RFC 2779.</t></abstract></front>
+<seriesInfo name='RFC' value='3921' />
+<format type='TXT' octets='217527' target='http://www.rfc-editor.org/rfc/rfc3921.txt' />
+<format type='HTML' octets='274538' target='http://xml.resource.org/public/rfc/html/rfc3921.html' />
+<format type='XML' octets='234468' target='http://xml.resource.org/public/rfc/xml/rfc3921.xml' />
 </reference>
 
 <reference anchor="SASL">
@@ -3213,6 +3274,20 @@ US: </stream:stream>
 </front>
 <seriesInfo name='World Wide Web Consortium Recommendation' value='REC-xmlschema-1-20041028' />
 <format type='HTML' target='http://www.w3.org/TR/2004/REC-xmlschema-1-20041028' />
+</reference>
+
+<reference anchor="XMPP-ADDR">
+<front>
+<title>Extensible Messaging and Presence Protocol (XMPP): Address Format</title>
+<author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
+    <organization />
+</author>
+<date month='April' day='7' year='2010' />
+<abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP).</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-00' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-00.txt' />
 </reference>
 
 <reference anchor="VCARD">
@@ -4006,16 +4081,12 @@ US: </stream:stream>
           <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed" and the optional "subscribed" value for the 'ask' flag.</t>
           <t>Added optional 'parent' attribute to &lt;thread/&gt; element</t>
           <t>Moved the protocol for communications blocking (specified in Section 10 of RFC 3921) back to <xref target='XEP-0016'/>, from which it was originally taken.</t>
-        </list>
-      </t>
-      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols, including the following.</t>
-      <t>
-        <list style='symbols'>
           <t>Recommended returning presence unavailable in response to probes.</t>
           <t>Clarified handling of presence probes sent to full JIDs.</t>
           <t>Explicitly specified that the default value for the presence &lt;priority/&gt; element is zero.</t>
         </list>
       </t>
+      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
     </section>
 
     <section title="Copying Conditions" anchor="copying">
