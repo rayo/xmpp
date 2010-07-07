@@ -1283,11 +1283,11 @@ CS: <presence from='romeo@example.net'
   <section title="Exchanging Presence Information" anchor="presence">
 
     <section title="Overview" anchor="presence-overview">
-      <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication (the terms "online" and "offline" are also used).  In XMPP, a user's availability is signalled when a client controlled by the user generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when a client generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".</t>
+      <t>The concept of presence refers to an entity's availability for communication over a network.  At the most basic level, presence is a boolean "on/off" variable that signals whether an entity is available or unavailable for communication (the terms "online" and "offline" are also used).  In XMPP, an entity's availability is signalled when its client generates a &lt;presence/&gt; stanza with no 'type' attribute, and an entity's lack of availability is signalled when its client generates a &lt;presence/&gt; stanza whose 'type' attribute has a value of "unavailable".</t>
       <t>XMPP presence typically follows a "publish-subscribe" or "observer" pattern, wherein an entity sends presence to its server, and its server then broadcasts that information to all of the entity's contacts who have a subscription to the entity's presence (in the terminology of <xref target="IMP-MODEL"/>, an entity that generates presence is a "presentity" and the entities that receive presence are "subscribers").  A client generates presence for broadcasting to all subscribed entities by sending a presence stanza to its server with no 'to' address, where the presence stanza has either no 'type' attribute or a 'type' attribute whose value is "unavailable".  This kind of presence is called BROADCAST PRESENCE.  (A client can also send DIRECTED PRESENCE, i.e., a presence stanza with a 'to' address; this is less common but is sometimes used to send presence to entities that are not subscribed to the user's presence; see <xref target='presence-directed'/>.)</t>
       <t>After a client completes the preconditions specified in <xref target="XMPP-CORE"/>, it can establish a PRESENCE SESSION at its server by sending <xref target='presence-initial'>initial presence</xref>, where the presence session is terminated by sending <xref target='presence-unavailable'>unavailable presence</xref>.  For the duration of its presence session, a connected resource (in the terminology of <xref target="XMPP-CORE"/>) is said to be an AVAILABLE RESOURCE.</t>
-      <t>In XMPP-based applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, it is not necessary for XMPP-based applications to combine messaging and presence functionality, and can provide standalone presence features without messaging (in addition, XMPP servers do not require information about network availability in order to successfully route message and IQ stanzas).</t>
-      <t><list style='empty'><t>Note: In the following examples, the "user" is juliet@example.com and the user has three contacts in her roster with a subscription state of "from" or "both": romeo@example.net, mercutio@example.com, and benvolio@example.net.</t></list></t>
+      <t>In XMPP applications that combine messaging and presence functionality, the default type of communication for which presence signals availability is messaging; however, it is not necessary for XMPP applications to combine messaging and presence functionality, and they can provide standalone presence features without messaging (in addition, XMPP servers do not require information about network availability in order to successfully route message and IQ stanzas).</t>
+      <t><list style='empty'><t>Informational Note: In the examples that follow, the user is &lt;juliet@example.com&gt;, she has two available resources ("balcony" and "chamber"), and she has three contacts in her roster with a subscription state of "from" or "both": &lt;romeo@example.net&gt;, &lt;mercutio@example.com&gt;, and &lt;benvolio@example.net&gt;.</t></list></t>
     </section>
 
     <section title="Initial Presence" anchor="presence-initial">
@@ -1298,7 +1298,7 @@ CS: <presence from='romeo@example.net'
 UC: <presence/>
           ]]></artwork>
         </figure>
-        <t>The initial presence stanza MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content.</t>
+        <t>The initial presence stanza MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content; see <xref target='presence-syntax'/> for details.</t>
       </section>
 
       <section title="Server Processing of Outbound Initial Presence" anchor="presence-initial-outbound">
@@ -1315,14 +1315,18 @@ US: <presence from='juliet@example.com/balcony'
               to='benvolio@example.net'/>
           ]]></artwork>
         </figure>
-        <t>The user's server MUST also broadcast initial presence from the user's newly available resource to all of the user's available resources (including the resource that generated the presence notification in the first place).</t>
+        <t>The user's server MUST also broadcast initial presence from the user's newly available resource to all of the user's available resources, including the resource that generated the presence notification in the first place (i.e., an entity is implicitly subscribed to its own presence).</t>
         <figure>
           <artwork><![CDATA[
-US: <presence from='juliet@example.com/balcony' 
-              to='juliet@example.com/balcony'/>
+[... to the "balcony" resource ...]
 
 US: <presence from='juliet@example.com/balcony' 
-              to='juliet@example.com/chamber'/>
+              to='juliet@example.com'/>
+
+[... to the "chamber" resource ...]
+
+US: <presence from='juliet@example.com/balcony' 
+              to='juliet@example.com'/>
           ]]></artwork>
         </figure>
         <t>In the absence of presence information about the user's contacts, the user's server MUST also send presence probes to the user's contacts on behalf of the user as specified under <xref target='presence-probe'/>.</t>
@@ -1343,7 +1347,6 @@ CS: <presence from='juliet@example.com/balcony'
               to='romeo@example.net'/>
           ]]></artwork>
         </figure>
-        <t>If there is no such contact, the contact's server MUST silently ignore the presence stanza.</t>
       </section>
 
       <section title="Client Processing of Initial Presence" anchor="presence-initial-client">
@@ -1351,7 +1354,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>
           <list style='numbers'>
             <t>If the user is in the contact's roster, the client MUST display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
             <t>Otherwise, the client MUST ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
@@ -1359,42 +1362,42 @@ CS: <presence from='juliet@example.com/balcony'
     </section>
 
     <section title="Presence Probes" anchor="presence-probe">
-      <t>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare or full JID of the subscribed user and the value of the 'to' address SHOULD be the bare JID of the contact to which the user is subscribed (since presence subscriptions are based on the bare JID) but MAY be a full JID for the contact.  (Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>.)</t>
+      <t>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare JID of the subscribed user and the value of the 'to' address MUST be the bare JID of the contact to which the user is subscribed, since presence subscriptions are based on the bare JID.  Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>; in this case the value of the 'from' or 'to' address can be a full JID instead of a bare JID.</t>
       <figure>
         <artwork><![CDATA[
-US: <presence from='juliet@example.com/balcony' 
+US: <presence from='juliet@example.com' 
               id='ign291v5'
               to='romeo@example.net' 
               type='probe'/>
         ]]></artwork>
       </figure>
-      <t><list style='empty'><t>Note: Although presence probes MAY be sent by a client, in general a client will not need to send them since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT return a stanza or stream error to the client.</t></list></t>
+      <t><list style='empty'><t>Implementation Note: Although presence probes MAY be sent by a client, in general a client will not need to send them since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT return a stanza or stream error to the client.</t></list></t>
 
       <section title="Server Generation of Outbound Presence Probe" anchor="presence-probe-outbound">
-        <t>When a server needs to discover the availability of a user's contact, it sends a presence probe from the full JID &lt;user@domain/resource&gt; of the user to the bare JID &lt;contact@domain&gt; of the contact.  The server MUST NOT send a probe to a contact if the user is not subscribed to the contact's presence (i.e., if the contact is not in the user's roster with the 'subscription' attribute set to a value of "to" or "both".</t>
+        <t>When a server needs to discover the availability of a user's contact, it sends a presence probe from the bare JID &lt;user@domain&gt; of the user to the bare JID &lt;contact@domain&gt; of the contact.  The server MUST NOT send a probe to a contact if the user is not subscribed to the contact's presence (i.e., if the contact is not in the user's roster with the 'subscription' attribute set to a value of "to" or "both"), unless the user has sent directed presence to the contact and has received presence information in return.</t>
         <t>The user's server SHOULD send a presence probe whenever the user starts a new presence session by sending initial presence; however, the server MAY choose not to send the probe at that point if it has what it deems to be reliable and up-to-date presence information about the user's contacts (e.g., because the user has another available resource or because the user briefly logged off and on before the new presence session began).  In addition, a server MAY periodically send a presence probe to a contact if it has not received presence information or other traffic from the contact in some configurable amount of time; this can help to prevent "ghost" contacts who appear to be online but in fact are not.</t>
         <figure>
           <artwork><![CDATA[
-US: <presence from='juliet@example.com/balcony' 
+US: <presence from='juliet@example.com' 
               id='ign291v5'
               to='romeo@example.net' 
               type='probe'/>
 
-US: <presence from='juliet@example.com/balcony' 
+US: <presence from='juliet@example.com' 
               id='xv291f38'
               to='mercutio@example.com' 
               type='probe'/>
           ]]></artwork>
         </figure>
-        <t>Naturally, the user's server does not need to send a presence probe to a contact if the contact's account resides on the same server as the user, since the server possesses contact's information locally.</t>
+        <t>Naturally, the user's server does not need to send a presence probe to a contact if the contact's account resides on the same server as the user, since the server possesses the contact's information locally.</t>
               
         </section>
 
       <section title="Server Processing of Inbound Presence Probe" anchor="presence-probe-inbound">
-        <t>Upon receiving a presence probe to the contact's bare JID from the user's server on behalf of the user, the contact's server SHOULD reply as follows:</t>
+        <t>Upon receiving a presence probe to the contact's bare JID from the user's server on behalf of the user, the contact's server MUST reply as follows:</t>
         <t>
           <list style='numbers'>
-            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe (however, if a server receives a presence probe from a configured hostname of the server itself or another such trusted service, it MAY provide presence information about the user to that entity).
+            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe.  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='mercutio@example.com' 
@@ -1403,6 +1406,7 @@ CS: <presence from='mercutio@example.com'
               type='unsubscribed'/>
                 ]]></artwork>
               </figure>
+             However, if a server receives a presence probe from a configured hostname of the server itself or another such trusted service, it MAY provide presence information about the user to that entity.
             <vspace blankLines='1'/></t>
             <t>Else, if the contact has moved temporarily or permanently to another address, then the server SHOULD return a presence stanza of type "error" with a stanza error condition of &lt;redirect/&gt; (temporary) or &lt;gone/&gt; (permanent) that includes the new address of the contact.
               <figure>
@@ -1420,7 +1424,9 @@ CS: <presence from='mercutio@example.com'
                 ]]></artwork>
               </figure>
             <vspace blankLines='1'/></t>
-            <t>Else, if the contact has no available resources, then the server SHOULD reply to the presence probe by sending to the user a presence stanza of type "unavailable" (although sending unavailable presence here is preferable because it results in a deterministic answer to the probe, it is not mandatory because it can greatly increase the number of presence notifications generated by the contact's server); if appropriate in accordance with local security policies this presence notification MAY include the full XML of the last unavailable presence stanza that the server received from the contact (including the 'id' of the original stanza), but if not then the presence notification SHOULD simply indicate that the contact is unavailable without any of the details originally provided; in any case the presence notification returned to the probing entity SHOULD include information about the time when the last unavailable presence stanza was generated (formatted using the XMPP delayed delivery extension <xref target='DELAY'/>).
+            <t>Else, if the contact has no available resources, then the server SHOULD reply to the presence probe by sending to the user a presence stanza of type "unavailable" (although sending unavailable presence here is preferable because it results in a deterministic answer to the probe, it is not mandatory because it can greatly increase the number of presence notifications generated by the contact's server).  Here the 'from' address is the bare JID because there is no available resource associated with the contact.
+            <vspace blankLines='1'/>
+            If appropriate in accordance with local security policies this presence notification MAY include the full XML of the last unavailable presence stanza that the server received from the contact (including the 'id' of the original stanza), but if not then the presence notification SHOULD simply indicate that the contact is unavailable without any of the details originally provided.  In any case the presence notification returned to the probing entity SHOULD include information about the time when the last unavailable presence stanza was generated (formatted using the XMPP delayed delivery extension <xref target='DELAY'/>).
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='mercutio@example.com' 
@@ -1433,7 +1439,7 @@ CS: <presence from='mercutio@example.com'
                 ]]></artwork>
               </figure>
             <vspace blankLines='1'/></t>
-            <t>Else, if the contact has at least one available resource, then the server MUST reply to the presence probe by sending to the user the full XML of the last presence stanza with no 'to' attribute received by the server from each of the contact's available resources.
+            <t>Else, if the contact has at least one available resource, then the server MUST reply to the presence probe by sending to the user the full XML of the last presence stanza with no 'to' attribute received by the server from each of the contact's available resources.  Here the 'from' addresses are the bare JIDs of each available resource.
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='romeo@example.net/foo'
@@ -1459,13 +1465,13 @@ CS: <presence from='romeo@example.net/bar'
             ]]></artwork>
           </figure>
         </t>
-        <t><list style='empty'><t>Note: The handling of the 'id' attribute in relation to presence probes was unspecified in the predecessor to this specification. Although the pattern of "send a probe and receive a reply" might seem like a request-response protocol, in fact it is not because the response to a probe might consist of multiple presence stanzas (one for each available resource currently active for the contact).  For this reason, if the contact currently has available resources then the contact's server SHOULD preserve the 'id' attribute of the contact's original presence stanza (if any) when sending those presence notifications to the probing entity; however, if the contact currently has no available resources, the probing entity is not authorized (via presence subscription) to see the contact's presence, or an error occurs in relation to the proble, then the contact's server SHOULD mirror the 'id' of the presence probe when replying to the probing entity.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: The handling of the 'id' attribute in relation to presence probes was unspecified in the predecessor to this specification. Although the pattern of "send a probe and receive a reply" might seem like a request-response protocol, in fact it is not because the response to a probe might consist of multiple presence stanzas (one for each available resource currently active for the contact).  For this reason, if the contact currently has available resources then the contact's server SHOULD preserve the 'id' attribute of the contact's original presence stanza (if any) when sending those presence notifications to the probing entity; however, if the contact currently has no available resources, the probing entity is not authorized (via presence subscription) to see the contact's presence, or an error occurs in relation to the proble, then the contact's server SHOULD mirror the 'id' of the user's presence probe when replying to the probing entity.</t></list></t>
       </section>
     </section>
 
     <section title="Subsequent Presence Broadcast" anchor="presence-broadcast">
       <section title="Client Generation of Subsequent Presence Broadcast" anchor="presence-broadcast-gen">
-        <t>After sending initial presence, the user's client can update its availability for broadcasting at any time during its session by sending a presence stanza with no 'to' address and no 'type' attribute.</t>
+        <t>After sending initial presence, at any time during its session the user's client can update its availability for broadcasting by sending a presence stanza with no 'to' address and no 'type' attribute.</t>
         <figure>
           <artwork><![CDATA[
 UC: <presence>
@@ -1473,8 +1479,8 @@ UC: <presence>
     </presence>
           ]]></artwork>
         </figure>
-        <t>The presence broadcast MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content.</t>
-        <t>However, a user SHOULD send a presence update only to broadcast information that is relevant to the user's availability for communication or the communication capabilities of the connected resource.  Information that is not relevant in this way can be of interest to the user's contacts but SHOULD be sent via other means, such as the XMPP message stanza.</t>
+        <t>The presence broadcast MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content; see <xref target='presence-syntax'/> for details.</t>
+        <t>However, a user SHOULD send a presence update only to broadcast information that is relevant to the user's availability for communication or the communication capabilities of the connected resource.  Information that is not relevant in this way might be of interest to the user's contacts but SHOULD be sent via other means, such as the XMPP message stanza.</t>
       </section>
 
       <section title="Server Processing of Outbound Presence" anchor="presence-broadcast-outbound">
@@ -1504,7 +1510,7 @@ US: <presence from='juliet@example.com/balcony'
     </presence>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
         <t>The user's server MUST also send the presence stanza to all of the user's available resources (including the resource that generated the presence notification in the first place).</t>
         <figure>
           <artwork><![CDATA[
@@ -1547,7 +1553,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>
           <list style='numbers'>
             <t>If the user is in the contact's roster, the client MUST display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
             <t>Otherwise, the client MUST ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
@@ -1570,7 +1576,7 @@ UC: <presence type='unavailable'>
     </presence>
           ]]></artwork>
         </figure>
-        <t>However, the unavailable presence stanza MUST NOT contain the &lt;priority/&gt; element or the &lt;show/&gt; element, since these elements apply only to available presence.</t>
+        <t>However, the unavailable presence stanza MUST NOT contain the &lt;priority/&gt; element or the &lt;show/&gt; element, since these elements apply only to available resources.</t>
       </section>
 
       <section title="Server Processing of Outbound Unavailable Presence" anchor="presence-unavailable-outbound">
@@ -1582,8 +1588,8 @@ UC: <presence type='unavailable'>
             <t>The last presence stanza received from the contact during the user's presence session was not of type "error" or "unsubscribe".<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t><list style='empty'><t>See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
-        <t><list style='empty'><t>The optimization employed for subsequent presence broadcast during a user's presence session MUST NOT be employed for unavailable presence broadcast; if it were, the last presence received by the contact's server would be the user's initial presence for the presence session, with the result that the contact would consider the user to be online.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: The optimization employed for subsequent presence broadcast during a user's presence session (see <xref target='presence-broadcast-outbound'/>) MUST NOT be employed for unavailable presence broadcast; if it were, the last presence received by the contact's server would be the user's initial presence for the presence session, with the result that the contact would consider the user to be online.</t></list></t>
         <t>If the unavailable notification was gracefully received from the client, then the server MUST broadcast the full XML of the presence stanza.</t>
         <figure>
           <artwork><![CDATA[
@@ -1617,7 +1623,7 @@ US: <presence from='juliet@example.com/balcony'
           ]]></artwork>
         </figure>
         <t>If the server detects that the user has gone offline ungracefully, then the server MUST generate the unavailable presence broadcast on the user's behalf.</t>
-        <t><list style='empty'><t>Note: Any presence stanza with no 'type' attribute and no 'to' attribute that is sent after sending unavailable presence broadcast MUST be sent by the user's server to all subscribers (i.e., MUST be treated as equivalent to initial presence for a new presence session).</t></list></t>
+        <t><list style='empty'><t>Implementation Note: Any presence stanza with no 'type' attribute and no 'to' attribute that the client sends after the server broadcasts or generates an unavailable presence notification MUST be routed or delivered by the user's server to all subscribers (i.e., MUST be treated as equivalent to initial presence for a new presence session).</t></list></t>
       </section>
 
       <section title="Server Processing of Inbound Unavailable Presence" anchor="presence-unavailable-inbound">
@@ -1641,7 +1647,7 @@ CS: <presence from='juliet@example.com/balcony'
     </presence>
           ]]></artwork>
         </figure>
-        <t>If the contact's server is optimizing subsequent presence delivery as described under <xref target='presence-broadcast'/>, it MUST also note that the user is unavailable and appropriately update its internal representation of which entities are online.</t>
+        <t>If the contact's server is optimizing subsequent presence delivery as described under <xref target='presence-broadcast-outbound'/>, it MUST also note that the user is unavailable and appropriately update its internal representation of which entities are online.</t>
       </section>
 
       <section title="Client Processing of Unavailable Presence" anchor="presence-unavailable-client">
@@ -1653,14 +1659,14 @@ CS: <presence from='juliet@example.com/balcony'
             <t>Otherwise, the client MUST ignore the unavailable notification and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>Typically, presence is presence about a particular connected resource.  However, it is possible for the contact to receive an unavailable notification from the bare JID of the user.  In this case, the presence notificatio SHOULD be treated as related to a resource identifier of zero length, which does not supersede or overshadow other resources associated with the same bare JID.</t>
+        <t>Typically, presence provides availability information about a particular connected resource.  However, it is possible for the contact to receive an unavailable notification from the bare JID of the user.  In this case, the presence notification SHOULD be treated as related to a resource identifier of zero length, which does not supersede or overshadow other resources associated with the same bare JID.</t>
       </section>
     </section>
 
     <section title="Directed Presence" anchor="presence-directed">
       <t>This section supplements and in some respects modifies the rules for client and server processing of presence notifications, but only for the special case of directed presence.</t>
       <section title="Client Generation of Directed Presence" anchor="presence-directed-gen">
-        <t>As noted, directed presence is a presence stanza with a 'to' attribute whose value is the bare JID or full JID of the other entity and with either no 'type' attribute (indicating availability) or a 'type' attribute whose value is "unavailable".</t>
+        <t>As noted, directed presence is a client-generated presence stanza with a 'to' attribute whose value is the bare JID or full JID of the other entity and with either no 'type' attribute (indicating availability) or a 'type' attribute whose value is "unavailable".</t>
         <t>Information about the use of directed presence in the context of a one-to-one chat session is provided under <xref target='message-chat'/>.</t>
       </section>
       <section title="Server Processing of Outbound Directed Presence" anchor="presence-directed-outbound">
@@ -1674,7 +1680,7 @@ CS: <presence from='juliet@example.com/balcony'
         </t>
       </section>
       <section title="Server Processing of Inbound Directed Presence" anchor="presence-directed-inbound">
-        <t>From the perspective of the contact's server, there is no difference between presence broadcast and directed presence, so the contact's server follows the existing rules for processing of inbound presence.</t>
+        <t>From the perspective of the contact's server, there is no difference between presence broadcast and directed presence, so the contact's server follows the rules for processing of inbound presence defined under <xref target='presence-probe-inbound'/>, <xref target='presence-broadcast-inbound'/>, and <xref target='presence-unavailable-inbound'/>.</t>
       </section>
 
       <section title="Client Processing of Inbound Directed Presence" anchor="presence-directed-client">
@@ -1682,7 +1688,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>
           <list style='numbers'>
             <t>If the user is in the contact's roster, the client MUST display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
             <t>Otherwise, the client MUST ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
@@ -1702,16 +1708,16 @@ CS: <presence from='juliet@example.com/balcony'
             <t>probe -- A request for an entity's current presence; SHOULD be generated only by a server on behalf of a user.<vspace blankLines='1'/></t>
             <t>subscribe -- The sender wishes to subscribe to the recipient's presence.<vspace blankLines='1'/></t>
             <t>subscribed -- The sender has allowed the recipient to receive their presence.<vspace blankLines='1'/></t>
-            <t>unavailable -- Signals that the entity is no longer available for communication.<vspace blankLines='1'/></t>
+            <t>unavailable -- The sender is no longer available for communication.<vspace blankLines='1'/></t>
             <t>unsubscribe -- The sender is unsubscribing from the receiver's presence.<vspace blankLines='1'/></t>
             <t>unsubscribed -- The subscription request has been denied or a previously-granted subscription has been cancelled.<vspace blankLines='1'/></t>
           </list>
         </t>
         <t>If the value of the 'type' attribute is not one of the foregoing values, the recipient or an intermediate router SHOULD return a stanza error of &lt;bad-request/&gt;.</t>
-        <t><list style='empty'><t>Note: There is no default value for the 'type' attribute of the &lt;presence/&gt; element; in particular, there is no value of "available".</t></list></t>
+        <t><list style='empty'><t>Implementation Note: There is no default value for the 'type' attribute of the &lt;presence/&gt; element; in particular, there is no value of "available".</t></list></t>
       </section>
       <section title="Child Elements" anchor="presence-syntax-children">
-        <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain allowable children of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are provided only if the presence stanza possesses no 'type' attribute, although exceptions are noted in the text that follows.</t>
+        <t>In accordance with the default namespace declaration, a presence stanza is qualified by the 'jabber:client' or 'jabber:server' namespace, which defines certain child elements of presence stanzas, in particular the &lt;show/&gt;, &lt;status/&gt;, and &lt;priority/&gt; elements.  These child elements are used to provide more detailed information about an entity's availability.  Typically these child elements are included only if the presence stanza possesses no 'type' attribute, although exceptions are noted in the text that follows.</t>
         <section title="Show Element" anchor="presence-syntax-children-show">
           <t>The OPTIONAL &lt;show/&gt; element specifies the particular availability sub-state of an entity or a specific resource thereof.  A presence stanza MUST NOT contain more than one &lt;show/&gt; element.  There are no attributes defined for the &lt;show/&gt; element.  The XML character data of the &lt;show/&gt; element is not human-readable.  The XML character data MUST be one of the following (additional availability states could be defined through a child element of the presence stanza that is qualified by a namespace other than the default namespace):</t>
           <t>
@@ -1736,10 +1742,11 @@ CS: <presence from='juliet@example.com/balcony'
 </presence>
             ]]></artwork>
           </figure>
-          <t>There are no attributes defined for the &lt;status/&gt; element, with the exception of the 'xml:lang' attribute inherited from XML.  Multiple instances of the &lt;status/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
+          <t>There are no attributes defined for the &lt;status/&gt; element, with the exception of the 'xml:lang' attribute inherited from <xref target='XML'/>.  Multiple instances of the &lt;status/&gt; element MAY be included, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which from the sender's perspective can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
           <figure>
             <artwork><![CDATA[
 <presence from='romeo@example.net/orchard'
+          id='jx62vs97'
           xml:lang='en'>
   <show>dnd</show>
   <status>Wooing Juliet</status>
@@ -1751,6 +1758,7 @@ CS: <presence from='juliet@example.com/balcony'
           <figure>
             <artwork><![CDATA[
 <presence from='romeo@example.net/orchard'
+          id='oy6sb241'
           type='unavailable'
           xml:lang='en'>
   <status>Busy IRL</status>
@@ -1761,9 +1769,10 @@ CS: <presence from='juliet@example.com/balcony'
           <figure>
             <artwork><![CDATA[
 <presence from='romeo@example.net'
+          id='uc51xs63'
           to='nurse@example.com'
           type='subscribe'>
-  <status>Hi, Juliet told to add you to my buddy list.</status>
+  <status>Hi, Juliet told me to add you to my buddy list.</status>
 </presence>
             ]]></artwork>
           </figure>
@@ -2554,6 +2563,21 @@ US: </stream:stream>
 
     <references title="Normative References">
 
+<reference anchor="DELAY">
+  <front>
+    <title>Delayed Delivery</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="15" month="September" year="2009"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0203"/>
+  <format type="HTML" target="http://xmpp.org/extensions/xep-0203.html"/>
+</reference>
+
 <reference anchor="IMP-SRV">
 <front>
 <title>Address Resolution for Instant Messaging and Presence</title>
@@ -2806,21 +2830,6 @@ US: </stream:stream>
 <t>At the time this document was written, numerous presence protocols were in use (largely as components of commercial instant messaging services), and little interoperability between services based on these protocols has been achieved. This specification defines common semantics and data formats for presence to facilitate the creation of gateways between presence services. [STANDARDS TRACK] </t></abstract></front>
 <seriesInfo name='RFC' value='3859' />
 <format type='TXT' octets='30537' target='ftp://ftp.isi.edu/in-notes/rfc3859.txt' />
-</reference>
-
-<reference anchor="DELAY">
-  <front>
-    <title>Delayed Delivery</title>
-    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization/>
-      <address>
-        <email>stpeter@jabber.org</email>
-      </address>
-    </author>
-    <date day="15" month="September" year="2009"/>
-  </front>
-  <seriesInfo name="XSF XEP" value="0203"/>
-  <format type="HTML" target="http://xmpp.org/extensions/xep-0203.html"/>
 </reference>
 
 <reference anchor="IMP-MODEL">
