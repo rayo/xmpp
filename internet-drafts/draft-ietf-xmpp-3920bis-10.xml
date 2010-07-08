@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="July" day="6"/>
+    <date year="2010" month="July" day="7"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -86,10 +86,14 @@
       <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of SP, HT, CR, or LF.</t>
       <t>We define the following terms with regard to XML stanzas or parts thereof:</t>
       <t>
+        <list style='empty'>
+      <t>
         <list style='hanging'>
           <t hangText="deliver:">for a server, to pass the data to a connected client<vspace blankLines='1'/></t>
           <t hangText="ignore:">for a client or server, to discard the data without acting upon it, presenting it a human user, or returning an error to the sender<vspace blankLines='1'/></t>
-          <t hangText="route:">for a server, to pass the data to a remote server for subsequent delivery</t>
+          <t hangText="route:">for a server, to pass the data to a remote server for subsequent delivery<vspace blankLines='1'/></t>
+        </list>
+      </t>
         </list>
       </t>
       <t>In examples, lines have been wrapped for improved readability, "[...]" means elision, and the following prepended strings are used (these prepended strings are not to be sent over the wire):</t>
@@ -1539,20 +1543,24 @@ S: <stream:error>
       <section title="Data Formatting" anchor="tls-rules-data">
         <t>During STARTTLS negotiation, the entities MUST NOT send any whitespace as separators between XML elements (i.e., from the last character of the &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace at depth=1 of the stream as sent by the initiating entity, until the last character of the &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace at depth=1 of the stream as sent by the receiving entity).  This prohibition helps to ensure proper security layer byte precision.  Any such whitespace shown in the STARTTLS examples provided in this document is included only for the sake of readability.</t>
       </section>
-      <section title="Order of Negotiation" anchor="tls-rules-order">
+      <section title="Order of TLS and SASL Negotiations" anchor="tls-rules-order">
         <t>If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is necessary to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
       </section>
-      <section title="Renegotiation" anchor="tls-rules-renegotiation">
-        <t>The TLS protocol allows either party in a TLS-protected channel to initiate a new handshake that establishes new cryptographic parameters.  There are some rare cases in which such a TLS renegotiation might be justified, including (1) refreshing encryption keys, (2) wrapping the TLS sequence number as explained in Section 6.1 of <xref target='TLS'/>, and (3) protecting client credentials by completing server authentication first and then completing client authentication over the protected channel.  In XMPP, for the first two cases it is preferable to use an XMPP stream reset (as described under <xref target='streams-error-conditions-reset'/>) instead of performing TLS renegotiation.  The third case has slightly improved security characteristics when the TLS client (which might be an XMPP server) presents credentials to the TLS server, however that slight benefit is in general outweighed by the complexity of supporting TLS renegotiation.</t>
-        <t>Therefore:</t>
+      <section title="TLS Renegotiation" anchor="tls-rules-renegotiation">
+        <t>The TLS protocol allows either party in a TLS-protected channel to initiate a new handshake that establishes new cryptographic parameters (see <xref target='TLS-NEG'/>).  The cases most commonly mentioned are:</t>
         <t>
           <list style='numbers'>
-            <t>XMPP entities SHOULD NOT attempt TLS renegotiation.</t>
-            <t>If a party that does not support TLS renegotiation detects a TLS renegotiation attempt, it SHOULD immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
-            <t>If a party that does support TLS Renegotiation Extension <xref target='TLS-NEG'/> detects a TLS renegotiation attempt not using the TLS Renegotiation Extension, it SHOULD immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
-            <t>Support for TLS renegotiation is OPTIONAL; however, if an XMPP implementation supports TLS renegotiation, it MUST implement and make use of the TLS Renegotiation Extension defined in <xref target='TLS-NEG'/>.</t>
+            <t>Refreshing encryption keys.<vspace blankLines='1'/></t>
+            <t>Wrapping the TLS sequence number as explained in Section 6.1 of <xref target='TLS'/>.<vspace blankLines='1'/></t>
+            <t>Protecting client credentials by completing server authentication first and then completing client authentication over the protected channel.</t>
           </list>
         </t>
+        <t>Because it is relatively inexpensive to establish streams in XMPP, for the first two cases it is preferable to use an XMPP stream reset (as described under <xref target='streams-error-conditions-reset'/>) instead of performing TLS renegotiation.</t>
+        <t>The third case has improved security characteristics when the TLS client (which might be an XMPP server) presents credentials to the TLS server.  If communicating such credentials to an unauthenticated server might leak private information, it can be appropriate to complete TLS negotiation for the purpose of server authentication and then attempt TLS renegotiation for the purpose of client authentication with the TLS server.</t>
+        <t>However, the third case is sufficiently rare that XMPP entities SHOULD NOT blindly attempt TLS renegotiation.</t>
+        <t>If an entity that does not support TLS renegotiation detects a renegotiation attempt, then it MUST immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
+        <t>If an entity that supports TLS renegotiation detects a TLS renegotiation attempt that does not use the TLS Renegotiation Extension <xref target='TLS-NEG'/>, then it MUST immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t> 
+        <t>Support for TLS renegotiation is strictly OPTIONAL.  However, implementations that support TLS renegotiation MUST implement and use the TLS Renegotiation Extension <xref target='TLS-NEG'/>.</t>
       </section>
       <section title="TLS Extensions" anchor="tls-rules-extensions">
         <t>Either party to a stream MAY include any TLS extension during the TLS negotiation itself.  This is a matter for the TLS layer, not the XMPP layer.</t>
@@ -3645,8 +3653,29 @@ S2: </stream>
         </t>
       </section>
     </section>
+    <section title="Remote Domain" anchor="rules-remote">
+      <t>If the domainpart of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  As described in the following sections, there are two possible cases.</t>
+      <t><list style='empty'><t>Security Note: These rules apply only client-to-server streams.  As described under <xref target='stanzas-attributes-to-s2s'/>, a server MUST NOT accept a stanza over a server-to-server stream if the domainpart of the JID in the 'to' attribute does not match a hostname serviced by the receiving server.</t></list></t>
+      <section title="Existing Stream" anchor="rules-remote-existing">
+        <t>If a server-to-server stream already exists between the two domains, the sender's server will attempt to route the stanza to the authoritative server for the remote domain over the existing stream.</t>
+      </section>
+      <section title="No Existing Stream" anchor="rules-remote-nostream">
+        <t>If there exists no server-to-server stream between the two domains, the sender's server will proceed as follows:</t>
+        <t>
+          <list style='numbers'>
+            <t>Resolve the hostname of the remote domain, as described under <xref target="security-reuse-dns"/>).<vspace blankLines='1'/></t>
+            <t>Negotiate a server-to-server stream between the two domains (as defined under <xref target='tls'/> and <xref target='sasl'/>).<vspace blankLines='1'/></t>
+            <t>Route the stanza to the authoritative server for the remote domain over the newly-established stream.</t>
+          </list>
+        </t>
+      </section>
+      <section title="Error Handling" anchor="rules-remote-error">
+        <t>If routing of a stanza to the intended recipient's server is unsuccessful, the sender's server MUST return an error to the sender.  If resolution of the remote domain is unsuccessful, the stanza error MUST be &lt;remote-server-not-found/&gt;.  If resolution succeeds but streams cannot be negotiated, the stanza error MUST be &lt;remote-server-timeout/&gt;.</t>
+        <t>If stream negotiation with the intended recipient's server is successful but the remote server cannot deliver the stanza to the recipient, the remote server MUST return an appropriate error to the sender by way of the sender's server.</t>
+      </section>
+    </section>
     <section title="Local Domain" anchor="rules-local">
-      <t>If the hostname of the domainpart of the JID contained in the 'to' attribute matches one of the configured hostnames of the server itself, the server MUST first determine if the hostname is serviced by the server or by a specialized local service.  If the latter, the server MUST route the stanza to that service.  If the former, the server MUST proceed as follows.</t>
+      <t>If the hostname of the domainpart of the JID contained in the 'to' attribute matches one of the configured hostnames of the server, the server MUST first determine if the hostname is serviced by the server itself or by a specialized local service.  If the latter, the server MUST route the stanza to that service.  If the former, the server MUST proceed as follows.</t>
       <section title="Mere Domain" anchor="rules-local-domain">
         <t>If the JID contained in the 'to' attribute is of the form &lt;domain&gt;, then the server MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
       </section>
@@ -3679,27 +3708,6 @@ S2: </stream>
           <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart/resource&gt; and there is no connected resource that exactly matches the full JID, the stanza SHOULD be processed as if the JID were of the form &lt;localpart@domainpart&gt;.</t>
           <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart/resource&gt; and there is a connected resource that exactly matches the full JID, the server SHOULD deliver the stanza to that connected resource.</t>
         </section>
-      </section>
-    </section>
-    <section title="Remote Domain" anchor="rules-remote">
-      <t>If the domainpart of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server itself, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  As described in the following sections, there are two possible cases.</t>
-      <t><list style='empty'><t>Security Note: These rules apply only client-to-server streams.  As described under <xref target='stanzas-attributes-to-s2s'/>, a server MUST NOT accept a stanza over a server-to-server stream if the domainpart of the JID in the 'to' attribute does not match a hostname serviced by the receiving server.</t></list></t>
-      <section title="Existing Stream" anchor="rules-remote-existing">
-        <t>If a server-to-server stream already exists between the two domains, the sender's server will attempt to route the stanza to the authoritative server for the remote domain over the existing stream.</t>
-      </section>
-      <section title="No Existing Stream" anchor="rules-remote-nostream">
-        <t>If there exists no server-to-server stream between the two domains, the sender's server will proceed as follows:</t>
-        <t>
-          <list style='numbers'>
-            <t>Resolve the hostname of the remote domain, as described under <xref target="security-reuse-dns"/>).<vspace blankLines='1'/></t>
-            <t>Negotiate a server-to-server stream between the two domains (as defined under <xref target='tls'/> and <xref target='sasl'/>).<vspace blankLines='1'/></t>
-            <t>Route the stanza to the authoritative server for the remote domain over the newly-established stream.</t>
-          </list>
-        </t>
-      </section>
-      <section title="Error Handling" anchor="rules-remote-error">
-        <t>If routing of a stanza to the intended recipient's server is unsuccessful, the sender's server MUST return an error to the sender.  If resolution of the remote domain is unsuccessful, the stanza error MUST be &lt;remote-server-not-found/&gt;.  If resolution succeeds but streams cannot be negotiated, the stanza error MUST be &lt;remote-server-timeout/&gt;.</t>
-        <t>If stream negotiation with the intended recipient's server is successful but the remote server cannot deliver the stanza to the recipient, the remote server MUST return an appropriate error to the sender by way of the sender's server.</t>
       </section>
     </section>
   </section>
@@ -3965,9 +3973,9 @@ XmppAddr ::= UTF8String
             <t>If the client certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="X509"/>), the server MUST check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-xmppaddr'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
-                <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use this represented JID as the validated identity of the client.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #2:'>The server finds more than one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server itself; the server SHOULD use one of these represented JIDs as the validated identity of the client, choosing among them according to local service policies or based on the 'to' address of the initial stream header.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #3:'>The server finds no XmppAddrs, or finds at least one XmppAddr but the domainpart of the represented JID does not match one of the configured hostnames of the server itself; the server MUST NOT use the represented JID (if any) as the validated identity of the client but instead MUST either validate the identity of the client using other means.</t>
+                <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server; the server SHOULD use this represented JID as the validated identity of the client.<vspace blankLines='1'/></t>
+                <t hangText='Sub-Case #2:'>The server finds more than one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server; the server SHOULD use one of these represented JIDs as the validated identity of the client, choosing among them according to local service policies or based on the 'to' address of the initial stream header.<vspace blankLines='1'/></t>
+                <t hangText='Sub-Case #3:'>The server finds no XmppAddrs, or finds at least one XmppAddr but the domainpart of the represented JID does not match one of the configured hostnames of the server; the server MUST NOT use the represented JID (if any) as the validated identity of the client but instead MUST either validate the identity of the client using other means.</t>
               </list>
             </t>
           </section>
@@ -4986,12 +4994,12 @@ XmppAddr ::= UTF8String
 <author initials='J' surname='Hodges' fullname='Jeff Hodges'>
     <organization />
 </author>
-<date month='June' day='11' year='2010' />
+<date month='June' day='30' year='2010' />
 <abstract><t>Many application technologies enable a secure connection between two entities using certificates in the context of Transport Layer Security (TLS).  This document specifies procedures for representing and verifying the identity of application servers in such interactions.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-06' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-07' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-06.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-07.txt' />
 </reference>
 
 <reference anchor="UCS2">
@@ -5347,12 +5355,12 @@ specifications of each URI scheme.
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='April' day='7' year='2010' />
-<abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP).</t></abstract>
+<date month='July' day='7' year='2010' />
+<abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP), including support for non- ASCII characters.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-00' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-01' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-00.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-01.txt' />
 </reference>
 
     </references>
@@ -6005,22 +6013,16 @@ specifications of each URI scheme.
 
 <reference anchor='TLS-EXT'>
 <front>
-<title>Transport Layer Security (TLS) Extensions</title>
-<author initials='S.' surname='Blake-Wilson' fullname='S. Blake-Wilson'>
-<organization /></author>
-<author initials='M.' surname='Nystrom' fullname='M. Nystrom'>
-<organization /></author>
-<author initials='D.' surname='Hopwood' fullname='D. Hopwood'>
-<organization /></author>
-<author initials='J.' surname='Mikkelsen' fullname='J. Mikkelsen'>
-<organization /></author>
-<author initials='T.' surname='Wright' fullname='T. Wright'>
-<organization /></author>
-<date year='2006' month='April' />
-<abstract>
-<t>This document describes extensions that may be used to add functionality to Transport Layer Security (TLS). It provides both generic extension mechanisms for the TLS handshake client and server hellos, and specific extensions using these generic mechanisms.&lt;/t>&lt;t> The extensions may be used by TLS clients and servers. The extensions are backwards compatible: communication is possible between TLS clients that support the extensions and TLS servers that do not support the extensions, and vice versa. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='4366' />
-<format type='TXT' octets='66344' target='ftp://ftp.isi.edu/in-notes/rfc4366.txt' />
+<title>Transport Layer Security (TLS) Extensions: Extension Definitions</title>
+<author initials='D' surname='3rd' fullname='Donald Eastlake 3rd'>
+    <organization />
+</author>
+<date month='June' day='11' year='2010' />
+<abstract><t>This document provides specifications for existing TLS extensions. It is a companion document for the TLS 1.2 specification [RFC5246]. The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-tls-rfc4366-bis-09' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-tls-rfc4366-bis-09.txt' />
 </reference>
 
 <reference anchor='TLS-NEG'>
@@ -6493,12 +6495,12 @@ specifications of each URI scheme.
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='March' day='31' year='2010' />
+<date month='July' day='7' year='2010' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-06' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-07' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-06.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-07.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
