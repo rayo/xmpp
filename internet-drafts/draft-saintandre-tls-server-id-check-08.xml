@@ -69,11 +69,11 @@
             <t>The NETCONF Configuration Protocol <xref target="NETCONF"/>, for which see also <xref target="NETCONF-SSH"/> and <xref target="NETCONF-TLS"/><vspace blankLines='1'/></t>
             <t>The Syslog Protocol <xref target="SYSLOG"/>, for which see also <xref target="SYSLOG-TLS"/><vspace blankLines='1'/></t>
             <t>The Session Initiation Protocol <xref target="SIP"/>, for which see also <xref target="SIP-CERTS"/><vspace blankLines='1'/></t>
-            <t>The General Internet Signalling Transport <xref target="GIST"/><vspace blankLines='1'/></t>
+            <t>The General Internet Signalling Transport <xref target="GIST"/></t>
           </list>
         </t>
         <t>Application protocols have traditionally specified their own rules for representing and verifying server identities.  Unfortunately, this divergence of approaches has caused some confusion among certification authorities, application developers, and protocol designers.</t>
-        <t>To codify best current practices regarding the implementation and deployment of secure PKIX-based authentication, this document specifies recommended procedures for representing and verifying server identities in certificates intended for use in applications employing TLS.</t>
+        <t>Therefore, to codify best current practices regarding the implementation and deployment of secure PKIX-based authentication, this document specifies recommended procedures for representing and verifying server identities in certificates intended for use in applications employing TLS.</t>
       </section>
 
       <section title="Scope" anchor="scope">
@@ -94,7 +94,7 @@
                 <vspace blankLines="1"/> 
               </t>
               <t>
-                Identifiers other than fully-qualified DNS domain names (e.g., IP addresses).
+                Identifiers other than fully-qualified DNS domain names.
 
                 <vspace blankLines="1"/> 
 
@@ -102,7 +102,7 @@
 
                 <vspace blankLines="1"/> 
 
-                Furthermore, we do not discuss attributes other than those related to DNS domain names,  such as those defined in <xref target='X.520'/> (e.g., organizational attributes, geographical attributes, company logos, and the like).
+                Furthermore, we do not discuss attributes unrelated to DNS domain names, such as those defined in <xref target='X.520'/> and other such specification (e.g., organizational attributes, geographical attributes, company logos, and the like).
 
                 <vspace blankLines="1"/>
               </t>
@@ -111,7 +111,7 @@
 
                 <vspace blankLines="1"/> 
 
-                Although other secure, lower-layer protocols exist and also at times employ PKIX certificates, e.g. <xref target='IPSEC'/>, their use cases can differ from those of TLS-based or DTLS-based application technologies.  Furtermore, application technologies have less experience with IPsec than with TLS, thus making it more difficult to gather feedback on proposed best practices.
+                Although other secure, lower-layer protocols exist and even employ PKIX certificates at times, e.g. <xref target='IPSEC'/>, their use cases can differ from those of TLS-based or DTLS-based application technologies.  Furthermore, application technologies have less experience with IPsec than with TLS, thus making it more difficult to gather feedback on proposed best practices.
 
                 <vspace blankLines="1"/> 
               </t>
@@ -132,7 +132,8 @@
               <t>What classes and types of certificates to issue and whether to apply different policies for them (e.g., allow the wildcard character in Class 2 certificates but not in Class 1 or Extended Validation certificates).<vspace blankLines="1"/></t>
               <t>Whether to issue certificates based on IP addresses (or some other form, such as relative domain names) in addition to fully-qualified DNS domain names.<vspace blankLines="1"/></t>
               <t>Which identifiers to include (e.g., whether to include the SRVName and uniformResourceIdentifier extensions).<vspace blankLines="1"/></t>
-              <t>How to certify or validate the information contained in a certificate.<vspace blankLines="1"/></t>
+              <t>How to certify or validate fully-qualified domain names and application service types.<vspace blankLines="1"/></t>
+              <t>How to certify or validate other kinds of information that might be included in a certificate (e.g., organization name).</t>
             </list>
           </t>
           <t>Finally, this specification is mostly silent about user interface issues, which in general are properly the responsibility of client software developers and standards development organizations dedicated to particular application technologies (see for example <xref target='WSC-UI'/>).</t>
@@ -140,10 +141,10 @@
       </section>
 
       <section title="Terminology" anchor="terminology">
-        <t>Because the concept of "identity" is too vague to be actionable in application protocols, we define a set of more concrete terms:</t>
+        <t>Because many concepts related to "identity" are often too vague to be actionable in application protocols, we define a set of more concrete terms for use in this specification.</t>
         <t>
           <list style="hanging">
-            <t hangText="application service:">A service on the Internet that enables interactive clients and automated clients to connect for the purpose of retrieving or uploading information, communicating with other entities, or connecting to a broader network of services.<vspace blankLines='1'/></t>
+            <t hangText="application service:">A service on the Internet that enables interactive and automated clients to connect for the purpose of retrieving or uploading information, communicating with other entities, or connecting to a broader network of services.<vspace blankLines='1'/></t>
             <t hangText="application service provider:">An organization or individual that hosts or deploys an application service.<vspace blankLines='1'/></t>
             <t hangText="attribute-type-and-value pair:">The ASN.1 structure for a distinguished name as described in <xref target='LDAP-DN'/>.<vspace blankLines='1'/></t>
             <t hangText="automated client:">A software agent or device that is not directly controlled by a natural person.<vspace blankLines='1'/></t>
@@ -154,7 +155,7 @@
                 <t>CN-ID = a Relative Distinguished Name (RDN) in the certificate subject that contains one and only one attribute-type-and-value pair of type Common Name (CN); see <xref target='PKIX'/> and also <xref target='LDAP-SCHEMA'/><vspace blankLines='1'/></t>
                 <t>DNS-ID = a subjectAltName entry of type dNSName; see <xref target='PKIX'/><vspace blankLines='1'/></t>
                 <t>SRV-ID = a subjectAltName entry of type otherName whose name form is SRVName; see <xref target='SRVNAME'/><vspace blankLines='1'/></t>
-                <t>URI-ID = a subjectAltName entry of type uniformResourceIdentifier; see <xref target='PKIX'/><vspace blankLines='1'/></t>
+                <t>URI-ID = a subjectAltName entry of type uniformResourceIdentifier; see <xref target='PKIX'/></t>
               </list>
             <vspace blankLines='1'/></t>
             <t hangText="indirect name:">A name for an application service that is indirectly resolved by a client based on a direct name provided by a user, resulting in a target domain and (optionally) a service type.<vspace blankLines='1'/></t>
@@ -162,8 +163,8 @@
             <t hangText="PKIX certificate:">An X.509v3 certificate generated and employed in the context of the Internet Public Key Infrastructure using X.509 <xref target='PKIX'/>.<vspace blankLines='1'/></t>
             <t hangText="presented identifier:">An identifier that is presented by a server to a client within the server's PKIX certificate when the client attempts to establish a secure connection with the server; the certificate can include one or more presented identifiers of different types.<vspace blankLines='1'/></t>
             <t hangText="reference identifier:">An identifier that is used by the client for matching purposes when checking the presented identifiers; the client can attempt to match multiple reference identifiers of different types.<vspace blankLines='1'/></t>
-            <t hangText="restricted name:">A name that can be used only for one kind of application at a service provider.<vspace blankLines='1'/></t>
-            <t hangText="service type:">A formal identifier for the application protocol used to provide a particular kind of service at a domain; the service type typically takes the form of a Uniform Resource Identifier <xref target='URI'/> scheme or a DNS SRV Service <xref target='DNS-SRV'/>.<vspace blankLines='1'/></t>
+            <t hangText="restricted name:">A name that can be used only for one type of service at an application service provider.<vspace blankLines='1'/></t>
+            <t hangText="service type:">A formal identifier for the application protocol used to provide a particular kind of service at a domain; the service type typically takes the form of a Uniform Resource Identifier scheme <xref target='URI'/> or a DNS SRV Service <xref target='DNS-SRV'/>.<vspace blankLines='1'/></t>
             <t hangText="source domain:">The fully-qualified DNS domain name that a client expects an application service to present in the certificate.<vspace blankLines='1'/></t>
             <t hangText="subjectAltName entry:">A specific identifier placed in the subjectAltName extension.<vspace blankLines='1'/></t>
             <t hangText="subjectAltName extension:">The subject alternative name structure of an X.509v3 certificate as described in <xref target='PKIX'/>.<vspace blankLines='1'/></t>
@@ -171,7 +172,7 @@
             <t hangText="TLS client:">An entity that assumes the role of a client in a Transport Layer Security <xref target='TLS'/> negotiation; in this specfication we generally assume that the TLS client is an (interactive or automated) application client, however in application protocols that enable server-to-server communication the TLS client could be a peer application service.<vspace blankLines='1'/></t>
             <t hangText="TLS server:">An entity that assumes the role of a server in a Transport Layer Security <xref target='TLS'/> negotiation; in this specfication we assume that the TLS server is an application service.<vspace blankLines='1'/></t>
             <t hangText="target domain:">A domain name or host name that a client has derived from the source domain in an automated fashion (e.g., by means of a <xref target='DNS-SRV'/> lookup) or that a natural person directly controlling an interactive client has explicitly configured for connecting to the source domain.<vspace blankLines='1'/></t>
-            <t hangText="unrestricted name:">A name that can be used for any kind of application at a service provider.</t>
+            <t hangText="unrestricted name:">A name that can be used for any service type at an application service provider.</t>
           </list>
         </t>
         <t>Most security-related terms in this document are to be understood in the sense defined in <xref target="SECTERMS"/>; such terms include, but are not limited to, "attack", "authentication", "authorization", "certification authority", "certification path", "certificate", "credential", "identity", "self-signed certificate", "trust", "trust anchor", "trust chain", "validate", and "verify".</t>
@@ -196,15 +197,15 @@
     <section title="Names" anchor="names">
       <t>This section discusses naming of application services on the Internet, followed by a brief tutorial about subject naming in PKIX.</t>
       <section title="Naming Application Services" anchor="names-apps">
-        <t>This specification assumes that the name of an application service is based on a DNS domain name (e.g., "example.com") -- supplemented in some circumstances by an application type (e.g., "the IMAP server at example.com").</t>
-        <t>From the perspective of the application client or user, some names are direct because they are provided directly by the user (e.g., via runtime input or prior configuration) whereas other names are indirect because they are resolved by the client based on input provided by the user (e.g., a target name resolved from a source name using DNS SRV records). This dimension matters for certificate verification.</t>
-        <t>From the perspective of the application service, some names are unrestricted because they can be used in any kind of application (e.g., a certificate might be re-used for both the HTTP service and the IMAP service at example.com) whereas other names are restricted because they can be used in only one kind of application (e.g., a special-purpose certificate that can be used only for an IMAP service).  This dimension matters for certificate issuance.</t>
+        <t>This specification assumes that the name of an application service is based on a DNS domain name (e.g., "example.com") -- supplemented in some circumstances by a service type (e.g., "the IMAP server at example.com").</t>
+        <t>From the perspective of the application client or user, some names are direct because they are provided directly by the user (e.g., via runtime input or prior configuration) whereas other names are indirect because they are resolved by the client based on input provided directly by the user (e.g., a target name resolved from a source name using DNS SRV records). This dimension matters for certificate verification.</t>
+        <t>From the perspective of the application service, some names are unrestricted because they can be used in any type of service (e.g., a certificate might be re-used for both the HTTP service and the IMAP service at example.com) whereas other names are restricted because they can be used in only one type of service (e.g., a special-purpose certificate that can be used only for an IMAP service).  This dimension matters for certificate issuance.</t>
         <t>Therefore:</t>
         <t>
           <list style='symbols'>
-            <t>A CN-ID identifier is direct (provided by a user) and unrestricted (can be used for any application).</t>
-            <t>A DNS-ID identifier is direct (provided by a user) and unrestricted (can be used for any application).</t>
-            <t>An SRV-ID identifier is indirect (resolved by a client) and restricted (can be used for only a single application).</t>
+            <t>A CN-ID identifier is direct (provided by a user) and unrestricted (can be used for any application).<vspace blankLines='1'/></t>
+            <t>A DNS-ID identifier is direct (provided by a user) and unrestricted (can be used for any application).<vspace blankLines='1'/></t>
+            <t>An SRV-ID identifier is indirect (resolved by a client) and restricted (can be used for only a single application).<vspace blankLines='1'/></t>
             <t>A URI-ID identifier is direct (provided by a user) and restricted (can be used for only a single application).</t>
           </list>
         </t>
@@ -231,8 +232,8 @@
         <t>More specifically, in <xref target='X.509'/> and <xref target='PKIX'/> an application service is identified by a name or names carried in the subject field and/or the subjectAltName extension of a certificate (as <xref target='PKIX'/> says, "[the] subject field identifies the entity associated with the public key stored in the subject public key field").  The subject field of a PKIX certificate is an X.501 type Name (see Section 4.1.2.6 of <xref target='PKIX'/>) and the subject alternative name ("subjectAltName") extension allows various alternative identities to be bound to the subject (see Section 4.2.1.6 of <xref target='PKIX'/>).  It is perfectly acceptable for a PKIX certificate to have an empty subject field as long as the certificate contains a subjectAltName extension that includes at least one subjectAltName entry.  The subjectAltName extension is a sequence of typed entries, where each type is a distinct kind of identifier.  For example, the subjectAltName entry types noted in this specification are:</t>
         <t>
           <list style='symbols'>
-            <t>dNSName -- a (fully-qualified) DNS domain name <xref target='PKIX'/></t>
-            <t>SRVName -- a DNS SRV service name <xref target='DNS-SRV'/> <xref target='SRVNAME'/></t>
+            <t>dNSName -- a (fully-qualified) DNS domain name <xref target='PKIX'/><vspace blankLines='1'/></t>
+            <t>SRVName -- a DNS SRV service name <xref target='DNS-SRV'/> <xref target='SRVNAME'/><vspace blankLines='1'/></t>
             <t>uniformResourceIdentifier -- a Uniform Resource Identifier <xref target='URI'/> <xref target='PKIX'/></t>
           </list>
         </t>
@@ -251,9 +252,9 @@ cn=www.example.com,c=GB,ou=Web Services
       <t>When a certification authority issues a certificate based on the fully-qualified DNS domain name at which the application service provider will provide the relevant application, the following rules apply to the representation of application service identities.</t>
       <t>
         <list style='numbers'>
-          <t>The certificate SHOULD include a "DNS-ID" (i.e., a subjectAltName entry of type dNSName).<vspace blankLines='1'/></t>
+          <t>The certificate SHOULD include a "DNS-ID" (i.e., a subjectAltName entry of type dNSName) if possible as a baseline for interoperability.<vspace blankLines='1'/></t>
           <t>If the service using the certificate deploys a technology in which a server is discovered by means of DNS SRV records <xref target='DNS-SRV'/> (e.g., this is true of <xref target='XMPP'/>), then the certificate SHOULD include an "SRV-ID" (i.e., a subjectAltName entry of type otherName whose name form is SRVName as specified in <xref target='SRVNAME'/>).<vspace blankLines='1'/></t>
-          <t>If the service using the certificate deploys a technology in which a server is typically associated with a URI (e.g., this is true of <xref target='SIP'/>), then the certificate SHOULD include an URI-ID (i.e., a subjectAltName entry of type uniformResourceIdentifier); the scheme SHALL be that of the protocol associated with the application type and the authority component SHALL be the fully-qualified DNS domain name of the service.<vspace blankLines='1'/></t>
+          <t>If the service using the certificate deploys a technology in which a server is typically associated with a URI (e.g., this is true of <xref target='SIP'/>), then the certificate SHOULD include an URI-ID (i.e., a subjectAltName entry of type uniformResourceIdentifier); the scheme SHALL be that of the protocol associated with the service type and the authority component SHALL be the fully-qualified DNS domain name of the service.<vspace blankLines='1'/></t>
           <t>The certificate MAY include other application-specific identifiers for types that were defined before specification of the SRVName extension (e.g., XmppAddr for <xref target='XMPP'/>) or for which service names or URI schemes do not exist; however, such application-specific identifiers are not generally applicable and therefore are out of scope for this specification.<vspace blankLines='1'/></t>
           <t>The certificate SHOULD NOT represent the server's fully-qualified DNS domain name in a CN-ID, even though many deployed clients still check for this legacy identifier configuration within certificate subjectName.  However, the certificate's subject Distinguished Name SHOULD NOT contain more than one CN-ID, and MUST NOT contain RDNs which consist of multiple Common Name attributes.<vspace blankLines='1'/></t>
           <t>The fully-qualified DNS domain name portion of the DN-ID or CN-ID MAY contain one instance of the wildcard character '*', but only as the left-most label of the domain name component of the identifier (following the definition of "label" from <xref target='DNS'/>).  Specifications that profile the rules defined in this document MUST specify whether the wildcard character is or is not allowed in certificates issued under that profile; by default wildcard certificates SHOULD NOT be allowed.<vspace blankLines='1'/></t>
@@ -276,15 +277,15 @@ cn=www.example.com,c=GB,ou=Web Services
       </section>
       <section title="Constructing an Ordered List of Reference Identifiers" anchor="verify-reference">
         <t>Before connecting to the server, the client MUST construct an ordered list of acceptable reference identifiers.</t>
-        <t>The inputs here might be a URI that a user has typed into an interface (e.g., an HTTP URL for a web site), configured account information (e.g., the username of an IMAP or POP3 account for retrieving email), or some other combination of information that can yield a source domain and an application type.</t>
-        <t>The client might need to derive the source domain and application type from the input(s) it has received.  The derived data MUST include only information that can be securely parsed out of the inputs (e.g., extracting the fully-qualified DNS domain name from the authority component of a URI or extracting the application type from the scheme of a URI) or information for which the derivation is performed in a secure manner (e.g., using <xref target='DNSSEC'/>).</t>
+        <t>The inputs here might be a URI that a user has typed into an interface (e.g., an HTTP URL for a web site), configured account information (e.g., the username of an IMAP or POP3 account for retrieving email), or some other combination of information that can yield a source domain and a service type.</t>
+        <t>The client might need to derive the source domain and service type from the input(s) it has received.  The derived data MUST include only information that can be securely parsed out of the inputs (e.g., extracting the fully-qualified DNS domain name from the authority component of a URI or extracting the service type from the scheme of a URI) or information for which the derivation is performed in a secure manner (e.g., using <xref target='DNSSEC'/>).</t>
         <t>In some cases the inputs might include more than one fully-qualified DNS domain name, because a user might have explicitly configured the client to associate a target domain with the source domain.  Such delegation can occur by means of user-approved DNS SRV records (e.g., _xmpp-server._tcp.im.example.com might yield an address of hosting.example.net) or a user-configured lookup table for host-to-address or address-to-host translations (e.g., the Unix "hosts" file).  See under <xref target='security'/> for further discussion of service delegation.</t>
-        <t>Using the combination of fully-qualified DNS domain name(s) and application type, the client constructs a list of reference identifiers in accordance with the following rules:</t>
+        <t>Using the combination of fully-qualified DNS domain name(s) and service type, the client constructs a list of reference identifiers in accordance with the following rules:</t>
         <t>
           <list style='symbols'>
             <t>The list MUST include a DNS-ID.  A reference identifier of type DNS-ID can be directly constructed from a fully-qualified DNS domain name that is (a) contained in or securely derived from the inputs (i.e., the source domain), or (b) explicitly associated with the source domain by means of user configuration (i.e., a target domain).<vspace blankLines='1'/></t>
-            <t>If a server for the application type is typically discovered by means of DNS SRV records , then the list SHOULD include an SRV-ID.<vspace blankLines='1'/></t>
-            <t>If a server for the application type is typically associated with a URI, then the list SHOULD include a URI-ID <vspace blankLines='1'/></t>
+            <t>If a server for the service type is typically discovered by means of DNS SRV records , then the list SHOULD include an SRV-ID.<vspace blankLines='1'/></t>
+            <t>If a server for the service type is typically associated with a URI, then the list SHOULD include a URI-ID <vspace blankLines='1'/></t>
             <t>The list SHOULD NOT include a CN-ID; however, the CN-ID (if included) MUST be constructed only from the source domain and never from a target domain.<vspace blankLines='1'/></t>
           </list>
         </t>
@@ -294,11 +295,11 @@ cn=www.example.com,c=GB,ou=Web Services
         <t>
           <list style='symbols'>
             <t>Reference identifiers that include the source domain MUST be preferred over reference identifiers that include a target domain (if any).<vspace blankLines='1'/></t>
-            <t>Reference identifiers that include both a fully-qualified DNS domain name and an application type MUST be preferred over reference identifiers that include only a fully-qualified DNS domain name.  Therefore an SRV-ID or URI-ID is to be preferred over a DNS-ID.<vspace blankLines='1'/></t>
+            <t>Reference identifiers that include both a fully-qualified DNS domain name and a service type MUST be preferred over reference identifiers that include only a fully-qualified DNS domain name.  Therefore an SRV-ID or URI-ID is to be preferred over a DNS-ID.<vspace blankLines='1'/></t>
             <t>Notwithstanding any of the foregoing rules, reference identifiers of type CN-ID (if included) MUST always be the lowest-priority reference identifiers in the list.<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>To illustrate the ordering rules, consider the case where the inputs are a source domain of "im.example.com" and an application type of "XMPP" (for which application services are discovered via DNS SRV records) and the user of the client has also explicitly configured a target domain of "hosting.example.net".  In this case, the ordered list would be:</t>
+        <t>To illustrate the ordering rules, consider the case where the inputs are a source domain of "im.example.com" and a service type of "XMPP" (for which application services are discovered via DNS SRV records) and the user of the client has also explicitly configured a target domain of "hosting.example.net".  In this case, the ordered list would be:</t>
         <t>
           <list style='numbers'>
             <t>SRV-ID of "_xmpp.im.example.com"</t>
@@ -333,8 +334,8 @@ cn=www.example.com,c=GB,ou=Web Services
         </section>
       </section>
       <section title="Verifying an Application Type" anchor="verify-app">
-        <t>As specified under the ordering rules for reference identifiers, a client SHOULD check not only the domain name but also the application type of the service to which it connects.  This is a best practice because typically a client is not designed to connect to all kinds of services using all possible application protocols, but instead is designed to connect to one kind of service, such as a web site, an email service, or an instant messaging service.</t>
-        <t>The application type is verified by means of either an SRV-ID or URI-ID.</t>
+        <t>As specified under the ordering rules for reference identifiers, a client SHOULD check not only the domain name but also the service type of the service to which it connects.  This is a best practice because typically a client is not designed to connect to all kinds of services using all possible application protocols, but instead is designed to connect to one kind of service, such as a web site, an email service, or an instant messaging service.</t>
+        <t>The service type is verified by means of either an SRV-ID or URI-ID.</t>
         <section title="SRV-ID" anchor="verify-app-srv">
           <t>The service name portion of an SRV-ID (e.g., "xmpp") MUST be matched in a case-insensitive manner, in accordance with <xref target='DNS-SRV'/>.  Note that the "_" character is prepended to the service identifier in DNS SRV records.</t>
         </section>
@@ -374,7 +375,7 @@ cn=www.example.com,c=GB,ou=Web Services
 
     <section title="Security Considerations" anchor="security">
       <section title="Service Delegation" anchor="security-delegation">
-        <t>When the connecting application is an interactive client, the source domain name and application type MUST be provided by a human user (e.g. when specifying the server portion of the user's account name on the server or when explicitly configuring the client to connect to a particular host or URI as in <xref target='SIP-LOC'/>) and MUST NOT be derived from the user inputs in an automated fashion (e.g., a host name or domain name discovered through DNS resolution of the source domain).  This rule is important because only a match between the user inputs (in the form of a reference identifier) and a presented identifier enables the client to be sure that the certificate can legitimately be used to secure the connection.</t>
+        <t>When the connecting application is an interactive client, the source domain name and service type MUST be provided by a human user (e.g. when specifying the server portion of the user's account name on the server or when explicitly configuring the client to connect to a particular host or URI as in <xref target='SIP-LOC'/>) and MUST NOT be derived from the user inputs in an automated fashion (e.g., a host name or domain name discovered through DNS resolution of the source domain).  This rule is important because only a match between the user inputs (in the form of a reference identifier) and a presented identifier enables the client to be sure that the certificate can legitimately be used to secure the connection.</t>
         <t>However, an interactive client MAY provide a configuration setting that enables a human user to explicitly specify a particular host name or domain name (called a "target domain") to be checked for connection purposes.</t>
       </section>
       <section title="Wildcard Certificates" anchor="security-wildcard">
