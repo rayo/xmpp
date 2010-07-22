@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="July" day="19"/>
+    <date year="2010" month="July" day="26"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -276,10 +276,12 @@ romeo@example.net           juliet@im.example.com
         <list style='symbols'>
           <t>The stream negotation process</t>
           <t>How to close a stream</t>
+          <t>How to handle peers that are silent</t>
           <t>The XML attributes of a stream</t>
           <t>The XML namespaces of a stream</t>
         </list>
       </t>
+      <t><list style='empty'><t>Implementation Note: Although this specification speaks of a single stream in each direction, nothing prevents implementations from negotiating multiple streams in each direction (and, in practice, large XMPP service providers often use multiple streams for server-to-server connectivity).</t></list></t>
     </section>
 
     <section title="Stream Negotiation" anchor="streams-negotiation">
@@ -445,7 +447,7 @@ S: </stream:stream>
         </list>
       </t>
       <t>These three conditions are best handled separately, as described in the following sections.</t>
-      <t><list style='empty'><t>Implementation Note:  For the purpose of handling silent peers, we treat a two unidirectional TCP connections as conceptually equivalent to a single bidirectional TCP connection (see <xref target='tcp-direction'/>); however, implementers need to be aware that, in the case of two unidirectional TCP connections, responses to traffic at the XMPP application layer will come back from the peer on the second TCP connection.</t></list></t>
+      <t><list style='empty'><t>Implementation Note:  For the purpose of handling silent peers, we treat a two unidirectional TCP connections as conceptually equivalent to a single bidirectional TCP connection (see <xref target='tcp-direction'/>); however, implementers need to be aware that, in the case of two unidirectional TCP connections, responses to traffic at the XMPP application layer will come back from the peer on the second TCP connection.  In addition, the use of multiple streams in each direction (which is a common deployment choice for server-to-server connectivity among large XMPP service providers) further complicates application-level checking of XMPP streams and their underlying TCP connections, because there is no necessary correlation between any given initial stream and any given response stream.</t></list></t>
       <section title="Idle Peer" anchor="streams-silence-idle">
         <t>If the stream peer is idle at the XMPP application layer, it is acceptable for the entity to ieither close the stream using the handshake described under <xref target='streams-close'/> or to return a stream error (e.g., &lt;resource-constraint/&gt; if the entity has reached a limit on the number of open TCP connections or &lt;policy-violation/&gt; if the connection has exceeded a local timeout policy).  However, it is RECOMMENDED to be liberal in accepting idle peers, since experience has shown that doing so improves the reliability of communication over XMPP networks and that it is typically more efficient to maintain a stream between two servers than to aggressively timeout such a stream.</t>
       </section>
@@ -3842,7 +3844,7 @@ S2: </stream>
     </section>
     <section title="Certificates" anchor="security-certificates">
       <t>Channel encryption of an XML stream using Transport Layer Security as described under <xref target='tls'/>, and in some cases also authentication as described under <xref target='sasl'/>, is commonly based on a digital certificate presented by the receiving entity (or, in the case of mutual authentication, both the receiving entity and the initiating entity).  This section describes best practices regarding the generation of digital certificates to be presented by XMPP entities and the verification of digital certificates presented by XMPP entities.</t>
-      <t>In general, the following sections rely on and extend the rules and guidelines provided in <xref target='PKIX'/> and <xref target='TLS-CERTS'/>.  The reader is referred to those specifications for a detailed understanding of certificates and their use in TLS.</t>
+      <t>In general, the following sections rely on and extend the rules and guidelines provided in the <xref target='PKIX'/> profile of <xref target='X509'/>, and in <xref target='TLS-CERTS'/>.  The reader is referred to those specifications for a detailed understanding of PKIX certificates and their use in TLS.</t>
       <section title="Certificate Generation" anchor="security-certificates-generation">
         <section title="General Considerations" anchor="security-certificates-generation-general">
           <t>The following rules apply to public key certificates that are issued to XMPP entities:</t>
@@ -5209,6 +5211,19 @@ specifications of each URI scheme.
 <format type='TXT' octets='141811' target='ftp://ftp.isi.edu/in-notes/rfc3986.txt' />
 <format type='HTML' octets='200858' target='http://xml.resource.org/public/rfc/html/rfc3986.html' />
 <format type='XML' octets='165759' target='http://xml.resource.org/public/rfc/xml/rfc3986.xml' />
+</reference>
+
+<reference anchor="X509">
+<front>
+<title>Information technology - Open Systems Interconnection - The Directory:
+Public-key and attribute certificate frameworks</title>
+<author>
+<organization>International Telecommunications Union</organization>
+</author>
+<date month="March" year="2000" />
+</front>
+<seriesInfo name="ITU-T" value="Recommendation X.509" />
+<seriesInfo name="ISO" value="Standard 9594-8" />
 </reference>
 
 <reference anchor='XML' target='http://www.w3.org/TR/2008/REC-xml-20081126'>
