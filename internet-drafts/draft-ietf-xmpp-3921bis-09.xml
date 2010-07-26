@@ -5,12 +5,12 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3921bis-08" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-ietf-xmpp-3921bis-09" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
     <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
-      <organization>Cisco Systems, Inc.</organization>
+      <organization>Cisco</organization>
       <address>
         <postal>
           <street>1899 Wyknoop Street, Suite 600</street>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="July" day="12"/>
+    <date year="2010" month="July" day="26"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -109,8 +109,9 @@
   </section>
 
   <section title="Managing the Roster" anchor="roster">
-    <t>In XMPP, a user's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user can access roster information from any device.</t>
+    <t>In XMPP, a user's roster contains any number of specific contacts.  A user's roster is stored by the user's server on the user's behalf so that the user can access roster information from any device.  When the user adds items to the roster or modifies existing items, if an error does not occur then the server SHOULD store that data unmodified if at all possible and MUST return the data it has stored when an authorized client requests the roster.</t>
     <t><list style='empty'><t>Security Note: Because the user's roster can contain confidential data, the server MUST restrict access to this data so that only authorized entities (typically limited to the account owner) are able to retrieve, modify, or delete it.</t></list></t>
+    <t>RFC 3921 assumed that the only place where a user stores their roster is the server where the user's account is registered and at which the user authenticates for access to the XMPP network.  This specification removes that strict coupling of roster storage to account registration and network authentication, such that a user could store their roster at another location, or could have multiple rosters that are stored in multiple locations.  However, in the absence of implementation and deployment experience with a more flexible roster storage model, this specification retains the terminology of RFC 3921 by using the terms "client" and server" (and "the roster" instead of "a roster"), rather than coining a new term for "a place where a user stores a roster".  Future documents might provide normative rules for non-server roster storage or for the management of multiple rosters, but such rules are out of scope for this document.</t>
     <section title="Syntax and Semantics" anchor="roster-syntax">
       <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The detailed syntax and semantics are defined in the following sections.</t>
       <section title="Ver Attribute" anchor="roster-syntax-ver">
@@ -122,16 +123,15 @@
         <t>The &lt;query/&gt; element inside a <xref target='roster-syntax-actions-set'>roster set</xref> contains one &lt;item/&gt; child, and a <xref target='roster-syntax-actions-result'>roster result</xref> typically contains multiple &lt;item/&gt; children.  Each &lt;item/&gt; element describes a unique ROSTER ITEM or "contact".</t>
         <t>The syntax of the &lt;item/&gt; element is described in the following sections.</t>
         <section title="Ask Attribute" anchor="roster-syntax-items-ask">
-          <t>The 'ask' attribute is used to specify certain subscription sub-states; for details, see <xref target='sub-request-outbound'/>.</t>
-          <t>Inclusion of the 'ask' attribute is OPTIONAL.</t>
+          <t>The 'ask' attribute is used to specify subscription sub-states that include a "Pending Out" aspect as described under <xref target='sub-request-outbound'/>.  A server SHOULD include the 'ask' attribute for those subscription sub-states when returning the roster to an authorized client.  A client MUST NOT include the 'ask' attribute in the roster sets is sends to the server.</t>
         </section>
         <section title="JID Attribute" anchor="roster-syntax-items-jid">
           <t>The 'jid' attribute specifies the Jabber Identifier (JID) that uniquely identifies the roster item.</t>
-          <t>Inclusion of the 'jid' attribute is REQUIRED.</t>
+          <t>The 'jid' attribute is REQUIRED whenever a client or server adds, updates, deletes, or returns a roster item.</t>
         </section>
         <section title="Name Attribute" anchor="roster-syntax-items-name">
           <t>The 'name' attribute specifies the "handle" to be associated with the JID, as determined by the user (not the contact).  Although the value of the 'name' attribute MAY have meaning to a human user, it is opaque to the server.  However, the 'name' attribute MAY be used by the server for matching purposes within the context of various XMPP extensions (one possible comparison method is that described for XMPP resourceparts in <xref target='XMPP-ADDR'/>).</t>
-          <t>Inclusion of the 'name' attribute is OPTIONAL.</t>
+          <t>It is OPTIONAL for a client to include the 'name' attribute when adding or updating a roster item.</t>
         </section>
         <section title="Subscription Attribute" anchor="roster-syntax-items-subscription">
           <t>The state of the presence subscription is captured in the 'subscription' attribute of the &lt;item/&gt; element.  The defined subscription-related values are:</t>
@@ -150,7 +150,7 @@
         </section>
         <section title="Group Element" anchor="roster-syntax-items-group">
           <t>The &lt;group/&gt; child element specifies a category or "bucket" into which the roster item is to be grouped by a client.  An &lt;item/&gt; element MAY contain more than one &lt;group/&gt; element, which means that roster groups are not exclusive.  Although the XML character data of the &lt;group/&gt; element MAY have meaning to a human user, it is opaque to the server.  However, the &lt;group/&gt; element MAY be used by the server for matching purposes within the context of various XMPP extensions (one possible comparison method is that described for XMPP resourceparts in <xref target='XMPP-ADDR'/>).</t>
-          <t>Inclusion of the &lt;group/&gt; element is OPTIONAL.  If a <xref target='roster-syntax-actions-set'>roster set</xref> includes no &lt;group/&gt; element, then the item is to be interpreted being affiliated with no group.</t>
+          <t>It is OPTIONAL for a client to include the &lt;group/&gt; element when adding or updating a roster item.  If a <xref target='roster-syntax-actions-set'>roster set</xref> includes no &lt;group/&gt; element, then the item is to be interpreted as being affiliated with no group.</t>
         </section>
       </section>
       <section title="Roster Get" anchor="roster-syntax-actions-get">
@@ -181,7 +181,7 @@ S: <iq id='bv1bs71f'
   </iq>
           ]]></artwork>
         </figure>
-        <t>If the roster exists but there are no contacts in the roster, then the server MUST return an IQ-result containing a child &lt;query/&gt; element that in turn contains no &lt;item/&gt; children (i.e. , the server MUST NOT return an empty &lt;iq/&gt; stanza of type 'error').</t>
+        <t>If the roster exists but there are no contacts in the roster, then the server MUST return an IQ-result containing a child &lt;query/&gt; element that in turn contains no &lt;item/&gt; children (i.e. , the server MUST NOT return an empty &lt;iq/&gt; stanza of type "error").</t>
         <figure>
           <artwork><![CDATA[
 S: <iq id='bv1bs71f'
@@ -214,7 +214,7 @@ S: <iq id='bv1bs71f'
             <t>The server MUST ignore any value of the 'subscription' attribute other than "remove" (see <xref target='roster-syntax-items-subscription'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t><list style='empty'><t>Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource of the account whose roster was being updated.  Furthermore, the predecessor to this specification required a server to perform special-case checking of roster set stanzas to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set stanza might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set stanza is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
+        <t><list style='empty'><t>Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource (full JID) of the account whose roster was being updated.  Furthermore, RFC 3921 required a server to perform special-case checking of roster set stanzas to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set stanza might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set stanza is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
@@ -233,7 +233,7 @@ C: <iq from='juliet@example.com/balcony'
         <t>
           <list style='numbers'>
             <t>The &lt;query/&gt; element in a roster push MUST contain one and only one &lt;item/&gt; element.<vspace blankLines='1'/></t>
-            <t>A receiving client MUST ignore the stanza unless it has no 'from' attribute (i.e., implicitly from the user's bare JID) or it has a 'from' attribute whose value matches the user's bare JID &lt;user@domain&gt;.<vspace blankLines='1'/></t>
+            <t>A receiving client MUST ignore the stanza unless it has no 'from' attribute (i.e., implicitly from the bare JID of the user's account) or it has a 'from' attribute whose value matches the user's bare JID &lt;user@domain&gt;.<vspace blankLines='1'/></t>
           </list>
         </t>
         <figure>
@@ -371,23 +371,22 @@ C: <iq from='juliet@example.com/chamber'
       </section>
       <section title="Error Cases" anchor="roster-add-errors">
         <t>If the server cannot successfully process the roster set, it MUST return a stanza error.  The following error cases are defined (naturally, other stanza errors can occur, such as &lt;internal-server-error/&gt;).</t>
-        <t>The server MUST return a &lt;forbidden/&gt; stanza error to the client if the sender of the roster set is not authorized to update the roster (where typically only an authenticated resource of the account itself is so authorized).</t>
-        <t>The server SHOULD return a &lt;bad-request/&gt; stanza error to the client if the roster set contains any of the following violations:</t>
+        <t>The server MUST return a &lt;forbidden/&gt; stanza error to the client if the sender of the roster set is not authorized to update the roster (where typically only an authenticated resource of the account itself is authorized).</t>
+        <t>The server MUST return a &lt;bad-request/&gt; stanza error to the client if the roster set contains any of the following violations:</t>
         <t>
           <list style='numbers'>
             <t>The &lt;query/&gt; element contains more than one &lt;item/&gt; child element.<vspace blankLines='1'/></t>
             <t>The &lt;item/&gt; element contains more than one &lt;group/&gt; element, but there are duplicate groups (one possible comparison method for determining duplicates is that described for XMPP resourceparts in <xref target='XMPP-ADDR'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>The server SHOULD return a &lt;not-acceptable/&gt; stanza error to the client if the roster set contains any of the following violations:</t>
+        <t>The server MUST return a &lt;not-acceptable/&gt; stanza error to the client if the roster set contains any of the following violations:</t>
         <t>
           <list style='numbers'>
-            <t>The value of the 'name' attribute is greater than a server-configured limit.<vspace blankLines='1'/></t>
+            <t>The length of the 'name' attribute is greater than a server-configured limit.<vspace blankLines='1'/></t>
             <t>The XML character data of the &lt;group/&gt; element is of zero length (to remove an item from all groups, the client instead needs to exclude any &lt;group/&gt; element from the roster set).<vspace blankLines='1'/></t>
-            <t>The XML character data of the &lt;group/&gt; element is greater than a server-configured limit.<vspace blankLines='1'/></t>
+            <t>The XML character data of the &lt;group/&gt; element is larger than a server-configured limit.<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>As an alternative to returning a &lt;bad-request/&gt; or &lt;not-acceptable/&gt; stanza error, the server MAY ignore the foregoing violations and process the roster set as best as possible (e.g., process only the first &lt;item/&gt; element, ignore duplicate &lt;group/&gt; elements, place the roster item in no group or a default group if the &lt;group/&gt; element is empty, and truncate 'name' attributes and &lt;group/&gt; elements that are too long).</t>
         <figure>
           <preamble>Error: Roster set initiated by unauthorized entity</preamble>
           <artwork><![CDATA[
@@ -529,27 +528,7 @@ S: <iq id='qh3b4v19'
    </iq>
           ]]></artwork>
         </figure>
-        <t>The server MUST return a &lt;not-allowed/&gt; stanza error to the client if the value of the &lt;item/&gt; element's 'jid' attribute matches the bare JID &lt;node@domain&gt; portion of the &lt;iq/&gt; element's 'from' attribute (i.e., a JID MUST NOT be allowed to add itself to its own roster).</t>
-        <figure>
-          <preamble>Error: Roster set contains sender's JID</preamble>
-          <artwork><![CDATA[
-C: <iq from='juliet@example.com/balcony'
-       id='ry3vs714'
-       type='set'>
-     <query xmlns='jabber:iq:roster'>
-       <item jid='juliet@example.com'/>
-      </query>
-    </iq>
-
-S: <iq id='ry3vs714'
-       to='juliet@example.com/balcony'
-       type='error'>
-      <error type='cancel'>
-        <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
-      </error>
-    </iq>
-          ]]></artwork>
-        </figure>
+        <t><list style='empty'><t>Interoperability Note: Some servers return a &lt;not-allowed/&gt; stanza error to the client if the value of the &lt;item/&gt; element's 'jid' attribute matches the bare JID &lt;node@domain&gt; of the user's account.</t></list></t>
       </section>
     </section>
 
@@ -814,7 +793,7 @@ S: <iq from='romeo@example.net'
             <t>The interim roster pushes would not include all of the intermediate steps, only the final result of all modifications applied to each item while the client was in fact offline (which might have been, say, "ver34", "ver42", "ver72", and "ver96").<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>The client MUST handle an "interim roster push" in the same way it handles any roster push (indeed, from the client's perspective it cannot tell the difference between an "interim" roster push and a "live" roster push). If the client's session ends before it receives all of the interim roster pushes, when requesting the roster after reconnection it SHOULD request the version associated with the last roster push it received during the session that was disconnected, not the version associated with the roster result it received at the start of that session.</t>
+        <t>The client MUST handle an "interim roster push" in the same way it handles any roster push (indeed, from the client's perspective it cannot tell the difference between an "interim" roster push and a "live" roster push and therefore it has no way of knowing when it has received all of the interim roster pushes).  When requesting the roster after reconnection, the client SHOULD request the version associated with the last roster push it received during its previous session, not the version associated with the roster result it received at the start of its previous session.</t>
         <t>When roster versioning is enabled, the server MUST include the updated roster version with each roster push. Roster pushes MUST occur in order of modification and the version contained in a roster push MUST be unique.  Even if the client has not included the 'ver' attribute in its roster gets or sets, the server SHOULD include the 'ver' attribute on all roster pushes and results that it sends to the client.</t>
         <t><list style='empty'><t>Implementation Note: Guidelines and more detailed examples for roster versioning are provided in <xref target='XEP-0237'/>.</t></list></t>
       </section>
@@ -826,7 +805,7 @@ S: <iq from='romeo@example.net'
     <t>In XMPP, a subscription lasts across presence sessions; indeed, it lasts until the contact unsubscribes or the user cancels the previously-granted subscription.</t>
     <t>Subscriptions are managed within XMPP by sending presence stanzas containing specially-defined attributes ("subscribe", "unsubscribe", "subscribed", and "unsubscribed").</t>
     <t><list style='empty'><t>Implementation Note: When a server processes or generates an outbound presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST stamp the outgoing presence stanza with the bare JID &lt;node@domain&gt; of the sending entity, not the full JID &lt;node@domain/resource&gt;.  Enforcement of this rule simplifies the presence subscription model and helps to prevent presence leaks; for information about presence leaks, refer to the security considerations of <xref target='XMPP-CORE'/>.</t></list></t>
-    <t>Subscription states are reflected in the rosters of both the user and the contact.  Complete details regarding these subscription states can be found <xref target='substates'/>; those details are not provided in this section, which simply narrates the protocol flows for common use cases related to presence subscriptions.</t>
+    <t>Subscription states are reflected in the rosters of both the user and the contact.  This section does not cover every possible case related to presence subscriptions, and mainly narrates the protocol flows for bootstrapping a mutual subscription between a user and a contact.  Complete details regarding subscription states can be found in <xref target='substates'/>.</t>
 
     <section title="Requesting a Subscription" anchor="sub-request">
       <t>A SUBSCRIPTION REQUEST is a request from a user for authorization to permanently subscribe to a contact's presence information; syntactically it is a presence stanza whose 'type' attribute has a value of "subscribe".  A subscription request is generated by a user's client, processed by the (potential) contact's server, and acted on by the contact via the contact's client.  The workflow is described in the following sections.</t>
@@ -967,7 +946,7 @@ CS: <presence from='juliet@example.com'
               type='subscribed'/>
           ]]></artwork>
         </figure>
-        <t>The contact's server then MUST send an updated roster push to all of the contact's interested resources, with the 'subscription' attribute set to a value of "from".</t>
+        <t>The contact's server then MUST send an updated roster push to all of the contact's interested resources, with the 'subscription' attribute set to a value of "from". (Here we assume that the contact does not already have a subscription to the user; if that were the case, the 'subscription' attribute would be set to a value of "both", as defined under <xref target='substates'/>.)</t>
         <figure>
           <artwork><![CDATA[
 CS: <iq id='a78b4q6ha463'
@@ -989,7 +968,7 @@ CS: <iq id='x81g3bdy4n19'
     </iq>
           ]]></artwork>
         </figure>
-        <t>From the perspective of the contact, there now exists a subscription from the user (which is why the 'subscription' attribute is set to a value of "from").</t>
+        <t>From the perspective of the contact, there now exists a subscription from the user, which is why the 'subscription' attribute is set to a value of "from".  (Here we assume that the contact does not already have a subscription to the user; if that were the case, the 'subscription' attribute would be set to a value of "both", as defined under <xref target='substates'/>.)</t>
         <t>The contact's server MUST then also send current presence to the user from each of the contact's available resources.</t>
         <figure>
           <artwork><![CDATA[
@@ -1350,19 +1329,21 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Client Processing of Initial Presence" anchor="presence-initial-client">
-        <t>When the contact's client receives presence from the user, it SHOULD proceed as follows:</t>
+        <t>When the contact's client receives presence from the user, the following behavior is suggested:</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster, the client MUST display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, the client MUST ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
+            <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
       </section>
     </section>
 
     <section title="Presence Probes" anchor="presence-probe">
-      <t>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare JID of the subscribed user and the value of the 'to' address MUST be the bare JID of the contact to which the user is subscribed, since presence subscriptions are based on the bare JID.  Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>; in this case the value of the 'from' or 'to' address can be a full JID instead of a bare JID.</t>
+      <t>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare JID of the subscribed user and the value of the 'to' address MUST be the bare JID of the contact to which the user is subscribed, since presence subscriptions are based on the bare JID.</t>
+      <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that probes are sent from the full JID, not the bare JID.  Some existing implementations follow the bare JID rule, and others follow the full JID rule.</t></list></t>
+      <t>Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>; in this case the value of the 'from' or 'to' address can be a full JID instead of a bare JID.</t>
       <figure>
         <artwork><![CDATA[
 US: <presence from='juliet@example.com' 
@@ -1465,7 +1446,7 @@ CS: <presence from='romeo@example.net/bar'
             ]]></artwork>
           </figure>
         </t>
-        <t><list style='empty'><t>Implementation Note: The handling of the 'id' attribute in relation to presence probes was unspecified in the predecessor to this specification. Although the pattern of "send a probe and receive a reply" might seem like a request-response protocol, in fact it is not because the response to a probe might consist of multiple presence stanzas (one for each available resource currently active for the contact).  For this reason, if the contact currently has available resources then the contact's server SHOULD preserve the 'id' attribute of the contact's original presence stanza (if any) when sending those presence notifications to the probing entity; however, if the contact currently has no available resources, the probing entity is not authorized (via presence subscription) to see the contact's presence, or an error occurs in relation to the proble, then the contact's server SHOULD mirror the 'id' of the user's presence probe when replying to the probing entity.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: The handling of the 'id' attribute in relation to presence probes was unspecified in RFC 3921. Although the pattern of "send a probe and receive a reply" might seem like a request-response protocol, in fact it is not because the response to a probe might consist of multiple presence stanzas (one for each available resource currently active for the contact).  For this reason, if the contact currently has available resources then the contact's server SHOULD preserve the 'id' attribute of the contact's original presence stanza (if any) when sending those presence notifications to the probing entity; however, if the contact currently has no available resources, the probing entity is not authorized (via presence subscription) to see the contact's presence, or an error occurs in relation to the proble, then the contact's server SHOULD mirror the 'id' of the user's presence probe when replying to the probing entity.</t></list></t>
       </section>
     </section>
 
@@ -1549,12 +1530,12 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Client Processing of Subsequent Presence" anchor="presence-broadcast-client">
-        <t>When the contact's client receives presence from the user, it SHOULD proceed as follows:</t>
+        <t>When the contact's client receives presence from the user, the following behavior is suggested:</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster, the client MUST display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, the client MUST ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
+            <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
       </section>
@@ -1651,15 +1632,15 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Client Processing of Unavailable Presence" anchor="presence-unavailable-client">
-        <t>When the contact's client receives an unavailable notification from the user, it SHOULD proceed as follows:</t>
+        <t>When the contact's client receives unavailable presence from the user, the following behavior is suggested:</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster, the client MUST display the unavailable notification in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the unavailable notification in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, the client MUST ignore the unavailable notification and not display it to the contact.<vspace blankLines='1'/></t>
+            <t>If the user is in the contact's roster, display the unavailable notification in an appropriate roster interface.<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, display the unavailable notification in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>Otherwise, ignore the unavailable notification and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t>Typically, presence provides availability information about a particular connected resource.  However, it is possible for the contact to receive an unavailable notification from the bare JID of the user.  In this case, the presence notification SHOULD be treated as related to a resource identifier of zero length, which does not supersede or overshadow other resources associated with the same bare JID.</t>
+        <t>Typically, presence provides availability information about a particular connected resource.  However, it is possible for the contact to receive an unavailable notification from the bare JID of the user.  In this case, the presence notification SHOULD be treated as applying to all resources.</t>
       </section>
     </section>
 
@@ -1684,12 +1665,12 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Client Processing of Inbound Directed Presence" anchor="presence-directed-client">
-        <t>When the contact's client receives directed presence from the user, it SHOULD proceed as follows:</t>
+        <t>When the contact's client receives directed presence from the user, the following behavior is suggested:</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster, the client MUST display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, the contact's client SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, the client MUST ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
+            <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
       </section>
@@ -1817,7 +1798,7 @@ CS: <presence from='juliet@example.com/balcony'
     <section title="One-to-One Chat Sessions" anchor="message-chat">
       <t>In practice, instant messaging activity between human users tends to occur in the form of a conversational burst that we call a CHAT SESSION: the exchange of at least several messages between two parties in relatively rapid succession within a relatively brief period of time.</t>
       <t>When a human user intends to engage in such a chat session with a contact (rather than sending a single message to which no reply is expected), the message type generated by the user's client SHOULD be "chat" and the contact's client SHOULD preserve that message type in subsequent replies.   The user's client also SHOULD include a &lt;thread/&gt; element with its initial message, which the contact's client SHOULD also preserve during the life of the chat session (see <xref target='message-syntax-thread'/>.</t>
-      <t>The user's client MUST address the initial message in a chat session to the bare JID &lt;contact@domain&gt; of the contact (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt; based on the &lt;show/&gt;, &lt;status/&gt;, or &lt;priority/&gt; value of any presence notifications it has received from the contact).  Until and unless the user's client receives a reply from the contact, it MUST send any further messages to the contact's bare JID.  The contact's client SHOULD address its replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies, thus "locking in" on that full JID.  A client SHOULD "unlock" after having received a &lt;message/&gt; or &lt;presence/&gt; stanza from any other resource controlled by the peer (or a presence stanza from the locked resource); as a result, it SHOULD address its next message(s) in the chat session to the bare JID of the peer (thus "unlocking" the previous "lock") until it receives a message from one of the peer's full JIDs.</t>
+      <t>The user's client SHOULD address the initial message in a chat session to the bare JID &lt;contact@domain&gt; of the contact (rather than attempting to guess an appropriate full JID &lt;contact@domain/resource&gt; based on the &lt;show/&gt;, &lt;status/&gt;, or &lt;priority/&gt; value of any presence notifications it has received from the contact).  Until and unless the user's client receives a reply from the contact, it SHOULD send any further messages to the contact's bare JID.  The contact's client SHOULD address its replies to the user's full JID &lt;user@domain/resource&gt; as provided in the 'from' address of the initial message.  Once the user's client receives a reply from the contact's full JID, it SHOULD address its subsequent messages to the contact's full JID as provided in the 'from' address of the contact's replies, thus "locking in" on that full JID.  A client SHOULD "unlock" after having received a &lt;message/&gt; or &lt;presence/&gt; stanza from any other resource controlled by the peer (or a presence stanza from the locked resource); as a result, it SHOULD address its next message(s) in the chat session to the bare JID of the peer (thus "unlocking" the previous "lock") until it receives a message from one of the peer's full JIDs.</t>
       <t>When two parties engage in a chat session but do not share presence with each other based on a presence subscription, they SHOULD send directed presence to each other so that either party can easily discover if the peer changes its availability or goes offline during the course of the chat session.  However, a client MUST provide a way for a user to disable such presence sharing globally or to enable it only with particular entities.  Furthermore, a party SHOULD send directed unavailable presence to the peer when it has reason to believe that the chat session is over (e.g., if, after some reasonable amount of time, no subsequent messages have been exchanged between the parties).</t>
       <t>An example of a chat session is provided under <xref target='session'/>.</t>
     </section>
@@ -1859,7 +1840,7 @@ CS: <presence from='juliet@example.com/balcony'
           <t>chat -- The message is sent in the context of a one-to-one chat session.  Typically a receiving client will present a message of type "chat" in an interface that enables one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding one-to-one chat sessions are provided under <xref target='message-chat'/>.<vspace blankLines='1'/></t>
           <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.<vspace blankLines='1'/></t>
           <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  Typically a receiving client will present a message of type "groupchat" in an interface that enables many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  For detailed information about XMPP-based groupchat, refer to <xref target="XEP-0045"/>.<vspace blankLines='1'/></t>
-          <t>headline -- The message provides an alert, a notification, or other transient information to which no reply is expected (e.g., news headlines, sports updates, near-real-time market data, and syndicated content).  Because no reply to the message is expected, typically a receiving client will present a message of type "headline" in an interface that appropriately differentiates the message from standalone messages, chat messages, or groupchat messages (e.g., by not providing the recipient with the ability to reply).  The receiving server SHOULD deliver the message to all of the recipient's available resources, or silently ignore it if there are no available resources (see <xref target='rules'/>).<vspace blankLines='1'/></t>
+          <t>headline -- The message provides an alert, a notification, or other transient information to which no reply is expected (e.g., news headlines, sports updates, near-real-time market data, and syndicated content).  Because no reply to the message is expected, typically a receiving client will present a message of type "headline" in an interface that appropriately differentiates the message from standalone messages, chat messages, or groupchat messages (e.g., by not providing the recipient with the ability to reply).  If the 'to' address is the bare JID, the receiving server SHOULD deliver the message to all of the recipient's available resources with non-negative presence priority; if the 'to' address is a full JID and there is a matching resource, the server MUST deliver the message to that resource; otherwise the server MUST silently ignore the message (see <xref target='rules'/>).<vspace blankLines='1'/></t>
           <t>normal -- The message is a standalone message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  Typically a receiving client will present a message of type "normal" in an interface that enables the recipient to reply, but without a conversation history.  The default value of the 'type' attribute is "normal".<vspace blankLines='1'/></t>
         </list>
       </t>
@@ -1938,7 +1919,7 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
       <section title="Thread Element" anchor="message-syntax-thread">
         <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element MAY also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It MAY also be used for &lt;message/&gt; stanzas not related to a human conversation, such as a game session or an interaction between plugins.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations or messaging sessions.</t>
-        <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL.  Because the &lt;thread/&gt; element identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
+        <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL for messages of type "normal", "headline", and "groupchat", and RECOMMENDED for messages of type "chat".  Because the &lt;thread/&gt; element identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
         <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child; the value of the 'parent' attribute MUST conform to the syntax of the &lt;thread/&gt; element itself.</t>
         <t>The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning can be derived from it, and only exact comparisons can be made against it.  The value of the &lt;thread/&gt; element MUST uniquely identify the conversation thread either between the conversation partners or more generally (one way to ensure uniqueness is by generating a universally unique identifier (UUID) as described in <xref target='UUID'/>).</t>
         <t>The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
@@ -1992,7 +1973,6 @@ CS: <presence from='juliet@example.com/balcony'
 
   <section title="Exchanging IQ Stanzas" anchor="iq">
     <t>As described in <xref target="XMPP-CORE"/>, IQ stanzas provide a structured request-response mechanism.  The basic semantics of that mechanism (e.g., that the 'id' attribute is mandatory) are defined in <xref target="XMPP-CORE"/>, whereas the specific semantics needed to complete particular use cases are defined in all instances by the extended namespace that qualifies the direct child element of an IQ stanza of type "get" or "set".  The 'jabber:client' and 'jabber:server' namespaces do not define any children of IQ stanzas other than the &lt;error/&gt; element common to all stanza types.  This document defines one such extended namespace, for <xref target="roster">Managing the Roster</xref>.  However, an IQ stanza MAY contain structured information qualified by any extended namespace.</t>
-    <t>As noted under <xref target='presence-directed'/>, if a user exchanges IQ stanzas with another entity but does not share presence with the entity based on a presence subscription, it is RECOMMENDED for the user's client to send directed presence to the other entity.</t>
   </section>
 
   <section title="A Sample Session" anchor="session">
@@ -2315,7 +2295,7 @@ US: </stream:stream>
       <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
-      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a configured hostname of the server itself, then the server MUST attempt to route the stanza to the remote domain.  If there exists an active stream between the two peers, then the server MUST route the stanza over that stream for processing by the peer server.  If not, then the server MUST do the following.</t>
+      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a configured hostname of the server itself, then the server MUST attempt to route the stanza to the remote domain.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD proceed as follows.</t>
       <t>First, resolve the hostname of the remote domain (or use a cached resolution of the remote domain to an IP address).  The RECOMMENDED order of attempted resolutions is as follows:</t>
       <t>
         <list style='numbers'>
@@ -2454,13 +2434,13 @@ US: </stream:stream>
 |  full no match   |   E    |   D   |    E      |    S     |
 +----------------------------------------------------------+
 | 1+ NON-NEG                                               |
-|  bare            |  M/A   |  M/A  |    E      |   M/A    |
+|  bare            |  M/A   |  M/A* |    E      |    A     |
 |  full match      |   D    |  D/A* |    D      |    D     |
-|  full no match   |   E    |  M/A  |    E      |    S     |
+|  full no match   |   E    |  M/A* |    E      |    S     |
 +----------------------------------------------------------+
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>* A server SHOULD NOT act in accordance with option (A) unless clients can explicitly opt in to receiving all chat messages; however, methods for opting in are outside the scope of this specification.</t></list></t>
+        <t><list style='empty'><t>* For messages of type "chat", a server SHOULD NOT act in accordance with option (A) unless clients can explicitly opt in to receiving all chat messages; however, methods for opting in are outside the scope of this specification.</t></list></t>
       </section>
     </section>
   </section>
@@ -2546,10 +2526,18 @@ US: </stream:stream>
     </t>
     <t>
       <list style='hanging'>
-        <t hangText="Feature:">message-type</t>
-        <t hangText="Description:">Differentiate between messages of type "normal", "chat", "groupchat", "headline", and "error".</t>
+        <t hangText="Feature:">message-type-support</t>
+        <t hangText="Description:">Support reception of messages of type "normal", "chat", "groupchat", "headline", and "error".</t>
         <t hangText="Section:"><xref target='message-syntax-type'/></t>
-        <t hangText="Roles:">Client MUST, Server MUST.</t>
+        <t hangText="Roles:">Client SHOULD, Server N/A.</t>
+      </list>
+    </t>
+    <t>
+      <list style='hanging'>
+        <t hangText="Feature:">message-type-deliver</t>
+        <t hangText="Description:">Appropriately deliver messages of type "normal", "chat", "groupchat", "headline", and "error".</t>
+        <t hangText="Section:"><xref target='rules'/></t>
+        <t hangText="Roles:">Client N/A, Server SHOULD.</t>
       </list>
     </t>
     <t>
@@ -4189,6 +4177,7 @@ US: </stream:stream>
         <list style='symbols'>
           <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, for the sake of backward-compatibility server implementations are encouraged to advertise support for the feature, even though session establishment is a "no-op".</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, clarified and modified error handling related to presence subscription requests, presence probes and presence notifications.</t>
+          <t>Change the 'from' address for presence probes so that it is the bare JID, not the full JID.</t>
           <t>Explicitly specified that a server is allowed to deliver a message stanza of type "normal" or "chat" to all resources.</t>
           <t>Added optional versioning of roster information to save bandwidth in cases where the roster has not changed (or has changed very little) between sessions; the relevant protocol interactions were originally described in <xref target='XEP-0237'/>.</t>
           <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed" and the optional "subscribed" value for the 'ask' flag.</t>
