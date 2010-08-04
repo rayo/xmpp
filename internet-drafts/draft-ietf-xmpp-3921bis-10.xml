@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3921bis-09" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-ietf-xmpp-3921bis-10" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="July" day="29"/>
+    <date year="2010" month="August" day="4"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -214,7 +214,7 @@ S: <iq id='bv1bs71f'
             <t>The server MUST ignore any value of the 'subscription' attribute other than "remove" (see <xref target='roster-syntax-items-subscription'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t><list style='empty'><t>Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource (full JID) of the account whose roster was being updated.  Furthermore, RFC 3921 required a server to perform special-case checking of roster set stanzas to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set stanza might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set stanza is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource (full JID) of the account whose roster was being updated.  Furthermore, RFC 3921 required a server to perform special-case checking of roster set stanzas to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set stanza might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set stanza is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
@@ -259,7 +259,7 @@ C: <iq from='juliet@example.com/chamber'
        type='result'/>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>Note: There is no error case for client processing of roster pushes; if the server receives an IQ of type "error" in response to a roster push it SHOULD ignore the error.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: There is no error case for client processing of roster pushes; if the server receives an IQ of type "error" in response to a roster push it SHOULD ignore the error.</t></list></t>
       </section>
     </section>
 
@@ -823,7 +823,7 @@ UC: <presence id='xk3h1v69'
         </figure>
         <t>When a user sends a presence subscription request to a potential instant messaging and presence contact, the value of the 'to' attribute MUST be a bare JID &lt;contact@domain&gt; rather a full JID &lt;contact@domain/resource&gt;, since the desired result is for the user to receive presence from all of the contact's resources, not merely the particular resource specified in the 'to' attribute.  Use of bare JIDs also simplifies subscription processing, presence probes, and presence notifications by the user's server and the contact's server.</t>
         <t>For tracking purposes, a client SHOULD include an 'id' attribute in a presence subscription request.</t>
-        <t><list style='empty'><t>Note: Many XMPP clients prompt the user for information about the potential contact (e.g., "handle" and desired roster group) when generating an outbound presence subscription request and therefore send a roster set before sending the outbound presence subscription request.  This behavior is OPTIONAL, because a client MAY instead wait until receiving the initial roster push from the server before uploading user-provided information about the contact.  A server MUST process a roster set and outbound presence subscription request in either order.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: Many XMPP clients prompt the user for information about the potential contact (e.g., "handle" and desired roster group) when generating an outbound presence subscription request and therefore send a roster set before sending the outbound presence subscription request.  This behavior is OPTIONAL, because a client MAY instead wait until receiving the initial roster push from the server before uploading user-provided information about the contact.  A server MUST process a roster set and outbound presence subscription request in either order.</t></list></t>
       </section>
 
       <section title="Server Processing of Outbound Subscription Request" anchor="sub-request-outbound">
@@ -883,7 +883,7 @@ US: <iq id='b89c5r7ib575'
     </iq>
           ]]></artwork>
         </figure>
-        <t>If a remote contact does not approve or deny the subscription request within some configurable amount of time, the user's server SHOULD resend the subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that might have occurred when the original subscription request was routed to the remote domain.</t>
+        <t>If a remote contact does not approve or deny the subscription request within some configurable amount of time, the user's server SHOULD resend the subscription request to the contact based on an implementation-specific algorithm (e.g., whenever a new resource becomes available for the user, or after a certain amount of time has elapsed); this helps to recover from transient, silent errors that might have occurred when the original subscription request was routed to the remote domain.  When doing so, it is RECOMMENDED for the server to include an 'id' attribute so that it can track responses to the resent subscription request.</t>
       </section>
 
       <section title="Server Processing of Inbound Subscription Request" anchor="sub-request-inbound">
@@ -905,7 +905,7 @@ CS: <presence from='juliet@example.com'
             <t>Otherwise, if there is at least one available resource associated with the contact when the subscription request is received by the contact's server, then the contact's server MUST broadcast that subscription request to all available resources in accordance with <xref target="rules"/>.
             <vspace blankLines='1'/>
             As a way of acknowledging receipt of the presence subscription request, the contact's server MAY send a presence stanza of type "unavailable" from the bare JID of the contact to the bare JID of the user (the user's client MUST NOT assume that this ack provides presence information about the contact, since it comes from the contact's bare JID and is received before the subscription request has been approved).<vspace blankLines='1'/></t>
-            <t>Otherwise, if the contact has no available resources when the subscription request is received by the contact's server, then the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and deliver the request when the contact next has an available resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an available resource, until the contact either approves or denies the request.  (The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an available resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an available resource; this helps to prevent "subscription request spam".)
+            <t>Otherwise, if the contact has no available resources when the subscription request is received by the contact's server, then the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein, and then deliver the request when the contact next has an available resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an available resource, until the contact either approves or denies the request.  (The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an available resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an available resource; this helps to prevent "subscription request spam".)
             <vspace blankLines='1'/>
             As a way of acknowledging receipt of the presence subscription request, the contact's server MAY send a presence stanza of type "unavailable" from the bare JID of the contact to the bare JID of the user, since it comes from the contact's bare JID and is received before the subscription request has been approved).<vspace blankLines='1'/></t>
           </list>
@@ -1050,6 +1050,7 @@ US: <presence from='juliet@example.com/chamber'
             <vspace blankLines='1'/></t>
           </list>
         </t>
+        <t><list style='empty'><t>Implementation Note: If the account has no available resources when the inbound subscribed notification is received, a server MAY keep a record of the notification (ideally the complete presence stanza) and then deliver the notification when the account next has an available resource.  This behavior provides more complete signalling to the user regarding the reasons for the roster change that occurred while the user was offline.</t></list></t>
         <t>Otherwise -- that is, if the user does not exist, if the contact is not in the user's roster, or if the contact is in the user's roster with a subscription state other than those described in the foregoing check -- then the user's server MUST silently ignore the subscription approval stanza by not delivering it to the user, not modifying the user's roster, and not generating a roster push to the user's interested resources.</t>
         <t>From the perspective of the user, there now exists a subscription to the contact's presence (which is why the 'subscription' attribute is set to a value of "to").</t>
       </section>
@@ -1161,6 +1162,7 @@ US: <iq id='h37h3u1bv401'
           </list>
         </t>
         <t>The user's server MUST also deliver the inbound presence stanzas of type "unavailable".</t>
+        <t><list style='empty'><t>Implementation Note: If the account has no available resources when the inbound unsubscribed notification is received, a server MAY keep a record of the notification (ideally the complete presence stanza) and then deliver the notification when the account next has an available resource.  This behavior provides more complete signalling to the user regarding the reasons for the roster change that occurred while the user was offline.</t></list></t>
         <t>Otherwise -- that is, if the user does not exist, if the contact is not in the user's roster, or if the contact is in the user's roster with a subscription state other than those described in the foregoing check -- then the user's server MUST silently ignore the subscription cancellation stanza by not delivering it to the user, not modifying the user's roster, and not generating a roster push to the user's interested resources.</t>
       </section>
     </section>
@@ -1268,6 +1270,7 @@ CS: <presence from='romeo@example.net'
             <vspace blankLines='1'/></t>
           </list>
         </t>
+        <t><list style='empty'><t>Implementation Note: If the account has no available resources when the inbound unsubscribe notification is received, a server MAY keep a record of the notification (ideally the complete presence stanza) and then deliver the notification when the account next has an available resource.  This behavior provides more complete signalling to the user regarding the reasons for the roster change that occurred while the user was offline.</t></list></t>
         <t>Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the unsubscribe stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.  However, if the contact's server is keeping track of an inbound presence subscription request from the user to the contact but the user is not yet in the contact's roster (functionally equivalent to a subscription state of "None + Pending In" where the contact never added the user to the contact's roster), then the contact's server MUST simply remove any record of the inbound presence subscription request (it cannot remove the user from the contact's roster because the user was never added to the contact's roster).</t>
         <t><list style='empty'><t>Implementation Note: The user's client MUST NOT depend on receiving the unavailable presence notification, since it MUST consider its presence subscription to the contact, and its presence information about the contact, to be null and void when it sends the presence stanza of type "unsubscribe" or when it receives the roster push triggered by the unsubscribe request.</t></list></t>
       </section>
@@ -1394,7 +1397,7 @@ US: <presence from='juliet@example.com'
         <t>Upon receiving a presence probe to the contact's bare JID from the user's server on behalf of the user, the contact's server MUST reply as follows:</t>
         <t>
           <list style='numbers'>
-            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe.  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
+            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe (this will trigger a protocol flow for cancelling the user's subscription to the contact; see <xref target='sub-cancel'/>).  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='mercutio@example.com' 
@@ -1477,7 +1480,7 @@ UC: <presence>
           ]]></artwork>
         </figure>
         <t>The presence broadcast MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content; see <xref target='presence-syntax'/> for details.</t>
-        <t>However, a user SHOULD send a presence update only to broadcast information that is relevant to the user's availability for communication or the communication capabilities of the connected resource.  Information that is not relevant in this way might be of interest to the user's contacts but SHOULD be sent via other means, such as the XMPP message stanza.</t>
+        <t>However, a user SHOULD send a presence update only to broadcast information that is relevant to the user's availability for communication or the communication capabilities of the resource.  Information that is not relevant in this way might be of interest to the user's contacts but SHOULD be sent via other means, such as the XMPP message stanza.</t>
       </section>
 
       <section title="Server Processing of Outbound Presence" anchor="presence-broadcast-outbound">
@@ -1485,7 +1488,7 @@ UC: <presence>
         <t>
           <list style='numbers'>
             <t>The contact is in the user's roster with a subscription type of "from" or "both".<vspace blankLines='1'/></t>
-            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe".<vspace blankLines='1'/></t>
+            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
         <t>As an optimization, if the subscription type is "both", then the server MAY send subsequent presence notifications to a contact only if the contact is online according to the user's server.  That is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact or if the last presence stanza it received from the contact during the user's presence session was of type "unavailable", the user's server MAY opt to ned send subsequent presence notifications from the user to the contact.  This optimization helps to save bandwidth, since most presence subscriptions are bidirectional and many contacts will not be online at any given time.</t>
@@ -1546,14 +1549,7 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Client Processing of Subsequent Presence" anchor="presence-broadcast-client">
-        <t>When the contact's client receives presence from the user, the following behavior is suggested:</t>
-        <t>
-          <list style='numbers'>
-            <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
-          </list>
-        </t>
+        <t>From the perspective of the contact's client, there is no significant difference between initial presence broadcast and subsequent presence, so the contact's client follows the rules for processing of inbound presence defined under <xref target='presence-broadcast-inbound'/>.</t>
       </section>
     </section>
 
@@ -1582,7 +1578,7 @@ UC: <presence type='unavailable'>
         <t>
           <list style='numbers'>
             <t>The contact is in the user's roster with a subscription type of "from" or "both".<vspace blankLines='1'/></t>
-            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe".<vspace blankLines='1'/></t>
+            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
         <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
@@ -1648,15 +1644,7 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
 
       <section title="Client Processing of Unavailable Presence" anchor="presence-unavailable-client">
-        <t>When the contact's client receives unavailable presence from the user, the following behavior is suggested:</t>
-        <t>
-          <list style='numbers'>
-            <t>If the user is in the contact's roster, display the unavailable notification in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, display the unavailable notification in the user interface for that chat session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, ignore the unavailable notification and not display it to the contact.<vspace blankLines='1'/></t>
-          </list>
-        </t>
-        <t>Typically, presence provides availability information about a particular connected resource.  However, it is possible for the contact to receive an unavailable notification from the bare JID of the user.  In this case, the presence notification SHOULD be treated as applying to all resources.</t>
+        <t>From the perspective of the contact's client, there is no significant difference between available presence broadcast and unavailable presence broadcast, so in general the contact's client follows the rules for processing of inbound presence defined under <xref target='presence-broadcast-inbound'/>.  However, if the contact receives an unavailable notification from the bare JID of the user (rather than the full JID of a particular available resource), the contact's client SHOULD treat the unavailable notification as applying to all resources.</t>
       </section>
     </section>
 
@@ -1677,18 +1665,11 @@ CS: <presence from='juliet@example.com/balcony'
         </t>
       </section>
       <section title="Server Processing of Inbound Directed Presence" anchor="presence-directed-inbound">
-        <t>From the perspective of the contact's server, there is no difference between presence broadcast and directed presence, so the contact's server follows the rules for processing of inbound presence defined under <xref target='presence-probe-inbound'/>, <xref target='presence-broadcast-inbound'/>, and <xref target='presence-unavailable-inbound'/>.</t>
+        <t>From the perspective of the contact's server, there is no significant difference between presence broadcast and directed presence, so the contact's server follows the rules for processing of inbound presence defined under <xref target='presence-probe-inbound'/>, <xref target='presence-broadcast-inbound'/>, and <xref target='presence-unavailable-inbound'/>.</t>
       </section>
 
       <section title="Client Processing of Inbound Directed Presence" anchor="presence-directed-client">
-        <t>When the contact's client receives directed presence from the user, the following behavior is suggested:</t>
-        <t>
-          <list style='numbers'>
-            <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
-            <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
-          </list>
-        </t>
+        <t>From the perspective of the contact's client, there is no significant difference between presence broadcast and directed presence, so the contact's client follows the rules for processing of inbound presence defined under <xref target='presence-broadcast-inbound'/>.</t>
       </section>
     </section>
 
@@ -2306,24 +2287,13 @@ US: </stream:stream>
 
   <section title="Server Rules for Processing XML Stanzas" anchor="rules">
     <t>Basic server rules for processing XML stanzas are defined in <xref target="XMPP-CORE"/>.  This section defines supplementary rules for XMPP instant messaging and presence servers.</t>
-    <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and delivering it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
+    <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and then delivering it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
     <section title="No 'to' Address" anchor="rules-noto">
       <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
-      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a configured hostname of the server itself, then the server MUST attempt to route the stanza to the remote domain.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD proceed as follows.</t>
-      <t>First, resolve the hostname of the remote domain (or use a cached resolution of the remote domain to an IP address).  The RECOMMENDED order of attempted resolutions is as follows:</t>
-      <t>
-        <list style='numbers'>
-          <t>Attempt to resolve the remote hostname using a DNS service location record <xref target="SRV"/> Service of "xmpp-server" and a Proto of "tcp", resulting in resource records such as "_xmpp-server._tcp.example.com.", as specified in <xref target="XMPP-CORE"/>.<vspace blankLines='1'/></t>
-          <t>If the "xmpp-server" address record resolution fails, attempt to resolve the "_im" or "_pres" SRV Service as specified in <xref target="IMP-SRV"/>, using the "_im" Service for &lt;message/&gt; stanzas and the "_pres" Service for &lt;presence/&gt; stanzas (it is up to the implementation how to handle &lt;iq/&gt; stanzas).  This will result in one or more resolutions of the form "_im.&lt;proto&gt;.example.com." or "_pres.&lt;proto&gt;.example.com.", where "&lt;proto&gt;" would be a label registered in the Instant Messaging SRV Protocol Label registry or the Presence SRV Protocol Label registry: either "_xmpp" for an XMPP-aware domain or some other IANA-registered label (e.g., "_simple") for a non-XMPP-aware domain.<vspace blankLines='1'/></t>
-          <t>If both SRV address record resolutions fail, attempt to perform a normal IPv4/IPv6 address record resolution to determine the IP address using the "xmpp-server" port of 5269 registered with the IANA, as specified in <xref target="XMPP-CORE"/>.<vspace blankLines='1'/></t>
-        </list>
-      </t>
-      <t>If the server cannot resolve the remote domain, it MUST return a &lt;remote-server-not-found/&gt; stanza error.</t>
-      <t>Second, negotiate XML streams with the remote domain by following the process defined in <xref target='XMPP-CORE'/>.  If the server can resolve the remote domain but cannot establish streams with the XMPP service at that domain, it MUST return a &lt;remote-server-timeout/&gt; stanza error.</t>
-      <t>Third, route the stanza to the remote domain for processing by the peer server.</t>
-      <t><list style='empty'><t>Note: Administrators of server deployments are strongly encouraged to keep the _im._xmpp, _pres._xmpp, and _xmpp._tcp SRV records properly synchronized, since different implementations might perform the "_im" and "_pres" lookups before the "xmpp-server" lookup.</t></list></t>
+      <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a configured hostname of the server itself, then the server MUST attempt to route the stanza to the remote domain.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD attempt to resolve the hostname of the remote server in adherence with the rules defined in <xref target="XMPP-CORE"/>, negotiate XML streams with the remote domain, and route the stanza to the remote domain.  However, if the server cannot resolve the remote domain, then it MUST return a &lt;remote-server-not-found/&gt; stanza error to the local sender.</t>
+      <t><list style='empty'><t>Implementation Note: RFC 3921 described use of the _im._xmpp and _pres._xmpp SRV records (defined in <xref target='IMP-SRV'/>) to discover the appropriate protocol for communication with remote instant messaging and presence services.  Because those SRV records have not been widely deployed, this specification no longer actively recommends that they be deployed or supported; see RFC 3921 regarding the proper formats and resolution processes.</t></list></t>
     </section>
     <section title="Local Domain" anchor="rules-local">
       <t>If the hostname of the domainpart of the JID contained in the 'to' attribute matches one of the configured hostnames of the server and the hostname is serviced by the server itself (not a specialized local service), the server MUST proceed as follows.</t>
@@ -2343,7 +2313,7 @@ US: </stream:stream>
       <section title="Full JID at Local Domain" anchor="rules-local-fulljid">
         <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured hostnames of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain/resource&gt;, then the server MUST adhere to the following rules (subject to enforcement of relevant privacy and security policies, such as those deployed by means of <xref target='XEP-0016'/> or <xref target='XEP-0191'/>).</t>
         <section title="Resource Matches" anchor="rules-local-fulljid-match">
-          <t>If an available or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
+          <t>If an available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
               <t>For an IQ stanzas of type "get" or "set", if the intended recipient does not share presence with the requesting entity either by means of a presence subscription of type "both" or "from" or by means of directed presence, then the server SHOULD NOT deliver the IQ stanza but instead SHOULD return a &lt;service-unavailable/&gt; stanza error to the requesting entity.  This policy helps to prevent presence leaks (see <xref target='security'/>).<vspace blankLines='1'/></t>
@@ -2356,7 +2326,7 @@ US: </stream:stream>
           </t>
         </section>
         <section title="No Resource Matches" anchor="rules-local-fulljid-nomatch">
-          <t>If no connected or available resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
+          <t>If no available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
           <section title="Message" anchor="rules-local-fulljid-nomatch-message">
             <t>For a message stanza of type "normal", the server SHOULD return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
             <t>For a message stanza of type "chat":</t>
@@ -2364,7 +2334,7 @@ US: </stream:stream>
               <list style='symbols'>
                 <t>If the only available resource has a negative presence priority then the server SHOULD store the message offline for later delivery or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
                 <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm) but it MAY instead deliver it to all of the non-negative resources that have opted in to receive chat messages.</t>
+                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") but it MAY instead deliver it to all of the non-negative resources that have opted in to receive chat messages.</t>
               </list>
             </t>
             <t>For a message stanza of type "groupchat", the server MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
@@ -2385,20 +2355,20 @@ US: </stream:stream>
       <section title="Bare JID at Local Domain" anchor="rules-local-barejid">
         <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured hostnames of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain&gt;, then the server MUST adhere to the following rules.</t>
         <section title="Available or Connected Resources" anchor="rules-local-barejid-resource">
-          <t>If there is at least one available or connected resource, how the stanza is processed depends on the stanza type.</t>
+          <t>If there is at least one available resource or connected resource, how the stanza is processed depends on the stanza type.</t>
           <section title="Message" anchor="rules-local-barejid-resource-message">
             <t>For a message stanza of type "normal" or "chat":</t>
             <t>
               <list style='symbols'>
                 <t>If the only available resource has a negative presence priority then the server SHOULD store the message offline for later delivery or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
                 <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm) but it MAY instead deliver it to all of the non-negative resources that have opted in to receive chat messages.</t>
+                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") but it MAY instead deliver it to all of the non-negative resources that have opted in to receive chat messages.</t>
               </list>
             </t>
             <t>For a message stanza of type "groupchat", the server MUST NOT deliver the stanza to any of the available resources but instead MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
             <t>For a message stanza of type "headline", the server MUST deliver the stanza to all available resources.</t>
             <t>For a message stanza of type "error", the server MUST silently ignore the message.</t>
-            <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available or connected resources as described under <xref target='rules-local-barejid-noresource'/>.</t>
+            <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources or connected resources as described under <xref target='rules-local-barejid-noresource'/>.</t>
             <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
           </section>
           <section title="Presence" anchor="rules-local-barejid-resource-pres">
@@ -2412,7 +2382,7 @@ US: </stream:stream>
           </section>
         </section>
         <section title="No Available or Connected Resources" anchor="rules-local-barejid-noresource">
-          <t>If there are no available or connected resources associated with the user, how the stanza is processed depends on the stanza type.</t>
+          <t>If there are no available resources or connected resources associated with the user, how the stanza is processed depends on the stanza type.</t>
           <section title="Message" anchor="rules-local-barejid-noresource-message">
             <t>For a message stanza of type "normal" or "chat", the server SHOULD add the message to offline storage or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
             <t>For a message stanza of type "groupchat", the server MUST return an error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
@@ -2430,7 +2400,7 @@ US: </stream:stream>
         </section>
       </section>
       <section title="Summary of Message Delivery Rules" anchor="rules-local-message">
-        <t>The following table summarizes the message delivery rules described earlier in this section.  The left column shows various combinations of conditions (non-existent account, no active resources, only one resource and it has a negative presence priority, only one resource and it has a non-negative presence priority, or more than one resource and each one has a non-negative presence priority) and 'to' addresses (bare JID, full JID matching an available resource, or full JID matching no available resource).  The subsequent columns list the four message types (normal, chat, groupchat, or headline) along with six possible delivery options: storing the message offline (O), bouncing the message with a stanza error (E), silently ignoring the message (S), delivering the message to the resource specified in the 'to' address (D), delivering the message to the "most available" resource or resources according to the server's implementation-specific algorithm (M), or delivering the message to all resources with non-negative presence priority (A -- where for chat messages "all resources" can mean the set of resources that have explicitly opted in to receiving every chat message).  The '/' character stands for "or".</t>
+        <t>The following table summarizes the message delivery rules described earlier in this section.  The left column shows various combinations of conditions (non-existent account, no active resources, only one resource and it has a negative presence priority, only one resource and it has a non-negative presence priority, or more than one resource and each one has a non-negative presence priority) and 'to' addresses (bare JID, full JID matching an available resource, or full JID matching no available resource).  The subsequent columns list the four message types (normal, chat, groupchat, or headline) along with six possible delivery options: storing the message offline (O), bouncing the message with a stanza error (E), silently ignoring the message (S), delivering the message to the resource specified in the 'to' address (D), delivering the message to the "most available" resource or resources according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available" (M), or delivering the message to all resources with non-negative presence priority (A -- where for chat messages "all resources" can mean the set of resources that have explicitly opted in to receiving every chat message).  The '/' character stands for "or".</t>
         <figure>
           <preamble>Table 1: Message Delivery Rules</preamble>
           <artwork><![CDATA[
@@ -2488,26 +2458,7 @@ US: </stream:stream>
   </section>
 
   <section title="IANA Considerations" anchor="ref">
-    <t>The following sections update the registrations provided in <xref target='RFC3921'/>.</t>
-    <t>For a number of related IANA considerations, refer to the relevant section of <xref target="XMPP-CORE"/>.</t>
-    <section title="Instant Messaging SRV Protocol Label Registration" anchor="iana-reg-im">
-      <t><xref target="IMP-SRV">Address Resolution for Instant Messaging and Presence</xref> defines an Instant Messaging SRV Protocol Label registry for protocols that can provide services that conform to the "_im" SRV Service label.  Because XMPP is one such protocol, the IANA registers the "_xmpp" protocol label in the appropriate registry, as follows:</t>
-      <t><list style='hanging'>
-        <t hangText='Protocol label:'>_xmpp</t>
-        <t hangText='Specification:'>&rfc.number;</t>
-        <t hangText='Description:'>Instant messaging protocol label for the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
-      </list></t>
-    </section>
-    <section title="Presence SRV Protocol Label Registration" anchor="iana-reg-pres">
-      <t><xref target="IMP-SRV">Address Resolution for Instant Messaging and Presence</xref> defines a Presence SRV Protocol Label registry for protocols that can provide services that conform to the "_pres" SRV Service label.  Because XMPP is one such protocol, the IANA registers the "_xmpp" protocol label in the appropriate registry, as follows:</t>
-      <t><list style='hanging'>
-        <t hangText='Protocol label:'>_xmpp</t>
-        <t hangText='Specification:'>&rfc.number;</t>
-        <t hangText='Description:'>Presence protocol label for the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
-      </list></t>
-    </section>
+    <t>This specification requests no actions from the IANA.</t>
   </section>
 
   <section title="Conformance Requirements" anchor="conformance">
@@ -2673,16 +2624,6 @@ US: </stream:stream>
   <format type="HTML" target="http://xmpp.org/extensions/xep-0203.html"/>
 </reference>
 
-<reference anchor="IMP-SRV">
-<front>
-<title>Address Resolution for Instant Messaging and Presence</title>
-<author initials='J.' surname='Peterson' fullname='J. Peterson'>
-<organization /></author>
-<date year='2004' month='August' /></front>
-<seriesInfo name='RFC' value='3861' />
-<format type='TXT' octets='15764' target='ftp://ftp.isi.edu/in-notes/rfc3861.txt' />
-</reference>
-
 <reference anchor="KEYWORDS">
 <front>
 <title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
@@ -2722,49 +2663,6 @@ US: </stream:stream>
 <format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
 <format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
-</reference>
-
-<reference anchor='SRV'>
-<front>
-<title abbrev='DNS SRV RR'>A DNS RR for specifying the location of services (DNS SRV)</title>
-<author initials='A.' surname='Gulbrandsen' fullname='Arnt Gulbrandsen'>
-<organization>Troll Tech</organization>
-<address>
-<postal>
-<street>Waldemar Thranes gate 98B</street>
-<city>Oslo</city>
-<region />
-<code>N-0175</code>
-<country>NO</country></postal>
-<phone>+47 22 806390</phone>
-<facsimile>+47 22 806380</facsimile>
-<email>arnt@troll.no</email></address></author>
-<author initials='P.' surname='Vixie' fullname='Paul Vixie'>
-<organization>Internet Software Consortium</organization>
-<address>
-<postal>
-<street>950 Charter Street</street>
-<city>Redwood City</city>
-<region>CA</region>
-<code>94063</code>
-<country>US</country></postal>
-<phone>+1 650 779 7001</phone></address></author>
-<author initials='L.' surname='Esibov' fullname='Levon Esibov'>
-<organization>Microsoft Corporation</organization>
-<address>
-<postal>
-<street>One Microsoft Way</street>
-<city>Redmond</city>
-<region>WA</region>
-<code>98052</code>
-<country>US</country></postal>
-<email>levone@microsoft.com</email></address></author>
-<date month='February' year='2000' />
-<abstract>
-<t>This document describes a DNS RR which specifies the location of the
-   server(s) for a specific protocol and domain.</t></abstract></front>
-<seriesInfo name='RFC' value='2782' />
-<format type='TXT' octets='24013' target='ftp://ftp.isi.edu/in-notes/rfc2782.txt' />
 </reference>
 
 <reference anchor='XML' target='http://www.w3.org/TR/2008/REC-xml-20081126'>
@@ -2949,6 +2847,16 @@ US: </stream:stream>
 <t>Applications of presence and instant messaging currently use independent, non-standard and non-interoperable protocols developed by various vendors.  The goal of the Instant Messaging and Presence Protocol (IMPP) Working Group is to define a standard protocol so that independently developed applications of instant messaging and/or   presence can interoperate across the Internet.  This document defines a minimal set of requirements that IMPP must meet.</t></abstract></front>
 <seriesInfo name='RFC' value='2779' />
 <format type='TXT' octets='47420' target='ftp://ftp.isi.edu/in-notes/rfc2779.txt' />
+</reference>
+
+<reference anchor="IMP-SRV">
+<front>
+<title>Address Resolution for Instant Messaging and Presence</title>
+<author initials='J.' surname='Peterson' fullname='J. Peterson'>
+<organization /></author>
+<date year='2004' month='August' /></front>
+<seriesInfo name='RFC' value='3861' />
+<format type='TXT' octets='15764' target='ftp://ftp.isi.edu/in-notes/rfc3861.txt' />
 </reference>
 
 <reference anchor='INTEROP'>
@@ -4199,8 +4107,9 @@ US: </stream:stream>
         <list style='symbols'>
           <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, for the sake of backward-compatibility server implementations are encouraged to advertise support for the feature, even though session establishment is a "no-op".</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, clarified and modified error handling related to presence subscription requests, presence probes and presence notifications.</t>
-          <t>Change the 'from' address for presence probes so that it is the bare JID, not the full JID.</t>
-          <t>Explicitly specified that a server is allowed to deliver a message stanza of type "normal" or "chat" to all resources.</t>
+          <t>Changed the 'from' address for presence probes so that it is the bare JID, not the full JID.</t>
+          <t>Explicitly specified that a server is allowed to deliver a message stanza of type "normal" or "chat" to all resources if it has a method for allowing resources to opt in to such behavior.</t>
+          <t>Allowed a server to use its own algorithm for determining the "most available" resource for the purpose of message delivery, but mentioned the recommended algorithm from RFC 3921 (based on presence priority) as one possible algorithm.</t>
           <t>Added optional versioning of roster information to save bandwidth in cases where the roster has not changed (or has changed very little) between sessions; the relevant protocol interactions were originally described in <xref target='XEP-0237'/>.</t>
           <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed" and the optional "subscribed" value for the 'ask' flag.</t>
           <t>Added optional 'parent' attribute to &lt;thread/&gt; element</t>
@@ -4208,6 +4117,7 @@ US: </stream:stream>
           <t>Recommended returning presence unavailable in response to probes.</t>
           <t>Clarified handling of presence probes sent to full JIDs.</t>
           <t>Explicitly specified that the default value for the presence &lt;priority/&gt; element is zero.</t>
+          <t>Removed recommendation to support the "_im" and "_pres" SRV records.</t>
         </list>
       </t>
       <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
