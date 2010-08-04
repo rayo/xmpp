@@ -2430,29 +2430,35 @@ US: </stream:stream>
         </section>
       </section>
       <section title="Summary of Message Delivery Rules" anchor="rules-local-message">
-        <t>The following table summarizes the message delivery rules described earlier in this section.  The left column shows various combinations of available resources (no resource, one resource with a negative presence priority, one resource with a non-negative presence priority, or more than one resource with a non-negative presence priority) and 'to' addresses (bare JID, full JID matching an available resource, or full JID matching no available resource).  The subsequent columns list the four message types (normal, chat, groupchat, or headline) along with six possible delivery options: storing the message offline (O), bouncing the message with a stanza error (E), silently ignoring the message (S), delivering the message to the resource specified in the 'to' address (D), delivering the message to the "most available" resource or resources according to the server's implementation-specific algorithm (M), or delivering the message to all resources with non-negative presence priority that have opted in to receive chat messages (A).  The '/' character stands for "or".</t>
+        <t>The following table summarizes the message delivery rules described earlier in this section.  The left column shows various combinations of conditions (non-existent account, no active resources, only one resource and it has a negative presence priority, only one resource and it has a non-negative presence priority, or more than one resource and each one has a non-negative presence priority) and 'to' addresses (bare JID, full JID matching an available resource, or full JID matching no available resource).  The subsequent columns list the four message types (normal, chat, groupchat, or headline) along with six possible delivery options: storing the message offline (O), bouncing the message with a stanza error (E), silently ignoring the message (S), delivering the message to the resource specified in the 'to' address (D), delivering the message to the "most available" resource or resources according to the server's implementation-specific algorithm (M), or delivering the message to all resources with non-negative presence priority (A -- where for chat messages "all resources" can mean the set of resources that have explicitly opted in to receiving every chat message).  The '/' character stands for "or".</t>
         <figure>
           <preamble>Table 1: Message Delivery Rules</preamble>
           <artwork><![CDATA[
 +----------------------------------------------------------+
-| Resources        | Normal | Chat  | Groupchat | Headline |
+| Condition        | Normal | Chat  | Groupchat | Headline |
 +----------------------------------------------------------+
-| NONE             |  O/E   |  O/E  |    E      |    S     |
+| ACCOUNT DOES NOT EXIST                                   |
+|  bare            |  S/E   |  S/E  |     E     |    S     |
+|  full            |  S/E   |  S/E  |    S/E    |   S/E    |
 +----------------------------------------------------------+
-| 1 NEG                                                    |
-|  bare            |  O/E   |  O/E  |    E      |    S     |
-|  full match      |   D    |   D   |    D      |    D     |
-|  full no match   |   E    |  O/E  |    E      |    S     |
+| ACCOUNT EXISTS, BUT NO ACTIVE RESOURCES                  |
+|  bare            |  O/E   |  O/E  |     E     |    S     |
+|  full (no match) |  S/E   |  O/E  |    S/E    |   S/E    |
 +----------------------------------------------------------+
-| 1 NON-NEG                                                |
-|  bare            |   D    |   D   |    E      |    D     |
-|  full match      |   D    |   D   |    D      |    D     |
-|  full no match   |   E    |   D   |    E      |    S     |
+| 1 NEGATIVE RESOURCE                                      |
+|  bare            |  O/E   |  O/E  |     E     |    S     |
+|  full match      |   D    |   D   |     D     |    D     |
+|  full no match   |  S/E   |  O/E  |    S/E    |   S/E    |
 +----------------------------------------------------------+
-| 1+ NON-NEG                                               |
-|  bare            |  M/A   |  M/A* |    E      |    A     |
-|  full match      |   D    |  D/A* |    D      |    D     |
-|  full no match   |   E    |  M/A* |    E      |    S     |
+| 1 NON-NEGATIVE RESOURCE                                  |
+|  bare            |   D    |   D   |     E     |    D     |
+|  full match      |   D    |   D   |     D     |    D     |
+|  full no match   |  S/E   |   D   |    S/E    |   S/E    |
++----------------------------------------------------------+
+| 1+ NON-NEGATIVE RESOURCES                                |
+|  bare            |  M/A   |  M/A* |     E     |    A     |
+|  full match      |   D    |  D/A* |     D     |    D     |
+|  full no match   |  S/E   |  M/A* |    S/E    |   S/E    |
 +----------------------------------------------------------+
           ]]></artwork>
         </figure>
