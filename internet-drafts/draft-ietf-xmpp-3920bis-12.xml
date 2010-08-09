@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3920bis-11" ipr="trust200902" obsoletes="3920">
+<rfc category="std" docName="draft-ietf-xmpp-3920bis-12" ipr="trust200902" obsoletes="3920">
 
   <front>
     <title abbrev="XMPP Core">Extensible Messaging and Presence Protocol (XMPP): Core</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="July" day="26"/>
+    <date year="2010" month="August" day="9"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -109,7 +109,7 @@
           <t>S2: = server2</t>
         </list>
       </t>
-      <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent Unicode characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON); this form is definitely not to be sent over the wire in XMPP systems.</t>
+      <t>Following the "XML Notation" used in <xref target="IRI"/> to represent characters that cannot be rendered in ASCII-only documents, some examples in this document use the form "&amp;#x...." as a notational device to represent <xref target='UNICODE'/> characters (e.g., the string "&amp;#x0159;" stands for the Unicode character LATIN SMALL LETTER R WITH CARON); this form is definitely not to be sent over the wire in XMPP systems.</t>
       <t>In adherence to the convention used in <xref target='URI'/> to represent Uniform Resource Indentifiers, XMPP addresses in running text are enclosed between '&lt;' and '&gt;' (despite the fact that natively they are not URIs).</t>
     </section>
     <section title="Acknowledgements" anchor="intro-ack">
@@ -220,7 +220,7 @@ romeo@example.net           juliet@im.example.com
 
   <section title="XML Streams" anchor="streams">
 
-    <section title="Overview" anchor="streams-overview">
+    <section title="Streams Overview" anchor="streams-overview">
       <t>Two fundamental concepts make possible the rapid, asynchronous exchange of relatively small payloads of structured information between XMPP entities: XML streams and XML stanzas.  These terms are defined as follows.</t>
       <t>
         <list style='hanging'>
@@ -450,22 +450,22 @@ S: </stream:stream>
       <t>When an entity that is a party to a stream has not received any XMPP traffic from its stream peer for some period of time, the peer might appear to be silent.  There are several reasons why this might happen:</t>
       <t>
         <list style='numbers'>
-          <t>The peer is idle and simply has not sent any XMPP traffic over its XML stream to the entity.<vspace blankLines='1'/></t>
+          <t>The underlying TCP connection is dead.<vspace blankLines='1'/></t>
           <t>The XML stream is broken despite the fact that the underlying TCP connection is alive.<vspace blankLines='1'/></t>
-          <t>The underlying TCP connection is dead.</t>
+          <t>The peer is idle and simply has not sent any XMPP traffic over its XML stream to the entity.</t>
         </list>
       </t>
       <t>These three conditions are best handled separately, as described in the following sections.</t>
       <t><list style='empty'><t>Implementation Note:  For the purpose of handling silent peers, we treat a two unidirectional TCP connections as conceptually equivalent to a single bidirectional TCP connection (see <xref target='streams-direction'/>); however, implementers need to be aware that, in the case of two unidirectional TCP connections, responses to traffic at the XMPP application layer will come back from the peer on the second TCP connection.  In addition, the use of multiple streams in each direction (which is a common deployment choice for server-to-server connectivity among large XMPP service providers) further complicates application-level checking of XMPP streams and their underlying TCP connections, because there is no necessary correlation between any given initial stream and any given response stream.</t></list></t>
-      <section title="Idle Peer" anchor="streams-silence-idle">
-        <t>If the peer has not sent any stanzas for a certain period of time, it SHOULD close the stream using the handshake described under <xref target='streams-close'/>.  If an idle peer does not close the stream, the other party to the stream MAY either close the stream using the handshake described under <xref target='streams-close'/> or return a stream error (e.g., &lt;resource-constraint/&gt; if the entity has reached a limit on the number of open TCP connections or &lt;policy-violation/&gt; if the connection has exceeded a local timeout policy).  However, it is preferable to be liberal in accepting idle peers, since experience has shown that doing so improves the reliability of communication over XMPP networks and that it is typically more efficient to maintain a stream between two servers than to aggressively timeout such a stream.</t>
+      <section title="Dead Connection" anchor="streams-silence-dead">
+        <t>If the underlying TCP connection is dead, stream-level checks (e.g., <xref target="XEP-0199"/> and <xref target="XEP-0198"/>) are ineffective.  Therefore it is unnecessary to close the stream with or without an error, and it is appropriate instead to simply terminate the TCP connection.</t>
+        <t>One common method for checking the TCP connection is to send a space character (U+0020) between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>; the sending of such a space character is properly called a WHITESPACE KEEPALIVE (the term "whitespace ping" is often used, despite the fact that it is not a ping since no "pong" is possible).</t>
       </section>
       <section title="Broken Stream" anchor="streams-silence-broken">
-        <t>In this case, the peer never responds to XMPP traffic that the entity sends, whether normal stanzas or specialized stream-checking traffic such as the application-level pings defined in <xref target="XEP-0199"/> or the more comprehensive stream management protocol defined in <xref target="XEP-0198"/>.  It is appropriate for the entity to terminate a broken stream using the &lt;connection-timeout/&gt; stream error described under <xref target='streams-error-conditions-connection-timeout'/>.</t>
+        <t>Even if the underlying TCP connection is alive, the peer might never respond to XMPP traffic that the entity sends, whether normal stanzas or specialized stream-checking traffic such as the application-level pings defined in <xref target="XEP-0199"/> or the more comprehensive stream management protocol defined in <xref target="XEP-0198"/>.  In this case, it is appropriate for the entity to close a broken stream using the &lt;connection-timeout/&gt; stream error described under <xref target='streams-error-conditions-connection-timeout'/>.</t>
       </section>
-      <section title="Dead Connection" anchor="streams-silence-dead">
-        <t>If the underlying TCP connection is dead, stream-level checks (e.g., <xref target="XEP-0199"/> and <xref target="XEP-0198"/>) are ineffective.  Therefore it is unnecessary to close the stream with or without an error, and it is appropriate instead to simply close the TCP connection.</t>
-        <t>One common method for checking the TCP connection is to send a space character (U+0020) between XML stanzas, which is allowed for XML streams as described under <xref target='xml-whitespace'/>; the sending of such a space character is properly called a WHITESPACE KEEPALIVE (the term "whitespace ping" is often used, despite the fact that it is not a ping since no "pong" is possible).</t>
+      <section title="Idle Peer" anchor="streams-silence-idle">
+        <t>Even if the underlying TCP connection is alive and the stream is not broken, the peer might have sent no stanzas for a certain period of time.  In this case, the peer SHOULD close the stream using the handshake described under <xref target='streams-close'/>.  If the idle peer does not close the stream, the other party MAY either close the stream using the handshake described under <xref target='streams-close'/> or return a stream error (e.g., &lt;resource-constraint/&gt; if the entity has reached a limit on the number of open TCP connections or &lt;policy-violation/&gt; if the connection has exceeded a local timeout policy).  However, consistent with the order of layers (specified under <xref target='security-layers'/>), the other party is advised to verify that the underlying TCP connection is alive and the stream is unbroken (as described above) before concluding that the peer is idle.  Furthermore, it is preferable to be liberal in accepting idle peers, since experience has shown that doing so improves the reliability of communication over XMPP networks and that it is typically more efficient to maintain a stream between two servers than to aggressively timeout such a stream.</t>
       </section>
       <section title="Use of Checking Methods" anchor="streams-silence-check">
         <t>Implementers are advised to support whichever stream-checking and connection-checking methods they deem appropriate, but to carefully weigh the network impact of such methods against the benefits of discovering broken streams and dead TCP connections in a timely manner.  The length of time between the use of any particular check is very much a matter of local service policy and depends strongly on the network environment and usage scenarios of a given deployment and connection type; at the time of writing, it is RECOMMENDED that any such check be performed not more than once every 5 minutes and that, ideally, such checks will be initiated by clients rather than servers.  Those who implement XMPP software and deploy XMPP services are encouraged to seek additional advice regarding appropriate timing of stream-checking and connection-checking methods, particularly when power-constrained devices are being used (e.g., in mobile environments).</t>
@@ -3642,13 +3642,30 @@ S2: </stream>
   </section>
 
   <section title="Server Rules for Processing XML Stanzas" anchor="rules">
-    <t>An XMPP server MUST ensure in-order processing of XML stanzas between any two entities.  This includes stanzas sent by a client to its server for direct processing by the server (e.g., in-order processing of a roster get and initial presence as described in <xref target='XMPP-IM'/>).</t>
-    <t>Beyond the requirement for in-order processing, each server implementation will contain its own logic for processing stanzas it receives.  Such logic determines whether the server needs to ROUTE a given stanza to another domain, DELIVER it to a local entity (typically a connected client associated with a local account), or HANDLE it directly within the server itself.  The following rules apply.</t>
-    <t><list style='empty'><t>Implementation Note: Particular XMPP applications MAY specify delivery rules that modify or supplement the following rules; for example, a set of delivery rules for instant messaging and presence applications is defined in <xref target="XMPP-IM"/>.</t></list></t>
+    <t>Each server implementation will contain its own logic for processing stanzas it receives.  Such logic determines whether the server needs to ROUTE a given stanza to another domain, DELIVER it to a local entity (typically a connected client associated with a local account), or HANDLE it directly within the server itself.  This section provides general rules for processing XML stanzas.  However, particular XMPP applications MAY specify delivery rules that modify or supplement the following rules (e.g., a set of delivery rules for instant messaging and presence applications is defined in <xref target="XMPP-IM"/>).</t>
+    <section title="In-Order Processing" anchor="rules-order">
+      <t>An XMPP server MUST ensure in-order processing of XML stanzas between any two entities.  This includes stanzas sent by a client to its server for direct processing by the server (e.g., in-order processing of a roster get and initial presence as described in <xref target='XMPP-IM'/>).</t>
+    </section>
+    <section title="General Considerations" anchor="rules-gen">
+      <t>At high level, there are three primary considerations at play in server processing of XML stanzas, which sometimes are at odds but need to be managed in a consistent way:</t>
+      <t>
+        <list style='numbers'>
+          <t>It is good to deliver a stanza to the intended recipient if possible.<vspace blankLines='1'/></t>
+          <t>If a stanza cannot be delivered, it is helpful to inform the sender.<vspace blankLines='1'/></t>
+          <t>It is bad to facilitate directory harvesting attacks and presence leaks.</t>
+        </list>
+      </t>
+      <t>With regarding to possible delivery-related attacks, the following points need to be kept in mind:</t>
+      <t>
+        <list style='numbers'>
+          <t>From the perspective of an attacker, there is little if any effective difference between the server's (i) delivering the stanza or storing it offline for later delivery (see <xref target='XMPP-IM'/>) and (ii) silently ignoring it (because an error is not returned immediately in any of those cases); therefore, in scenarios where a server delivers a stanza or places the stanza into offline storage for later delivery, it needs to silently ignore the stanza if that account does not exist.<vspace blankLines='1'/></t>
+          <t>How a server processes stanzas sent to the bare JID &lt;localpart@domainpart&gt; has implications for directory harvesting.<vspace blankLines='1'/></t>
+          <t>How a server processes stanzas sent to a full JID has implications for presence leaks.  However, the attack is less direct here (because the attacker needs to try many different resources in an attempt to find the one resource that matches) so it is of somewhat lesser concern.</t>
+        </list>
+      </t>
+    </section>
     <section title="No 'to' Address" anchor="rules-noto">
-      <section title="Overview" anchor="rules-noto-overview">
-        <t>If the stanza possesses no 'to' attribute, the server MUST handle it directly on behalf of the entity that sent it, where the meaning of "handle it directly" depends on whether the stanza is message, presence, or IQ.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a local entity (such as a client) that is connected to the server.</t>
-      </section>
+      <t>If the stanza possesses no 'to' attribute, the server MUST handle it directly on behalf of the entity that sent it, where the meaning of "handle it directly" depends on whether the stanza is message, presence, or IQ.  Because all stanzas received from other servers MUST possess a 'to' attribute, this rule applies only to stanzas received from a local entity (typically a client) that is connected to the server.</t>
       <section title="Message" anchor="rules-noto-message">
         <t>If the server receives a message stanza with no 'to' attribute, it MUST treat the message as if the 'to' address were the bare JID &lt;localpart@domainpart&gt; of the sending entity.</t>
       </section>
@@ -3690,18 +3707,18 @@ S2: </stream>
     <section title="Local Domain" anchor="rules-local">
       <t>If the hostname of the domainpart of the JID contained in the 'to' attribute matches one of the configured hostnames of the server, the server MUST first determine if the hostname is serviced by the server itself or by a specialized local service.  If the latter, the server MUST route the stanza to that service.  If the former, the server MUST proceed as follows.</t>
       <section title="Mere Domain" anchor="rules-local-domain">
-        <t>If the JID contained in the 'to' attribute is of the form &lt;domain&gt;, then the server MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
+        <t>If the JID contained in the 'to' attribute is of the form &lt;domain&gt;, then the server MUST either (a) handle the stanza as appropriate for the stanza kind or (b) return an error stanza to the sender.</t>
       </section>
       <section title="Domain with Resource" anchor="rules-local-domainresource">
-        <t>If the JID contained in the 'to' attribute is of the form &lt;domain/resource&gt;, then the server MUST either handle the stanza as appropriate for the stanza kind or return an error stanza to the sender.</t>
+        <t>If the JID contained in the 'to' attribute is of the form &lt;domain/resource&gt;, then the server MUST either (a) handle the stanza as appropriate for the stanza kind or (b) return an error stanza to the sender.</t>
       </section>
       <section title="Localpart at Domain" anchor="rules-local-localpart">
-        <t>For addresses of this type, more detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t>
+        <t>An address of this type is normally associated with an account on the server.  The following rules provide some general guidelines; more detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t>
         <section title="No Such User" anchor="rules-local-localpart-nosuchuser">
           <t>If there is no local account associated with the &lt;localpart@domainpart&gt;, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
-              <t>For a message stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.<vspace blankLines='1'/></t>
+              <t>For a message stanza, the server MUST either (a) silently ignore the stanza or (b) return a &lt;service-unavailable/&gt; stanza error to the sender.<vspace blankLines='1'/></t>
               <t>For a presence stanza, the server SHOULD ignore the stanza (or behave as described in <xref target='XMPP-IM'/>).<vspace blankLines='1'/></t>
               <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
             </list>
@@ -3711,7 +3728,7 @@ S2: </stream>
           <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart&gt;, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
-              <t>For a message stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST either return a &lt;service-unavailable/&gt; stanza error or store the message offline for delivery when the account next has a connected resource.<vspace blankLines='1'/></t>
+              <t>For a message stanza, if there exists at least one connected resource for the account the server SHOULD deliver it to at least one of the connected resources.  If there exists no connected resource, the server MUST either (a) store the message offline for delivery when the account next has a connected resource or (b) return a &lt;service-unavailable/&gt; stanza error.<vspace blankLines='1'/></t>
               <t>For a presence stanza, if there exists at least one connected resource that has sent initial presence (i.e., has a "presence session" as defined in <xref target='XMPP-IM'/>), the server SHOULD deliver it to such resources.  If there exists no connected resource, the server SHOULD ignore the stanza (or behave as described in <xref target='XMPP-IM'/>).<vspace blankLines='1'/></t>
               <t>For an IQ stanza, the server MUST handle it directly on behalf of the intended recipient.</t>
             </list>
@@ -3775,7 +3792,7 @@ S2: </stream>
 
     <section title="Character Encoding" anchor="xml-encoding">
       <t>Implementations MUST support the UTF-8 transformation of Universal Character Set <xref target="UCS2"/> characters, as needed for conformance with <xref target="CHARSETS"/> and as defined in <xref target='UTF-8'/>.  Implementations MUST NOT attempt to use any other encoding.  If one party to an XML stream detects that the other party has attempted to send XML data with an encoding other than UTF-8, it MUST return a stream error, which SHOULD be &lt;unsupported-encoding/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t>
-      <t><list style='empty'><t>Implementation Note: Because it is mandatory for an XMPP implementation to support all and only the UTF-8 encoding and because UTF-8 always has the same byte order, an implementation MUST NOT send a byte order mark ("BOM") at the beginning of the data stream.  If an entity receives the Unicode character U+FEFF anywhere in an XML stream (including as the first character of the stream), it MUST interpret that character as a zero width no-break space, not as a byte order mark.</t></list></t>
+      <t><list style='empty'><t>Implementation Note: Because it is mandatory for an XMPP implementation to support all and only the UTF-8 encoding and because UTF-8 always has the same byte order, an implementation MUST NOT send a byte order mark ("BOM") at the beginning of the data stream.  If an entity receives the <xref target='UNICODE'/> character U+FEFF anywhere in an XML stream (including as the first character of the stream), it MUST interpret that character as a zero width no-break space, not as a byte order mark.</t></list></t>
     </section>
 
     <section title="Whitespace" anchor="xml-whitespace">
@@ -3838,6 +3855,7 @@ S2: </stream>
         </list>
       </t>
       <t>This order has important security characteristics, as described throughout these security considerations.</t>
+      <t>Within XMPP, XML stanzas are ordered on top of XML streams, as described under <xref target='streams'/>.</t>
     </section>
     <section title="Confidentiality and Integrity" anchor="security-confidentiality">
       <t>The use of Transport Layer Security (TLS) with non-null cipher suites provides a reliable mechanism for the ensuring the confidentiality and integrity of data exchanged between a client and a server or between two servers.  Therefore TLS helps to protect against eavesdropping, password sniffing, man-in-the-middle attacks, and stanza replays, insertion, deletion, and modification over an XML stream.  XMPP clients and servers MUST support TLS as defined under <xref target='tls'/>.</t>
@@ -3880,16 +3898,7 @@ S2: </stream>
         </section>
         <section title="Server Certificates" anchor="security-certificates-generation-server">
           <section title="Rules" anchor="security-certificates-generation-server-rules">
-            <t>In a digital certificate to be presented by an XMPP server (i.e., a SERVER CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs (i.e., domainparts) associated with domains serviced at the server.  The rules and guidelines defined in <xref target='TLS-CERTS'/> apply to XMPP server certificates.  The following preference order of identifiers is RECOMMENDED, where the identifier types are as described in <xref target='TLS-CERTS'/> unless otherwise noted.</t>
-            <t>
-              <list style='numbers'>
-                <t>SRV-ID (see also <xref target='PKIX-SRV'/>)</t>
-                <t>DNS-ID</t>
-                <t>XmppAddr as specified under <xref target='security-certificates-generation-xmppaddr'/></t>
-                <t>CN-ID</t>
-              </list>
-            </t>
-            <t>XMPP client and server software implementations MUST be able to validate both the SRV-ID and DNS-ID identifier types. Certification authorities that issue XMPP-specific certificates MUST support the DNS-ID identifier type and SHOULD support the SRV-ID identifier type.  Service providers SHOULD request and prefer certificates that include an SRV-ID identifier type.  Support for the XmppAddr and CN-ID identifier types is encouraged for the sake of backward-compatibility.</t>
+            <t>In a digital certificate to be presented by an XMPP server (i.e., a SERVER CERTIFICATE), it is RECOMMENDED for the certificate to include one or more JIDs (i.e., domainparts) associated with domains serviced at the server.  The rules and guidelines defined in <xref target='TLS-CERTS'/> apply to XMPP server certificates.  XMPP client and server software implementations MUST be able to validate both the SRV-ID and DNS-ID identifier types described in <xref target='TLS-CERTS'/>.  Certification authorities that issue XMPP-specific certificates MUST support the DNS-ID identifier type and SHOULD support the SRV-ID identifier type.  Service providers SHOULD request and prefer certificates that include the SRV-ID identifier type.  Support for the XmppAddr identifier type (specified under <xref target='security-certificates-generation-xmppaddr'/>) and the CN-ID identifier type (described in <xref target='TLS-CERTS'/>) is encouraged for the sake of backward-compatibility.</t>
           </section>
           <section title="Examples" anchor="security-certificates-generation-server-examples">
             <t>For our first (relatively simple) example, consider a company called "Example Products, Inc."  It hosts an XMPP service at "im.example.com" (i.e., user addresses at the service are of the form "user@im.example.com"), and SRV lookups for the xmpp-client and xmpp-server services at "im.example.com" yield one machine, called "x.example.com", as follows:</t>
@@ -5050,12 +5059,12 @@ XmppAddr ::= UTF8String
 <author initials='J' surname='Hodges' fullname='Jeff Hodges'>
     <organization />
 </author>
-<date month='July' day='12' year='2010' />
+<date month='August' day='6' year='2010' />
 <abstract><t>Many application technologies enable a secure connection between two entities using certificates in the context of Transport Layer Security (TLS).  This document specifies procedures for representing and verifying the identity of application servers in such interactions.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-08' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-09' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-08.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-09.txt' />
 </reference>
 
 <reference anchor="UCS2">
@@ -5376,12 +5385,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='July' day='12' year='2010' />
+<date month='July' day='26' year='2010' />
 <abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP), including support for non- ASCII characters.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-02' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-03' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-02.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-03.txt' />
 </reference>
 
     </references>
@@ -6034,12 +6043,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='D' surname='3rd' fullname='Donald Eastlake 3rd'>
     <organization />
 </author>
-<date month='June' day='11' year='2010' />
+<date month='July' day='30' year='2010' />
 <abstract><t>This document provides specifications for existing TLS extensions. It is a companion document for the TLS 1.2 specification [RFC5246]. The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-tls-rfc4366-bis-09' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-tls-rfc4366-bis-10' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-tls-rfc4366-bis-09.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-tls-rfc4366-bis-10.txt' />
 </reference>
 
 <reference anchor='TLS-NEG'>
@@ -6512,12 +6521,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='July' day='12' year='2010' />
+<date month='August' day='9' year='2010' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-08' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-10' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-08.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-10.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
