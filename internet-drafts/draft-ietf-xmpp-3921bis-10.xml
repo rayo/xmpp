@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="August" day="4"/>
+    <date year="2010" month="August" day="9"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -2286,37 +2286,100 @@ US: </stream:stream>
   </section>
 
   <section title="Server Rules for Processing XML Stanzas" anchor="rules">
-    <t>Basic server rules for processing XML stanzas are defined in <xref target="XMPP-CORE"/>.  This section defines supplementary rules for XMPP instant messaging and presence servers.</t>
-    <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and then delivering it when the user next becomes available.  For recommendations regarding offline message storage refer to <xref target='XEP-0160'/>.</t>
+    <t>Basic server rules for processing XML stanzas are defined in <xref target="XMPP-CORE"/>, and the reader is referred to that specification for general considerations and security implications.  This section defines supplementary rules for XMPP instant messaging and presence servers.</t>
+    <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and then delivering it when the user next becomes available.  For recommendations regarding offline message storage, refer to <xref target='XEP-0160'/>.</t>
     <section title="No 'to' Address" anchor="rules-noto">
-      <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
+      <t>In this case, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
       <t>If the hostname of the domain identifier portion of the address contained in the 'to' attribute of an outbound stanza does not match a configured hostname of the server itself, then the server MUST attempt to route the stanza to the remote domain.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD attempt to resolve the hostname of the remote server in adherence with the rules defined in <xref target="XMPP-CORE"/>, negotiate XML streams with the remote domain, and route the stanza to the remote domain.  However, if the server cannot resolve the remote domain, then it MUST return a &lt;remote-server-not-found/&gt; stanza error to the local sender.</t>
       <t><list style='empty'><t>Implementation Note: RFC 3921 described use of the _im._xmpp and _pres._xmpp SRV records (defined in <xref target='IMP-SRV'/>) to discover the appropriate protocol for communication with remote instant messaging and presence services.  Because those SRV records have not been widely deployed, this specification no longer actively recommends that they be deployed or supported; see RFC 3921 regarding the proper formats and resolution processes.</t></list></t>
     </section>
     <section title="Local Domain" anchor="rules-local">
-      <t>If the hostname of the domainpart of the JID contained in the 'to' attribute matches one of the configured hostnames of the server and the hostname is serviced by the server itself (not a specialized local service), the server MUST proceed as follows.</t>
-      <section title="No Such User" anchor="rules-local-nosuchuser">
+      <t>In this case, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
+    </section>
+    <section title="Localpart at Domain" anchor="rules-localpart">
+      <t>If the 'to' address specifies a bare JID &lt;user@domain&gt; or full JID &lt;user@domain/resourcepart&gt; where the domainpart of the JID matches a configured domain that is serviced by the server itself, the server MUST proceed as follows.</t>
+      <section title="No Such User" anchor="rules-localpart-nosuchuser">
         <t>If the user account identified by the 'to' attribute does not exist, how the stanza is processed depends on the stanza type.</t>
         <t>
           <list style='symbols'>
             <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.<vspace blankLines='1'/></t>
-            <t>For a message stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.<vspace blankLines='1'/></t>
+            <t>For a message stanza, the server MUST either (a) silently ignore the message or (b) return a &lt;service-unavailable/&gt; stanza error to the sender.<vspace blankLines='1'/></t>
             <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
-            <t>For a presence stanza of type "subscribe", the server MUST return a presence stanza of type "unsubscribed".<vspace blankLines='1'/></t>
-            <t>For a presence stanza of type "subscribed", "unsubscribe", or "unsubscribed", the server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
-            <t>For a presence stanza of type "probe", the server MUST return a presence stanza of type "unsubscribed".<vspace blankLines='1'/></t>
+            <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
+            <t>For a presence stanza of type "probe", the server MUST either (a) silently ignore the stanza or (b) return a presence stanza of type "unsubscribed".<vspace blankLines='1'/></t>
           </list>
         </t>
       </section>
-      <section title="Full JID at Local Domain" anchor="rules-local-fulljid">
+      <section title="Bare JID" anchor="rules-localpart-barejid">
+        <t>If the JID contained in the 'to' attribute is of the form &lt;user@domain&gt;, then the server MUST adhere to the following rules.</t>
+        <section title="Available or Connected Resources" anchor="rules-localpart-barejid-resource">
+          <t>If there is at least one available resource or connected resource, how the stanza is processed depends on the stanza type.</t>
+          <section title="Message" anchor="rules-localpart-barejid-resource-message">
+            <t>For a message stanza of type "normal":</t>
+            <t>
+              <list style='symbols'>
+                <t>If the only available resource has a negative presence priority then the server SHOULD either (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources.</t>
+              </list>
+            </t>
+            <t>For a message stanza of type "chat":</t>
+            <t>
+              <list style='symbols'>
+                <t>If the only available resource has a negative presence priority then the server SHOULD either (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
+              </list>
+            </t>
+            <t>For a message stanza of type "groupchat", the server MUST NOT deliver the stanza to any of the available resources but instead MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
+            <t>For a message stanza of type "headline":</t>
+            <t>
+              <list style='symbols'>
+                <t>If the only available resource has a negative presence priority then the server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
+                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
+              </list>
+            </t>
+            <t>For a message stanza of type "error", the server MUST silently ignore the message.</t>
+            <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources or connected resources as described under <xref target='rules-localpart-barejid-noresource'/>.</t>
+            <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+          </section>
+          <section title="Presence" anchor="rules-localpart-barejid-resource-pres">
+            <t>For a presence stanza with no type or of type "unavailable", the server MUST deliver it to all available resources.</t>
+            <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+            <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
+            <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
+          </section>
+          <section title="IQ" anchor="rules-localpart-barejid-resource-iq">
+            <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to any of the user's available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, then the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, then the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+          </section>
+        </section>
+        <section title="No Available or Connected Resources" anchor="rules-localpart-barejid-noresource">
+          <t>If there are no available resources or connected resources associated with the user, how the stanza is processed depends on the stanza type.</t>
+          <section title="Message" anchor="rules-localpart-barejid-noresource-message">
+            <t>For a message stanza of type "normal" or "chat", the server SHOULD either (a) add the message to offline storage or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
+            <t>For a message stanza of type "groupchat", the server MUST return an error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
+            <t>For a message stanza of type "headline" or "error", the server MUST silently ignore the message.</t>
+          </section>
+          <section title="Presence" anchor="rules-localpart-barejid-noresource-pres">
+            <t>For a presence stanza with no type or of type "unavailable", the server SHOULD silently ignore the stanza by not storing it for later delivery and not replying to it on behalf of the user.</t>
+            <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
+            <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
+          </section>
+          <section title="IQ" anchor="rules-localpart-barejid-noresource-iq">
+            <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, then the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, then the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
+          </section>
+        </section>
+      </section>
+      <section title="Full JID" anchor="rules-localpart-fulljid">
         <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured hostnames of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain/resource&gt;, then the server MUST adhere to the following rules (subject to enforcement of relevant privacy and security policies, such as those deployed by means of <xref target='XEP-0016'/> or <xref target='XEP-0191'/>).</t>
-        <section title="Resource Matches" anchor="rules-local-fulljid-match">
+        <section title="Resource Matches" anchor="rules-localpart-fulljid-match">
           <t>If an available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
-              <t>For an IQ stanzas of type "get" or "set", if the intended recipient does not share presence with the requesting entity either by means of a presence subscription of type "both" or "from" or by means of directed presence, then the server SHOULD NOT deliver the IQ stanza but instead SHOULD return a &lt;service-unavailable/&gt; stanza error to the requesting entity.  This policy helps to prevent presence leaks (see <xref target='security'/>).<vspace blankLines='1'/></t>
+              <t>For an IQ stanza of type "get" or "set", if the intended recipient does not share presence with the requesting entity either by means of a presence subscription of type "both" or "from" or by means of directed presence, then the server SHOULD NOT deliver the IQ stanza but instead SHOULD return a &lt;service-unavailable/&gt; stanza error to the requesting entity.  This policy helps to prevent presence leaks (see <xref target='security'/>).<vspace blankLines='1'/></t>
               <t>For a message stanza, the server MUST deliver the stanza to the resource.<vspace blankLines='1'/></t>
               <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST deliver the stanza to the resource.<vspace blankLines='1'/></t>
               <t>For a presence stanza of type "subscribe", the server MUST follow the guidelines provided under <xref target='sub-request-inbound'/>.<vspace blankLines='1'/></t>
@@ -2325,77 +2388,29 @@ US: </stream:stream>
             </list>
           </t>
         </section>
-        <section title="No Resource Matches" anchor="rules-local-fulljid-nomatch">
+        <section title="No Resource Matches" anchor="rules-localpart-fulljid-nomatch">
           <t>If no available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
           <section title="Message" anchor="rules-local-fulljid-nomatch-message">
-            <t>For a message stanza of type "normal", the server SHOULD return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
+            <t>For a message stanza of type "normal", "groupchat", or "headline", the server MUST either (a) silently ignore the stanza or (b) return an error stanza to the sender, which SHOULD be &;lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
             <t>For a message stanza of type "chat":</t>
             <t>
               <list style='symbols'>
-                <t>If the only available resource has a negative presence priority then the server SHOULD store the message offline for later delivery or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If there is no available or connected resource, the server MUST either (a) store the message offline for later delivery or (b) return an error stanza to the sender, which SHOULD be &;lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If the only available resource has a negative presence priority then the server SHOULD (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
                 <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
                 <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") but it MAY instead deliver it to all of the non-negative resources that have opted in to receive chat messages.</t>
               </list>
             </t>
-            <t>For a message stanza of type "groupchat", the server MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
-            <t>For a message stanza of type "headline", the server SHOULD silently ignore the stanza or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
             <t>For a message stanza of type "error", the server MUST silently ignore the stanza.</t>
           </section>
-          <section title="Presence" anchor="rules-local-fulljid-nomatch-presence">
+          <section title="Presence" anchor="rules-localpart-fulljid-nomatch-presence">
             <t>For a presence stanza with no 'type' attribute or a 'type' attribute of "unavailable", the server MUST silently ignore the stanza.</t>
             <t>For a presence stanza of type "subscribe", the server MUST follow the guidelines provided under <xref target='sub-request-inbound'/>.</t>
             <t>For a presence stanza of type "subscribed", "unsubscribe", or "unsubscribed", the server MUST ignore the stanza.</t>
             <t>For a presence stanza of type "probe", the server MUST follow the guidelines provided under <xref target='presence-probe'/>.</t>
           </section>
-          <section title="IQ" anchor="rules-local-fulljid-nomatch-iq">
+          <section title="IQ" anchor="rules-localpart-fulljid-nomatch-iq">
             <t>For an IQ stanza, the server MUST return a &lt;service-unavailable/&gt; stanza error to the sender.</t>
-          </section>
-        </section>
-      </section>
-      <section title="Bare JID at Local Domain" anchor="rules-local-barejid">
-        <t>If the hostname of the domain identifier portion of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured hostnames of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain&gt;, then the server MUST adhere to the following rules.</t>
-        <section title="Available or Connected Resources" anchor="rules-local-barejid-resource">
-          <t>If there is at least one available resource or connected resource, how the stanza is processed depends on the stanza type.</t>
-          <section title="Message" anchor="rules-local-barejid-resource-message">
-            <t>For a message stanza of type "normal" or "chat":</t>
-            <t>
-              <list style='symbols'>
-                <t>If the only available resource has a negative presence priority then the server SHOULD store the message offline for later delivery or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") but it MAY instead deliver it to all of the non-negative resources that have opted in to receive chat messages.</t>
-              </list>
-            </t>
-            <t>For a message stanza of type "groupchat", the server MUST NOT deliver the stanza to any of the available resources but instead MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
-            <t>For a message stanza of type "headline", the server MUST deliver the stanza to all available resources.</t>
-            <t>For a message stanza of type "error", the server MUST silently ignore the message.</t>
-            <t>However, for any message type the server MUST NOT deliver the stanza to any available resource with a negative priority; if the only available resource has a negative priority, the server SHOULD handle the message as if there were no available resources or connected resources as described under <xref target='rules-local-barejid-noresource'/>.</t>
-            <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          </section>
-          <section title="Presence" anchor="rules-local-barejid-resource-pres">
-            <t>For a presence stanza with no type or of type "unavailable", the server MUST deliver it to all available resources.</t>
-            <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
-            <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
-            <t>In all cases, the server MUST NOT rewrite the 'to' attribute (i.e., it MUST leave it as &lt;user@domain&gt; rather than change it to &lt;user@domain/resource&gt;).</t>
-          </section>
-          <section title="IQ" anchor="rules-local-barejid-resource-iq">
-            <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error, and MUST NOT deliver the IQ stanza to any of the user's available resources.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, then the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, then the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
-          </section>
-        </section>
-        <section title="No Available or Connected Resources" anchor="rules-local-barejid-noresource">
-          <t>If there are no available resources or connected resources associated with the user, how the stanza is processed depends on the stanza type.</t>
-          <section title="Message" anchor="rules-local-barejid-noresource-message">
-            <t>For a message stanza of type "normal" or "chat", the server SHOULD add the message to offline storage or return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
-            <t>For a message stanza of type "groupchat", the server MUST return an error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
-            <t>For a message stanza of type "headline", the server MUST silently ignore the message.</t>
-            <t>For a message stanza of type "error", the server MUST silently ignore the message.</t>
-          </section>
-          <section title="Presence" anchor="rules-local-barejid-noresource-pres">
-            <t>For a presence stanza with no type or of type "unavailable", the server SHOULD silently ignore the stanza by not storing it for later delivery and not replying to it on behalf of the user.</t>
-            <t>For a presence stanza of type "subscribe", "subscribed", "unsubscribe", or "unsubscribed", the server MUST adhere to the rules defined under <xref target='sub'/> and summarized under <xref target='substates'/>.</t>
-            <t>For a presence stanza of type "probe", the server MUST handle it directly as described under <xref target='presence-probe'/>.</t>
-          </section>
-          <section title="IQ" anchor="rules-local-barejid-noresource-iq">
-            <t>For an IQ stanza, the server itself MUST reply on behalf of the user with either an IQ result or an IQ error.  Specifically, if the semantics of the qualifying namespace define a reply that the server can provide on behalf of the user, then the server MUST reply to the stanza on behalf of the user by returning either an IQ stanza of type "result" or an IQ stanza of type "error" that is appropriate to the original payload; if not, then the server MUST reply with a &lt;service-unavailable/&gt; stanza error.</t>
           </section>
         </section>
       </section>
@@ -2721,12 +2736,12 @@ US: </stream:stream>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='July' day='26' year='2010' />
+<date month='August' day='9' year='2010' />
 <abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network- aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities. This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-11' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-12' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-11.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-12.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
@@ -4108,6 +4123,7 @@ US: </stream:stream>
           <t>The protocol for session establishment was determined to be unnecessary and therefore the content previously defined in Section 3 of RFC 3921 was removed.  However, for the sake of backward-compatibility server implementations are encouraged to advertise support for the feature, even though session establishment is a "no-op".</t>
           <t>In order to more seamlessly repair lack of synchronization in subscription states between rosters located at different servers, clarified and modified error handling related to presence subscription requests, presence probes and presence notifications.</t>
           <t>Changed the 'from' address for presence probes so that it is the bare JID, not the full JID.</t>
+          <t>Adjusted and clarified stanza delivery rules based on implementation and deployment experience.</t>
           <t>Explicitly specified that a server is allowed to deliver a message stanza of type "normal" or "chat" to all resources if it has a method for allowing resources to opt in to such behavior.</t>
           <t>Allowed a server to use its own algorithm for determining the "most available" resource for the purpose of message delivery, but mentioned the recommended algorithm from RFC 3921 (based on presence priority) as one possible algorithm.</t>
           <t>Added optional versioning of roster information to save bandwidth in cases where the roster has not changed (or has changed very little) between sessions; the relevant protocol interactions were originally described in <xref target='XEP-0237'/>.</t>
