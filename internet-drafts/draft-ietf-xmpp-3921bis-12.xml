@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3921bis-11" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-ietf-xmpp-3921bis-12" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="August" day="12"/>
+    <date year="2010" month="August" day="17"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -1290,9 +1290,16 @@ CS: <presence from='romeo@example.net'
     </section>
 
     <section title="Pre-Approving a Subscription Request" anchor="sub-preapproval">
-      <t>If a user has not received a subscription request from a contact, the user can "pre-approve" such a request so that it will be automatically approved by the user's server.  Support for this feature is OPTIONAL on the part of clients and servers.</t>
+      <t>If a user has not received a subscription request from a contact, the user can "pre-approve" such a request so that it will be automatically approved by the user's server.</t>
+      <t>Support for subscription pre-approvals is OPTIONAL on the part of clients and servers.  If a server supports subscription pre-approvals, then it MUST advertise the following stream feature during stream negotiation.</t>
+      <figure>
+        <artwork><![CDATA[
+<sub xmlns='urn:xmpp:features:pre-approval'/>
+        ]]></artwork>
+      </figure>
+      <t>The subscription pre-approval stream feature is merely informative and therefore is never mandatory.</t>
       <section title="Client Generation of Subscription Pre-Approval" anchor="sub-preapproval-gen">
-        <t>A client generates a subscription pre-approval by sending a presence stanza of type "subscribed" to the contact.</t>
+        <t>If the server to which a client connects has advertised support for subscription pre-approvals, the client MAY generate a subscription pre-approval by sending a presence stanza of type "subscribed" to the contact.</t>
         <figure>
           <artwork><![CDATA[
 UC: <presence id='pg81vx64'
@@ -1300,6 +1307,7 @@ UC: <presence id='pg81vx64'
               type='subscribed'/>
           ]]></artwork>
         </figure>
+        <t>If the server does not advertise support for subscription pre-approvals, the client MUST NOT attempt to pre-approve subscription requests from potential or actual contacts.</t>
       </section>
       <section title="Server Processing of Subscription Pre-Approval" anchor="sub-preapproval-proc">
         <t>Upon receiving the presence stanza of type "subscribed", the user's server MUST proceed as follows if it supports subscription pre-approvals.</t>
@@ -1391,7 +1399,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>
           <list style='numbers'>
             <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
-            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, SHOULD display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
+            <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
             <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
         </t>
@@ -1437,7 +1445,7 @@ US: <presence from='juliet@example.com'
         <t>Upon receiving a presence probe to the contact's bare JID from the user's server on behalf of the user, the contact's server MUST reply as follows:</t>
         <t>
           <list style='numbers'>
-            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server MUST return a presence stanza of type "unsubscribed" in response to the presence probe (this will trigger a protocol flow for cancelling the user's subscription to the contact as described under <xref target='sub-cancel'/>; however, it MUST NOT result in cancellation of a subscription pre-approval as described under <xref target='sub-preapproval'/>).  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
+            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server SHOULD return a presence stanza of type "unsubscribed" in response to the presence probe (this will trigger a protocol flow for cancelling the user's subscription to the contact as described under <xref target='sub-cancel'/>; however, this MUST NOT result in cancellation of a subscription pre-approval as described under <xref target='sub-preapproval'/>).  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='mercutio@example.com' 
@@ -1528,10 +1536,10 @@ UC: <presence>
         <t>
           <list style='numbers'>
             <t>The contact is in the user's roster with a subscription type of "from" or "both".<vspace blankLines='1'/></t>
-            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).<vspace blankLines='1'/></t>
+            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).</t>
           </list>
         </t>
-        <t>As an optimization, if the subscription type is "both", then the server MAY send subsequent presence notifications to a contact only if the contact is online according to the user's server.  That is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact or if the last presence stanza it received from the contact during the user's presence session was of type "unavailable", the user's server MAY opt to not send subsequent presence notifications from the user to the contact.  This optimization helps to save bandwidth, since most presence subscriptions are bidirectional and many contacts will not be online at any given time.</t>
+        <t><list style='empty'><t>Interoperability Note: If the subscription type is "both", some existing server implementations send subsequent presence notifications to a contact only if the contact is online according to the user's server (that is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact, the user's server does not send subsequent presence notifications from the user to the contact).  This behavior is perceived to save bandwidth, since most presence subscriptions are bidirectional and many contacts will not be online at any given time.</t></list></t>
         <figure>
           <artwork><![CDATA[
 US: <presence from='juliet@example.com/balcony' 
@@ -1877,7 +1885,7 @@ CS: <presence from='juliet@example.com/balcony'
           <t>chat -- The message is sent in the context of a one-to-one chat session.  Typically a receiving client will present a message of type "chat" in an interface that enables one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding one-to-one chat sessions are provided under <xref target='message-chat'/>.<vspace blankLines='1'/></t>
           <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.<vspace blankLines='1'/></t>
           <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  Typically a receiving client will present a message of type "groupchat" in an interface that enables many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  For detailed information about XMPP-based groupchat, refer to <xref target="XEP-0045"/>.<vspace blankLines='1'/></t>
-          <t>headline -- The message provides an alert, a notification, or other transient information to which no reply is expected (e.g., news headlines, sports updates, near-real-time market data, and syndicated content).  Because no reply to the message is expected, typically a receiving client will present a message of type "headline" in an interface that appropriately differentiates the message from standalone messages, chat messages, or groupchat messages (e.g., by not providing the recipient with the ability to reply).  If the 'to' address is the bare JID, the receiving server SHOULD deliver the message to all of the recipient's available resources with non-negative presence priority; if the 'to' address is a full JID and there is a matching resource, the server MUST deliver the message to that resource; otherwise the server MUST either silently ignore the message or return an error (see <xref target='rules'/>).<vspace blankLines='1'/></t>
+          <t>headline -- The message provides an alert, a notification, or other transient information to which no reply is expected (e.g., news headlines, sports updates, near-real-time market data, and syndicated content).  Because no reply to the message is expected, typically a receiving client will present a message of type "headline" in an interface that appropriately differentiates the message from standalone messages, chat messages, or groupchat messages (e.g., by not providing the recipient with the ability to reply).  If the 'to' address is the bare JID, the receiving server SHOULD deliver the message to all of the recipient's available resources with non-negative presence priority and MUST deliver the message to at least one of those resources; if the 'to' address is a full JID and there is a matching resource, the server MUST deliver the message to that resource; otherwise the server MUST either silently ignore the message or return an error (see <xref target='rules'/>).<vspace blankLines='1'/></t>
           <t>normal -- The message is a standalone message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  Typically a receiving client will present a message of type "normal" in an interface that enables the recipient to reply, but without a conversation history.  The default value of the 'type' attribute is "normal".<vspace blankLines='1'/></t>
         </list>
       </t>
@@ -1956,7 +1964,7 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
       <section title="Thread Element" anchor="message-syntax-thread">
         <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element MAY also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It MAY also be used for &lt;message/&gt; stanzas not related to a human conversation, such as a game session or an interaction between plugins.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations or messaging sessions.</t>
-        <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL for messages of type "normal", "headline", and "groupchat", and RECOMMENDED for messages of type "chat".  Because the &lt;thread/&gt; element identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
+        <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL.  Because the &lt;thread/&gt; element identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
         <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child; the value of the 'parent' attribute MUST conform to the syntax of the &lt;thread/&gt; element itself.</t>
         <t>The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning can be derived from it, and only exact comparisons can be made against it.  The value of the &lt;thread/&gt; element MUST uniquely identify the conversation thread either between the conversation partners or more generally (one way to ensure uniqueness is by generating a universally unique identifier (UUID) as described in <xref target='UUID'/>).</t>
         <t><list style='empty'><t>An application that generates a ThreadID MUST ensure that it does not reveal identifying information about the entity (e.g., the MAC address of the device on which the XMPP application is running).</t></list></t>
@@ -2327,13 +2335,16 @@ US: </stream:stream>
   </section>
 
   <section title="Server Rules for Processing XML Stanzas" anchor="rules">
-    <t>Basic server rules for processing XML stanzas are defined in <xref target="XMPP-CORE"/>, and the reader is referred to that specification for general considerations and security implications.  This section defines supplementary rules for XMPP instant messaging and presence servers.</t>
+    <t>Basic server rules for processing XML stanzas are defined in <xref target="XMPP-CORE"/>, and the reader is referred to that specification for underlying rules and security implications.  This section defines supplementary rules for XMPP instant messaging and presence servers.</t>
     <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and then delivering it when the user next becomes available.  For recommendations regarding offline message storage, refer to <xref target='XEP-0160'/>.</t>
+    <section title="General Considerations" anchor="rules-general">
+      <t><xref target="XMPP-CORE"/> discusses general considerations for stanza delivery, in particular the tradeoffs between (i) providing an acceptable level of service regarding stanza delivery and (ii) preventing directory harvesting attacks and presence leaks.  However, the concept of a directory harvesting attack does not apply if a contact is known to and trusted by a user (because the contact is in the user's roster as described under <xref target='roster'/>).  Similarly, the concept of a presence leak does not apply if a contact is authorized to know a user's presence (by means of a presence subscription as described under <xref target='sub'/>) or if the user has voluntarily sent presence to an entity (by means of directed presence as described under <xref target='presence-directed'/>).  Therefore, in cases where the following sections guard against directory harvesting attacks and presence leaks by providing an alternative of (a) silently ignoring a stanza or (b) returning an error, a server SHOULD return an error if the originating entity is in the user's roster (when the error would reveal whether the user's account exists) or is authorized to receive presence from the user or has received directed presence from the user (when the error would reveal the presence of a user's resource).</t>
+    </section>
     <section title="No 'to' Address" anchor="rules-noto">
       <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
-      <t>If the domainpart of the address contained in the 'to' attribute of an outbound stanza does not match a configured domain of the server itself, then the server MUST attempt to route the stanza to the remote domain.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD attempt to resolve the domain name of the remote server in adherence with the rules defined in <xref target="XMPP-CORE"/>, negotiate XML streams with the remote domain, and route the stanza to the remote domain.  However, if the server cannot resolve the remote domain, then it MUST return a &lt;remote-server-not-found/&gt; stanza error to the local sender.</t>
+      <t>If the domainpart of the address contained in the 'to' attribute of an outbound stanza does not match a configured domain of the server itself, then the server MUST attempt to route the stanza to the remote domain, subject to local security policies.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD attempt to resolve the domain name of the remote server in adherence with the rules defined in <xref target="XMPP-CORE"/>, negotiate XML streams with the remote domain, and route the stanza to the remote domain.  However, if the server cannot resolve the remote domain, then it MUST return a &lt;remote-server-not-found/&gt; stanza error to the local sender.</t>
       <t><list style='empty'><t>Implementation Note: RFC 3921 described use of the _im._xmpp and _pres._xmpp SRV records (defined in <xref target='IMP-SRV'/>) to discover the appropriate protocol for communication with remote instant messaging and presence services.  Because those SRV records have not been widely deployed, this specification no longer actively recommends that they be deployed or supported; see RFC 3921 regarding the proper formats and resolution processes.</t></list></t>
     </section>
     <section title="Local Domain" anchor="rules-local">
@@ -3552,11 +3563,11 @@ US: </stream:stream>
 +-----------------------------------------------------------------+
 |  EXISTING STATE          |  ROUTE?  |  NEW STATE                |
 +-----------------------------------------------------------------+
-|  "None"                  |  S.N.    |  cancel preapproval? [1]  |
-|  "None + Pending Out"    |  S.N.    |  cancel preapproval? [1]  |
+|  "None"                  |  S.N.    |  cancel pre-approval? [1] |
+|  "None + Pending Out"    |  S.N.    |  cancel pre-approval? [1] |
 |  "None + Pending In"     |  MUST    |  "None"                   |
 |  "None + Pending Out+In" |  MUST    |  "None + Pending Out"     |
-|  "To"                    |  S.N.    |  cancel preapproval? [1]  |
+|  "To"                    |  S.N.    |  cancel pre-approval? [1] |
 |  "To + Pending In"       |  MUST    |  "To"                     |
 |  "From"                  |  MUST    |  "None"                   |
 |  "From + Pending Out"    |  MUST    |  "None + Pending Out"     |
