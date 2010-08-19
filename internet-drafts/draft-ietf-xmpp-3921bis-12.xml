@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="August" day="17"/>
+    <date year="2010" month="August" day="19"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -125,17 +125,14 @@
       <section title="Roster Items" anchor="roster-syntax-items">
         <t>The &lt;query/&gt; element inside a <xref target='roster-syntax-actions-set'>roster set</xref> contains one &lt;item/&gt; child, and a <xref target='roster-syntax-actions-result'>roster result</xref> typically contains multiple &lt;item/&gt; children.  Each &lt;item/&gt; element describes a unique ROSTER ITEM or "contact".</t>
         <t>The syntax of the &lt;item/&gt; element is described in the following sections.</t>
+        <section title="Approved Attribute" anchor="roster-syntax-items-approved">
+          <t>The boolean 'approved' attribute with a value of "true" is used to signal subscription pre-approval as described under <xref target='sub-preapproval'/> (the default is "false", in accordance with <xref target='XML-DATATYPES'/>).</t>
+          <t>A server SHOULD include the 'approved' attribute to inform the client of subscription pre-approvals.  A client MUST NOT include the 'approved' attribute in the roster sets it sends to the server, but instead MUST use presence stanzas of type "subscribed" and "unsubscribed" to manage pre-approvals as described under <xref target='sub-preapproval'/>.</t>
+          <t><list style='empty'><t>Interoperability Note: The 'approved' attribute was not defined in RFC 3921 and is newly defined in this specification.</t></list></t>
+        </section>
         <section title="Ask Attribute" anchor="roster-syntax-items-ask">
-          <t>The 'ask' attribute is used to specify two aspects of presence subscriptions:</t>
-          <t>
-            <list style='symbols'>
-              <t>A value of "subscribe" is used to signal various subscription sub-states that include a "Pending Out" aspect as described under <xref target='sub-request-outbound'/>.<vspace blankLines='1'/></t>
-              <t>A value of "subscribed" is used to signal subscription pre-approval as described under <xref target='sub-preapproval'/>.</t>
-            </list>
-          </t>
-          <t>A server SHOULD include the 'ask' attribute to inform the client of "Pending Out" sub-states and subscription pre-approval.  A client MUST NOT include the 'ask' attribute in the roster sets it sends to the server, but instead MUST use presence stanzas of type "subscribe", "subscribed", "unsubscribe", and "unsubscribed" to manage such sub-states as described under <xref target='sub-request-outbound'/> and <xref target='sub-preapproval'/>.</t>
-          <t>It is possible for a contact to be in a user's roster both with a "Pending Out" sub-state and with a subscription pre-approval.  Because the &lt;item/&gt; element cannot have two instances of the 'ask' attribute (one with a value of "subscribe" and one with a value of "subscribed"), the server SHALL indicate such a state by including a single 'ask' attribute with a value of "subscribe subscribed".</t>
-          <t><list style='empty'><t>Interoperability Note: To handle case just mentioned, in this specification the 'ask' attribute has been redefined to have an XML datatype <xref target='XML-DATATYPES'/> of NMTOKENS (with allowable values of "subscribe", "subscribed", and "subscribe subscribed") instead of NCName (with an enumerated value of "subscribe" only) as in RFC 3921.</t></list></t>
+          <t>The 'ask' attribute with a value of "subscribe" is used to signal various subscription sub-states that include a "Pending Out" aspect as described under <xref target='sub-request-outbound'/>.</t>
+          <t>A server SHOULD include the 'ask' attribute to inform the client of "Pending Out" sub-states.  A client MUST NOT include the 'ask' attribute in the roster sets it sends to the server, but instead MUST use presence stanzas of type "subscribe" and "unsubscribe" to manage such sub-states as described under <xref target='sub-request-outbound'/>.</t>
         </section>
         <section title="JID Attribute" anchor="roster-syntax-items-jid">
           <t>The 'jid' attribute specifies the Jabber Identifier (JID) that uniquely identifies the roster item.</t>
@@ -1084,7 +1081,7 @@ CC: <presence id='ij5b1v7g'
         <t>Upon receiving the outbound subscription cancellation, the contact's server MUST proceed as follows.</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster with a state of "None", "None + Pending Out", or "To" and the 'ask' flag is set to "subscribed" (thus signalling a subscription pre-approval as described under <xref target='sub-preapproval'/>), the contact's server MUST remove the pre-approval and MUST NOT route or deliver the presence stanza of type "unsubscribed" to the user.<vspace blankLines='1'/></t>
+            <t>If the user is in the contact's roster with a state of "None", "None + Pending Out", or "To" and the 'approved' flag is set to "true" (thus signalling a subscription pre-approval as described under <xref target='sub-preapproval'/>), the contact's server MUST remove the pre-approval and MUST NOT route or deliver the presence stanza of type "unsubscribed" to the user.<vspace blankLines='1'/></t>
             <t>Otherwise, if the user is hosted on the same server as the contact, then the server MUST adhere to the rules specified in the next section in processing the subscription cancellation.<vspace blankLines='1'/></t>
             <t>Otherwise, if the user is hosted on a remote server, the contact's server MUST route the stanza to that remote domain in accordance with core XMPP stanza processing rules.  (This can result in returning an appropriate stanza error to the contact, such as &lt;remote-server-timeout/&gt;.)</t>
           </list>
@@ -1315,12 +1312,27 @@ UC: <presence id='pg81vx64'
           <list style='numbers'>
             <t>If the contact is already in the user's roster with a state of "Both", "From", or "From + Pending Out", the user's server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
             <t>If the contact is already in the user's roster with a state of "To + Pending In", "None + Pending In", or "None + Pending Out+In", the user's server MUST handle the stanza as a normal subscription approval (see under <xref target='sub-request-approvalout'/>) by updating the existing roster item to a state of "Both", "From", or "From + Pending Out" (respectively), pushing the modified roster item to all of the user's interested resources, and routing the presence stanza of type "subscribed" to the contact.<vspace blankLines='1'/></t>
-            <t>If the contact is in the user's roster with a state of "To", "None", or "None + Pending Out", the user's server MUST note the subscription pre-approval by setting the 'ask' flag to a value of "subscribed" and then push the modified roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.<vspace blankLines='1'/></t>
-            <t>If the contact is not already in the user's roster, the user's server MUST create a roster item for the contact with a state of "None" and set the 'ask' flag to a value of "subscribed", then push the roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.</t>
+            <t>If the contact is in the user's roster with a state of "To", "None", or "None + Pending Out", the user's server MUST note the subscription pre-approval by setting the 'approved' flag to a value of "true" and then push the modified roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.<vspace blankLines='1'/></t>
+            <t>If the contact is not already in the user's roster, the user's server MUST create a roster item for the contact with a state of "None" and set the 'approved' flag to a value of "true", then push the roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.</t>
           </list>
         </t>
-        <t>When the 'ask' flag is set to "subscribed", the user's server MUST NOT deliver a presence stanza of type "subscribe" from the contact to the user, but instead MUST automatically respond to such a stanza on behalf of the user by returning a presence stanza of type "subscribed" from the bare JID of the user to the bare JID of the contact.</t>
-        <t><list style='empty'><t>Implementation Note: A client can cancel a pre-approval by sending a presence stanza of type "unsubscribed", as described more fully under <xref target='sub-cancel'/>.  In this case the user's server would send a roster push to all of the user's interested resources with the 'ask' attribute removed.</t></list></t>
+        <t>An example of the roster push follows.</t>
+        <figure>
+          <artwork><![CDATA[
+US: <iq id='h3bs81vs763f'
+        to='romeo@example.net/bar'
+        type='set'>
+      <query xmlns='jabber:iq:roster'>
+        <item approved='true'
+              jid='juliet@example.com'
+              subscription='none'/>
+        </item>
+      </query>
+    </iq>
+          ]]></artwork>
+        </figure>
+        <t>When the 'approved' flag is set to "true", the user's server MUST NOT deliver a presence stanza of type "subscribe" from the contact to the user, but instead MUST automatically respond to such a stanza on behalf of the user by returning a presence stanza of type "subscribed" from the bare JID of the user to the bare JID of the contact.</t>
+        <t><list style='empty'><t>Implementation Note: A client can cancel a pre-approval by sending a presence stanza of type "unsubscribed", as described more fully under <xref target='sub-cancel'/>.  In this case the user's server would send a roster push to all of the user's interested resources with the 'approved' attribute removed.</t></list></t>
       </section>
     </section>
   </section>
@@ -2615,7 +2627,7 @@ US: </stream:stream>
     <t>
       <list style='hanging'>
         <t hangText="Feature:">presence-sub-preapproval</t>
-        <t hangText="Description:">Treat an outbound presence stanza of type "subscribed" in certain circumstances as the act of pre-approving a subscription request received from another entity.</t>
+        <t hangText="Description:">Treat an outbound presence stanza of type "subscribed" in certain circumstances as the act of pre-approving a subscription request received from another entity; this includes support for the 'approved' attribute of the &lt;item/&gt; element within the 'jabber:iq:roster' namespace.</t>
         <t hangText="Section:"><xref target='sub-preapproval'/></t>
         <t hangText="Roles:">Client MAY, Server MAY.</t>
       </list>
@@ -3722,7 +3734,7 @@ US: </stream:stream>
                       use='optional' 
                       default='normal'>
           <xs:simpleType>
-            <xs:restriction base='xs:NCName'>
+            <xs:restriction base='xs:NMTOKEN'>
               <xs:enumeration value='chat'/>
               <xs:enumeration value='error'/>
               <xs:enumeration value='groupchat'/>
@@ -3792,7 +3804,7 @@ US: </stream:stream>
                     use='optional'/>
       <xs:attribute name='type' use='optional'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='error'/>
             <xs:enumeration value='probe'/>
             <xs:enumeration value='subscribe'/>
@@ -3809,7 +3821,7 @@ US: </stream:stream>
 
   <xs:element name='show'>
     <xs:simpleType>
-      <xs:restriction base='xs:NCName'>
+      <xs:restriction base='xs:NMTOKEN'>
         <xs:enumeration value='away'/>
         <xs:enumeration value='chat'/>
         <xs:enumeration value='dnd'/>
@@ -3856,7 +3868,7 @@ US: </stream:stream>
                     use='optional'/>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='error'/>
             <xs:enumeration value='get'/>
             <xs:enumeration value='result'/>
@@ -3880,7 +3892,7 @@ US: </stream:stream>
                     use='optional'>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='auth'/>
             <xs:enumeration value='cancel'/>
             <xs:enumeration value='continue'/>
@@ -3937,7 +3949,7 @@ US: </stream:stream>
                       use='optional' 
                       default='normal'>
           <xs:simpleType>
-            <xs:restriction base='xs:NCName'>
+            <xs:restriction base='xs:NMTOKEN'>
               <xs:enumeration value='chat'/>
               <xs:enumeration value='error'/>
               <xs:enumeration value='groupchat'/>
@@ -4019,7 +4031,7 @@ US: </stream:stream>
                     use='required'/>
       <xs:attribute name='type' use='optional'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='error'/>
             <xs:enumeration value='probe'/>
             <xs:enumeration value='subscribe'/>
@@ -4036,7 +4048,7 @@ US: </stream:stream>
 
   <xs:element name='show'>
     <xs:simpleType>
-      <xs:restriction base='xs:NCName'>
+      <xs:restriction base='xs:NMTOKEN'>
         <xs:enumeration value='away'/>
         <xs:enumeration value='chat'/>
         <xs:enumeration value='dnd'/>
@@ -4083,7 +4095,7 @@ US: </stream:stream>
                     use='required'/>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='error'/>
             <xs:enumeration value='get'/>
             <xs:enumeration value='result'/>
@@ -4107,7 +4119,7 @@ US: </stream:stream>
                     use='optional'>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='auth'/>
             <xs:enumeration value='cancel'/>
             <xs:enumeration value='continue'/>
@@ -4155,9 +4167,17 @@ US: </stream:stream>
                     minOccurs='0'
                     maxOccurs='unbounded'/>
       </xs:sequence>
-      <xs:attribute name='ask' 
-                    type='NMTOKENS'
+      <xs:attribute name='approved'
+                    type='xs:boolean'
                     use='optional'/>
+      <xs:attribute name='ask' 
+                    use='optional'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='subscribed'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
       <xs:attribute name='jid'
                     type='xs:string'
                     use='required'/>
@@ -4168,7 +4188,7 @@ US: </stream:stream>
                     use='optional'
                     default='none'>
         <xs:simpleType>
-          <xs:restriction base='xs:NCName'>
+          <xs:restriction base='xs:NMTOKEN'>
             <xs:enumeration value='both'/>
             <xs:enumeration value='from'/>
             <xs:enumeration value='none'/>
@@ -4199,7 +4219,7 @@ US: </stream:stream>
           <t>Explicitly specified that a server is allowed to deliver a message stanza of type "normal" or "chat" to all resources if it has a method for allowing resources to opt in to such behavior.</t>
           <t>Allowed a server to use its own algorithm for determining the "most available" resource for the purpose of message delivery, but mentioned the recommended algorithm from RFC 3921 (based on presence priority) as one possible algorithm.</t>
           <t>Added optional versioning of roster information to save bandwidth in cases where the roster has not changed (or has changed very little) between sessions; the relevant protocol interactions were originally described in <xref target='XEP-0237'/>.</t>
-          <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed", including the "subscribed" value for the 'ask' attribute (necessitating a change of the datatype for that attribute from NCName to NMTOKENS).</t>
+          <t>Added optional server support for pre-approved presence subscriptions via presence stanzas of type "subscribed", including a new 'approved' attribute that can be set to "true" (for a pre-approved subscription) or false (the default).</t>
           <t>Added optional 'parent' attribute to &lt;thread/&gt; element</t>
           <t>Moved the protocol for communications blocking (specified in Section 10 of RFC 3921) back to <xref target='XEP-0016'/>, from which it was originally taken.</t>
           <t>Recommended returning presence unavailable in response to probes.</t>
