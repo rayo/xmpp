@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="August" day="30"/>
+    <date year="2010" month="August" day="31"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -1081,7 +1081,7 @@ CC: <presence id='ij5b1v7g'
         <t>Upon receiving the outbound subscription cancellation, the contact's server MUST proceed as follows.</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster with a state of "None", "None + Pending Out", or "To" and the 'approved' flag is set to "true" (thus signalling a subscription pre-approval as described under <xref target='sub-preapproval'/>), the contact's server MUST remove the pre-approval and MUST NOT route or deliver the presence stanza of type "unsubscribed" to the user.<vspace blankLines='1'/></t>
+            <t>If the user's bare JID is in the contact's roster with a state of "None", "None + Pending Out", or "To" and the 'approved' flag is set to "true" (thus signalling a subscription pre-approval as described under <xref target='sub-preapproval'/>), the contact's server MUST remove the pre-approval and MUST NOT route or deliver the presence stanza of type "unsubscribed" to the user.<vspace blankLines='1'/></t>
             <t>Otherwise, if the user is hosted on the same server as the contact, then the server MUST adhere to the rules specified in the next section in processing the subscription cancellation.<vspace blankLines='1'/></t>
             <t>Otherwise, if the user is hosted on a remote server, the contact's server MUST route the stanza to that remote domain in accordance with core XMPP stanza processing rules.  (This can result in returning an appropriate stanza error to the contact, such as &lt;remote-server-timeout/&gt;.)</t>
           </list>
@@ -1232,7 +1232,7 @@ US: <iq to='romeo@example.net/bar'
       </section>
 
       <section title="Server Processing of Inbound Unsubscribe" anchor="sub-unsub-inbound">
-        <t>When the contact's server receives the unsubscribe notification, it MUST first check if the user is in the contact's roster with subscription='from' or subscription='both' (i.e., a subscription state of "From", "From + Pending Out", or "Both"; see <xref target='substates'/>).  If this check is successful, then the contact's server MUST:</t>
+        <t>When the contact's server receives the unsubscribe notification, it MUST first check if the user's bare JID is in the contact's roster with subscription='from' or subscription='both' (i.e., a subscription state of "From", "From + Pending Out", or "Both"; see <xref target='substates'/>).  If this check is successful, then the contact's server MUST:</t>
         <t>
           <list style='numbers'>
             <t>Deliver the inbound unsubscribe to all of the contact's interested resources (this helps to give the contact's client(s) proper context regarding the unsubscribe so that they can differentiate between a roster push originated by another of the contact's resources and an unsubscribe received from the user).  This MUST occur before sending the roster push described in the next step.
@@ -1281,7 +1281,7 @@ CS: <presence from='romeo@example.net'
           </list>
         </t>
         <t><list style='empty'><t>Implementation Note: If the account has no available resources when the inbound unsubscribe notification is received, a server MAY keep a record of the notification (ideally the complete presence stanza) and then deliver the notification when the account next has an available resource.  This behavior provides more complete signalling to the user regarding the reasons for the roster change that occurred while the user was offline.</t></list></t>
-        <t>Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the unsubscribe stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.  However, if the contact's server is keeping track of an inbound presence subscription request from the user to the contact but the user is not yet in the contact's roster (functionally equivalent to a subscription state of "None + Pending In" where the contact never added the user to the contact's roster), then the contact's server MUST simply remove any record of the inbound presence subscription request (it cannot remove the user from the contact's roster because the user was never added to the contact's roster).</t>
+        <t>Otherwise -- that is, if the contact does not exist, if the user is not in the contact's roster, or if the user's bare JID is in the contact's roster with a subscription state other than those described in the foregoing check -- then the contact's server MUST silently ignore the unsubscribe stanza by not delivering it to the contact, not modifying the contact's roster, and not generating a roster push to the contact's interested resources.  However, if the contact's server is keeping track of an inbound presence subscription request from the user to the contact but the user is not yet in the contact's roster (functionally equivalent to a subscription state of "None + Pending In" where the contact never added the user to the contact's roster), then the contact's server MUST simply remove any record of the inbound presence subscription request (it cannot remove the user from the contact's roster because the user was never added to the contact's roster).</t>
         <t><list style='empty'><t>Implementation Note: The user's client MUST NOT depend on receiving the unavailable presence notification, since it MUST consider its presence subscription to the contact, and its presence information about the contact, to be null and void when it sends the presence stanza of type "unsubscribe" or when it receives the roster push triggered by the unsubscribe request.</t></list></t>
       </section>
     </section>
@@ -1410,7 +1410,7 @@ CS: <presence from='juliet@example.com/balcony'
         <t>When the contact's client receives presence from the user, the following behavior is suggested:</t>
         <t>
           <list style='numbers'>
-            <t>If the user is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
+            <t>If the user's bare JID is in the contact's roster, display the presence information in an appropriate roster interface.<vspace blankLines='1'/></t>
             <t>If the user is not in the contact's roster but the contact and the user are actively exchanging message or IQ stanzas, display the presence information in the user interface for that communication session (see also <xref target='presence-directed'/> and <xref target='message-chat'/>).<vspace blankLines='1'/></t>
             <t>Otherwise, ignore the presence information and not display it to the contact.<vspace blankLines='1'/></t>
           </list>
@@ -1457,7 +1457,7 @@ US: <presence from='juliet@example.com'
         <t>Upon receiving a presence probe to the contact's bare JID from the user's server on behalf of the user, the contact's server MUST reply as follows:</t>
         <t>
           <list style='numbers'>
-            <t>If the contact account does not exist or the user is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server SHOULD return a presence stanza of type "unsubscribed" in response to the presence probe (this will trigger a protocol flow for cancelling the user's subscription to the contact as described under <xref target='sub-cancel'/>; however, this MUST NOT result in cancellation of a subscription pre-approval as described under <xref target='sub-preapproval'/>).  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
+            <t>If the contact account does not exist or the user's bare JID is in the contact's roster with a subscription state other than "From", "From + Pending Out", or "Both" (as defined under <xref target='substates'/>) and the contact has not sent directed presence to the user (as defined under <xref target='presence-directed'/>), then the contact's server SHOULD return a presence stanza of type "unsubscribed" in response to the presence probe (this will trigger a protocol flow for cancelling the user's subscription to the contact as described under <xref target='sub-cancel'/>; however, this MUST NOT result in cancellation of a subscription pre-approval as described under <xref target='sub-preapproval'/>).  Here the 'from' address MUST be the bare JID of the contact, since specifying a full JID would constitute a presence leak as described in <xref target='XMPP-CORE'/>.
               <figure>
                 <artwork><![CDATA[
 CS: <presence from='mercutio@example.com' 
@@ -1551,6 +1551,7 @@ UC: <presence>
             <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).</t>
           </list>
         </t>
+        <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that the contact's server would check to make sure that it had not received a presence error from the contact; in order to provide for more efficient "healing" of subscription synchronization problems, this specification changes the behavior to use a presence stanza of "unsubscribe".</t></list></t>
         <t><list style='empty'><t>Interoperability Note: If the subscription type is "both", some existing server implementations send subsequent presence notifications to a contact only if the contact is online according to the user's server (that is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact, the user's server does not send subsequent presence notifications from the user to the contact).  This behavior is perceived to save bandwidth, since most presence subscriptions are bidirectional and many contacts will not be online at any given time.</t></list></t>
         <figure>
           <artwork><![CDATA[
@@ -1638,11 +1639,12 @@ UC: <presence type='unavailable'>
         <t>
           <list style='numbers'>
             <t>The contact is in the user's roster with a subscription type of "from" or "both".<vspace blankLines='1'/></t>
-            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).<vspace blankLines='1'/></t>
+            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).</t>
           </list>
         </t>
-        <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
+        <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that the contact's server would check to make sure that it had not received a presence error from the contact; in order to provide for more efficient "healing" of subscription synchronization problems, this specification changes the behavior to use a presence stanza of "unsubscribe".</t></list></t>
         <t><list style='empty'><t>Implementation Note: Even if the user's server does not broadcast the user's subsequent presence notifications to contacts who are offline (as described under <xref target='presence-broadcast-outbound'/>), it MUST broadcast the user's unavailable presence notification; if it did not do so, the last presence received by the contact's server would be the user's initial presence for the presence session, with the result that the contact would consider the user to be online.</t></list></t>
+        <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
         <t>If the unavailable notification was gracefully received from the client, then the server MUST broadcast the full XML of the presence stanza.</t>
         <figure>
           <artwork><![CDATA[
@@ -3691,10 +3693,10 @@ US: </stream:stream>
       <t>Sections 3.1.3 and 4.1.4 of <xref target="IMP-REQS"/> require that it be possible to retrieve out-of-band contact information for other users (e.g., telephone number or email address).  An XML representation of the vCard specification defined in <xref target="VCARD">RFC 2426</xref> is in common use within the XMPP community to provide such information but is out of scope for this specification (documentation of this protocol is contained in <xref target="XEP-0054"/>).</t>
     </section>
 
-    <section title="XML Schemas" anchor="def">
+    <section title="XML Schemas" anchor="schemas">
       <t>Because validation of XML streams and stanzas is optional, the following XML schemas are provided for descriptive purposes only.  These schemas are not normative.</t>
       <t>The following schemas formally define various XML namespaces used in the core XMPP protocols, in conformance with <xref target='XML-SCHEMA'/>.  For schemas defining namespaces for XML streams and other core aspects of XMPP, refer to <xref target="XMPP-CORE"/>.</t>
-      <section title="jabber:client" anchor="def-client">
+      <section title="jabber:client" anchor="schemas-client">
         <figure>
           <artwork><![CDATA[
 <?xml version='1.0' encoding='UTF-8'?>
@@ -3718,7 +3720,8 @@ US: </stream:stream>
           </xs:choice>
           <xs:any     namespace='##other'
                       minOccurs='0'
-                      maxOccurs='unbounded'/>
+                      maxOccurs='unbounded'
+                      processContents='lax'/>
           <xs:element ref='error'
                       minOccurs='0'/>
         </xs:sequence>
@@ -3790,7 +3793,8 @@ US: </stream:stream>
         </xs:choice>
         <xs:any     namespace='##other'
                     minOccurs='0'
-                    maxOccurs='unbounded'/>
+                    maxOccurs='unbounded'
+                    processContents='lax'/>
         <xs:element ref='error'
                     minOccurs='0'/>
       </xs:sequence>
@@ -3854,7 +3858,9 @@ US: </stream:stream>
     <xs:complexType>
       <xs:sequence>
         <xs:any     namespace='##other'
-                    minOccurs='0'/>
+                    minOccurs='0'
+                    maxOccurs='1'
+                    processContents='lax'/>
         <xs:element ref='error'
                     minOccurs='0'/>
       </xs:sequence>
@@ -3890,7 +3896,7 @@ US: </stream:stream>
       </xs:sequence>
       <xs:attribute name='by' 
                     type='xs:string' 
-                    use='optional'>
+                    use='optional'/>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
           <xs:restriction base='xs:NMTOKEN'>
@@ -3909,7 +3915,7 @@ US: </stream:stream>
           ]]></artwork>
         </figure>
       </section>
-      <section title="jabber:server" anchor="def-server">
+      <section title="jabber:server" anchor="schemas-server">
         <figure>
           <artwork><![CDATA[
 <?xml version='1.0' encoding='UTF-8'?>
@@ -3933,7 +3939,8 @@ US: </stream:stream>
           </xs:choice>
           <xs:any namespace='##other'
                   minOccurs='0'
-                  maxOccurs='unbounded'/>
+                  maxOccurs='unbounded'
+                  processContents='lax'/>
           <xs:element ref='error'
                       minOccurs='0'/>
         </xs:sequence>
@@ -4017,7 +4024,8 @@ US: </stream:stream>
         </xs:choice>
         <xs:any     namespace='##other'
                     minOccurs='0'
-                    maxOccurs='unbounded'/>
+                    maxOccurs='unbounded'
+                    processContents='lax'/>
         <xs:element ref='error'
                     minOccurs='0'/>
       </xs:sequence>
@@ -4081,7 +4089,9 @@ US: </stream:stream>
     <xs:complexType>
       <xs:sequence>
         <xs:any namespace='##other'
-                minOccurs='0'/>
+                minOccurs='0'
+                maxOccurs='1'
+                processContents='lax'/>
         <xs:element ref='error'
                     minOccurs='0'/>
       </xs:sequence>
@@ -4117,7 +4127,7 @@ US: </stream:stream>
       </xs:sequence>
       <xs:attribute name='by' 
                     type='xs:string' 
-                    use='optional'>
+                    use='optional'/>
       <xs:attribute name='type' use='required'>
         <xs:simpleType>
           <xs:restriction base='xs:NMTOKEN'>
@@ -4137,7 +4147,7 @@ US: </stream:stream>
         </figure>
       </section>
 
-      <section title="jabber:iq:roster" anchor="def-roster">
+      <section title="jabber:iq:roster" anchor="schemas-roster">
         <figure>
           <artwork><![CDATA[
 <?xml version='1.0' encoding='UTF-8'?>
