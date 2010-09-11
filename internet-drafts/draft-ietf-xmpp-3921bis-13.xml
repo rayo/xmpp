@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="August" day="31"/>
+    <date year="2010" month="September" day="10"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -328,8 +328,8 @@ C: <iq from='juliet@example.com/balcony'
         </figure>
       </section>
       <section title="Success Case" anchor="roster-add-success">
-        <t>If the server can successfully process the roster set for the new item (i.e., if no error occurs), it MUST create the roster item in persistent storage.</t>
-        <t>The server MUST then return an IQ stanza of type "result" to the connected resource that sent the roster set.</t>
+        <t>If the server can successfully process the roster set for the new item (i.e., if no error occurs), it MUST create the item in the user's roster and proceed as follows.</t>
+        <t>The server MUST return an IQ stanza of type "result" to the connected resource that sent the roster set.</t>
         <figure>
           <artwork><![CDATA[
 S: <iq id='ph1xaz53'
@@ -634,7 +634,7 @@ C: <iq from='juliet@example.com/balcony'
         </figure>
       </section>
       <section title="Success Case" anchor="roster-update-success">
-        <t>As with adding a roster item, if the roster item can be successfully processed then the server MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources, and send an IQ result to the initiating resource; for details, see <xref target='roster-add'/>.</t>
+        <t>As with adding a roster item, if the roster item can be successfully processed then the server MUST update the item in the user's roster, send a roster push to all of the user's interested resources, and send an IQ result to the initiating resource; for details, see <xref target='roster-add'/>.</t>
       </section>
       <section title="Error Cases" anchor="roster-update-error">
       <t>The error cases described under <xref target='roster-add-errors'/> also apply to updating a roster item.</t>
@@ -658,7 +658,7 @@ C: <iq from='juliet@example.com/balcony'
         </figure>
       </section>
       <section title="Success Case" anchor="roster-delete-success">
-        <t>As with adding a roster item, if the server can successfully process the roster set then it MUST update the roster information in persistent storage, send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource; for details, see <xref target='roster-add'/>.</t>
+        <t>As with adding a roster item, if the server can successfully process the roster set then it MUST update the item in the user's roster, send a roster push to all of the user's interested resources (with the 'subscription' attribute set to a value of "remove"), and send an IQ result to the initiating resource; for details, see <xref target='roster-add'/>.</t>
         <t>In addition, the user's server might need to generate one or more subscription-related presence stanzas, as follows:</t>
         <t>
           <list style='numbers'>
@@ -923,7 +923,7 @@ CS: <presence from='juliet@example.com'
       </section>
 
       <section title="Client Processing of Inbound Subscription Request" anchor="sub-request-handle">
-        <t>When the contact's client receives a subscription request from the user, it MUST present the request to the contact for approval (unless the contact has explicitly configured the client to automatically approve or deny some or all subscription requests).</t>
+        <t>When an interactive client receives a subscription request, it MUST present the request to the natural person controlling the client (i.e., the "contact") for approval, unless the contact has explicitly configured the client to automatically approve or deny some or all subscription requests.  An automated client that is not controlled by a natural person will have its own application-specific rules for approving or denying subscription requests.</t>
         <t>A subscription request is approved by sending a presence stanza of type "subscribed", which is processed as described under <xref target='sub-request-approvalout'/> for the contact's server and <xref target='sub-request-approvalin'/> for the user's server.</t>
         <figure>
           <artwork><![CDATA[
@@ -1067,7 +1067,7 @@ US: <presence from='juliet@example.com/chamber'
 
     <section title="Cancelling a Subscription" anchor="sub-cancel">
       <section title="Client Generation of Subscription Cancellation" anchor="sub-cancel-gen">
-        <t>If a contact would like to cancel a subscription or subscription pre-approval (<xref target='sub-preapproval'/>) that it has previously granted to a user, or would like to deny a subscription request, it sends a presence stanza of type "unsubscribed".</t>
+        <t>If a contact would like to cancel a subscription that it has previously granted to a user, to cancel a subscription pre-approval (<xref target='sub-preapproval'/>), or to deny a subscription request, it sends a presence stanza of type "unsubscribed".</t>
         <figure>
           <artwork><![CDATA[
 CC: <presence id='ij5b1v7g'
@@ -1081,12 +1081,24 @@ CC: <presence id='ij5b1v7g'
         <t>Upon receiving the outbound subscription cancellation, the contact's server MUST proceed as follows.</t>
         <t>
           <list style='numbers'>
+            <t>If the user's bare JID is not yet in the contact's roster or is in the contact's roster with a state of "None", "None + Pending Out", or "To", the contact's server SHOULD NOT route or deliver the presence stanza of type "unsubscribed" to the user and MUST NOT send presence notifications of type "unavailable" to the user as described below.<vspace blankLines='1'/></t>
             <t>If the user's bare JID is in the contact's roster with a state of "None", "None + Pending Out", or "To" and the 'approved' flag is set to "true" (thus signalling a subscription pre-approval as described under <xref target='sub-preapproval'/>), the contact's server MUST remove the pre-approval and MUST NOT route or deliver the presence stanza of type "unsubscribed" to the user.<vspace blankLines='1'/></t>
-            <t>Otherwise, if the user is hosted on the same server as the contact, then the server MUST adhere to the rules specified in the next section in processing the subscription cancellation.<vspace blankLines='1'/></t>
-            <t>Otherwise, if the user is hosted on a remote server, the contact's server MUST route the stanza to that remote domain in accordance with core XMPP stanza processing rules.  (This can result in returning an appropriate stanza error to the contact, such as &lt;remote-server-timeout/&gt;.)</t>
+            <t>Otherwise, as shown in the following examples, the contact's server MUST route or deliver both presence notifications of type "unavailable" and presence stanzas of type "unsubscribed" to the user and MUST send a roster push to the contact.</t>
           </list>
         </t>
-        <t>As mentioned, before locally delivering or remotely routing the stanza, the contact's server MUST stamp the outbound subscription cancellation with the bare JID &lt;contact@domain&gt; of the contact.</t>
+        <t>While the user is still subscribed to the contact's presence (i.e., before the contact's server routes or delivers the presence stanza of type "unsubscribed" to the user), the contact's server MUST send a presence stanza of type "unavailable" from all of the contact's online resources to the user.</t>
+        <figure>
+          <artwork><![CDATA[
+CS: <presence from='juliet@example.com/balcony'
+              id='i8bsg3h3'
+              type='unavailable'/>
+
+CS: <presence from='juliet@example.com/chamber'
+              id='bvx2c9mk'
+              type='unavailable'/>
+          ]]></artwork>
+        </figure>
+        <t>Then the contact's server MUST route or deliver the presence stanza of type "unsubscribed" to the user, making sure to stamp the outbound subscription cancellation with the bare JID &lt;contact@domain&gt; of the contact.</t>
         <figure>
           <artwork><![CDATA[
 CS: <presence from='juliet@example.com' 
@@ -1115,18 +1127,6 @@ CS: <iq id='zu2y3f571v35'
               subscription='none'/>
       </query>
     </iq>
-          ]]></artwork>
-        </figure>
-        <t>The contact's server then MUST send a presence stanza of type "unavailable" from all of the contact's online resources to the user.</t>
-        <figure>
-          <artwork><![CDATA[
-CS: <presence from='juliet@example.com/balcony'
-              id='i8bsg3h3'
-              type='unavailable'/>
-
-CS: <presence from='juliet@example.com/chamber'
-              id='bvx2c9mk'
-              type='unavailable'/>
           ]]></artwork>
         </figure>
       </section>
@@ -1310,10 +1310,10 @@ UC: <presence id='pg81vx64'
         <t>Upon receiving the presence stanza of type "subscribed", the user's server MUST proceed as follows if it supports subscription pre-approvals.</t>
         <t>
           <list style='numbers'>
-            <t>If the contact is already in the user's roster with a state of "Both", "From", or "From + Pending Out", the user's server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
-            <t>If the contact is already in the user's roster with a state of "To + Pending In", "None + Pending In", or "None + Pending Out+In", the user's server MUST handle the stanza as a normal subscription approval (see under <xref target='sub-request-approvalout'/>) by updating the existing roster item to a state of "Both", "From", or "From + Pending Out" (respectively), pushing the modified roster item to all of the user's interested resources, and routing the presence stanza of type "subscribed" to the contact.<vspace blankLines='1'/></t>
+            <t>If the contact is in the user's roster with a state of "Both", "From", or "From + Pending Out", the user's server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
+            <t>If the contact is in the user's roster with a state of "To + Pending In", "None + Pending In", or "None + Pending Out+In", the user's server MUST handle the stanza as a normal subscription approval (see under <xref target='sub-request-approvalout'/>) by updating the existing roster item to a state of "Both", "From", or "From + Pending Out" (respectively), pushing the modified roster item to all of the user's interested resources, and routing the presence stanza of type "subscribed" to the contact.<vspace blankLines='1'/></t>
             <t>If the contact is in the user's roster with a state of "To", "None", or "None + Pending Out", the user's server MUST note the subscription pre-approval by setting the 'approved' flag to a value of "true" and then push the modified roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.<vspace blankLines='1'/></t>
-            <t>If the contact is not already in the user's roster, the user's server MUST create a roster item for the contact with a state of "None" and set the 'approved' flag to a value of "true", then push the roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.</t>
+            <t>If the contact is not yet in the user's roster, the user's server MUST create a roster item for the contact with a state of "None" and set the 'approved' flag to a value of "true", then push the roster item to all of the user's interested resources.  However, the user's server MUST NOT route the presence stanza of type "subscribed" to the contact.</t>
           </list>
         </t>
         <t>An example of the roster push follows.</t>
@@ -1420,7 +1420,7 @@ CS: <presence from='juliet@example.com/balcony'
 
     <section title="Presence Probes" anchor="presence-probe">
       <t>A PRESENCE PROBE is a request for a contact's current presence information, sent on behalf of a user by the user's server; syntactically it is a presence stanza whose 'type' attribute has a value of "probe".  In the context of presence subscriptions, the value of the 'from' address MUST be the bare JID of the subscribed user and the value of the 'to' address MUST be the bare JID of the contact to which the user is subscribed, since presence subscriptions are based on the bare JID.</t>
-      <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that probes are sent from the full JID, not the bare JID.  Some existing implementations follow the bare JID rule, and others follow the full JID rule.</t></list></t>
+      <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that probes are sent from the full JID, not the bare JID (a rule which was changed because subscriptions are based on the bare JID).  Some existing implementations send from the full JID instead of the bare JID.</t></list></t>
       <t>Probes can also be sent outside the context of a presence subscription, e.g. when the contact has sent directed presence to an entity as described under <xref target='presence-directed'/>; in this case the value of the 'from' or 'to' address can be a full JID instead of a bare JID.</t>
       <figure>
         <artwork><![CDATA[
@@ -1430,7 +1430,7 @@ US: <presence from='juliet@example.com'
               type='probe'/>
         ]]></artwork>
       </figure>
-      <t><list style='empty'><t>Implementation Note: Although presence probes MAY be sent by a client, in general a client will not need to send them since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT return a stanza or stream error to the client.</t></list></t>
+      <t><list style='empty'><t>Implementation Note: Presence probes SHOULD NOT be sent by a client because in general a client will not need to send them, since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT return a stanza or stream error to the client.</t></list></t>
 
       <section title="Server Generation of Outbound Presence Probe" anchor="presence-probe-outbound">
         <t>When a server needs to discover the availability of a user's contact, it sends a presence probe from the bare JID &lt;user@domain&gt; of the user to the bare JID &lt;contact@domain&gt; of the contact.</t>
@@ -1540,18 +1540,12 @@ UC: <presence>
           ]]></artwork>
         </figure>
         <t>The presence broadcast MAY contain the &lt;priority/&gt; element, the &lt;show/&gt; element, and one or more instances of the &lt;status/&gt; element, as well as extended content; see <xref target='presence-syntax'/> for details.</t>
-        <t>However, a user SHOULD send a presence update only to broadcast information that is relevant to the user's availability for communication or the communication capabilities of the resource.  Information that is not relevant in this way might be of interest to the user's contacts but SHOULD be sent via other means, such as the XMPP message stanza.</t>
+        <t>However, a user SHOULD send a presence update only to broadcast information that is relevant to the user's availability for communication or the communication capabilities of the resource.  Information that is not relevant in this way might be of interest to the user's contacts but SHOULD be sent via other means, such as the "publish-subscribe" method described in <xref target='XEP-0163'/>.</t>
       </section>
 
       <section title="Server Processing of Outbound Presence" anchor="presence-broadcast-outbound">
-        <t>Upon receiving a presence stanza expressing updated availability, the user's server MUST broadcast the full XML of that presence stanza to the contacts who meet all of the following criteria:</t>
-        <t>
-          <list style='numbers'>
-            <t>The contact is in the user's roster with a subscription type of "from" or "both".<vspace blankLines='1'/></t>
-            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).</t>
-          </list>
-        </t>
-        <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that the contact's server would check to make sure that it had not received a presence error from the contact; in order to provide for more efficient "healing" of subscription synchronization problems, this specification changes the behavior to use a presence stanza of "unsubscribe".</t></list></t>
+        <t>Upon receiving a presence stanza expressing updated availability, the user's server MUST broadcast the full XML of that presence stanza to the contacts who are in the user's roster with a subscription type of "from" or "both".</t>
+        <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that the user's server would check to make sure that it had not received a presence error from the contact before sending subsequent presence notifications; that rule has been removed because this specification uses presence stanzas of type "unsubscribe" (not "error") to solve subscription synchronization problems, in part because such stanzas change the contact's subscription state in the user's roster to either "none" or "to" (see <xref target='sub-unsub'/> and <xref target='substates'/>), thus obviating the need for the error check.</t></list></t>
         <t><list style='empty'><t>Interoperability Note: If the subscription type is "both", some existing server implementations send subsequent presence notifications to a contact only if the contact is online according to the user's server (that is, if the user's server never received a positive indication that the contact is online in response to the presence probe it sent to the contact, the user's server does not send subsequent presence notifications from the user to the contact).  This behavior is perceived to save bandwidth, since most presence subscriptions are bidirectional and many contacts will not be online at any given time.</t></list></t>
         <figure>
           <artwork><![CDATA[
@@ -1635,14 +1629,8 @@ UC: <presence type='unavailable'>
 
       <section title="Server Processing of Outbound Unavailable Presence" anchor="presence-unavailable-outbound">
         <t>The user's server MUST NOT depend on receiving unavailable presence from an available resource, since the resource can become unavailable ungracefully (e.g., the resource can be timed out by the server because of inactivity).</t>
-        <t>If an available resource becomes unavailable for any reason (either gracefully or ungracefully), the user's server MUST broadcast unavailable presence to all contacts that meet all of the following criteria:</t>
-        <t>
-          <list style='numbers'>
-            <t>The contact is in the user's roster with a subscription type of "from" or "both".<vspace blankLines='1'/></t>
-            <t>The last presence stanza received from the contact during the user's presence session was not of type "unsubscribe" (because the user's server would then have changed the subscription state to either "none" or "to"; see <xref target='sub-unsub'/> and <xref target='substates'/>).</t>
-          </list>
-        </t>
-        <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that the contact's server would check to make sure that it had not received a presence error from the contact; in order to provide for more efficient "healing" of subscription synchronization problems, this specification changes the behavior to use a presence stanza of "unsubscribe".</t></list></t>
+        <t>If an available resource becomes unavailable for any reason (either gracefully or ungracefully), the user's server MUST broadcast unavailable presence to all contacts that are in the user's roster with a subscription type of "from" or "both".</t>
+        <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that the user's server would check to make sure that it had not received a presence error from the contact before sending unavailable presence notifications; that rule has been removed because this specification uses presence stanzas of type "unsubscribe" (not "error") to solve subscription synchronization problems, in part because such stanzas change the contact's subscription state in the user's roster to either "none" or "to" (see <xref target='sub-unsub'/> and <xref target='substates'/>), thus obviating the need for the error check.</t></list></t>
         <t><list style='empty'><t>Implementation Note: Even if the user's server does not broadcast the user's subsequent presence notifications to contacts who are offline (as described under <xref target='presence-broadcast-outbound'/>), it MUST broadcast the user's unavailable presence notification; if it did not do so, the last presence received by the contact's server would be the user's initial presence for the presence session, with the result that the contact would consider the user to be online.</t></list></t>
         <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
         <t>If the unavailable notification was gracefully received from the client, then the server MUST broadcast the full XML of the presence stanza.</t>
@@ -1806,7 +1794,7 @@ CS: <presence from='juliet@example.com/balcony'
 </presence>
             ]]></artwork>
           </figure>
-          <t>The &lt;status/&gt; child MAY also be sent in a subscription-related presence stanza (i.e., type "subscribe", "subscribed", "unsubscribe", or "unsubscribed") to provide a description of the action.  The receiving client MAY present this &lt;status/&gt; information to a human user (see <xref target='security'/>).</t>
+          <t>The &lt;status/&gt; child MAY also be sent in a subscription-related presence stanza (i.e., type "subscribe", "subscribed", "unsubscribe", or "unsubscribed") to provide a description of the action.  An interactive client MAY present this &lt;status/&gt; information to a human user (see <xref target='security'/>).</t>
           <figure>
             <artwork><![CDATA[
 <presence from='romeo@example.net'
@@ -1831,7 +1819,7 @@ CS: <presence from='juliet@example.com/balcony'
             ]]></artwork>
           </figure>
           <t>If no priority is provided, the processing server or client MUST consider the priority to be zero ("0").</t>
-          <t>The client's server MAY override the priority value provided by the client (e.g., in order to impose a message handling rule of delivering a message intended for the account's bare JID to all of the account's available resources); if the server does so, it MUST include the modified priority value (typically zero) when it echoes the client's presence back to itself and sends the presence notification to the user's contacts.</t>
+          <t>The client's server MAY override the priority value provided by the client (e.g., in order to impose a message handling rule of delivering a message intended for the account's bare JID to all of the account's available resources); if the server does so, it MUST communicate the modified priority value when it echoes the client's presence back to itself and sends the presence notification to the user's contacts (because this modified priority value is typically the default value of zero, communicating the modified priority value can be done by not including the &lt;priority/&gt; child element).</t>
           <t>For information regarding the semantics of priority values in stanza processing within instant messaging and presence applications, refer to <xref target="rules"/>.</t>
         </section>
       </section>
@@ -1897,8 +1885,8 @@ CS: <presence from='juliet@example.com/balcony'
       <t>Common uses of the message stanza in instant messaging applications include: single messages; messages sent in the context of a one-to-one chat session; messages sent in the context of a multi-user chat room; alerts, notifications, or other information to which no reply is expected; and errors.  These uses are differentiated via the 'type' attribute.  Inclusion of the 'type' attribute is RECOMMENDED.  If included, the 'type' attribute MUST have one of the following values:</t>
       <t>
         <list style='symbols'>
-          <t>chat -- The message is sent in the context of a one-to-one chat session.  Typically a receiving client will present a message of type "chat" in an interface that enables one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding one-to-one chat sessions are provided under <xref target='message-chat'/>.<vspace blankLines='1'/></t>
-          <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the sender of the nature of the error.<vspace blankLines='1'/></t>
+          <t>chat -- The message is sent in the context of a one-to-one chat session.  Typically an interactive client will present a message of type "chat" in an interface that enables one-to-one chat between the two parties, including an appropriate conversation history.  Detailed recommendations regarding one-to-one chat sessions are provided under <xref target='message-chat'/>.<vspace blankLines='1'/></t>
+          <t>error -- The message is generated by an entity that experiences an error in processing a message received from another entity (for details regarding stanza error syntax, refer to <xref target="XMPP-CORE"/>).  A client that receives a message of type "error" SHOULD present an appropriate interface informing the original sender regarding the nature of the error.<vspace blankLines='1'/></t>
           <t>groupchat -- The message is sent in the context of a multi-user chat environment (similar to that of <xref target="IRC"/>).  Typically a receiving client will present a message of type "groupchat" in an interface that enables many-to-many chat between the parties, including a roster of parties in the chatroom and an appropriate conversation history.  For detailed information about XMPP-based groupchat, refer to <xref target="XEP-0045"/>.<vspace blankLines='1'/></t>
           <t>headline -- The message provides an alert, a notification, or other transient information to which no reply is expected (e.g., news headlines, sports updates, near-real-time market data, and syndicated content).  Because no reply to the message is expected, typically a receiving client will present a message of type "headline" in an interface that appropriately differentiates the message from standalone messages, chat messages, or groupchat messages (e.g., by not providing the recipient with the ability to reply).  If the 'to' address is the bare JID, the receiving server SHOULD deliver the message to all of the recipient's available resources with non-negative presence priority and MUST deliver the message to at least one of those resources; if the 'to' address is a full JID and there is a matching resource, the server MUST deliver the message to that resource; otherwise the server MUST either silently ignore the message or return an error (see <xref target='rules'/>).<vspace blankLines='1'/></t>
           <t>normal -- The message is a standalone message that is sent outside the context of a one-to-one conversation or groupchat, and to which it is expected that the recipient will reply.  Typically a receiving client will present a message of type "normal" in an interface that enables the recipient to reply, but without a conversation history.  The default value of the 'type' attribute is "normal".<vspace blankLines='1'/></t>
@@ -2099,7 +2087,7 @@ US: <presence
         ]]></artwork>
     </figure>
     <figure>
-      <preamble>Example 5: User's server sends initial presence to contacts with subscription="from" and subscription="both" on behalf of the user's available resource:</preamble>
+      <preamble>Example 5: User's server sends initial presence to contacts with subscription="from" and subscription="both" on behalf of the user's available resource, as well as to user:</preamble>
       <artwork><![CDATA[
 US: <presence
         from='romeo@example.net/orchard'
@@ -2108,6 +2096,10 @@ US: <presence
 US: <presence
         from='romeo@example.net/orchard'
         to='mercutio@example.org'/>
+
+US: <presence
+        from='romeo@example.net/orchard'
+        to='romeo@example.net'/>
         ]]></artwork>
     </figure>
     <figure>
@@ -2354,6 +2346,7 @@ US: </stream:stream>
     <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and then delivering it when the user next becomes available.  For recommendations regarding offline message storage, refer to <xref target='XEP-0160'/>.</t>
     <section title="General Considerations" anchor="rules-general">
       <t><xref target="XMPP-CORE"/> discusses general considerations for stanza delivery, in particular the tradeoffs between (i) providing an acceptable level of service regarding stanza delivery and (ii) preventing directory harvesting attacks and presence leaks.  However, the concept of a directory harvesting attack does not apply if a contact is known to and trusted by a user (because the contact is in the user's roster as described under <xref target='roster'/>).  Similarly, the concept of a presence leak does not apply if a contact is authorized to know a user's presence (by means of a presence subscription as described under <xref target='sub'/>) or if the user has voluntarily sent presence to an entity (by means of directed presence as described under <xref target='presence-directed'/>).  Therefore, in cases where the following sections guard against directory harvesting attacks and presence leaks by providing an alternative of (a) silently ignoring a stanza or (b) returning an error, a server SHOULD return an error if the originating entity is in the user's roster (when the error would reveal whether the user's account exists) or is authorized to receive presence from the user or has received directed presence from the user (when the error would reveal the presence of a user's resource).</t>
+      <t><list style='empty'><t>Security Note: All of the stanza processing rules described below are defined with the understand that they will be applied subject to enforcement of relevant privacy and security policies, such as those deployed by means of <xref target='XEP-0016'/> or <xref target='XEP-0191'/>).  The conformance language (MUST, SHOULD, etc.) in the following sections is not meant to override any such local service policies.</t></list></t>
     </section>
     <section title="No 'to' Address" anchor="rules-noto">
       <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
@@ -2387,8 +2380,8 @@ US: </stream:stream>
             <t>For a message stanza of type "normal":</t>
             <t>
               <list style='symbols'>
-                <t>If the only available resource has a negative presence priority then the server SHOULD either (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If all of the available resources have a negative presence priority then the server SHOULD either (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If there is one available resource with a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
                 <t>If there is more than one resource with a non-negative presence priority then the server SHOULD either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources.</t>
               </list>
             </t>
@@ -2441,7 +2434,7 @@ US: </stream:stream>
         </section>
       </section>
       <section title="Full JID" anchor="rules-localpart-fulljid">
-        <t>If the domainpart of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured domains of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain/resource&gt;, then the server MUST adhere to the following rules (subject to enforcement of relevant privacy and security policies, such as those deployed by means of <xref target='XEP-0016'/> or <xref target='XEP-0191'/>).</t>
+        <t>If the domainpart of the JID contained in the 'to' attribute of an inbound stanza matches one of the configured domains of the server itself and the JID contained in the 'to' attribute is of the form &lt;user@domain/resource&gt;, then the server MUST adhere to the following rules.</t>
         <section title="Resource Matches" anchor="rules-localpart-fulljid-match">
           <t>If an available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
           <t>
@@ -2458,13 +2451,13 @@ US: </stream:stream>
         <section title="No Resource Matches" anchor="rules-localpart-fulljid-nomatch">
           <t>If no available resource or connected resource exactly matches the full JID, how the stanza is processed depends on the stanza type.</t>
           <section title="Message" anchor="rules-local-fulljid-nomatch-message">
-            <t>For a message stanza of type "normal", "groupchat", or "headline", the server MUST either (a) silently ignore the stanza or (b) return an error stanza to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+            <t>For a message stanza of type "normal", "groupchat", or "headline", the server MUST either (a) silently ignore the stanza or (b) return an error stanza to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
             <t>For a message stanza of type "chat":</t>
             <t>
               <list style='symbols'>
-                <t>If there is no available or connected resource, the server MUST either (a) store the message offline for later delivery or (b) return an error stanza to the sender, which SHOULD be &;lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If the only available resource has a negative presence priority then the server SHOULD (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is no available or connected resource, the server MUST either (a) store the message offline for later delivery or (b) return an error stanza to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If all of the available resources have a negative presence priority then the server SHOULD (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
+                <t>If there is one available resource with a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
                 <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available"); however, if the server supports methods for enabling resources to opt in to receiving every chat message then it is appropriate for the server to instead deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
               </list>
             </t>
@@ -2482,7 +2475,7 @@ US: </stream:stream>
         </section>
       </section>
       <section title="Summary of Message Delivery Rules" anchor="rules-local-message">
-        <t>The following table summarizes the message delivery rules described earlier in this section.  The left column shows various combinations of conditions (non-existent account, no active resources, only one resource and it has a negative presence priority, only one resource and it has a non-negative presence priority, or more than one resource and each one has a non-negative presence priority) and 'to' addresses (bare JID, full JID matching an available resource, or full JID matching no available resource).  The subsequent columns list the four message types (normal, chat, groupchat, or headline) along with six possible delivery options: storing the message offline (O), bouncing the message with a stanza error (E), silently ignoring the message (S), delivering the message to the resource specified in the 'to' address (D), delivering the message to the "most available" resource or resources according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available" (M), or delivering the message to all resources with non-negative presence priority (A -- where for chat messages "all resources" can mean the set of resources that have explicitly opted in to receiving every chat message).  The '/' character stands for "or".</t>
+        <t>The following table summarizes the message delivery rules described earlier in this section.  The left column shows various combinations of conditions (non-existent account, no active resources, only one resource and it has a negative presence priority, only one resource and it has a non-negative presence priority, or more than one resource and each one has a non-negative presence priority) and 'to' addresses (bare JID, full JID matching an available resource, or full JID matching no available resource).  The subsequent columns list the four message types (normal, chat, groupchat, or headline) along with six possible delivery options: storing the message offline (O), bouncing the message with a stanza error (E), silently ignoring the message (S), delivering the message to the resource specified in the 'to' address (D), delivering the message to the "most available" resource or resources according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available" (M), or delivering the message to all resources with non-negative presence priority (A -- where for chat messages "all resources" can mean the set of resources that have explicitly opted in to receiving every chat message).  The '/' character stands for "or".  The server SHOULD observe the rules given in section 8.1 when choosing which action to take for a particular message.</t>
         <figure>
           <preamble>Table 1: Message Delivery Rules</preamble>
           <artwork><![CDATA[
@@ -2811,12 +2804,12 @@ US: </stream:stream>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='August' day='9' year='2010' />
+<date month='September' day='8' year='2010' />
 <abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network- aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities. This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-12' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-14' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-12.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-14.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
@@ -3308,6 +3301,27 @@ US: </stream:stream>
   <format type="HTML" target="http://www.xmpp.org/extensions/xep-0160.html"/>
 </reference>
 
+<reference anchor="XEP-0163">
+  <front>
+    <title>Personal Eventing Protocol</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <author initials="K." surname="Smith" fullname="Kevin Smith">
+      <organization/>
+      <address>
+        <email>kevin@kismith.co.uk</email>
+      </address>
+    </author>
+    <date day="12" month="July" year="2010"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0163"/>
+  <format type="HTML" target="http://xmpp.org/extensions/xep-0163.html"/>
+</reference>
+
 <reference anchor="XEP-0191">
   <front>
     <title>Simple Communications Blocking</title>
@@ -3493,7 +3507,8 @@ US: </stream:stream>
           <t hangText="Both:">both the user and the contact have subscriptions to each other's presence (i.e., the union of 'from' and 'to')<vspace blankLines='1'/></t>
         </list>
       </t>
-      <t>These states are supplemented by various pending sub-states to yield nine possible subscription states:</t>
+      <t><list style='empty'><t>Implementation Note: For the purpose of processing subscription-related presence stanzas as described in the following sections, a subscription state of "None" includes the case of the contact not being in the user's roster at all, i.e., an unknown entity from the perspective of the user's roster.</t></list></t>
+      <t>The foregoing states are supplemented by various sub-states related pending inbound and outbound subscriptions, thus yielding nine possible subscription states:</t>
       <t><list style='numbers'>
         <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the user's roster by subscription='none'<vspace blankLines='1'/></t>
         <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'<vspace blankLines='1'/></t>
@@ -3508,7 +3523,7 @@ US: </stream:stream>
     </section>
     <section title="Server Processing of Outbound Presence Subscription Stanzas" anchor="substates-out">
       <t>Outbound presence subscription stanzas enable the user to manage his or her subscription to the contact's presence (via the "subscribe" and "unsubscribe" types), and to manage the contact's access to the user's presence (via the "subscribed" and "unsubscribed" types).</t>
-      <t>The following rules apply to outbound routing of the stanza as well as changes to the user's roster.  (These rules are described from the perspective of the user, not the contact.  In addition, "S.N." stands for SHOULD NOT.)</t>
+      <t>The following rules apply to outbound routing of the stanza as well as changes to the user's roster.  (These rules are described from the perspective of the user, not the contact.  In addition, "S.N." stands for SHOULD NOT and "M.N." stands for MUST NOT.)</t>
       <section title="Subscribe" anchor="substates-out-subscribe">
         <figure>
           <preamble>Table 2: Processing of outbound "subscribe" stanzas</preamble>
@@ -3578,11 +3593,11 @@ US: </stream:stream>
 +-----------------------------------------------------------------+
 |  EXISTING STATE          |  ROUTE?  |  NEW STATE                |
 +-----------------------------------------------------------------+
-|  "None"                  |  S.N.    |  cancel pre-approval? [1] |
-|  "None + Pending Out"    |  S.N.    |  cancel pre-approval? [1] |
+|  "None"                  |  S.N.    |  no state change [1]      |
+|  "None + Pending Out"    |  S.N.    |  no state change [1]      |
 |  "None + Pending In"     |  MUST    |  "None"                   |
 |  "None + Pending Out+In" |  MUST    |  "None + Pending Out"     |
-|  "To"                    |  S.N.    |  cancel pre-approval? [1] |
+|  "To"                    |  S.N.    |  no state change [1]      |
 |  "To + Pending In"       |  MUST    |  "To"                     |
 |  "From"                  |  MUST    |  "None"                   |
 |  "From + Pending Out"    |  MUST    |  "None + Pending Out"     |
@@ -3590,7 +3605,7 @@ US: </stream:stream>
 +-----------------------------------------------------------------+
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>[1] Detailed information regarding subscription pre-approval is provided under <xref target='sub-preapproval'/>.</t></list></t>
+        <t><list style='empty'><t>[1] This event can result in cancellation of a subscription pre-approval, as described under <xref target='sub-preapproval'/>.</t></list></t>
       </section>
     </section>
     <section title="Server Processing of Inbound Presence Subscription Stanzas" anchor="substates-in">
@@ -3615,7 +3630,7 @@ US: </stream:stream>
 +------------------------------------------------------------------+
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>[1] If the user previously sent presence of type "subscribed" as described under <xref target='substates-out-subscribed'/>, then the server MAY auto-reply with "subscribed" and change the state to "From" rather than "None + Pending In".</t></list></t>
+        <t><list style='empty'><t>[1] If the user previously sent presence of type "subscribed" as described under <xref target='substates-out-subscribed'/> and <xref target='sub-preapproval'/>, then the server MAY auto-reply with "subscribed" and change the state to "From" rather than "None + Pending In".</t></list></t>
         <t><list style='empty'><t>[2] Server SHOULD auto-reply with "subscribed".</t></list></t>
       </section>
       <section title="Unsubscribe" anchor="substates-in-unsubscribe">
@@ -4240,10 +4255,6 @@ US: </stream:stream>
         </list>
       </t>
       <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain the protocols.</t>
-    </section>
-
-    <section title="Copying Conditions" anchor="copying">
-      <t>Regarding this entire document or any portion of it, the author makes no guarantees and is not responsible for any damage resulting from its use.  The author grants irrevocable permission to anyone to use, modify, and distribute it in any way that does not diminish the rights of anyone else to use, modify, and distribute it, provided that redistributed derivative works do not contain misleading author or version information.  Derivative works need not be licensed under similar terms.</t>
     </section>
 
   </back>
