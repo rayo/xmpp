@@ -286,7 +286,13 @@
 <xsl:template match="note">
   <cmd name="footnote"><parm><xsl:apply-templates/></parm></cmd>
 </xsl:template>
-  
+
+<!-- span[@class='super'] -->
+<xsl:template match="span[@class='super']">
+  <math><spec cat="sup"/><spec cat="bg"/><xsl:apply-templates/><spec cat="eg"/></math>
+</xsl:template>
+
+
 <!-- p -->
 <xsl:template match="p">  
   <xsl:apply-templates/><TeXML escape="0" emptylines="1"><xsl:text>\\
