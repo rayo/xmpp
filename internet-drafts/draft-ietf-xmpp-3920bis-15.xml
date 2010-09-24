@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="September" day="20"/>
+    <date year="2010" month="September" day="24"/>
     <area>Applications</area>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>XMPP</keyword>
@@ -115,7 +115,8 @@
       <t>In adherence to the convention used in <xref target='URI'/> to represent Uniform Resource Indentifiers, XMPP addresses in running text are enclosed between '&lt;' and '&gt;' (despite the fact that natively they are not URIs).</t>
     </section>
     <section title="Acknowledgements" anchor="intro-ack">
-      <t>Hundreds of people have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since publication of the RFC this document supersedes.  Although the document editor has endeavored to address all such feedback, he is solely responsible for any remaining errors and ambiguities.</t>
+      <t>This document is an update to, and derived from, RFC 3920.  This document would have been impossible without the work of the contributors and commenters acknowledged there.</t>
+      <t>Hundreds of people have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since publication of RFC 3920.  Although the document editor has endeavored to address all such feedback, he is solely responsible for any remaining errors and ambiguities.</t>
       <t>Special thanks are due to Kevin Smith, Matthew Wild, Dave Cridland, Philipp Hancke, Waqas Hussain, Florian Zeitz, Ben Campbell, Jehan Pages, Paul Aurich, Justin Karneges, Kurt Zeilenga, Simon Josefsson, Ralph Meijer, Curtis King, and others for their comments during Working Group Last Call.</t>
       <t>The Working Group chairs were Ben Campbell and Joe Hildebrand.</t>
       <t>The responsible Area Director was Gonzalo Camarillo.</t>
@@ -926,6 +927,7 @@ S: <?xml version='1.0'?>
    </stream:stream>
             ]]></artwork>
           </figure>
+          <t>If a client receives a &lt;conflict/&gt; stream error, during the resource binding aspect of its reconnection attempt it MUST NOT blindly request the resourcepart it used during the former session but instead MUST choose a different resourcepart; details are provided under <xref target='bind'/>.</t>
         </section>
         <section title="connection-timeout" anchor="streams-error-conditions-connection-timeout">
           <t>One party is closing the stream because it has reason to believe that the other party has permanently lost the ability to communicate over the stream.  The lack of ability to communicate can be discovered using various methods, such as whitespace keepalives as specified under <xref target='streams-close'/>, XMPP-level pings as defined in <xref target='XEP-0199'/>, and XMPP Stream Management as defined in <xref target='XEP-0198'/>.</t>
@@ -2291,16 +2293,21 @@ S: <iq id='wy2xa82b4' type='error'>
           </figure>
         </section>
         <section title="Conflict" anchor="bind-clientsubmit-error-conflict">
-          <t>If there is a currently connected client whose session has the resourcepart being requested by the connecting client, the server MUST do one of the following:</t>
+          <t>If there is a currently-connected client whose session has the resourcepart being requested by the newly-connecting client, the server MUST do one of the following (which of these the server does is a matter for implementation or local service policy, although suggestions are provided below).</t>
           <t>
             <list style='numbers'>
-              <t>Not accept the resourcepart provided by the connecting client but instead override it with a resourcepart that the server generates.<vspace blankLines='1'/></t>
-              <t>Disallow the resource binding attempt of the connecting client and maintain the existing session of the currently connected client.<vspace blankLines='1'/></t>
-              <t>Terminate the session of the currently connected client and allow the resource binding attempt of the connecting client.</t>
+              <t>Override the resourcepart provided by the newly-connecting client with a server-generated resourcepart.
+              <vspace blankLines='1'/>
+              This behavior is encouraged, because it simplifies the resource binding process for client implementations.<vspace blankLines='1'/></t>
+              <t>Disallow the resource binding attempt of the newly-connecting client and maintain the session of the currently-connected client.
+              <vspace blankLines='1'/>
+              This behavior is neither encouraged nor discouraged, despite the fact that it was implicitly encouraged in RFC 3920; however, note that handling of the &lt;conflict/&gt; error described below is unevenly supported among existing client implementations, which often treat it as an authentication error and have been observed to discard cached credentials when receiving it.<vspace blankLines='1'/></t>
+              <t>Terminate the session of the currently-connected client and allow the resource binding attempt of the newly-connecting client.
+              <vspace blankLines='1'/>
+              Although this was the traditional behavior of early XMPP server implementations, it is now discouraged because it can lead to a neverending cycle of two clients effectively disconnecting each other; however, note that this behavior can be appropriate in some deployment scenarios or if the server knows that the currently-connected client has a dead connection or broken stream as described under <xref target='streams-silence'/>.</t>
             </list>
           </t>
-          <t>Although servers have the choice of implementing any of these strategies, #3 is NOT RECOMMENDED because it can lead to a neverending cycle of two clients effectively disconnecting each other.  #2 is also NOT RECOMMENDED, because deployment experience has shown this to have poor support from clients (although it does work).  Therefore #1 is the RECOMMENDED approach.  Servers MAY change their behavior depending on the state of the existing connection (e.g., as determined via connectivity checking methods such as <xref target='XEP-0199'/>).</t>
-          <t>In case #1, the server returns an &lt;iq/&gt; stanza of type "result" to the connecting client, where the &lt;jid/&gt; child of the &lt;bind/&gt; element contains XML character data that indicates the full JID of the connecting client, including the resourcepart that was generated by the server.</t>
+          <t>If the server follows behavior #1, it returns an &lt;iq/&gt; stanza of type "result" to the newly-connecting client, where the &lt;jid/&gt; child of the &lt;bind/&gt; element contains XML character data that indicates the full JID of the client, including the resourcepart that was generated by the server.</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='wy2xa82b4' type='result'>
@@ -2312,7 +2319,7 @@ S: <iq id='wy2xa82b4' type='result'>
    </iq>
             ]]></artwork>
           </figure>
-          <t>In case #2, the server MUST send a &lt;conflict/&gt; stanza error in response to the resource binding attempt of the connecting client but maintain the XML stream so that the connecting client has an opportunity to negotiate a non-conflicting resourcepart (i.e., the connecting client MUST choose a different resourcepart before making another attempt to bind a resource).</t>
+          <t>If the server follows behavior #2, it sends a &lt;conflict/&gt; stanza error in response to the resource binding attempt of the newly-connecting client but maintains the XML stream so that the newly-connecting client has an opportunity to negotiate a non-conflicting resourcepart (i.e., the newly-connecting client needs to choose a different resourcepart before making another attempt to bind a resource).</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='wy2xa82b4' type='error'>
@@ -2322,8 +2329,7 @@ S: <iq id='wy2xa82b4' type='error'>
    </iq>
             ]]></artwork>
           </figure>
-          <t><list style='empty'><t>Implementation Note: This error is known to be badly supported among existing clients, which are are known to treat it as an authentication error and have been observed to discard cached credentials when receiving it.</t></list></t>
-          <t>In case #3, the server MUST send a &lt;conflict/&gt; stream error to the currently connected client and return an IQ stanza of type "result" (indicating success) in response to the resource binding attempt of the connecting client.</t>
+          <t>If the server follows behavior #3, it sends a &lt;conflict/&gt; stream error to the currently-connected client and returns an IQ stanza of type "result" (indicating success) in response to the resource binding attempt of the newly-connecting client.</t>
           <figure>
             <artwork><![CDATA[
 S: <iq id='wy2xa82b4' type='result'>
@@ -2335,7 +2341,6 @@ S: <iq id='wy2xa82b4' type='result'>
    </iq>
             ]]></artwork>
           </figure>
-          <t>If the current resource receives a &lt;conflict/&gt; stream error, it MUST NOT attempt to blindly request the same resourcepart when reconnecting but instead MUST choose a different resourcepart to use in the resource binding aspect of the stream negotiation process.</t>
         </section>
       </section>
       <section title="Retries" anchor="bind-clientsubmit-retries">
@@ -6019,12 +6024,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='D' surname='3rd' fullname='Donald Eastlake 3rd'>
     <organization />
 </author>
-<date month='July' day='30' year='2010' />
-<abstract><t>This document provides specifications for existing TLS extensions. It is a companion document for the TLS 1.2 specification [RFC5246]. The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.</t></abstract>
+<date month='September' day='20' year='2010' />
+<abstract><t>This document provides specifications for existing TLS extensions. It is a companion document for RFC 5246, "The Transport Layer Security (TLS) Protocol Version 1.2". The extensions specified are server_name, max_fragment_length, client_certificate_url, trusted_ca_keys, truncated_hmac, and status_request.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-tls-rfc4366-bis-10' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-tls-rfc4366-bis-12' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-tls-rfc4366-bis-10.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-tls-rfc4366-bis-12.txt' />
 </reference>
 
 <reference anchor='TLS-NEG'>
