@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3921bis-13" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-ietf-xmpp-3921bis-14" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="September" day="10"/>
+    <date year="2010" month="September" day="24"/>
     <area>Applications</area>
     <keyword>XMPP</keyword>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -100,7 +100,8 @@
       </t>
     </section>
     <section title="Acknowledgements" anchor="intro-ack">
-      <t>Hundreds of people have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since publication of the RFC this document supersedes.  Although the document editor has endeavored to address all such feedback, he is solely responsible for any remaining errors and ambiguities.</t>
+      <t>This document is an update to, and derived from, RFC 3921.  This document would have been impossible without the work of the contributors and commenters acknowledged there.</t>
+      <t>Hundreds of people have provided implementation feedback, bug reports, requests for clarification, and suggestions for improvement since publication of RFC 3921.  Although the document editor has endeavored to address all such feedback, he is solely responsible for any remaining errors and ambiguities.</t>
       <t>Special thanks are due to Kevin Smith, Matthew Wild, Dave Cridland, Waqas Hussain, Philipp Hancke, Florian Zeitz, Jonas Lindberg, Jehan Pages, Tory Patnoe, and others for their comments during Working Group Last Call.</t>
       <t>Some of the text about roster versioning was borrowed from <xref target='XEP-0237'/> and some of the text about message threads was borrowed from <xref target='XEP-0201'/>.</t>
       <t>The Working Group chairs were Ben Campbell and Joe Hildebrand.</t>
@@ -1271,9 +1272,14 @@ CS: <iq id='sp3b56n27hrp'
             <t>Generate an outbound presence stanza of type "unavailable" from each of the contact's available resources to the user.
               <figure>
                 <artwork><![CDATA[
-CS: <presence from='romeo@example.net'
+CS: <presence from='juliet@example.com/balcony'
               id='o5v91w49'
-              to='juliet@example.com' 
+              from='romeo@example.net'
+              type='unavailable'/>
+
+CS: <presence from='juliet@example.com/chamber'
+              id='n6b1c37k'
+              from='romeo@example.net'
               type='unavailable'/>
                 ]]></artwork>
               </figure>
@@ -1332,6 +1338,7 @@ US: <iq id='h3bs81vs763f'
           ]]></artwork>
         </figure>
         <t>When the 'approved' flag is set to "true", the user's server MUST NOT deliver a presence stanza of type "subscribe" from the contact to the user, but instead MUST automatically respond to such a stanza on behalf of the user by returning a presence stanza of type "subscribed" from the bare JID of the user to the bare JID of the contact.</t>
+        <t><list style='empty'><t>Implementation Note: It is a matter of implementation or local service policy whether the server maintains a record of the subscription approval after it has received a presence subscription request from the contact.  If the server does not maintain such a record, upon receiving the subscription request it will not include the 'approved' attribute in the roster item for the contact (i.e., in subsequent roster pushes and roster results).  If the server maintains such a record, it will always include the 'approved' attribute (set to "true") in the roster item for the contact, until and unless the user sends a presence stanza of type "unsubscribed" to the contact.</t></list></t>
         <t><list style='empty'><t>Implementation Note: A client can cancel a pre-approval by sending a presence stanza of type "unsubscribed", as described more fully under <xref target='sub-cancel'/>.  In this case the user's server would send a roster push to all of the user's interested resources with the 'approved' attribute removed.</t></list></t>
       </section>
     </section>
@@ -2346,7 +2353,7 @@ US: </stream:stream>
     <t>Some delivery rules defined in this section specify the use of OFFLINE STORAGE, i.e., the server's storing a message stanza on behalf of the user and then delivering it when the user next becomes available.  For recommendations regarding offline message storage, refer to <xref target='XEP-0160'/>.</t>
     <section title="General Considerations" anchor="rules-general">
       <t><xref target="XMPP-CORE"/> discusses general considerations for stanza delivery, in particular the tradeoffs between (i) providing an acceptable level of service regarding stanza delivery and (ii) preventing directory harvesting attacks and presence leaks.  However, the concept of a directory harvesting attack does not apply if a contact is known to and trusted by a user (because the contact is in the user's roster as described under <xref target='roster'/>).  Similarly, the concept of a presence leak does not apply if a contact is authorized to know a user's presence (by means of a presence subscription as described under <xref target='sub'/>) or if the user has voluntarily sent presence to an entity (by means of directed presence as described under <xref target='presence-directed'/>).  Therefore, in cases where the following sections guard against directory harvesting attacks and presence leaks by providing an alternative of (a) silently ignoring a stanza or (b) returning an error, a server SHOULD return an error if the originating entity is in the user's roster (when the error would reveal whether the user's account exists) or is authorized to receive presence from the user or has received directed presence from the user (when the error would reveal the presence of a user's resource).</t>
-      <t><list style='empty'><t>Security Note: All of the stanza processing rules described below are defined with the understand that they will be applied subject to enforcement of relevant privacy and security policies, such as those deployed by means of <xref target='XEP-0016'/> or <xref target='XEP-0191'/>).  The conformance language (MUST, SHOULD, etc.) in the following sections is not meant to override any such local service policies.</t></list></t>
+      <t><list style='empty'><t>Security Note: All of the stanza processing rules described below are defined with the understanding that they will be applied subject to enforcement of relevant privacy and security policies, such as those deployed by means of <xref target='XEP-0016'/> or <xref target='XEP-0191'/>).  The conformance language (MUST, SHOULD, etc.) in the following sections is not meant to override any such local service policies.</t></list></t>
     </section>
     <section title="No 'to' Address" anchor="rules-noto">
       <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
@@ -3508,7 +3515,7 @@ US: </stream:stream>
         </list>
       </t>
       <t><list style='empty'><t>Implementation Note: For the purpose of processing subscription-related presence stanzas as described in the following sections, a subscription state of "None" includes the case of the contact not being in the user's roster at all, i.e., an unknown entity from the perspective of the user's roster.</t></list></t>
-      <t>The foregoing states are supplemented by various sub-states related pending inbound and outbound subscriptions, thus yielding nine possible subscription states:</t>
+      <t>The foregoing states are supplemented by various sub-states related to pending inbound and outbound subscriptions, thus yielding nine possible subscription states:</t>
       <t><list style='numbers'>
         <t>"None" = contact and user are not subscribed to each other, and neither has requested a subscription from the other; this is reflected in the user's roster by subscription='none'<vspace blankLines='1'/></t>
         <t>"None + Pending Out" = contact and user are not subscribed to each other, and user has sent contact a subscription request but contact has not replied yet; this is reflected in the user's roster by subscription='none' and ask='subscribe'<vspace blankLines='1'/></t>
