@@ -23,10 +23,11 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="October" day="20"/>
-    <area>Applications</area>
-    <keyword>Extensible Messaging and Presence Protocol</keyword>
+    <date year="2010" month="October" day="25"/>
+    <area>RAI</area>
+    <workgroup>XMPP</workgroup>
     <keyword>XMPP</keyword>
+    <keyword>Extensible Messaging and Presence Protocol</keyword>
     <keyword>Jabber</keyword>
     <keyword>Messaging</keyword>
     <keyword>Instant Messaging</keyword>
@@ -755,7 +756,7 @@ R: <?xml version='1.0'?>
 C: <message><body>No closing tag!</message>
 
 S: <stream:error>
-     <xml-not-well-formed 
+     <not-well-formed 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
    </stream:stream>
@@ -864,7 +865,7 @@ S: <?xml version='1.0'?>
         <t>The following stream-level error conditions are defined.</t>
         <section title="bad-format" anchor="streams-error-conditions-bad-format">
           <t>The entity has sent XML that cannot be processed.</t>
-          <t>(In the following example, the client sends an XMPP message that is not well-formed XML, which alternatively might trigger an &lt;xml-not-well-formed/&gt; stream error.)</t>
+          <t>(In the following example, the client sends an XMPP message that is not well-formed XML, which alternatively might trigger a &lt;not-well-formed/&gt; stream error.)</t>
           <figure>
             <artwork><![CDATA[
 C: <message>
@@ -878,7 +879,7 @@ S: <stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
-          <t>This error MAY be used instead of the more specific XML-related errors, such as &lt;bad-namespace-prefix/&gt;, &lt;invalid-xml/&gt;, &lt;restricted-xml/&gt;, &lt;unsupported-encoding/&gt;, and &lt;xml-not-well-formed/&gt;.  However, the more specific errors are RECOMMENDED.</t>
+          <t>This error MAY be used instead of the more specific XML-related errors, such as &lt;bad-namespace-prefix/&gt;, &lt;invalid-xml/&gt;, &lt;restricted-xml/&gt;, &lt;unsupported-encoding/&gt;, and &lt;not-well-formed/&gt;.  However, the more specific errors are RECOMMENDED.</t>
         </section>
         <section title="bad-namespace-prefix" anchor="streams-error-conditions-bad-namespace-prefix">
           <t>The entity has sent a namespace prefix that is unsupported, or has sent no namespace prefix on an element that needs such a prefix (see <xref target="xml-ns"/>).</t>
@@ -1143,6 +1144,24 @@ S: <stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
+        </section>
+        <section title="not-well-formed" anchor="streams-error-conditions-not-well-formed">
+          <t>The initiating entity has sent XML that violates the well-formedness rules of <xref target="XML"/> or <xref target='XML-NAMES'/>.</t>
+          <t>(In the following example, the client sends an XMPP message that is not namespace-well-formed.)</t>
+          <figure>
+            <artwork><![CDATA[
+C: <message>
+     <foo:body>What is this foo?</foo:body>
+   </message>
+
+S: <stream:error>
+     <not-well-formed 
+         xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
+   </stream:error>
+   </stream:stream>
+            ]]></artwork>
+          </figure>
+          <t><list style='empty'><t>Interoperability Note: In RFC 3920, the name of this error condition was "xml-not-well-formed" instead of "not-well-formed".  The name was changed because the element name &lt;xml-not-well-formed/&gt; violates the constraint from Section 3 of <xref target='XML'/> that "names beginning with a match to (('X'|'x')('M'|'m')('L'|'l')) are reserved for standardization in this or future versions of this specification".</t></list></t>
         </section>
         <section title="policy-violation" anchor="streams-error-conditions-policy-violation">
           <t>The entity has violated some local service policy (e.g., the stanza exceeds a configured size limit); the server MAY choose to specify the policy in the &lt;text/&gt; element or in an application-specific condition element.</t>
@@ -1421,23 +1440,6 @@ S: <?xml version='1.0'?>
             ]]></artwork>
           </figure>
         </section>
-        <section title="xml-not-well-formed" anchor="streams-error-conditions-xml-not-well-formed">
-          <t>The initiating entity has sent XML that violates the well-formedness rules of <xref target="XML"/> or <xref target='XML-NAMES'/>.</t>
-          <t>(In the following example, the client sends an XMPP message that is not namespace-well-formed.)</t>
-          <figure>
-            <artwork><![CDATA[
-C: <message>
-     <foo:body>What is this foo?</foo:body>
-   </message>
-
-S: <stream:error>
-     <xml-not-well-formed 
-         xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
-   </stream:error>
-   </stream:stream>
-            ]]></artwork>
-          </figure>
-        </section>
       </section>
       <section title="Application-Specific Conditions" anchor="streams-error-app">
         <t>As noted, an application MAY provide application-specific stream error information by including a properly-namespaced child in the error element.  The application-specific element SHOULD supplement or further qualify a defined element.  Thus the &lt;error/&gt; element will contain two or three child elements.</t>
@@ -1454,7 +1456,7 @@ C: <message>
    </message>
 
 S: <stream:error>
-     <xml-not-well-formed
+     <not-well-formed
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
      <text xml:lang='en' xmlns='urn:ietf:params:xml:ns:xmpp-streams'>
        Some special application diagnostic information!
@@ -1549,7 +1551,7 @@ C:   <message from='juliet@im.example.com/balcony'
      </message>
 
 S: <stream:error>
-    <xml-not-well-formed
+    <not-well-formed
         xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
    </stream:stream>
@@ -3842,8 +3844,8 @@ S2: </stream>
         </list>
       </t>
       <t>The following rules apply.</t>
-      <t>An XMPP entity MUST NOT generate data that is not XML-well-formed.  An XMPP entity MUST NOT accept data that is not XML-well-formed; instead it MUST return an &lt;xml-not-well-formed/&gt; stream error and close the stream over which the data was received.</t>
-      <t>An XMPP entity MUST NOT generate data that is not namespace-well-formed.  An XMPP entity MUST NOT accept data that is not namespace-well-formed (in particular, an XMPP server MUST NOT route or deliver data that is not namespace-well-formed); instead it MUST return either a stanza error of &lt;not-acceptable/&gt; or a stream error of &lt;xml-not-well-formed/&gt; (where it is preferable to return a stream error because accepting such data can open an entity to certain denial of service attacks).</t>
+      <t>An XMPP entity MUST NOT generate data that is not XML-well-formed.  An XMPP entity MUST NOT accept data that is not XML-well-formed; instead it MUST return a &lt;not-well-formed/&gt; stream error and close the stream over which the data was received.</t>
+      <t>An XMPP entity MUST NOT generate data that is not namespace-well-formed.  An XMPP entity MUST NOT accept data that is not namespace-well-formed (in particular, an XMPP server MUST NOT route or deliver data that is not namespace-well-formed); instead it MUST return either a stanza error of &lt;not-acceptable/&gt; or a stream error of &lt;not-well-formed/&gt; (where it is preferable to return a stream error because accepting such data can open an entity to certain denial of service attacks).</t>
       <t><list style='empty'><t>Interoperability Note: Because these restrictions were underspecified in <xref target='RFC3920'/>, it is possible that implementations based on that specification will send data that does not comply with these restrictions.</t></list></t>
     </section>
 
@@ -5132,19 +5134,19 @@ XmppAddr ::= UTF8String
 
 <reference anchor='TLS-CERTS'>
 <front>
-<title>Representation and Verification of Application Server Identity in Certificates Used with Transport Layer Security (TLS)</title>
+<title>Representation and Verification of Domain-Based Application Service Identity within Internet Public Key Infrastructure Using X.509 (PKIX) Certificates in the Context of Transport Layer Security (TLS)</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
 <author initials='J' surname='Hodges' fullname='Jeff Hodges'>
     <organization />
 </author>
-<date month='August' day='6' year='2010' />
-<abstract><t>Many application technologies enable a secure connection between two entities using certificates in the context of Transport Layer Security (TLS).  This document specifies procedures for representing and verifying the identity of application servers in such interactions.</t></abstract>
+<date month='October' day='20' year='2010' />
+<abstract><t>Many application technologies enable a secure connection between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS).  This document specifies best current practices for representing and verifying the identity of application services in such interactions.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-09' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-10' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-09.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-10.txt' />
 </reference>
 
 <reference anchor="UCS2">
@@ -5407,12 +5409,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='October' day='6' year='2010' />
+<date month='October' day='25' year='2010' />
 <abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP), including support for non- ASCII characters.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-05' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-06' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-05.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-06.txt' />
 </reference>
 
     </references>
@@ -5780,12 +5782,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='S' surname='Cheshire' fullname='Stuart Cheshire'>
     <organization />
 </author>
-<date month='October' day='12' year='2010' />
+<date month='October' day='25' year='2010' />
 <abstract><t>This document defines the procedures that the Internet Assigned Numbers Authority (IANA) uses when handling registration and other requests related to the transport protocol port number and service name registry.  It also discusses the rationale and principles behind these procedures and how they facilitate the long-term sustainability of the registry.  This document updates IANA's procedures by obsoleting Sections 8 and 9.1 of the IANA allocation guidelines [RFC2780], it updates the IANA allocation procedures for UDP-Lite [RFC3828], DCCP [RFC4340] and SCTP [RFC4960], it updates the DNS SRV specification [RFC2782] to clarify what a service name is and how it is registered.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-tsvwg-iana-ports-07' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-tsvwg-iana-ports-08' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-tsvwg-iana-ports-07.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-tsvwg-iana-ports-08.txt' />
 </reference>
 
 <reference anchor='IMAP'>
@@ -6689,12 +6691,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='October' day='6' year='2010' />
+<date month='October' day='25' year='2010' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-15' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-16' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-15.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-16.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
@@ -6825,6 +6827,7 @@ Public-key and attribute certificate frameworks</title>
   <xs:element name='invalid-namespace' type='empty'/>
   <xs:element name='invalid-xml' type='empty'/>
   <xs:element name='not-authorized' type='empty'/>
+  <xs:element name='not-well-formed' type='empty'/>
   <xs:element name='policy-violation' type='empty'/>
   <xs:element name='remote-connection-failed' type='empty'/>
   <xs:element name='reset' type='empty'/>
@@ -6836,7 +6839,6 @@ Public-key and attribute certificate frameworks</title>
   <xs:element name='unsupported-encoding' type='empty'/>
   <xs:element name='unsupported-stanza-type' type='empty'/>
   <xs:element name='unsupported-version' type='empty'/>
-  <xs:element name='xml-not-well-formed' type='empty'/>
 
   <xs:group name='streamErrorGroup'>
     <xs:choice>
@@ -6853,6 +6855,7 @@ Public-key and attribute certificate frameworks</title>
       <xs:element ref='invalid-namespace'/>
       <xs:element ref='invalid-xml'/>
       <xs:element ref='not-authorized'/>
+      <xs:element ref='not-well-formed'/>
       <xs:element ref='policy-violation'/>
       <xs:element ref='remote-connection-failed'/>
       <xs:element ref='reset'/>
@@ -6864,7 +6867,6 @@ Public-key and attribute certificate frameworks</title>
       <xs:element ref='unsupported-encoding'/>
       <xs:element ref='unsupported-stanza-type'/>
       <xs:element ref='unsupported-version'/>
-      <xs:element ref='xml-not-well-formed'/>
     </xs:choice>
   </xs:group>
 
@@ -7148,6 +7150,7 @@ Public-key and attribute certificate frameworks</title>
           <t>Recommended or mandated use of the 'from' and 'to' attributes on stream headers.</t>
           <t>More fully specified the stream closing handshake.</t>
           <t>Specified the recommended stream reconnection algorithm.</t>
+          <t>Changed the name of the &lt;xml-not-well-formed/&gt; stream error condition to &lt;not-well-formed/&gt; for compliance with the XML specification.</t>
           <t>Removed the unnecessary and unused &lt;invalid-id/&gt; stream error (see RFC 3920 for historical documentation).</t>
           <t>Specified return of the &lt;restricted-xml/&gt; stream error in response to receipt of prohibited XML features.</t> 
           <t>Specified that the SASL SCRAM mechanism is a mandatory-to-implement technology for client-to-server streams.</t>
