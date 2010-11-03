@@ -1941,6 +1941,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
         <t><list style='empty'><t>Implementation Note: For server-to-server streams, if the receiving entity cannot offer the SASL EXTERNAL mechanism or any other SASL mechanism based on the security context established during TLS negotiation, the receiving entity MAY attempt to complete weak identity verification using the Server Dialback protocol <xref target='XEP-0220'/>; however, if according to local service policies weak identity verification is insufficient then the receiving entity SHOULD instead close the stream with a &lt;policy-violation/&gt; stream error.</t></list></t>
       </section>
       <section title="SASL Success" anchor="sasl-process-neg-success">
+        <t>Before considering the SASL handshake to be a success, the receiving entity SHOULD correlate the authentication identity resulting from the SASL negotiation with the 'from' address (if any; see <xref target='streams-attr-from'/>) of the stream header it received from the initiating entity.  If the two identities do not match, the receiving entity SHOULD terminate the connection attempt.</t>
         <t>The receiving entity reports success of the handshake by sending a &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (in SASL terminology, "additional data with success") if the chosen SASL mechanism supports or requires it; if the receiving entity needs to send additional data of zero length, it MUST transmit the data as a single equals sign character ("=").</t>
         <figure>
           <artwork><![CDATA[
@@ -2146,20 +2147,6 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
    </failure>
           ]]></artwork>
         </figure>
-      </section>
-      <section title="transition-needed" anchor="sasl-errors-transition-needed">
-        <t>The authentication failed because the mechanism cannot be used until the initiating entity provides (for one time only) a plaintext password so that the receiving entity can build a hashed password for use in future authentication attempts; sent in reply to an &lt;auth/&gt; element with or without initial response data.</t>
-        <figure>
-          <artwork><![CDATA[
-I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
-         mechanism='CRAM-MD5'>[ ... ]</auth>
-
-R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
-     <transition-needed/>
-   </failure>
-          ]]></artwork>
-        </figure>
-        <t><list style='empty'><t>Security Note: An XMPP client MUST treat a &lt;transition-needed/&gt; SASL error with extreme caution, SHOULD NOT provide a plaintext password over an XML stream that is not encrypted via Transport Layer Security, and MUST warn a human user before allowing the user to provide a plaintext password over an unencrypted connection.  Even so, the attacker could be located on the server, attempting to capture the plaintext password.</t></list></t>
       </section>
     </section>
     <section title="SASL Definition" anchor="sasl-def">
@@ -4084,8 +4071,9 @@ XmppAddr ::= UTF8String
             <t>Check certificate revocation messages.</t>
           </list>
         </t>
-        <t>If any of those validation attempts fail, either entity MAY choose to unilaterally terminate the session.</t>
+        <t>If any of those validation attempts fail, either entity MUST unilaterally terminate the session.</t>
         <t>The following sections describe the additional identity verification rules that apply to server-to-server and client-to-server streams.</t>
+        <t>Once the identity of the stream peer has been validated, the validating entity SHOULD also correlate the validated identity with the 'from' address (if any; see <xref target='streams-attr-from'/>) of the stream header it received from the peer.  If the two identities do not match, the validating entity SHOULD terminate the connection attempt.</t>
         <section title="Server Certificates" anchor="security-certificates-validation-server">
           <t>For server certificates, the rules and guidelines defined in <xref target='TLS-CERTS'/> apply, with the proviso that the XmppAddr identifier specified under <xref target='security-certificates-generation-xmppaddr'/> is allowed as a reference identifier.</t>
           <t>The identities to be checked are set as follows:</t>
@@ -4137,16 +4125,24 @@ XmppAddr ::= UTF8String
         </section>
       </section>
     </section>
-    <section title="Mandatory-to-Implement Technologies" anchor="security-mti">
-      <t>At a minimum, all implementations MUST support the following TLS ciphersuites and SASL mechanisms (naturally, implementations MAY support other ciphersuites and mechanisms as well).</t>
-      <t><list style='hanging'>
-        <t hangText='for authentication only:'>the SASL Salted Challenge Response mechanism <xref target='SCRAM'/>, in particular the SCRAM-SHA-1 variant (REQUIRED) and SCRAM-SHA-1-PLUS variant (RECOMMENDED if channel binding is possible)<vspace blankLines='1'/></t>
-        <t hangText='for confidentiality only:'>TLS (using the TLS_RSA_WITH_AES_128_CBC_SHA cipher)<vspace blankLines='1'/></t>
-        <t hangText='for both confidentiality and authentication with passwords:'>TLS plus SCRAM-SHA-1 (REQUIRED) or SCRAM-SHA-1-PLUS (RECOMMENDED) using the TLS_RSA_WITH_AES_128_CBC_SHA cipher; alternatively, TLS plus SASL PLAIN (but see further security considerations under <xref target='security-reuse-sasl'/>)<vspace blankLines='1'/></t>
-        <t hangText='for both confidentiality and authentication without passwords:'>TLS plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) using the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite supporting peer certificates (clients SHOULD support this, and servers MUST)</t>
-      </list></t>
-      <t>For security considerations related to TLS ciphersuites, see <xref target='TLS'/>.  Security considerations related to SASL mechanisms are further discussed under <xref target='security-reuse-sasl'/>.</t>
-      <t><list style='empty'><t>Interoperability Note: The use of the SCRAM-SHA-1 or SASL-SCRAM-SHA-1-PLUS mechanism replaces the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication only, and the use of TLS plus either of those SCRAM variants replaces TLS plus DIGEST-MD5.  For backward-compatibility with existing deployed infrastructure, implementations are encouraged to continue supporting the DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>, however there are known interoperability issues with DIGEST-MD5 that make it impractical in the long term.</t></list></t>
+    <section title="Mandatory-to-Implement TLS and SASL Technologies" anchor="security-mti">
+      <t>The following TLS ciphersuites and SASL mechanisms are mandatory-to-implement (naturally, implementations MAY support other ciphersuites and mechanisms as well).  For security considerations related to TLS ciphersuites, see <xref target='security-reuse-sasl'/> and <xref target='TLS'/>.  For security considerations related to SASL mechanisms, <xref target='security-reuse-sasl'/>, <xref target='SASL'/>, and specifications for particular SASL mechanisms such as <xref target='SCRAM'/>, <xref target='DIGEST-MD5'/>, and <xref target='PLAIN'/>.</t>
+      <section title="For Authentication Only" anchor="security-mti-auth">
+        <t>For authentication only, servers and clients MUST support the SASL Salted Challenge Response mechanism <xref target='SCRAM'/>, in particular the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants.</t>
+        <t><list style='empty'><t>Security Note: Even though it is possible to complete authentication only without confidentiality, it is RECOMMENDED for servers and clients to protect the stream with TLS before attempting authentication with SASL, both to help protect the information exchanged during SASL negotiation and to help prevent certain downgrade attacks; see also <xref target='security-reuse-sasl'/> and <xref target='security-reuse-tls'/>.  Even if TLS is used, implementations SHOULD also enforce channel binding as described under <xref target='security-reuse-sasl'/>.</t></list></t>
+        <t><list style='empty'><t>Interoperability Note: The SCRAM-SHA-1 or SASL-SCRAM-SHA-1-PLUS variants of the SCRAM mechanism replace the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication only.  For backward-compatibility with existing deployed infrastructure, implementations are encouraged to continue supporting the DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>; however, there are known interoperability issues with DIGEST-MD5 that make it impractical in the long term.</t></list></t>
+      </section>
+      <section title="For Confidentiality Only" anchor="security-mti-conf">
+        <t>For confidentiality only, servers SHOULD support TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite.</t>
+        <t><list style='empty'><t>Security Note: Because a connection with confidentiality only has weaker security properties than a connection with both confidentiality and authentication, it is RECOMMENDED for servers and clients to prefer connections with both qualities (e.g., by protecting the stream with TLS before attempting authentication with SASL).  In practice, confidentiality only is employed merely for server-to-server connections when the peer server does not present a certificate and the servers use Server Dialback <xref target='XEP-0220'/> for weak identity verification, but TLS is still desirable to protect the connection against casual eavesdropping.</t></list></t>
+      </section>
+      <section title="For Confidentiality and Authentication With Passwords" anchor="security-mti-bothpass">
+        <t>For both confidentiality and authentication with passwords, servers and clients MUST implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL SCRAM, in particular the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants.</t>
+        <t><list style='empty'><t>Interoperability and Security Note: In practice, when SCRAM is not available, typically servers and clients use TLS plus SASL PLAIN.  The SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants of the SCRAM mechanism are strongly preferred over the PLAIN mechanism because of their vastly superior security properties (including the ability to enforce channel binding as described under <xref target='security-reuse-sasl'/>).  Although in certain deployment scenarios it can be difficult for a server to offer SCRAM-based mechanisms (e.g., because the XMPP service depends for authentication purposes on a database or directory that is not under the control of the XMPP administrators), in general implementations SHOULD treat TLS plus SASL PLAIN as a technology of last resort when interacting with implementations that do not yet support SCRAM; in particular, a client MUST prefer more secure mechanisms (e.g., SCRAM-SHA-1, SCRAM-SHA-1-PLUS, and EXTERNAL) to the PLAIN mechanism and MUST NOT use the PLAIN mechanism without at a minimum confidentiality and integrity protection via TLS with full certificate validation as described under <xref target='security-certificates-validation-server'/>.</t></list></t>
+      </section>
+      <section title="For Confidentiality and Authentication Without Passwords" anchor="security-mti-bothnopass">
+        <t>For both confidentiality and authentication without passwords, servers MUST and clients SHOULD implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) with PKIX certificates.</t>
+      </section>
     </section>
     <section title="Technology Reuse" anchor="security-reuse">
       <section title="Use of base64 in SASL" anchor="security-reuse-base64">
@@ -4162,16 +4158,14 @@ XmppAddr ::= UTF8String
         <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
       </section>
       <section title="Use of SASL" anchor="security-reuse-sasl">
-        <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To help prevent this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation.</t>
-        <t>Protecting the channel with TLS also helps to ensure that the information exchanged during SASL negotiation is kept confidential.</t>
+        <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To mitigate this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation and either perform full certificate validation as described under <xref target='security-certificates-validation-server'/> or use a SASL mechanism that provides channel bindings, such as SCRAM-SHA-1-PLUS.  (Protecting the channel via TLS with full certificate validation can help to ensure the confidentiality and integrity of the information exchanged during SASL negotiation.)</t>
         <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer (e.g., TLS).  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings, which in the case of XMPP would typically be a binding to TLS (see <xref target='CHANNEL-TLS'/>).  If a SASL mechanism provides a channel binding (e.g., this is true of <xref target='SCRAM'/>), then XMPP entities using that mechanism SHOULD prefer the channel binding variant (e.g., preferring "SCRAM-SHA-1-PLUS" over "SCRAM-SHA-1").  If a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
-        <t>Most XMPP servers authenticate account connections by means of passwords.  It is well-known that most human users choose relatively weak passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.  Because all password-based authentication mechanisms are susceptible to password guessing attacks, XMPP servers MUST implement common rate-limiting mitigations.</t>
-        <t>The use of the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS mechanisms is strongly preferred over the SASL PLAIN mechanism because of their superior security properties, and TLS plus SASL PLAIN is intended to be a fallback only for implementations that do not yet support SCRAM.  Implementations MUST NOT use the SASL PLAIN without confidentiality and integrity protection via TLS.  For additional security considerations related to these SASL mechanisms, see <xref target='SCRAM'/> and <xref target='PLAIN'/>.</t>
+        <t>Many deployed XMPP services authenticate client connections by means of passwords.  It is well-known that most human users choose relatively weak passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.  Because all password-based authentication mechanisms are susceptible to password guessing attacks, XMPP servers MUST implement common rate-limiting mitigations.</t>
         <t>Some SASL mechanisms (e.g., <xref target='ANONYMOUS'/>) do not provide strong peer entity authentication of the client to the server.  Service administrators are advised to enable such mechanisms with caution.  Best practices for the use of the SASL ANONYMOUS mechanism in XMPP are described in <xref target='XEP-0175'/>.</t>
       </section>
       <section title="Use of TLS" anchor="security-reuse-tls">
         <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients MUST NOT request, offer, or use SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
-        <t>To prevent man-in-the-middle attacks, the TLS client (which might be an XMPP client or an XMPP server) MUST verify the certificate of the TLS server and MUST check its understanding of the server hostname against the server's identity as presented in the TLS Certificate message (for details, see <xref target='TLS-CERTS'/>.</t>
+        <t>To prevent man-in-the-middle attacks, the TLS client (which might be an XMPP client or an XMPP server) MUST verify the certificate of the TLS server and MUST check its understanding of the server hostname against the server's identity as presented in the TLS Certificate message as described under <xref target='security-certificates-validation-server'/> (for further details, see <xref target='TLS-CERTS'/>.</t>
       </section>
       <section title="Use of UTF-8" anchor="security-reuse-utf8">
         <t>The use of UTF-8 makes it possible to transport non-ASCII characters, and thus enables character "spoofing" scenarios, in which a displayed value appears to be something other than it is.  Furthermore, there are known attack scenarios related to the decoding of UTF-8 data.  On both of these points, refer to <xref target='UTF-8'/> for more information.</t>
@@ -4351,6 +4345,14 @@ XmppAddr ::= UTF8String
     </t>
     <t>
       <list style='hanging'>
+        <t hangText="Feature:">sasl-correlate</t>
+        <t hangText="Description:">When authenticating a stream peer using SASL, correlate the authentication identifier resulting from SASL negotiation with the 'from' address (if any) of the stream header it received from the peer.</t>
+        <t hangText="Section:"><xref target='sasl-process-neg-success'/></t>
+        <t hangText="Roles:">Client N/A, Server SHOULD.</t>
+      </list>
+    </t>
+    <t>
+      <list style='hanging'>
         <t hangText="Feature:">sasl-errors</t>
         <t hangText="Description:">Support SASL errors during the negotiation process.</t>
         <t hangText="Section:"><xref target='sasl-errors'/></t>
@@ -4399,16 +4401,8 @@ XmppAddr ::= UTF8String
     </t>
     <t>
       <list style='hanging'>
-        <t hangText="Feature:">security-mti-both-plain</t>
-        <t hangText="Description:">Support TLS with SASL PLAIN for confidentiality and authentication.</t>
-        <t hangText="Section:"><xref target='security-mti'/></t>
-        <t hangText="Roles:">Client MUST, Server MUST.</t>
-      </list>
-    </t>
-    <t>
-      <list style='hanging'>
         <t hangText="Feature:">security-mti-both-scram</t>
-        <t hangText="Description:">Support TLS with SASL SCRAM for confidentiality and authentication.</t>
+        <t hangText="Description:">Support TLS using the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus the SASL-SHA-1 and SASL-SHA-1-PLUS variants of the SASL SCRAM mechanism for confidentiality and authentication.</t>
         <t hangText="Section:"><xref target='security-mti'/></t>
         <t hangText="Roles:">Client MUST, Server MUST.</t>
       </list>
@@ -4418,7 +4412,7 @@ XmppAddr ::= UTF8String
         <t hangText="Feature:">security-mti-confidentiality</t>
         <t hangText="Description:">Support TLS using the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite for confidentiality only.</t>
         <t hangText="Section:"><xref target='security-mti'/></t>
-        <t hangText="Roles:">Client MUST, Server MUST.</t>
+        <t hangText="Roles:">Client N/A, Server SHOULD.</t>
       </list>
     </t>
     <t>
@@ -4431,9 +4425,17 @@ XmppAddr ::= UTF8String
     </t>
     <t>
       <list style='hanging'>
+        <t hangText="Feature:">stanza-attribute-from-stamp</t>
+        <t hangText="Description:">Stamp or rewrite the 'from' address of all stanzas received from connected clients.</t>
+        <t hangText="Section:"><xref target='stanzas-attributes-from-c2s'/></t>
+        <t hangText="Roles:">Client N/A, Server MUST.</t>
+      </list>
+    </t>
+    <t>
+      <list style='hanging'>
         <t hangText="Feature:">stanza-attribute-from-validate</t>
-        <t hangText="Description:">Validate the 'from' address of all stanzas received from connected clients or peer servers.</t>
-        <t hangText="Section:"><xref target='stanzas-attributes-from'/></t>
+        <t hangText="Description:">Validate the 'from' address of all stanzas received from a peer servers.</t>
+        <t hangText="Section:"><xref target='stanzas-attributes-from-s2s'/></t>
         <t hangText="Roles:">Client N/A, Server MUST.</t>
       </list>
     </t>
@@ -4715,6 +4717,14 @@ XmppAddr ::= UTF8String
         <t hangText="Description:">Support Transport Layer Security for stream encryption.</t>
         <t hangText="Section:"><xref target='tls'/></t>
         <t hangText="Roles:">Client MUST, Server MUST.</t>
+      </list>
+    </t>
+    <t>
+      <list style='hanging'>
+        <t hangText="Feature:">tls-correlate</t>
+        <t hangText="Description:">When validating a certificate presented by a stream peer during TLS negotiation, correlate the validated identity with the 'from' address (if any) of the stream header it received from the peer.</t>
+        <t hangText="Section:"><xref target='security-certificates-validation'/></t>
+        <t hangText="Roles:">Client SHOULD, Server SHOULD.</t>
       </list>
     </t>
     <t>
@@ -7236,7 +7246,7 @@ Public-key and attribute certificate frameworks</title>
           <t>Removed the hard two-connection rule for server-to-server streams.</t>
           <t>More clearly specified the certificate profile for both public key certificates and issuer certificates.</t>
           <t>Added the &lt;reset/&gt; streams error condition to handle expired/revoked certificates or the addition of security-critical features to an existing stream.</t>
-          <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, &lt;malformed-request/&gt;, and &lt;transition-needed/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
+          <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, and &lt;malformed-request/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified the process of DNS SRV lookups and fallbacks.</t>
           <t>Clarified the handling of SASL security layers.</t>
