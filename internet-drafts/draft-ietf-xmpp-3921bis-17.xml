@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="November" day="8"/>
+    <date year="2010" month="November" day="13"/>
     <area>RAI</area>
     <workgroup>XMPP</workgroup>
     <keyword>XMPP</keyword>
@@ -226,7 +226,7 @@ S: <iq id='bv1bs71f'
             <t>The server MUST ignore any value of the 'subscription' attribute other than "remove" (see <xref target='roster-syntax-items-subscription'/>).<vspace blankLines='1'/></t>
           </list>
         </t>
-        <t><list style='empty'><t>Implementation Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource (full JID) of the account whose roster was being updated.  Furthermore, RFC 3921 required a server to perform special-case checking of roster set stanzas to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set stanza might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set stanza is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
+        <t><list style='empty'><t>Security Note: Traditionally, the IQ stanza of the roster set included no 'to' address, with the result that all roster sets were sent from an authenticated resource (full JID) of the account whose roster was being updated.  Furthermore, RFC 3921 required a server to perform special-case checking of roster sets to ignore the 'to' address; however, this specification has removed that special-casing, which means that a roster set might include a 'to' address other than that of the sender.  Therefore, the server MUST verify that the sender of the roster set is authorized to update the roster, and if not return a &lt;forbidden/&gt; error.</t></list></t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony' 
@@ -259,7 +259,7 @@ S: <iq id='a78b4q6ha463'
   </iq>
           ]]></artwork>
         </figure>
-        <t>As mandated by the semantics of the IQ stanza as defined in <xref target="XMPP-CORE"/>, each resource that receives a roster push MUST reply with an IQ stanza of type "result" (or "error").</t>
+        <t>As mandated by the semantics of the IQ stanza as defined in <xref target="XMPP-CORE"/>, each resource that receives a roster push from the server MUST reply with an IQ stanza of type "result" (or "error").</t>
         <figure>
           <artwork><![CDATA[
 C: <iq from='juliet@example.com/balcony'
@@ -271,7 +271,8 @@ C: <iq from='juliet@example.com/chamber'
        type='result'/>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>Implementation Note: There is no error case for client processing of roster pushes; if the server receives an IQ of type "error" in response to a roster push it SHOULD ignore the error.</t></list></t>
+        <t><list style='empty'><t>Security Note: Traditionally, a roster push included no 'from' address, with the result that all roster pushes were sent implicitly from the bare JID of the account itself.  However, this specification allows entities other than the user's server to maintain roster information, which means that a roster push might include a 'from' address other than the bare JID of the user's account.  Therefore, the client MUST check the 'from' address to verify that the sender of the roster push is authorized to update the roster.  If the client receives a roster push from an unauthorized entity, it MUST NOT process the pushed data; in addition, the client can either return a stanza error of &lt;service-unavailable/&gt; error or refuse to return a stanza error at all (the latter behavior overrides a MUST-level requirement from <xref target='XMPP-CORE'/> for the purpose of preventing a presence leak).</t></list></t>
+        <t><list style='empty'><t>Implementation Note: There is no error case for client processing of roster pushes; if the server receives an IQ of type "error" in response to a roster push then it SHOULD ignore the error.</t></list></t>
       </section>
     </section>
 

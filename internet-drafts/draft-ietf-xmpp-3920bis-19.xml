@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="November" day="8"/>
+    <date year="2010" month="November" day="13"/>
     <area>RAI</area>
     <workgroup>XMPP</workgroup>
     <keyword>XMPP</keyword>
@@ -78,7 +78,7 @@
           <t>Close the TCP connection</t>
         </list>
       </t>
-      <t><list style='empty'><t>* Implementation Note: At the time of writing, most deployed servers use the Server Dialback protocol <xref target='XEP-0220'/> to provide weak identity verification instead of using SASL to provide strong authentication, especially in cases where SASL negotiation would not result in strong authentication anyway (e.g., because TLS negotiation was not mandated by the peer server, or because the PKIX certificate presented by the peer server during TLS negotiation is self-signed and has not been previously accepted); for details, see <xref target='XEP-0220'/>.  The solutions specified in this document offer a significantly stronger level of security (see also <xref target='security-strong'/>).</t></list></t>
+      <t><list style='empty'><t>* Interoperability Note: At the time of writing, most deployed servers use the Server Dialback protocol <xref target='XEP-0220'/> to provide weak identity verification instead of using SASL to provide strong authentication, especially in cases where SASL negotiation would not result in strong authentication anyway (e.g., because TLS negotiation was not mandated by the peer server, or because the PKIX certificate presented by the peer server during TLS negotiation is self-signed and has not been previously accepted); for details, see <xref target='XEP-0220'/>.  The solutions specified in this document offer a significantly stronger level of security (see also <xref target='security-strong'/>).</t></list></t>
       <t>This document specifies how clients connect to servers and specifies the basic semantics of XML stanzas.  However, this document does not define the "payloads" of the XML stanzas that might be exchanged once a connection is successfully established; instead, those payloads are defined by various XMPP extensions.  For example, <xref target='XMPP-IM'/> defines extensions for basic instant messaging and presence functionality.  In addition, various specifications produced in the XSF's XEP series <xref target='XEP-0001'/> define extensions for a wide range of applications.</t>
     </section>
     <section title="Terminology" anchor="intro-terms">
@@ -2698,7 +2698,7 @@ E: <iq from='pubsub.example.com
           </figure>
         </section>
         <section title="forbidden" anchor="stanzas-error-conditions-forbidden">
-          <t>The requesting entity does not possess the necessary permissions to perform the action; the associated error type SHOULD be "auth".</t>
+          <t>The requesting entity does not possess the necessary permissions to perform an action that only certain authorized roles or individuals are allowed to complete (i.e., it typically relates to authorization rather than authentication); the associated error type SHOULD be "auth".</t>
           <figure>
             <artwork><![CDATA[
 C: <presence
@@ -2858,7 +2858,7 @@ E: <presence
           </figure>
         </section>
         <section title="not-authorized" anchor="stanzas-error-conditions-not-authorized">
-          <t>The sender needs to provide credentials before being allowed to perform the action, or has provided improper credentials; the associated error type SHOULD be "auth".</t>
+          <t>The sender needs to provide credentials before being allowed to perform the action, or has provided improper credentials (the name "not-authorized", which was borrowed from the "401 Unauthorized" error of <xref target='HTTP'/>, might lead the reader to think that this condition relates to authorization, but instead it is typically used in relation to authentication); the associated error type SHOULD be "auth".</t>
           <figure>
             <artwork><![CDATA[
 C: <presence
@@ -3981,7 +3981,7 @@ S2: </stream>
             <t>
               <list style='symbols'>
                 <t>Support for the DNS-ID identifier type <xref target='PKIX'/> is REQUIRED in XMPP client and server software implementations.  Certification authorities that issue XMPP-specific certificates MUST support the DNS-ID identifier type.  Service providers SHOULD include the DNS-ID identifier type in certificate requests.<vspace blankLines='1'/></t>
-                <t>Support for the SRV-ID identifier type <xref target='PKIX-SRV'/> is REQUIRED for XMPP client and server software implementations (XMPP client implementations need to support only the "_xmpp-client" service type, whereas XMPP server implementations need to support both the "_xmpp-client" and "_xmpp-server" service types).  Certification authorities that issue XMPP-specific certificates SHOULD support the SRV-ID identifier type.  Service providers SHOULD include the SRV-ID identifier type in certificate requests.<vspace blankLines='1'/></t>
+                <t>Support for the SRV-ID identifier type <xref target='PKIX-SRV'/> is REQUIRED for XMPP client and server software implementations (for verification purposes XMPP client implementations need to support only the "_xmpp-client" service type, whereas XMPP server implementations need to support both the "_xmpp-client" and "_xmpp-server" service types).  Certification authorities that issue XMPP-specific certificates SHOULD support the SRV-ID identifier type.  Service providers SHOULD include the SRV-ID identifier type in certificate requests.<vspace blankLines='1'/></t>
                 <t>Support for the XmppAddr identifier type (specified under <xref target='security-certificates-generation-xmppaddr'/>) is encouraged in XMPP client and server software implementations for the sake of backward-compatibility, but is no longer encouraged in certificates issued by certification authorities or requested by service providers.<vspace blankLines='1'/></t>
               </list>
             </t>
@@ -4083,6 +4083,7 @@ XmppAddr ::= UTF8String
               <t>The receiving entity sets its reference identifier to the 'from' address communicated by the initiating entity in the initial stream header; i.e., this is the identity that the initiating entity is trying to assert.</t>
             </list>
           </t>
+          <t>In the case of server-to-server communication, the matching procedure described in <xref target='TLS-CERTS'/> can be performed by an application server (receiving entity) when verifying an incoming server-to-server connection from a peer server (initiating entity).  In this case, the receiving entity verifies the identity of the initiating entity and uses as its reference identifier the DNS domain name asserted by the initiating entity in the 'from' attribute of the initial stream header.  However, the matching procedure described in <xref target='TLS-CERTS'/> remains unchanged and is applied in the same way.</t>
         </section>
         <section title="Client Certificates" anchor="security-certificates-validation-client">
           <t>When an XMPP server validates a certificate presented by a client, there are three possible cases, as discussed in the following sections.</t>
@@ -4126,7 +4127,7 @@ XmppAddr ::= UTF8String
       </section>
     </section>
     <section title="Mandatory-to-Implement TLS and SASL Technologies" anchor="security-mti">
-      <t>The following TLS ciphersuites and SASL mechanisms are mandatory-to-implement (naturally, implementations MAY support other ciphersuites and mechanisms as well).  For security considerations related to TLS ciphersuites, see <xref target='security-reuse-sasl'/> and <xref target='TLS'/>.  For security considerations related to SASL mechanisms, <xref target='security-reuse-sasl'/>, <xref target='SASL'/>, and specifications for particular SASL mechanisms such as <xref target='SCRAM'/>, <xref target='DIGEST-MD5'/>, and <xref target='PLAIN'/>.</t>
+      <t>The following TLS ciphersuites and SASL mechanisms are mandatory-to-implement (naturally, implementations MAY support other ciphersuites and mechanisms as well).  For security considerations related to TLS ciphersuites, see <xref target='security-reuse-sasl'/> and <xref target='TLS'/>.  For security considerations related to SASL mechanisms, see <xref target='security-reuse-sasl'/>, <xref target='SASL'/>, and specifications for particular SASL mechanisms such as <xref target='SCRAM'/>, <xref target='DIGEST-MD5'/>, and <xref target='PLAIN'/>.</t>
       <section title="For Authentication Only" anchor="security-mti-auth">
         <t>For authentication only, servers and clients MUST support the SASL Salted Challenge Response mechanism <xref target='SCRAM'/>, in particular the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants.</t>
         <t><list style='empty'><t>Security Note: Even though it is possible to complete authentication only without confidentiality, it is RECOMMENDED for servers and clients to protect the stream with TLS before attempting authentication with SASL, both to help protect the information exchanged during SASL negotiation and to help prevent certain downgrade attacks; see also <xref target='security-reuse-sasl'/> and <xref target='security-reuse-tls'/>.  Even if TLS is used, implementations SHOULD also enforce channel binding as described under <xref target='security-reuse-sasl'/>.</t></list></t>
@@ -4137,8 +4138,11 @@ XmppAddr ::= UTF8String
         <t><list style='empty'><t>Security Note: Because a connection with confidentiality only has weaker security properties than a connection with both confidentiality and authentication, it is RECOMMENDED for servers and clients to prefer connections with both qualities (e.g., by protecting the stream with TLS before attempting authentication with SASL).  In practice, confidentiality only is employed merely for server-to-server connections when the peer server does not present a certificate and the servers use Server Dialback <xref target='XEP-0220'/> for weak identity verification, but TLS is still desirable to protect the connection against casual eavesdropping.</t></list></t>
       </section>
       <section title="For Confidentiality and Authentication With Passwords" anchor="security-mti-bothpass">
-        <t>For both confidentiality and authentication with passwords, servers and clients MUST implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL SCRAM, in particular the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants.</t>
-        <t><list style='empty'><t>Interoperability and Security Note: In practice, when SCRAM is not available, typically servers and clients use TLS plus SASL PLAIN.  The SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants of the SCRAM mechanism are strongly preferred over the PLAIN mechanism because of their vastly superior security properties (including the ability to enforce channel binding as described under <xref target='security-reuse-sasl'/>).  Although in certain deployment scenarios it can be difficult for a server to offer SCRAM-based mechanisms (e.g., because the XMPP service depends for authentication purposes on a database or directory that is not under the control of the XMPP administrators), in general implementations SHOULD treat TLS plus SASL PLAIN as a technology of last resort when interacting with implementations that do not yet support SCRAM; in particular, a client MUST prefer more secure mechanisms (e.g., SCRAM-SHA-1, SCRAM-SHA-1-PLUS, and EXTERNAL) to the PLAIN mechanism and MUST NOT use the PLAIN mechanism without at a minimum confidentiality and integrity protection via TLS with full certificate validation as described under <xref target='security-certificates-validation-server'/>.</t></list></t>
+        <t>For both confidentiality and authentication with passwords, servers and clients MUST implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL SCRAM, in particular the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants (with SCRAM-SHA1-PLUS being preferred, as described under <xref target='security-reuse-sasl'/>).</t>
+        <!--
+        <t>In addition, servers and clients SHOULD implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL PLAIN.</t>
+        -->
+        <t><list style='empty'><t>Interoperability and Security Note: In practice, many servers offer, and many clients use, TLS plus SASL PLAIN.  The SCRAM-SHA-1 and especially SCRAM-SHA-1-PLUS variants of the SCRAM mechanism are strongly preferred over the PLAIN mechanism because of their superior security properties (including for SCRAM-SHA-1-PLUS the ability to enforce channel binding as described under <xref target='security-reuse-sasl'/>).  A client SHOULD treat TLS plus SASL PLAIN as a technology of last resort to be used only when interacting with a server that does not yet support SCRAM, MUST prefer more secure mechanisms (e.g., EXTERNAL, SCRAM-SHA-1-PLUS, and SCRAM-SHA-1) to the PLAIN mechanism, and MUST NOT use the PLAIN mechanism if the stream does not at a minimum have confidentiality and integrity protection via TLS with full certificate validation as described under <xref target='security-certificates-validation-server'/>.  A server MUST NOT offer SASL PLAIN if the stream is not protected via TLS.  A server SHOULD NOT offer TLS plus SASL PLAIN unless it is unable to offer some variant of SASL SCRAM, e.g., because the XMPP service depends for authentication purposes on a database or directory that is not under the control of the XMPP administrators, such as Pluggable Authentication Modules (PAM), an LDAP directory <xref target='LDAP'/>, or an Authentication, Authorization, and Accounting (AAA) key management protocol (for guidance, refer to <xref target='AAA'/>); however, offering TLS plus SASL PLAIN even when the server supports SCRAM might be appropriate if the server needs to enable interoperability with an installed base of clients that do not yet support SCRAM.</t></list></t>
       </section>
       <section title="For Confidentiality and Authentication Without Passwords" anchor="security-mti-bothnopass">
         <t>For both confidentiality and authentication without passwords, servers MUST and clients SHOULD implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) with PKIX certificates.</t>
@@ -4386,7 +4390,7 @@ XmppAddr ::= UTF8String
     <t>
       <list style='hanging'>
         <t hangText="Feature:">security-mti-auth-scram</t>
-        <t hangText="Description:">Support the SASL Salted Challenge Response mechanism for authentication only or confidentiality and authentication (this implies support for both the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants).</t>
+        <t hangText="Description:">Support the SASL Salted Challenge Response (SCRAM) mechanism for authentication only (this implies support for both the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants).</t>
         <t hangText="Section:"><xref target='security-mti'/></t>
         <t hangText="Roles:">Client MUST, Server MUST.</t>
       </list>
@@ -5454,6 +5458,21 @@ Public-key and attribute certificate frameworks</title>
 
     <references title="Informative References">
 
+<reference anchor='AAA'>
+<front>
+<title>Guidance for Authentication, Authorization, and Accounting (AAA) Key Management</title>
+<author initials='R.' surname='Housley' fullname='R. Housley'>
+<organization /></author>
+<author initials='B.' surname='Aboba' fullname='B. Aboba'>
+<organization /></author>
+<date year='2007' month='July' />
+<abstract>
+<t>This document provides guidance to designers of Authentication, Authorization, and Accounting (AAA) key management protocols.  The guidance is also useful to designers of systems and solutions that include AAA key management protocols.  Given the complexity and difficulty in designing secure, long-lasting key management algorithms and protocols by experts in the field, it is almost certainly inappropriate for IETF working groups without deep expertise in the area to be designing their own key management algorithms and protocols based on Authentication, Authorization, and Accounting (AAA) protocols.  The guidelines in this document apply to documents requesting publication as IETF RFCs.  Further, these guidelines will be useful to other standards development organizations (SDOs) that specify AAA key management.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t></abstract></front>
+<seriesInfo name='BCP' value='132' />
+<seriesInfo name='RFC' value='4962' />
+<format type='TXT' octets='54927' target='http://www.rfc-editor.org/rfc/rfc4962.txt' />
+</reference>
+
 <reference anchor='ABNF'>
 <front>
 <title>Augmented BNF for Syntax Specifications: ABNF</title>
@@ -5915,6 +5934,18 @@ Public-key and attribute certificate frameworks</title>
 <t>&lt;p>This document defines a new protocol element, the Internationalized Resource Identifier (IRI), as a complement of the Uniform Resource Identifier (URI). An IRI is a sequence of characters from the Universal Character Set (Unicode/ISO 10646). A mapping from IRIs to URIs is defined, which means that IRIs can be used instead of URIs, where appropriate, to identify resources.&lt;/p>&lt;p> The approach of defining a new protocol element was chosen instead of extending or changing the definition of URIs. This was done in order to allow a clear distinction and to avoid incompatibilities with existing software. Guidelines are provided for the use and deployment of IRIs in various protocols, formats, and software components that currently deal with URIs.&lt;/p></t></abstract></front>
 <seriesInfo name='RFC' value='3987' />
 <format type='TXT' octets='111190' target='ftp://ftp.isi.edu/in-notes/rfc3987.txt' />
+</reference>
+
+<reference anchor='LDAP'>
+<front>
+<title>Lightweight Directory Access Protocol (LDAP): Technical Specification Road Map</title>
+<author initials='K.' surname='Zeilenga' fullname='K. Zeilenga'>
+<organization /></author>
+<date year='2006' month='June' />
+<abstract>
+<t>The Lightweight Directory Access Protocol (LDAP) is an Internet protocol for accessing distributed directory services that act in accordance with X.500 data and service models.  This document provides a road map of the LDAP Technical Specification. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='4510' />
+<format type='TXT' octets='12354' target='http://www.rfc-editor.org/rfc/rfc4510.txt' />
 </reference>
 
 <reference anchor="LINKLOCAL">
@@ -7071,7 +7102,6 @@ Public-key and attribute certificate frameworks</title>
           <xs:element name='mechanism-too-weak' type='empty'/>
           <xs:element name='not-authorized' type='empty'/>
           <xs:element name='temporary-auth-failure' type='empty'/>
-          <xs:element name='transition-needed' type='empty'/>
         </xs:choice>
         <xs:element ref='text' minOccurs='0' maxOccurs='1'/>
       </xs:sequence>
