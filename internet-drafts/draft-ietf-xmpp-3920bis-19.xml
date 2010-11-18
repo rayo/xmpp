@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="November" day="13"/>
+    <date year="2010" month="November" day="17"/>
     <area>RAI</area>
     <workgroup>XMPP</workgroup>
     <keyword>XMPP</keyword>
@@ -235,7 +235,7 @@ romeo@example.net           juliet@im.example.com
       <t>
         <list style='hanging'>
           <t hangText="Definition of XML Stream:">An XML stream is a container for the exchange of XML elements between any two entities over a network.  The start of an XML stream is denoted unambiguously by an opening "stream header" (i.e., an XML &lt;stream&gt; tag with appropriate attributes and namespace declarations), while the end of the XML stream is denoted unambiguously by a closing XML &lt;/stream&gt; tag.  During the life of the stream, the entity that initiated it can send an unbounded number of XML elements over the stream, either elements used to negotiate the stream (e.g., to complete <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref>) or XML stanzas.  The "initial stream" is negotiated from the initiating entity (typically a client or server) to the receiving entity (typically a server), and can be seen as corresponding to the initiating entity's "connection to" or "session with" the receiving entity.  The initial stream enables unidirectional communication from the initiating entity to the receiving entity; in order to enable exchange of stanzas from the receiving entity to the initiating entity, the receiving entity MUST negotiate a stream in the opposite direction (the "response stream").<vspace blankLines='1'/></t>
-          <t hangText="Definition of XML Stanza:">An XML stanza is the basic unit of meaning in XMPP.  Only a first-level &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; element qualified by the content namespace is an XML stanza.  By contrast, a first-level XML element sent for any other purpose is not an XML stanza (stream errors, stream features, TLS-related elements, SASL-related elements, etc.).  An XML stanza typically contains one or more child elements (with accompanying attributes, elements, and XML character data) as necessary in order to convey the desired information, which MAY be qualified by any XML namespace (see <xref target='XML-NAMES'/> as well as <xref target='stanzas-extended'/> in this specification).</t>
+          <t hangText="Definition of XML Stanza:">An XML stanza is the basic unit of meaning in XMPP.  A stanza is a first-level element (at depth=1 of the stream) whose element name is "message", "presence", or "iq" and whose qualifying namespace is 'jabber:client' or 'jabber:server'.  By contrast, a first-level element qualified by any other namespace is not an XML stanza (stream errors, stream features, TLS-related elements, SASL-related elements, etc.), nor is a &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; element that is qualified by the 'jabber:client' or 'jabber:server' namespace but that occurs at a depth other than one (e.g., a &lt;message/&gt; element contained within an extension element (<xref target='stanzas-extended'/>) for reporting purposes), nor is a &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; element that is qualified by a namespace other than 'jabber:client' or 'jabber:server'.  An XML stanza typically contains one or more child elements (with accompanying attributes, elements, and XML character data) as necessary in order to convey the desired information, which MAY be qualified by any XML namespace (see <xref target='XML-NAMES'/> as well as <xref target='stanzas-extended'/> in this specification).</t>
         </list>
       </t>
       <t>Consider the example of a client's connection to a server.  The client initiates an XML stream by sending a stream header to the server, optionally preceded by an XML declaration specifying the XML version and the character encoding supported (see <xref target="xml-declaration"/> and <xref target="xml-encoding"/>).  Subject to local policies and service provisioning, the server then replies with a second XML stream back to the client, again optionally preceded by an XML declaration.  Once the client has completed <xref target='sasl'>SASL negotiation</xref> and <xref target='bind'>resource binding</xref>, the client can send an unbounded number of XML stanzas over the stream.  When the client desires to close the stream, it simply sends a closing &lt;/stream&gt; tag to the server  as further described under <xref target='streams-close'/>.</t>
@@ -304,7 +304,7 @@ romeo@example.net           juliet@im.example.com
         <t>The existence of conditions for connecting implies that streams need to be negotiated.  The order of layers (TCP, then TLS, then SASL, then XMPP; see <xref target='security-layers'/>) implies that stream negotiation is a multi-stage process.  Further structure is imposed by two factors: (1) a given stream feature might be offered only to certain entities or only after certain other features have been negotiated (e.g., resource binding is offered only after SASL authentication), and (2) stream features can be either mandatory-to-negotiate or voluntary-to-negotiate.  Finally, for security reasons the parties to a stream need to discard knowledge that they gained during the negotiation process after successfully completing the protocol interactions defined for certain features (e.g., TLS in all cases and SASL in the case when a security layer might be established, as defined in the specification for the relevant SASL mechanism); this is done by flushing the old stream context and exchanging new stream headers over the existing TCP connection.</t>
       </section>
       <section title="Stream Features Format" anchor="streams-negotiation-features">
-        <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the streams namespace prefix) to the initiating entity in order to announce any conditions for continuation of the stream negotiation process.  Each condition takes the form of a child element of the &lt;features/&gt; element, qualified by a namespace that is different from the streams namespace and the content namespace.  The &lt;features/&gt; element can contain one child, contain multiple children, or be empty.</t>
+        <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the stream namespace prefix) to the initiating entity in order to announce any conditions for continuation of the stream negotiation process.  Each condition takes the form of a child element of the &lt;features/&gt; element, qualified by a namespace that is different from the stream namespace and the content namespace.  The &lt;features/&gt; element can contain one child, contain multiple children, or be empty.</t>
         <t><list style='empty'><t>Implementation Note: The order of child elements contained in any given &lt;features/&gt; element is not significant.</t></list></t>
         <t>If a particular stream feature is or can be mandatory-to-negotiate, the definition of that feature needs to do one of the following:</t>
         <t>
@@ -684,11 +684,11 @@ R: <?xml version='1.0'?>
 
     <section title="XML Namespaces" anchor="streams-ns">
       <t>Readers are referred to the specification of XML namespaces <xref target='XML-NAMES'/> for a full understanding of the concepts used in this section, especially the concept of a "default namespace" as provided in Section 3 and Section 6.2 of that specification.</t>
-      <section title="Streams Namespace" anchor="streams-ns-stream">
-        <t>The root &lt;stream/&gt; element ("stream header") MUST be qualified by the namespace 'http://etherx.jabber.org/streams' (the "streams namespace").  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t>
+      <section title="Stream Namespace" anchor="streams-ns-stream">
+        <t>The root &lt;stream/&gt; element ("stream header") MUST be qualified by the namespace 'http://etherx.jabber.org/streams' (the "stream namespace").  If this rule is violated, the entity that receives the offending stream header MUST return a stream error to the sending entity, which SHOULD be &lt;invalid-namespace/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t>
       </section>
       <section title="Content Namespace" anchor="streams-ns-content">
-        <t>An entity MAY declare a "content namespace" as the default namespace for data sent over the stream (i.e., data other than elements qualified by the streams namespace).  If so, (1) the content namespace MUST be other than the streams namespace, and (2) the content namespace MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The content namespace applies to all first-level child elements sent over the stream unless explicitly qualified by another namespace (i.e., the content namespace is the default namespace).</t>
+        <t>An entity MAY declare a "content namespace" as the default namespace for data sent over the stream (i.e., data other than elements qualified by the stream namespace).  If so, (1) the content namespace MUST be other than the stream namespace, and (2) the content namespace MUST be the same for the initial stream and the response stream so that both streams are qualified consistently.  The content namespace applies to all first-level child elements sent over the stream unless explicitly qualified by another namespace (i.e., the content namespace is the default namespace).</t>
         <t>Alternatively (i.e., instead of declaring the content namespace as the default namespace), an entity MAY explicitly qualify the namespace for each first-level child element of the stream, using so-called "prefix-free canonicalization".  These two styles are shown in the following examples.</t>
         <t>When a content namespace is declared as the default namespace, in rough outline a stream will look something like the following.</t>
         <figure>
@@ -724,7 +724,7 @@ R: <?xml version='1.0'?>
         <t>Historically, most XMPP implementations have used the content-namespace-as-default-namespace style rather than the prefix-free canonicalization style for stream headers; however, both styles are acceptable since they are semantically equivalent.</t>
       </section>
       <section title="Other Namespaces" anchor="streams-ns-other">
-        <t>Either party to a stream MAY send data qualified by namespaces other than the content namespace and the streams namespace.  For example, this is how data related to TLS negotiation and SASL negotiation are exchanged, as well as XMPP extensions such as Stream Management <xref target='XEP-0198'/> and Server Dialback <xref target='XEP-0220'/>.  (For historical reasons, some server implementations expect a declaration of the 'jabber:server:dialback' namespace on server-to-server streams, as explained in <xref target='XEP-0220'/>.)</t>
+        <t>Either party to a stream MAY send data qualified by namespaces other than the content namespace and the stream namespace.  For example, this is how data related to TLS negotiation and SASL negotiation are exchanged, as well as XMPP extensions such as Stream Management <xref target='XEP-0198'/> and Server Dialback <xref target='XEP-0220'/>.  (For historical reasons, some server implementations expect a declaration of the 'jabber:server:dialback' namespace on server-to-server streams, as explained in <xref target='XEP-0220'/>.)</t>
         <t>However, an XMPP server MUST NOT route or deliver data received over an input stream if that data is (a) qualified by another namespace and (b) addressed to an entity other than the server, unless the other party to the output stream over which the server would send the data has explicitly negotiated or advertised support for receiving arbitrary data from the server.  This rule is included because XMPP is designed for the exchange of XML stanzas (not arbitrary XML data), and because allowing an entity to send arbitrary data to other entities could significantly increase the potential for exchanging malicious information.  As an example of this rule, the server hosting the example.net domain would not route the following first-level XML element from &lt;romeo@example.net&gt; to &lt;juliet@example.com&gt;:</t>
         <figure>
           <artwork><![CDATA[
@@ -748,14 +748,14 @@ R: <?xml version='1.0'?>
         <t>Upon receiving arbitrary first-level XML elements over an input stream, a server MUST either ignore the data or return a stream error, which SHOULD be &lt;unsupported-stanza-type/&gt;.</t>
       </section>
       <section title="Namespace Declarations and Prefixes" anchor="streams-ns-declarations">
-        <t>Because the content namespace is other than the streams namespace, if a content namespace is declared as the default namespace then the following statements are true:</t>
+        <t>Because the content namespace is other than the stream namespace, if a content namespace is declared as the default namespace then the following statements are true:</t>
         <t>
           <list style='numbers'>
-            <t>The stream header needs to contain a namespace declaration for both the content namespace and the streams namespace.<vspace blankLines='1'/></t>
-            <t>The streams namespace declaration needs to include a namespace prefix for the streams namespace.</t>
+            <t>The stream header needs to contain a namespace declaration for both the content namespace and the stream namespace.<vspace blankLines='1'/></t>
+            <t>The stream namespace declaration needs to include a namespace prefix for the stream namespace.</t>
           </list>
         </t>
-        <t><list style='empty'><t>Interoperability Note: For historical reasons, an implementation MAY accept only the prefix 'stream' for the streams namespace (resulting in prefixed names such as &lt;stream:stream&gt; and &lt;stream:features&gt;).  If an entity receives a stream header with a streams namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t></list></t>
+        <t><list style='empty'><t>Interoperability Note: For historical reasons, an implementation MAY accept only the prefix 'stream' for the stream namespace (resulting in prefixed names such as &lt;stream:stream&gt; and &lt;stream:features&gt;).  If an entity receives a stream header with a stream namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t></list></t>
         <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the content namespace if the content namespace is 'jabber:client' or 'jabber:server' (e.g., &lt;foo:presence/&gt;).  An XMPP entity MUST NOT accept data that violates this rule (in particular, an XMPP server MUST NOT route or deliver such data to another entity); instead it MUST either ignore the data or return a stream error (which SHOULD be &lt;bad-namespace-prefix/&gt;).</t>
         <t>Namespaces declared in a stream header MUST apply only to that stream (e.g., the 'jabber:server:dialback' namespace used in Server Dialback <xref target='XEP-0220'/>).  In particular, because XML stanzas intended for routing or delivery over streams with other entities will lose the namespace context declared in the header of the stream in which those stanzas originated, namespaces for extended content within such stanzas MUST NOT be declared in that stream header (see also <xref target='stanzas-extended'/>).  If either party to a stream declares such namespaces, the other party to the stream SHOULD close the stream with a stream error of &lt;invalid-namespace/&gt;.  In any case, an entity MUST ensure that such namespaces are properly declared (according to this section) when routing or delivering stanzas originating from such a stream over streams with other entities.</t>
       </section>
@@ -763,14 +763,14 @@ R: <?xml version='1.0'?>
         <t>XMPP as defined in this specification uses two content namespaces: 'jabber:client' and 'jabber:server'.  These namespaces are nearly identical but are used in different contexts (client-to-server communication for 'jabber:client' and server-to-server communication for 'jabber:server').  The only difference between the two is that the 'to' and 'from' attributes are OPTIONAL on stanzas sent over XML streams qualified by the 'jabber:client' namespace, whereas they are REQUIRED on stanzas sent over XML streams qualified by the 'jabber:server' namespace.  Support for these content namespaces implies support for the <xref target="stanzas-attributes">common attributes</xref> and <xref target="stanzas-semantics">basic semantics</xref> of all three core stanza types (message, presence, and IQ).</t>
         <t>An implementation MAY support content namespaces other than 'jabber:client' or 'jabber:server'.  However, because such namespaces would define applications other than XMPP, they are to be defined in separate specifications.</t>
         <t>An implementation MAY refuse to support any other content namespaces as default namespaces.  If an entity receives a first-level child element qualified by a content namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t>
-        <t>Client implementations MUST support the 'jabber:client' content namespace as a default namespace (clearly the 'jabber:server' content namespace is out of scope for an XMPP client).</t>
-        <t>Server implementations MUST support as default content namespaces both the 'jabber:client' namespace (when the stream is used for communication between a client and a server) and the 'jabber:server' namespace (when the stream is used for communication between two servers).</t>
-        <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose content namespace is 'jabber:client', if the server to which the client is connected needs to route a client-generated stanza to another server then it MUST "re-scope" the stanza so that its content namespace is 'jabber:server' (i.e., it MUST NOT send a stanza qualified by the 'jabber:client' namespace over a stream whose content namespace is 'jabber:server').  Similarly, a routing server MUST "re-scope" a stanza received over a server-to-server stream (whose content namespace is 'jabber:server') so that the stanza is qualified by the 'jabber:client' namespace before sending it over a client-to-server stream (whose content namespace is 'jabber:client').</t></list></t>
+        <t>Client implementations MUST support the 'jabber:client' content namespace as a default namespace.  The 'jabber:server' content namespace is out of scope for an XMPP client, and a client MUST NOT send stanzas qualified by the 'jabber:server' namespace.</t>
+        <t>Server implementations MUST support as default content namespaces both the 'jabber:client' namespace (when the stream is used for communication between a client and a server) and the 'jabber:server' namespace (when the stream is used for communication between two servers).  When communicating with a connected client, a server MUST NOT send stanzas qualified by the 'jabber:server' namespace; when communicating with a peer server, a server MUST NOT send stanzas qualified by the 'jabber:client' namespace.</t>
+        <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose content namespace is 'jabber:client', if a server routes to a peer server a stanza it has received from a connected client then it needs to "re-scope" the stanza so that its content namespace is 'jabber:server'.  Similarly, if a server delivers to a connected client a stanza it has received from a peer server then it needs to "re-scope" the stanza so that its content namespace is 'jabber:client'.  This rule applies to XML stanzas as defined under <xref target='streams-fundamentals'/> (i.e., a first-level &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; element qualified by the 'jabber:client' or 'jabber:server' namespace), and by namespace inheritance to all child elements of a stanza; however the rule does not apply to elements qualified by namespaces other than 'jabber:client' and 'jabber:server' nor to any children of such elements (e.g., a &lt;message/&gt; element contained within an extension element (<xref target='stanzas-extended'/>) for reporting purposes).  Although it is not forbidden for an entity to generate stanzas in which an extension element contains a child element qualified by the 'jabber:client' or 'jabber:server' namespace, existing implementations handle such stanzas inconsistently; therefore implementers are advised to weigh the likely lack of interoperability against the possible utility of such stanzas.</t></list></t>
       </section>
     </section>
 
     <section title="Stream Errors" anchor="streams-error">
-      <t>The root stream element MAY contain an &lt;error/&gt; child element that is prefixed by the streams namespace prefix.  The error child SHALL be sent by a compliant entity if it perceives that a stream-level error has occurred.</t>
+      <t>The root stream element MAY contain an &lt;error/&gt; child element that is prefixed by the stream namespace prefix.  The error child SHALL be sent by a compliant entity if it perceives that a stream-level error has occurred.</t>
       <section title="Rules" anchor="streams-error-rules">
         <t>The following rules apply to stream-level errors.</t>
         <section title="Stream Errors Are Unrecoverable" anchor="streams-error-rules-unrecoverable">
@@ -907,7 +907,7 @@ S: <stream:error>
         </section>
         <section title="bad-namespace-prefix" anchor="streams-error-conditions-bad-namespace-prefix">
           <t>The entity has sent a namespace prefix that is unsupported, or has sent no namespace prefix on an element that needs such a prefix (see <xref target="xml-ns"/>).</t>
-          <t>(In the following example, the client specifies a namespace prefix of "foobar" for the XML streams namespace.)</t>
+          <t>(In the following example, the client specifies a namespace prefix of "foobar" for the XML stream namespace.)</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -1085,7 +1085,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="invalid-namespace" anchor="streams-error-conditions-invalid-namespace">
-          <t>The streams namespace name is something other than "http://etherx.jabber.org/streams" (see <xref target="xml-ns"/>) or the content namespace is not supported (e.g., something other than "jabber:client" or "jabber:server").</t>
+          <t>The stream namespace name is something other than "http://etherx.jabber.org/streams" (see <xref target="xml-ns"/>) or the content namespace is not supported (e.g., something other than "jabber:client" or "jabber:server").</t>
           <t>(In the following example, the client specifies a namespace of 'http://wrong.namespace.example.org/' for the stream.)</t>
           <figure>
             <artwork><![CDATA[
@@ -1598,7 +1598,7 @@ S: <stream:error>
         <t>After TLS negotiation, the parties MUST restart the stream.</t>
       </section>
       <section title="Data Formatting" anchor="tls-rules-data">
-        <t>During STARTTLS negotiation, the entities MUST NOT send any whitespace as separators between XML elements (i.e., from the last character of the &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace at depth=1 of the stream as sent by the initiating entity, until the last character of the &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace at depth=1 of the stream as sent by the receiving entity).  This prohibition helps to ensure proper security layer byte precision.  Any such whitespace shown in the STARTTLS examples provided in this document is included only for the sake of readability.</t>
+        <t>During STARTTLS negotiation, the entities MUST NOT send any whitespace as separators between XML elements (i.e., from the last character of the first-level &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace as sent by the initiating entity, until the last character of the first-level &lt;proceed/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace as sent by the receiving entity).  This prohibition helps to ensure proper security layer byte precision.  Any such whitespace shown in the STARTTLS examples provided in this document is included only for the sake of readability.</t>
       </section>
       <section title="Order of TLS and SASL Negotiations" anchor="tls-rules-order">
         <t>If the initiating entity chooses to use TLS, STARTTLS negotiation MUST be completed before proceeding to <xref target='sasl'>SASL negotiation</xref>; this order of negotiation is necessary to help safeguard authentication information sent during SASL negotiation, as well as to make it possible to base the use of the SASL EXTERNAL mechanism on a certificate (or other credentials) provided during prior TLS negotiation.</t>
@@ -1813,7 +1813,7 @@ R: <stream:features>
         <t>The following data formatting rules apply to the SASL negotiation:</t>
         <t>
           <list style='numbers'>
-            <t>During SASL negotiation, the entities MUST NOT send any whitespace as separators between XML elements (i.e., from the last character of the &lt;auth/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace at depth=1 of the stream as sent by the initiating entity, until the last character of the &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace at depth=1 of the stream as sent by the receiving entity).  This prohibition helps to ensure proper security layer byte precision.  Any such whitespace shown in the SASL examples provided in this document is included only for the sake of readability.<vspace blankLines='1'/></t>
+            <t>During SASL negotiation, the entities MUST NOT send any whitespace as separators between XML elements (i.e., from the last character of the first-level &lt;auth/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace as sent by the initiating entity, until the last character of the first-level &lt;success/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace as sent by the receiving entity).  This prohibition helps to ensure proper security layer byte precision.  Any such whitespace shown in the SASL examples provided in this document is included only for the sake of readability.<vspace blankLines='1'/></t>
             <t>Any XML character data contained within the XML elements MUST be encoded using base64, where the encoding adheres to the definition in Section 4 of <xref target="BASE64"/> and where the padding bits are set to zero.<vspace blankLines='1'/></t>
             <t>As formally specified in the XML schema for the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace under <xref target='schemas-sasl'/>, the receiving entity MAY include one or more application-specific child elements inside the &lt;mechanisms/&gt; element to provide information that might be needed by the initiating entity in order to complete successful SASL negotiation using one or more of the offered mechanisms; however, the syntax and semantics of all such elements are out of scope for this specification.</t>
           </list>
@@ -4139,10 +4139,8 @@ XmppAddr ::= UTF8String
       </section>
       <section title="For Confidentiality and Authentication With Passwords" anchor="security-mti-bothpass">
         <t>For both confidentiality and authentication with passwords, servers and clients MUST implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL SCRAM, in particular the SCRAM-SHA-1 and SCRAM-SHA-1-PLUS variants (with SCRAM-SHA1-PLUS being preferred, as described under <xref target='security-reuse-sasl'/>).</t>
-        <!--
-        <t>In addition, servers and clients SHOULD implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL PLAIN.</t>
-        -->
-        <t><list style='empty'><t>Interoperability and Security Note: In practice, many servers offer, and many clients use, TLS plus SASL PLAIN.  The SCRAM-SHA-1 and especially SCRAM-SHA-1-PLUS variants of the SCRAM mechanism are strongly preferred over the PLAIN mechanism because of their superior security properties (including for SCRAM-SHA-1-PLUS the ability to enforce channel binding as described under <xref target='security-reuse-sasl'/>).  A client SHOULD treat TLS plus SASL PLAIN as a technology of last resort to be used only when interacting with a server that does not yet support SCRAM, MUST prefer more secure mechanisms (e.g., EXTERNAL, SCRAM-SHA-1-PLUS, and SCRAM-SHA-1) to the PLAIN mechanism, and MUST NOT use the PLAIN mechanism if the stream does not at a minimum have confidentiality and integrity protection via TLS with full certificate validation as described under <xref target='security-certificates-validation-server'/>.  A server MUST NOT offer SASL PLAIN if the stream is not protected via TLS.  A server SHOULD NOT offer TLS plus SASL PLAIN unless it is unable to offer some variant of SASL SCRAM, e.g., because the XMPP service depends for authentication purposes on a database or directory that is not under the control of the XMPP administrators, such as Pluggable Authentication Modules (PAM), an LDAP directory <xref target='LDAP'/>, or an Authentication, Authorization, and Accounting (AAA) key management protocol (for guidance, refer to <xref target='AAA'/>); however, offering TLS plus SASL PLAIN even when the server supports SCRAM might be appropriate if the server needs to enable interoperability with an installed base of clients that do not yet support SCRAM.</t></list></t>
+        <t>As further explained in the following Security Note, in certain circumstances a server MAY offer TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus SASL PLAIN when it is not possible to offer more secure alternatives; in addition, clients SHOULD implement PLAIN over TLS in order to maximize interoperability with servers that are not able to deploy more secure alternatives.</t>
+        <t><list style='empty'><t>Security Note: In practice, many servers offer, and many clients use, TLS plus SASL PLAIN.  The SCRAM-SHA-1 and especially SCRAM-SHA-1-PLUS variants of the SCRAM mechanism are strongly preferred over the PLAIN mechanism because of their superior security properties (including for SCRAM-SHA-1-PLUS the ability to enforce channel binding as described under <xref target='security-reuse-sasl'/>).  A client SHOULD treat TLS plus SASL PLAIN as a technology of last resort to be used only when interacting with a server that does not offer SCRAM (or other alternatives that are more secure than TLS plus SASL PLAIN), MUST prefer more secure mechanisms (e.g., EXTERNAL, SCRAM-SHA-1-PLUS, SCRAM-SHA-1, or the older DIGEST-MD5 mechanism) to the PLAIN mechanism, and MUST NOT use the PLAIN mechanism if the stream does not at a minimum have confidentiality and integrity protection via TLS with full certificate validation as described under <xref target='security-certificates-validation-server'/>.  A server MUST NOT offer SASL PLAIN if the stream is not protected via TLS.  A server SHOULD NOT offer TLS plus SASL PLAIN unless it is unable to offer some variant of SASL SCRAM (or other alternatives that are more secure than TLS plus SASL PLAIN), e.g., because the XMPP service depends for authentication purposes on a database or directory that is not under the control of the XMPP administrators, such as Pluggable Authentication Modules (PAM), an LDAP directory <xref target='LDAP'/>, or an Authentication, Authorization, and Accounting (AAA) key management protocol (for guidance, refer to <xref target='AAA'/>); however, offering TLS plus SASL PLAIN even when the server supports more secure alternatives might be appropriate if the server needs to enable interoperability with an installed base of clients that do not yet support SCRAM or other alternatives that are more secure than TLS plus SASL PLAIN.</t></list></t>
       </section>
       <section title="For Confidentiality and Authentication Without Passwords" anchor="security-mti-bothnopass">
         <t>For both confidentiality and authentication without passwords, servers MUST and clients SHOULD implement TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite plus the SASL EXTERNAL mechanism (see Appendix A of <xref target='SASL'/>) with PKIX certificates.</t>
@@ -5178,12 +5176,12 @@ XmppAddr ::= UTF8String
 <author initials='J' surname='Hodges' fullname='Jeff Hodges'>
     <organization />
 </author>
-<date month='October' day='20' year='2010' />
+<date month='November' day='17' year='2010' />
 <abstract><t>Many application technologies enable a secure connection between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS).  This document specifies best current practices for representing and verifying the identity of application services in such interactions.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-10' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-11' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-10.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-11.txt' />
 </reference>
 
 <reference anchor="UCS2">
@@ -5446,10 +5444,10 @@ Public-key and attribute certificate frameworks</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='October' day='25' year='2010' />
+<date month='November' day='16' year='2010' />
 <abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP), including support for non- ASCII characters.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-06' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-07' />
 <format type='TXT'
         target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-06.txt' />
 </reference>
@@ -6809,12 +6807,12 @@ Public-key and attribute certificate frameworks</title>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='October' day='25' year='2010' />
+<date month='November' day='16' year='2010' />
 <abstract><t>This document describes extensions to the core features of the Extensible Messaging and Presence Protocol (XMPP) that provide basic instant messaging (IM) and presence functionality in conformance with RFC 2779. This document obseletes RFC 3921.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-16' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3921bis-17' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-16.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3921bis-17.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
@@ -6832,9 +6830,8 @@ Public-key and attribute certificate frameworks</title>
     </references>
 
     <section title="XML Schemas" anchor="schema">
-      <t>Because validation of XML streams and stanzas is optional, the following XML schemas are provided for descriptive purposes only.  These schemas are not normative.</t>
-      <t>The following schemas formally define various XML namespaces used in the core XMPP protocols, in conformance with <xref target='XML-SCHEMA'/>.  For schemas defining the 'jabber:client' and 'jabber:server' namespaces, refer to <xref target="XMPP-IM"/>.</t>
-      <section title="Streams Namespace" anchor="schemas-streams">
+      <t>The following schemas formally define various namespaces used in this document, in conformance with <xref target='XML-SCHEMA'/>.  Because validation of XML streams and stanzas is optional, these schemas are not normative and are provided for descriptive purposes only.</t>
+      <section title="Stream Namespace" anchor="schemas-stream">
         <figure>
           <artwork><![CDATA[
 <?xml version='1.0' encoding='UTF-8'?>
@@ -7128,6 +7125,456 @@ Public-key and attribute certificate frameworks</title>
           ]]></artwork>
         </figure>
       </section>
+      <section title="Client Namespace" anchor="schemas-client">
+        <figure>
+          <artwork><![CDATA[
+<?xml version='1.0' encoding='UTF-8'?>
+
+<xs:schema
+    xmlns:xs='http://www.w3.org/2001/XMLSchema'
+    targetNamespace='jabber:client'
+    xmlns='jabber:client'
+    elementFormDefault='qualified'>
+
+  <xs:import 
+      namespace='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+
+  <xs:element name='message'>
+     <xs:complexType>
+        <xs:sequence>
+          <xs:choice minOccurs='0' maxOccurs='unbounded'>
+            <xs:element ref='subject'/>
+            <xs:element ref='body'/>
+            <xs:element ref='thread'/>
+          </xs:choice>
+          <xs:any     namespace='##other'
+                      minOccurs='0'
+                      maxOccurs='unbounded'
+                      processContents='lax'/>
+          <xs:element ref='error'
+                      minOccurs='0'/>
+        </xs:sequence>
+        <xs:attribute name='from'
+                      type='xs:string'
+                      use='optional'/>
+        <xs:attribute name='id'
+                      type='xs:NMTOKEN'
+                      use='optional'/>
+        <xs:attribute name='to'
+                      type='xs:string'
+                      use='optional'/>
+        <xs:attribute name='type' 
+                      use='optional' 
+                      default='normal'>
+          <xs:simpleType>
+            <xs:restriction base='xs:NMTOKEN'>
+              <xs:enumeration value='chat'/>
+              <xs:enumeration value='error'/>
+              <xs:enumeration value='groupchat'/>
+              <xs:enumeration value='headline'/>
+              <xs:enumeration value='normal'/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute ref='xml:lang' use='optional'/>
+     </xs:complexType>
+  </xs:element>
+
+  <xs:element name='body'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:string'>
+          <xs:attribute ref='xml:lang' use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='subject'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:string'>
+          <xs:attribute ref='xml:lang' use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='thread'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:NMTOKEN'>
+          <xs:attribute name='parent'
+                        type='xs:NMTOKEN'
+                        use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='presence'>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs='0' maxOccurs='unbounded'>
+          <xs:element ref='show'/>
+          <xs:element ref='status'/>
+          <xs:element ref='priority'/>
+        </xs:choice>
+        <xs:any     namespace='##other'
+                    minOccurs='0'
+                    maxOccurs='unbounded'
+                    processContents='lax'/>
+        <xs:element ref='error'
+                    minOccurs='0'/>
+      </xs:sequence>
+      <xs:attribute name='from'
+                    type='xs:string'
+                    use='optional'/>
+      <xs:attribute name='id'
+                    type='xs:NMTOKEN'
+                    use='optional'/>
+      <xs:attribute name='to'
+                    type='xs:string'
+                    use='optional'/>
+      <xs:attribute name='type' use='optional'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='error'/>
+            <xs:enumeration value='probe'/>
+            <xs:enumeration value='subscribe'/>
+            <xs:enumeration value='subscribed'/>
+            <xs:enumeration value='unavailable'/>
+            <xs:enumeration value='unsubscribe'/>
+            <xs:enumeration value='unsubscribed'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute ref='xml:lang' use='optional'/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='show'>
+    <xs:simpleType>
+      <xs:restriction base='xs:NMTOKEN'>
+        <xs:enumeration value='away'/>
+        <xs:enumeration value='chat'/>
+        <xs:enumeration value='dnd'/>
+        <xs:enumeration value='xa'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name='status'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='string1024'>
+          <xs:attribute ref='xml:lang' use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name='string1024'>
+    <xs:restriction base='xs:string'>
+      <xs:minLength value='1'/>
+      <xs:maxLength value='1024'/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name='priority' type='xs:byte'/>
+
+  <xs:element name='iq'>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:any     namespace='##other'
+                    minOccurs='0'
+                    maxOccurs='1'
+                    processContents='lax'/>
+        <xs:element ref='error'
+                    minOccurs='0'/>
+      </xs:sequence>
+      <xs:attribute name='from'
+                    type='xs:string'
+                    use='optional'/>
+      <xs:attribute name='id'
+                    type='xs:NMTOKEN'
+                    use='required'/>
+      <xs:attribute name='to'
+                    type='xs:string'
+                    use='optional'/>
+      <xs:attribute name='type' use='required'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='error'/>
+            <xs:enumeration value='get'/>
+            <xs:enumeration value='result'/>
+            <xs:enumeration value='set'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute ref='xml:lang' use='optional'/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='error'>
+    <xs:complexType>
+      <xs:sequence xmlns:err='urn:ietf:params:xml:ns:xmpp-stanzas'>
+        <xs:group ref='err:stanzaErrorGroup'/>
+        <xs:element ref='err:text'
+                    minOccurs='0'/>
+      </xs:sequence>
+      <xs:attribute name='by' 
+                    type='xs:string' 
+                    use='optional'/>
+      <xs:attribute name='type' use='required'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='auth'/>
+            <xs:enumeration value='cancel'/>
+            <xs:enumeration value='continue'/>
+            <xs:enumeration value='modify'/>
+            <xs:enumeration value='wait'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
+          ]]></artwork>
+        </figure>
+      </section>
+      <section title="Server Namespace" anchor="schemas-server">
+        <figure>
+          <artwork><![CDATA[
+<?xml version='1.0' encoding='UTF-8'?>
+
+<xs:schema
+    xmlns:xs='http://www.w3.org/2001/XMLSchema'
+    targetNamespace='jabber:server'
+    xmlns='jabber:server'
+    elementFormDefault='qualified'>
+
+  <xs:import 
+      namespace='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+
+  <xs:element name='message'>
+     <xs:complexType>
+        <xs:sequence>
+          <xs:choice minOccurs='0' maxOccurs='unbounded'>
+            <xs:element ref='subject'/>
+            <xs:element ref='body'/>
+            <xs:element ref='thread'/>
+          </xs:choice>
+          <xs:any namespace='##other'
+                  minOccurs='0'
+                  maxOccurs='unbounded'
+                  processContents='lax'/>
+          <xs:element ref='error'
+                      minOccurs='0'/>
+        </xs:sequence>
+        <xs:attribute name='from'
+                      type='xs:string'
+                      use='required'/>
+        <xs:attribute name='id'
+                      type='xs:NMTOKEN'
+                      use='optional'/>
+        <xs:attribute name='to'
+                      type='xs:string'
+                      use='required'/>
+        <xs:attribute name='type' 
+                      use='optional' 
+                      default='normal'>
+          <xs:simpleType>
+            <xs:restriction base='xs:NMTOKEN'>
+              <xs:enumeration value='chat'/>
+              <xs:enumeration value='error'/>
+              <xs:enumeration value='groupchat'/>
+              <xs:enumeration value='headline'/>
+              <xs:enumeration value='normal'/>
+            </xs:restriction>
+          </xs:simpleType>
+        </xs:attribute>
+        <xs:attribute ref='xml:lang' use='optional'/>
+     </xs:complexType>
+  </xs:element>
+
+  <xs:element name='body'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:string'>
+          <xs:attribute ref='xml:lang' use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='subject'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:string'>
+          <xs:attribute ref='xml:lang' use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='thread'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:NMTOKEN'>
+          <xs:attribute name='parent'
+                        type='xs:NMTOKEN'
+                        use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='subject'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='xs:NMTOKEN'>
+          <xs:attribute name='parent' 
+                        type='xs:NMTOKEN'
+                        use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='presence'>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:choice minOccurs='0' maxOccurs='unbounded'>
+          <xs:element ref='show'/>
+          <xs:element ref='status'/>
+          <xs:element ref='priority'/>
+        </xs:choice>
+        <xs:any     namespace='##other'
+                    minOccurs='0'
+                    maxOccurs='unbounded'
+                    processContents='lax'/>
+        <xs:element ref='error'
+                    minOccurs='0'/>
+      </xs:sequence>
+      <xs:attribute name='from'
+                    type='xs:string'
+                    use='required'/>
+      <xs:attribute name='id'
+                    type='xs:NMTOKEN'
+                    use='optional'/>
+      <xs:attribute name='to'
+                    type='xs:string'
+                    use='required'/>
+      <xs:attribute name='type' use='optional'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='error'/>
+            <xs:enumeration value='probe'/>
+            <xs:enumeration value='subscribe'/>
+            <xs:enumeration value='subscribed'/>
+            <xs:enumeration value='unavailable'/>
+            <xs:enumeration value='unsubscribe'/>
+            <xs:enumeration value='unsubscribed'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute ref='xml:lang' use='optional'/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='show'>
+    <xs:simpleType>
+      <xs:restriction base='xs:NMTOKEN'>
+        <xs:enumeration value='away'/>
+        <xs:enumeration value='chat'/>
+        <xs:enumeration value='dnd'/>
+        <xs:enumeration value='xa'/>
+      </xs:restriction>
+    </xs:simpleType>
+  </xs:element>
+
+  <xs:element name='status'>
+    <xs:complexType>
+      <xs:simpleContent>
+        <xs:extension base='string1024'>
+          <xs:attribute ref='xml:lang' use='optional'/>
+        </xs:extension>
+      </xs:simpleContent>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:simpleType name='string1024'>
+    <xs:restriction base='xs:string'>
+      <xs:minLength value='1'/>
+      <xs:maxLength value='1024'/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name='priority' type='xs:byte' default='0'/>
+
+  <xs:element name='iq'>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:any namespace='##other'
+                minOccurs='0'
+                maxOccurs='1'
+                processContents='lax'/>
+        <xs:element ref='error'
+                    minOccurs='0'/>
+      </xs:sequence>
+      <xs:attribute name='from'
+                    type='xs:string'
+                    use='required'/>
+      <xs:attribute name='id'
+                    type='xs:NMTOKEN'
+                    use='required'/>
+      <xs:attribute name='to'
+                    type='xs:string'
+                    use='required'/>
+      <xs:attribute name='type' use='required'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='error'/>
+            <xs:enumeration value='get'/>
+            <xs:enumeration value='result'/>
+            <xs:enumeration value='set'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+      <xs:attribute ref='xml:lang' use='optional'/>
+    </xs:complexType>
+  </xs:element>
+
+  <xs:element name='error'>
+    <xs:complexType>
+      <xs:sequence xmlns:err='urn:ietf:params:xml:ns:xmpp-stanzas'>
+        <xs:group ref='err:stanzaErrorGroup'/>
+        <xs:element ref='err:text'
+                    minOccurs='0'/>
+      </xs:sequence>
+      <xs:attribute name='by' 
+                    type='xs:string' 
+                    use='optional'/>
+      <xs:attribute name='type' use='required'>
+        <xs:simpleType>
+          <xs:restriction base='xs:NMTOKEN'>
+            <xs:enumeration value='auth'/>
+            <xs:enumeration value='cancel'/>
+            <xs:enumeration value='continue'/>
+            <xs:enumeration value='modify'/>
+            <xs:enumeration value='wait'/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:attribute>
+    </xs:complexType>
+  </xs:element>
+
+</xs:schema>
+          ]]></artwork>
+        </figure>
+      </section>
       <section title="Resource Binding Namespace" anchor="schemas-bind">
         <figure>
           <artwork><![CDATA[
@@ -7260,7 +7707,7 @@ Public-key and attribute certificate frameworks</title>
     </section>
 
     <section title="Differences from RFC 3920" anchor="diffs">
-      <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920.</t>
+      <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920 (in addition to numerous changes of an editorial nature).</t>
       <t>
         <list style='symbols'>
           <t>Moved specification of the XMPP address format to a separate document.</t>
@@ -7288,7 +7735,6 @@ Public-key and attribute certificate frameworks</title>
           <t>Moved documentation of the Server Dialback protocol from this specification to a separate specification maintained by the XMPP Standards Foundation.</t>
         </list>
       </t>
-      <t>In addition, numerous changes of an editorial nature were made in order to more fully specify and clearly explain XMPP.</t>
     </section>
 
   </back>
