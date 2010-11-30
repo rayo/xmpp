@@ -54,7 +54,7 @@
       <t>The purpose of XMPP is to enable the exchange of relatively small pieces of structured data (called "XML stanzas") over a network between any two (or more) entities.  XMPP is typically implemented using a distributed client-server architecture, wherein a client needs to connect to a server in order to gain access to the network and thus be allowed to exchange XML stanzas with other entities (which can be associated with other servers).  The process whereby a client connects to a server, exchanges XML stanzas, and ends the connection is:</t>
       <t>
         <list style='numbers'>
-          <t>Determine the hostname and port at which to connect</t>
+          <t>Determine the IP address and port at which to connect, typically based on resolution of a fully-qualified domain name <xref target='tcp-resolution'/></t>
           <t>Open a Transmission Control Protocol <xref target='TCP'/> connection</t>
           <t>Open an XML stream over TCP</t>
           <t>Negotiate Transport Layer Security <xref target='TLS'/> for channel encryption (recommended)</t>
@@ -68,7 +68,7 @@
       <t>Within XMPP, one server can optionally connect to another server to enable inter-domain or inter-server communication.  For this to happen, the two servers need to negotiate a connection between themselves and then exchange XML stanzas; the process for doing so is:</t>
       <t>
         <list style='numbers'>
-          <t>Determine the hostname and port at which to connect</t>
+          <t>Determine the IP address and port at which to connect, typically based on resolution of a fully-qualified domain name <xref target='tcp-resolution'/></t>
           <t>Open a TCP connection</t>
           <t>Open an XML stream</t>
           <t>Negotiate TLS for channel encryption (recommended)</t>
@@ -86,7 +86,9 @@
       <t>Certain security-related terms are to be understood in the sense defined in <xref target="SEC-TERMS"/>; such terms include, but are not limited to, "assurance", "attack", "authentication", "authorization", "certificate", "certification authority", "certification path", "confidentiality", "credential", "downgrade", "encryption", "fingerprint", "hash value", "identity", "integrity", "signature", "security perimeter", "self-signed certificate", "sign", "spoof", "tamper", "trust", "trust anchor", "trust chain", "validate", "verify".</t>
       <t>Certain terms related to certificates, domains, and application service identity are to be understood in the sense defined in <xref target="TLS-CERTS"/>; these include, but are not limited to, "PKIX certificate", "source domain", "derived domain", and the identifier types "CN-ID", "DNS-ID", and "SRV-ID".</t>
       <t>Other security-related terms are to be understood in the sense defined in the referenced specifications (for example, "denial of service" as described in <xref target='DOS'/> or "end entity certificate" as described in <xref target='PKIX'/>).</t>
-      <t>The term "whitespace" is used to refer to any character that matches production [3] content of <xref target="XML"/>, i.e., any instance of the SP, HTAB, CR, or LF rules defined in <xref target='ABNF'/>.</t>
+      <t>The term "whitespace" is used to refer to any character or characters matching production [3] content of <xref target="XML"/>, i.e., one or more instances of the SP, HTAB, CR, or LF rules defined in <xref target='ABNF'/>.</t>
+      <t>The term "XML stream" (also "stream") is defined under <xref target='streams-fundamentals'/>.</t>
+      <t>The term "XML stanza" (also "stanza") is defined under <xref target='streams-fundamentals'/>.  There are three kinds of stanzas: message, presence, and IQ (short for "Info/Query").  These are defined under <xref target='stanzas-semantics-message'/>, <xref target='stanzas-semantics-presence'/>, and <xref target='stanzas-semantics-iq'/>, respectively.</t>
       <t>The term "input stream" designates an XML stream over which a server receives data from a connected client or remote server, and the term "output stream" designates an XML stream over which a server sends data to a connected client or remote server.  The following terms designate some of the actions that a server can perform when processing data received over an input stream:</t>
       <t>
         <list style='empty'>
@@ -160,7 +162,7 @@ romeo@example.net           juliet@im.example.com
       <t>A server is an entity whose primary responsibilities are to:</t>
       <t>
         <list style='symbols'>
-          <t>Manage <xref target="streams">XML streams</xref> with local clients and deliver <xref target="stanzas">XML stanzas</xref> to those clients over the negotiated streams; this includes responsibility for ensuring that a client authenticates with the server before being granted access to the XMPP network.<vspace blankLines='1'/></t>
+          <t>Manage <xref target="streams">XML streams</xref> with connected clients and deliver <xref target="stanzas">XML stanzas</xref> to those clients over the negotiated streams; this includes responsibility for ensuring that a client authenticates with the server before being granted access to the XMPP network.<vspace blankLines='1'/></t>
           <t>Subject to local service policies on server-to-server communication, manage <xref target="streams">XML streams</xref> with remote servers and route <xref target="stanzas">XML stanzas</xref> to those servers over the negotiated streams.</t>
         </list>
       </t>
@@ -168,7 +170,7 @@ romeo@example.net           juliet@im.example.com
       <t>
         <list style='symbols'>
           <t>Storing data that is used by clients (e.g., contact lists for users of XMPP-based instant messaging and presence applications as defined in <xref target='XMPP-IM'/>); in this case, the relevant XML stanza is handled directly by the server itself on behalf of the client and is not routed to a remote server or delivered to a local entity.<vspace blankLines='1'/></t>
-          <t>Hosting local services that also use XMPP as the basis for communication but that provide additional functionality beyond that defined in this document or in <xref target='XMPP-IM'/>; examples include multi-user conferencing services as specified in <xref target='XEP-0045'/> and publish-subscribe services as specified in <xref target='XEP-0060'/>.</t>
+          <t>Hosting add-on services that also use XMPP as the basis for communication but that provide additional functionality beyond that defined in this document or in <xref target='XMPP-IM'/>; examples include multi-user conferencing services as specified in <xref target='XEP-0045'/> and publish-subscribe services as specified in <xref target='XEP-0060'/>.</t>
         </list>
       </t>
     </section>
@@ -179,10 +181,10 @@ romeo@example.net           juliet@im.example.com
       <t>As XMPP is defined in this specification, an initiating entity (client or server) MUST open a Transmission Control Protocol <xref target='TCP'/> connection to the receiving entity (server) before it negotiates XML streams with the receiving entity.  The parties then maintain that TCP connection for as long as the XML streams are in use.  The rules specified in the following sections apply to the TCP binding.</t>
       <t><list style='empty'><t>Informational Note: There is no necessary coupling of XML streams to TCP, and other transports are possible.  For example, two entities could connect to each other by means of <xref target="HTTP"/> as specified in <xref target="XEP-0124"/> and <xref target='XEP-0206'/>.  However, this specification defines only a binding of XMPP to TCP.</t></list></t>
     </section>
-    <section title="Hostname Resolution" anchor="tcp-resolution">
-      <t>Because XML streams are sent over TCP, the initiating entity needs to determine the IPv4 or IPv6 address (and port) of the receiving entity's "origin domain" before it can attempt to connect to the XMPP network.</t>
+    <section title="Resolution of Fully Qualified Domain Names" anchor="tcp-resolution">
+      <t>Because XML streams are sent over TCP, the initiating entity needs to determine the IPv4 or IPv6 address (and port) of the receiving entity before it can attempt to connect to the XMPP network.  Typically this is done by resolving the receiving entity's fully-qualified domain name or "FDQN" (see <xref target='DNS-CONCEPTS'/>).</t>
       <section title="Preferred Process: SRV Lookup" anchor="tcp-resolution-prefer">
-        <t>The preferred process for hostname resolution is to use <xref target='DNS-SRV'/> records as follows:</t>
+        <t>The preferred process for FQDN resolution is to use <xref target='DNS-SRV'/> records as follows:</t>
         <t>
           <list style='numbers'>
             <t>The initiating entity constructs a DNS SRV query whose inputs are:
@@ -192,29 +194,30 @@ romeo@example.net           juliet@im.example.com
                 <t>a Name corresponding to the "origin domain" of the XMPP service to which the initiating entity wishes to connect (e.g., "example.net" or "im.example.com")</t>
               </list>
             <vspace blankLines='1'/></t>
-            <t>The resulting is a query such as "_xmpp-client._tcp.example.net." or "_xmpp-server._tcp.im.example.com.".<vspace blankLines='1'/></t>
-            <t>If a response is received, it will contain one or more combinations of a port and hostname, each of which is weighted and prioritized as described in <xref target="DNS-SRV"/>.  However, if the result of the SRV lookup is a single resource record with a Target of ".", i.e. the root domain, then the initiating entity MUST abort SRV processing at this point (but SHOULD attempt the fallback process described in the next section).<vspace blankLines='1'/></t>
-            <t>The initiating entity chooses at least one of the returned hostnames to resolve (following the rules in <xref target="DNS-SRV"/>), which it does by using a DNS "A" or "AAAA" lookup on the hostname; this will result in an IPv4 or IPv6 address.<vspace blankLines='1'/></t>
-            <t>The initiating entity uses the IP address(es) from the first successfully resolved hostname (with the corresponding port number returned by the SRV lookup) as the connection address for the receiving entity.<vspace blankLines='1'/></t>
-            <t>If the initiating entity fails to connect using that IP address but the "A" or "AAAA" lookup returned more than one IP address, then the initiating entity uses the next resolved IP address for that hostname as the connection address.<vspace blankLines='1'/></t>
-            <t>If the initiating entity fails to connect using all resolved IP addresses for a given hostname, then it repeats the process of resolution and connection for the next hostname returned by the SRV lookup.<vspace blankLines='1'/></t>
-            <t>If the initiating entity fails to connect using any hostname returned by the SRV lookup, then it can either abort the connection attempt or use the fallback process described in the next section.</t>
+            <t>The result is a query such as "_xmpp-client._tcp.example.net." or "_xmpp-server._tcp.im.example.com.".<vspace blankLines='1'/></t>
+            <t>If a response is received, it will contain one or more combinations of a port and FDQN, each of which is weighted and prioritized as described in <xref target="DNS-SRV"/>.  However, if the result of the SRV lookup is a single resource record with a Target of ".", i.e. the root domain, then the initiating entity MUST abort SRV processing at this point.<vspace blankLines='1'/></t>
+            <t>The initiating entity chooses at least one of the returned FQDNs to resolve (following the rules in <xref target="DNS-SRV"/>), which it does by using a DNS "A" or "AAAA" lookup on the FDQN; this will result in an IPv4 or IPv6 address.<vspace blankLines='1'/></t>
+            <t>The initiating entity uses the IP address(es) from the successfully resolved FDQN (with the corresponding port number returned by the SRV lookup) as the connection address for the receiving entity.<vspace blankLines='1'/></t>
+            <t>If the initiating entity fails to connect using that IP address but the "A" or "AAAA" lookup returned more than one IP address, then the initiating entity uses the next resolved IP address for that FDQN as the connection address.<vspace blankLines='1'/></t>
+            <t>If the initiating entity fails to connect using all resolved IP addresses for a given FDQN, then it repeats the process of resolution and connection for the next FQDN returned by the SRV lookup based on the priority and weight as defined in <xref target='DNS-SRV'/>.<vspace blankLines='1'/></t>
+            <t>If the initiating entity receives a response to its SRV query but it is not able to establish an XMPP connection using the data received in the response, it SHOULD NOT attempt the fallback process described in the next section (this helps to prevent a state mismatch between inbound and outbound connections).<vspace blankLines='1'/></t>
+            <t>If the initiating entity does not receive a response to its SRV query, it SHOULD attempt the fallback process described in the next section.</t>
           </list>
         </t>
       </section>
       <section title="Fallback Processes" anchor="tcp-resolution-fallback">
-         <t>The fallback process SHOULD be a normal "A" or "AAAA" address record resolution to determine the IPv4 or IPv6 address of the origin domain, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port 5269 for server-to-server connections.</t>
+         <t>The fallback process SHOULD be a normal "A" or "AAAA" address record resolution to determine the IPv4 or IPv6 address of the origin domain, where the port used is the "xmpp-client" port of 5222 for client-to-server connections or the "xmpp-server" port of 5269 for server-to-server connections (these are the default ports as registered with the IANA; see <xref target='iana-ports'/>).</t>
          <t>For client-to-server connections, the fallback MAY be a <xref target='DNS-TXT'/> lookup for alternative connection methods, for example as described in <xref target='XEP-0156'/>.</t>
       </section>
       <section title="When Not to Use SRV" anchor="tcp-resolution-srvnot">
-        <t>If the initiating entity has been explicitly configured to associate a particular hostname (and potentially port) with the origin domain of the receiving entity (say, to "hardcode" an association from an origin domain of example.net to a configured hostname of webcm.example.com:80), the initiating entity SHOULD use the configured name instead of performing the preferred SRV resolution process on the origin name.</t>
+        <t>If the initiating entity has been explicitly configured to associate a particular FQDN (and potentially port) with the origin domain of the receiving entity (say, to "hardcode" an association from an origin domain of example.net to a configured FQDN of apps.example.com), the initiating entity SHOULD use the configured name instead of performing the preferred SRV resolution process on the origin name.</t>
       </section>
       <section title="Use of SRV Records with Add-On Services" anchor="tcp-resolution-srvadd">
-        <t>Many XMPP servers are implemented in such a way that they can host add-on services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at DNS domain names that typically are "subdomains" of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or "subdomains" of the first-level domain of the underlying service (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity associated with a remote XMPP server wishes to use such an add-on service, it would generate an appropriate XML stanza and the remote server would attempt to resolve the add-on service's DNS domain name via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if the administrators of an XMPP service wish to enable entities associated with remote servers to access such add-on services, they need to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for their main XMPP service.  In case SRV records are not available, the fallback methods described under <xref target='tcp-resolution-fallback'/> can be used to resolve the DNS domain names of add-on services.</t>
+        <t>Many XMPP servers are implemented in such a way that they can host add-on services (beyond those defined in this specification and <xref target='XMPP-IM'/>) at DNS domain names that typically are "subdomains" of the main XMPP service (e.g., conference.example.net for a <xref target='XEP-0045'/> service associated with the example.net XMPP service) or "subdomains" of the first-level domain of the underlying service (e.g., muc.example.com for a <xref target='XEP-0045'/> service associated with the im.example.com XMPP service).  If an entity associated with a remote XMPP server wishes to communicate with such an add-on service, it would generate an appropriate XML stanza and the remote server would attempt to resolve the add-on service's DNS domain name via an SRV lookup on resource records such as "_xmpp-server._tcp.conference.example.net." or "_xmpp-server._tcp.muc.example.com.".  Therefore if the administrators of an XMPP service wish to enable entities associated with remote servers to access such add-on services, they need to advertise the appropriate "_xmpp-server" SRV records in addition to the "_xmpp-server" record for their main XMPP service.  In case SRV records are not available, the fallback methods described under <xref target='tcp-resolution-fallback'/> can be used to resolve the DNS domain names of add-on services.</t>
       </section>
     </section>
     <section title="Reconnection" anchor="tcp-reconnect">
-      <t>It can happen that an XMPP server goes offline while servicing TCP connections from local clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  If an entity chooses to reconnect, the following guidelines are RECOMMENDED:</t>
+      <t>It can happen that an XMPP server goes offline while servicing TCP connections from connected clients and from other servers.  Because the number of such connections can be quite large, the reconnection algorithm employed by entities that seek to reconnect can have a significant impact on software and network performance.  If an entity chooses to reconnect, the following guidelines are RECOMMENDED:</t>
       <t>
         <list style='symbols'>
           <t>The number of seconds that expire before an entity first seeks to reconnect SHOULD be an unpredictable number between 0 and 60 (e.g., so that all clients do not attempt to reconnect exactly 30 seconds after being disconnected).<vspace blankLines='1'/></t>
@@ -280,8 +283,8 @@ romeo@example.net           juliet@im.example.com
       <t>Those who are accustomed to thinking of XML in a document-centric manner might find the following analogies useful:</t>
       <t>
         <list style='symbols'>
-          <t>The two XML streams are like two "documents" (matching production [1] content of <xref target='XML'/>) that are built up through the accumulation of XML stanzas.</t>
-          <t>The root &lt;stream/&gt; element is like the "document entity" for each "document" (as described in Section 4.8 of <xref target='XML'/>).</t>
+          <t>The two XML streams are like two "documents" (matching production [1] content of <xref target='XML'/>) that are built up through the accumulation of XML stanzas.<vspace blankLines='1'/></t>
+          <t>The root &lt;stream/&gt; element is like the "document entity" for each "document" (as described in Section 4.8 of <xref target='XML'/>).<vspace blankLines='1'/></t>
           <t>The XML stanzas sent over the streams are like "fragments" of the "documents" (as described in <xref target='XML-FRAG'/>).</t>
         </list>
       </t>
@@ -289,22 +292,22 @@ romeo@example.net           juliet@im.example.com
       <t>The remainder of this section defines the following aspects of XML streams:</t>
       <t>
         <list style='symbols'>
-          <t>The stream negotation process</t>
-          <t>How to close a stream</t>
-          <t>How to handle peers that are silent</t>
-          <t>The XML attributes of a stream</t>
-          <t>The XML namespaces of a stream</t>
+          <t>The stream negotation process (<xref target='streams-negotiation'/>)</t>
+          <t>How to close a stream (<xref target='streams-close'/>)</t>
+          <t>How to handle peers that are silent (<xref target='streams-silence'/>)</t>
+          <t>The XML attributes of a stream (<xref target='streams-attr'/>)</t>
+          <t>The XML namespaces of a stream (<xref target='streams-ns'/>)</t>
         </list>
       </t>
     </section>
 
     <section title="Stream Negotiation" anchor="streams-negotiation">
       <section title="Basic Concepts" anchor="streams-negotiation-basics">
-        <t>Because the receiving entity for a stream acts as a gatekeeper to the domains it services, it imposes certain conditions for connecting as a client or as a peer server.  At a minimum, the initiating entity needs to authenticate with the receiving entity before it is allowed to send stanzas to the receiving entity, typically using SASL as described under <xref target='sasl'/>.  However, the receiving entity can consider conditions other than authentication to be mandatory, such as encryption using TLS as described under <xref target='tls'/>.  The receiving entity informs the initiating entity about such conditions by communicating "stream features": the set of particular protocol interactions that are mandatory for the initiating entity to complete before the receiving entity will accept XML stanzas from the initiating entity (e.g., authentication), as well as any protocol interactions that are voluntary but that might improve the handling of an XML stream (e.g., establishment of application-layer compression as described in <xref target='XEP-0138'/>).</t>
+        <t>Because the receiving entity for a stream acts as a gatekeeper to the domains it services, it imposes certain conditions for connecting as a client or as a peer server.  At a minimum, the initiating entity needs to authenticate with the receiving entity before it is allowed to send stanzas to the receiving entity, typically using SASL as described under <xref target='sasl'/>.  However, the receiving entity can consider conditions other than authentication to be mandatory-to-negotiate, such as encryption using TLS as described under <xref target='tls'/>.  The receiving entity informs the initiating entity about such conditions by communicating "stream features": the set of particular protocol interactions that the initiating entity needs to complete before the receiving entity will accept XML stanzas from the initiating entity (e.g., authentication), as well as any protocol interactions that are voluntary-to-negotiate but that might improve the handling of an XML stream (e.g., establishment of application-layer compression as described in <xref target='XEP-0138'/>).</t>
         <t>The existence of conditions for connecting implies that streams need to be negotiated.  The order of layers (TCP, then TLS, then SASL, then XMPP; see <xref target='security-layers'/>) implies that stream negotiation is a multi-stage process.  Further structure is imposed by two factors: (1) a given stream feature might be offered only to certain entities or only after certain other features have been negotiated (e.g., resource binding is offered only after SASL authentication), and (2) stream features can be either mandatory-to-negotiate or voluntary-to-negotiate.  Finally, for security reasons the parties to a stream need to discard knowledge that they gained during the negotiation process after successfully completing the protocol interactions defined for certain features (e.g., TLS in all cases and SASL in the case when a security layer might be established, as defined in the specification for the relevant SASL mechanism); this is done by flushing the old stream context and exchanging new stream headers over the existing TCP connection.</t>
       </section>
       <section title="Stream Features Format" anchor="streams-negotiation-features">
-        <t>If the initiating entity includes the 'version' attribute set to a value of at least "1.0" in the initial stream header, after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the stream namespace prefix) to the initiating entity in order to announce any conditions for continuation of the stream negotiation process.  Each condition takes the form of a child element of the &lt;features/&gt; element, qualified by a namespace that is different from the stream namespace and the content namespace.  The &lt;features/&gt; element can contain one child, contain multiple children, or be empty.</t>
+        <t>If the initiating entity includes in the initial stream header the 'version' attribute set to a value of at least "1.0" (see <xref target='streams-attr-version'/>), after sending the response stream header the receiving entity MUST send a &lt;features/&gt; child element (prefixed by the stream namespace prefix) to the initiating entity in order to announce any conditions for continuation of the stream negotiation process.  Each condition takes the form of a child element of the &lt;features/&gt; element, qualified by a namespace that is different from the stream namespace and the content namespace.  The &lt;features/&gt; element can contain one child, contain multiple children, or be empty.</t>
         <t><list style='empty'><t>Implementation Note: The order of child elements contained in any given &lt;features/&gt; element is not significant.</t></list></t>
         <t>If a particular stream feature is or can be mandatory-to-negotiate, the definition of that feature needs to do one of the following:</t>
         <t>
@@ -325,8 +328,8 @@ R: <stream:features>
    </stream:features>
           ]]></artwork>
         </figure>
-        <t>A &lt;features/&gt; element MAY contain more than one mandatory feature.  This means that the initiating entity can choose among the mandatory features.  For example, perhaps a future technology will perform roughly the same function as TLS, so the receiving entity might advertise support for both TLS and the future technology.</t>
-        <t>A &lt;features/&gt; element that contains both mandatory and voluntary features indicates that the negotiation is not complete but that the initiating entity MAY complete the voluntary feature(s) before it attempts to negotiate the mandatory feature(s).</t>
+        <t>A &lt;features/&gt; element MAY contain more than one mandatory-to-negotiate feature.  This means that the initiating entity can choose among the mandatory-to-negotiate features at this stage of the stream negotiation process.  As an example, perhaps a future technology will perform roughly the same function as TLS, so the receiving entity might advertise support for both TLS and the future technology at the same stage of the stream negotiation process.  However, this applies only at a given stage of the stream negotiation process and does not apply to features that are be mandatory-to-negotiate at different stages (e.g., the receiving entity would not advertise both STARTTLS and SASL as mandatory-to-negotiate, or both SASL and resource binding as mandatory-to-negotiate, because TLS would need to be negotiated before SASL and SASL would need to be negotiated before resource binding).</t>
+        <t>A &lt;features/&gt; element that contains both mandatory-to-negotiate and voluntary-to-negotiate features indicates that the negotiation is not complete but that the initiating entity MAY complete the voluntary-to-negotiate feature(s) before it attempts to negotiate the mandatory-to-negotiate feature(s).</t>
         <figure>
           <artwork><![CDATA[
 R: <stream:features>
@@ -338,7 +341,7 @@ R: <stream:features>
    </stream:features>
           ]]></artwork>
         </figure>
-        <t>A &lt;features/&gt; element that contains only voluntary features indicates that the stream negotiation is complete and that the initiating entity is cleared to send XML stanzas, but that the initiating entity MAY negotiate further features if desired.</t>
+        <t>A &lt;features/&gt; element that contains only voluntary-to-negotiate features indicates that the stream negotiation is complete and that the initiating entity is cleared to send XML stanzas, but that the initiating entity MAY negotiate further features if desired.</t>
         <figure>
           <artwork><![CDATA[
 R: <stream:features>
@@ -357,20 +360,20 @@ R: <stream:features/>
         </figure>
       </section>
       <section title="Restarts" anchor="streams-negotiation-restart">
-        <t>On successful negotiation of a feature that necessitates a stream restart, both parties MUST consider the previous stream to be replaced but MUST NOT terminate the underlying TCP connection; instead, the parties MUST reuse the existing connection, which might be in a new state (e.g., encrypted as a result of TLS negotiation).  The initiating entity then MUST send a new initial stream header, which SHOULD be preceded by an XML declaration as described under <xref target='xml-declaration'/>.  When the receiving entity receives the new initial stream header, it MUST generate a new stream ID (instead of re-using the old stream ID) before sending a new response stream header (which SHOULD be preceded by an XML declaration as described under <xref target='xml-declaration'/>).</t>
+        <t>On successful negotiation of a feature that necessitates a stream restart, both parties MUST consider the previous stream to be replaced but MUST NOT send a closing &lt;/stream&gt; tag and MUST NOT terminate the underlying TCP connection; instead, the parties MUST reuse the existing connection, which might be in a new state (e.g., encrypted as a result of TLS negotiation).  The initiating entity then MUST send a new initial stream header, which SHOULD be preceded by an XML declaration as described under <xref target='xml-declaration'/>.  When the receiving entity receives the new initial stream header, it MUST generate a new stream ID (instead of re-using the old stream ID) before sending a new response stream header (which SHOULD be preceded by an XML declaration as described under <xref target='xml-declaration'/>).</t>
       </section>
       <section title="Resending Features" anchor="streams-negotiation-resend">
-        <t>The receiving entity MUST send an updated list of stream features to the initiating entity after a stream restart, and MAY do so after completing negotiation of a stream feature that does not require a stream restart.  The list of updated features MAY be empty if there are no further features to be advertised or MAY include any combination of features.</t>
+        <t>The receiving entity MUST send an updated list of stream features to the initiating entity after a stream restart.  The list of updated features MAY be empty if there are no further features to be advertised or MAY include any combination of features.</t>
       </section>
       <section title="Completion of Stream Negotiation" anchor="streams-negotiation-complete">
-        <t>The receiving entity indicates completion of the stream negotiation process by sending to the initiating entity either an empty &lt;features/&gt; element or a &lt;features/&gt; element that contains only voluntary features.  After doing so, the receiving entity MAY send an empty &lt;features/&gt; element (e.g., after negotiation of such voluntary features) but MUST NOT send additional stream features to the initiating entity (if the receiving entity has new features to offer, preferably limited to mandatory-to-negotiate or security-critical features, it can simply close the stream using a &lt;reset/&gt; stream error and then advertise the new features when the initiating entity reconnects, preferably closing existing streams in a staggered way so that not all of the initiating entities reconnect at once).  Once stream negotiation is complete, the initiating entity is cleared to send XML stanzas over the stream for as long as the stream is maintained by both parties.</t>
+        <t>The receiving entity indicates completion of the stream negotiation process by sending to the initiating entity either an empty &lt;features/&gt; element or a &lt;features/&gt; element that contains only voluntary-to-negotiate features.  After doing so, the receiving entity MAY send an empty &lt;features/&gt; element (e.g., after negotiation of such voluntary-to-negotiate features) but MUST NOT send additional stream features to the initiating entity (if the receiving entity has new features to offer, preferably limited to mandatory-to-negotiate or security-critical features, it can simply close the stream using a &lt;reset/&gt; stream error and then advertise the new features when the initiating entity reconnects, preferably closing existing streams in a staggered way so that not all of the initiating entities reconnect at once).  Once stream negotiation is complete, the initiating entity is cleared to send XML stanzas over the stream for as long as the stream is maintained by both parties.</t>
         <t><list style='empty'><t>Informational Note: Resource binding as specified under <xref target='bind'/> is an historical exception to the foregoing rule, since it is mandatory-to-negotiate for clients but uses XML stanzas for negotiation purposes.</t></list></t>
         <t>The initiating entity MUST NOT attempt to send <xref target="stanzas">XML stanzas</xref> to entities other than itself (i.e., the client's connected resource or any other authenticated resource of the client's account) or the server to which it is connected until stream negotiation has been completed.  Even if the initiating entity does attempt to do so, the receiving entity MUST NOT accept such stanzas and MUST return a &lt;not-authorized/&gt; stream error.  This rule applies to XML stanzas only (i.e., &lt;message/&gt;, &lt;presence/&gt;, and &lt;iq/&gt; elements qualified by the content namespace) and not to XML elements used for stream negotiation (e.g., elements used to complete <xref target='tls'>TLS negotiation</xref> or <xref target='sasl'>SASL negotiation</xref>).</t>
       </section>
       <section title="Determination of Addresses" anchor="streams-negotiation-address">
         <t>After the parties to an XML stream have completed the appropriate aspects of stream negotiation (typically <xref target='sasl'>SASL negotiation</xref> and, for client-to-server streams, <xref target="bind">resource binding</xref>) the receiving entity for a stream MUST determine the initiating entity's JID.</t>
         <t>For client-to-server communication, the client's bare JID (&lt;localpart@domainpart&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the client during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the server from the authentication identity if no authorization identity was specified during SASL negotiation.  The resourcepart of the full JID (&lt;localpart@domainpart/resourcepart&gt;) MUST be the resource negotiated by the client and server during <xref target="bind">resource binding</xref>.  A client MUST NOT attempt to guess at its JID but instead MUST consider its JID to be whatever the server returns to it during resource binding.  The server MUST ensure that the resulting JID (including localpart, domainpart, resourcepart, and separator characters) conforms to the canonical format for XMPP addresses defined in <xref target='XMPP-ADDR'/>; to meet this restriction, the server MAY replace the JID sent by the client with the canonicalized JID as determined by the server and communicate that JID to the client during resource binding.</t>
-        <t>For server-to-server communication, the initiating server's JID (&lt;domainpart&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating server during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the receiving server from the authentication identity if no authorization identity was specified during SASL negotiation; in the absence of SASL negotiation, the receiving server MAY consider the authorization identity to be an identity negotiated within the relevant verification protocol (e.g., the 'from' attribute of the &lt;result/&gt; element in Server Dialback <xref target='XEP-0220'/>).</t>
+        <t>For server-to-server communication, the initiating server's bare JID (&lt;domainpart&gt;) MUST be the authorization identity (as defined by <xref target="SASL"/>), either (1) as directly communicated by the initiating server during <xref target='sasl'>SASL negotiation</xref> or (2) as derived by the receiving server from the authentication identity if no authorization identity was specified during SASL negotiation; in the absence of SASL negotiation, the receiving server MAY consider the authorization identity to be an identity negotiated within the relevant verification protocol (e.g., the 'from' attribute of the &lt;result/&gt; element in Server Dialback <xref target='XEP-0220'/>).</t>
         <t><list style='empty'><t>Security Note: Because it is possible for a third party to tamper with information that is sent over the stream before a security layer such as TLS is successfully negotiated, it is advisable for the receiving server to treat any such unprotected information with caution.</t></list></t>
       </section>
 
@@ -378,10 +381,9 @@ R: <stream:features/>
         <t>We summarize the foregoing rules in the following non-normative flow chart for the stream negotiation process, presented from the perspective of the initiating entity.</t>
         <figure anchor='figure-3' title='Stream Negotiation Flow Chart'>
           <artwork><![CDATA[
-                     +------------+
-                     |  open TCP  |
-                     | connection |
-                     +------------+
+                +---------------------+
+                | open TCP connection |
+                +---------------------+
                            |
                            v
                     +---------------+
@@ -399,7 +401,7 @@ R: <stream:features/>
                     +----------------+                         |
                     | receive stream |                         |
 +------------------>| features       |                         |
-^                   +----------------+                         |
+^   {OPTIONAL}      +----------------+                         |
 |                          |                                   |
 |                          v                                   |
 |       +<-----------------+                                   |
@@ -412,13 +414,10 @@ R: <stream:features/>
 |       |           | MAY negotiate |    | MUST negotiate |    |
 |       |           | any or none   |    | one feature    |    |
 |       |           +---------------+    +----------------+    |
-|       |                  |                     |             |
-|       v                  v                     |             |
-|   +----------+      +-----------+              |             |
-|   | process  |<-----| negotiate |              |             |
-|   | complete |  no  | a feature |              |             |
-|   +----------+      +-----------+              |             |
-|                          |                     |             |
+|       v                  |                     |             |
+|   +---------+            v                     |             |
+|   |  DONE   |<----- {negotiate?}               |             |
+|   +---------+   no       |                     |             |
 |                     yes  |                     |             |
 |                          v                     v             |
 |                          +--------->+<---------+             |
@@ -488,7 +487,7 @@ S: </stream:stream>
         <t>Even if the underlying TCP connection is alive, the peer might never respond to XMPP traffic that the entity sends, whether normal stanzas or specialized stream-checking traffic such as the application-level pings defined in <xref target="XEP-0199"/> or the more comprehensive Stream Management protocol defined in <xref target="XEP-0198"/>.  In this case, it is appropriate for the entity to close a broken stream using the &lt;connection-timeout/&gt; stream error described under <xref target='streams-error-conditions-connection-timeout'/>.</t>
       </section>
       <section title="Idle Peer" anchor="streams-silence-idle">
-        <t>Even if the underlying TCP connection is alive and the stream is not broken, the peer might have sent no stanzas for a certain period of time.  In this case, the peer SHOULD close the stream using the handshake described under <xref target='streams-close'/>.  If the idle peer does not close the stream, the other party MAY either close the stream using the handshake described under <xref target='streams-close'/> or return a stream error (e.g., &lt;resource-constraint/&gt; if the entity has reached a limit on the number of open TCP connections or &lt;policy-violation/&gt; if the connection has exceeded a local timeout policy).  However, consistent with the order of layers (specified under <xref target='security-layers'/>), the other party is advised to verify that the underlying TCP connection is alive and the stream is unbroken (as described above) before concluding that the peer is idle.  Furthermore, it is preferable to be liberal in accepting idle peers, since experience has shown that doing so improves the reliability of communication over XMPP networks and that it is typically more efficient to maintain a stream between two servers than to aggressively timeout such a stream.</t>
+        <t>Even if the underlying TCP connection is alive and the stream is not broken, the peer might have sent no stanzas for a certain period of time.  In this case, the peer itself MAY close the stream (as described under <xref target='streams-close'/>) rather than leaving an unused stream open.  If the idle peer does not close the stream, the other party MAY either close the stream using the handshake described under <xref target='streams-close'/> or return a stream error (e.g., &lt;resource-constraint/&gt; if the entity has reached a limit on the number of open TCP connections or &lt;policy-violation/&gt; if the connection has exceeded a local timeout policy).  However, consistent with the order of layers (specified under <xref target='security-layers'/>), the other party is advised to verify that the underlying TCP connection is alive and the stream is unbroken (as described above) before concluding that the peer is idle.  Furthermore, it is preferable to be liberal in accepting idle peers, since experience has shown that doing so improves the reliability of communication over XMPP networks and that it is typically more efficient to maintain a stream between two servers than to aggressively timeout such a stream.</t>
       </section>
       <section title="Use of Checking Methods" anchor="streams-silence-check">
         <t>Implementers are advised to support whichever stream-checking and connection-checking methods they deem appropriate, but to carefully weigh the network impact of such methods against the benefits of discovering broken streams and dead TCP connections in a timely manner.  The length of time between the use of any particular check is very much a matter of local service policy and depends strongly on the network environment and usage scenarios of a given deployment and connection type; at the time of writing, it is RECOMMENDED that any such check be performed not more than once every 5 minutes and that, ideally, such checks will be initiated by clients rather than servers.  Those who implement XMPP software and deploy XMPP services are encouraged to seek additional advice regarding appropriate timing of stream-checking and connection-checking methods, particularly when power-constrained devices are being used (e.g., in mobile environments).</t>
@@ -497,7 +496,7 @@ S: </stream:stream>
 
     <section title="Stream Attributes" anchor="streams-attr">
       <t>The attributes of the root &lt;stream/&gt; element are defined in the following sections.</t>
-      <t><list style='empty'><t>Security Note: Until and unless the confidentiality and integrity of a stream header is ensured via Transport Layer Security as described under <xref target='tls'/>, the attributes provided in a stream header could be tampered with by an attacker.</t></list></t>
+      <t><list style='empty'><t>Security Note: Until and unless the confidentiality and integrity of a stream header is ensured via Transport Layer Security as described under <xref target='tls'/> or a SASL security layer (e.g., GSSAPI), the attributes provided in a stream header could be tampered with by an attacker.</t></list></t>
       <t><list style='empty'><t>Implementation Note: The attributes of the root &lt;stream/&gt; element are not prepended by a namespace prefix because, as explained in <xref target="XML-NAMES"/>, "[d]efault namespace declarations do not apply directly to attribute names; the interpretation of unprefixed attributes is determined by the element on which they appear."</t></list></t>
       <section title='from' anchor='streams-attr-from'>
         <t>The 'from' attribute communicates an XMPP identity of the entity sending the stream element.</t>
@@ -528,7 +527,7 @@ I: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>For response stream headers in both client-to-server and server-to-server communication, the receiving entity MUST include the 'from' attribute and MUST set the value to one of the receiving entity's hostnames (which MAY be a hostname other than that specified in the 'to' attribute of the initial stream header; see <xref target='streams-error-rules-host'/> and <xref target='streams-error-conditions-host-unknown'/>).</t>
+        <t>For response stream headers in both client-to-server and server-to-server communication, the receiving entity MUST include the 'from' attribute and MUST set the value to one of the receiving entity's FQDNs (which MAY be an FQDN other than that specified in the 'to' attribute of the initial stream header; see <xref target='streams-error-rules-host'/> and <xref target='streams-error-conditions-host-unknown'/>).</t>
         <figure>
           <artwork><![CDATA[
 R: <?xml version='1.0'?>
@@ -546,7 +545,7 @@ R: <?xml version='1.0'?>
         <t><list style='empty'><t>Interoperability Note: It is possible that implementations based on <xref target='RFC3920'/> will not include the 'from' address on stream headers; an entity SHOULD be liberal in accepting such stream headers.</t></list></t>
       </section>
       <section title='to' anchor='streams-attr-to'>
-        <t>For initial stream headers in both client-to-server and server-to-server communication, the initiating entity MUST include the 'to' attribute and MUST set its value to a hostname that the initiating entity knows or expects the receiving entity to service.  (The same information can be provided in other ways, such as a server name indication during TLS negotiation as described in <xref target='TLS-EXT'/>.)</t>
+        <t>For initial stream headers in both client-to-server and server-to-server communication, the initiating entity MUST include the 'to' attribute and MUST set its value to an FQDN that the initiating entity knows or expects the receiving entity to service.  (The same information can be provided in other ways, such as a server name indication during TLS negotiation as described in <xref target='TLS-EXT'/>.)</t>
         <figure>
           <artwork><![CDATA[
 I: <?xml version='1.0'?>
@@ -573,7 +572,7 @@ R: <?xml version='1.0'?>
        xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>For response stream headers in server-to-server communication, the receiving entity MUST include a 'to' attribute in the response stream header and MUST set its value to the hostname specified in the 'from' attribute of the initial stream header.</t>
+        <t>For response stream headers in server-to-server communication, the receiving entity MUST include a 'to' attribute in the response stream header and MUST set its value to the domainpart specified in the 'from' attribute of the initial stream header.</t>
         <figure>
           <artwork><![CDATA[
 R: <?xml version='1.0'?>
@@ -628,9 +627,9 @@ I: <?xml version='1.0'?>
         <t>For response stream headers, the receiving entity MUST include the 'xml:lang' attribute.  The following rules apply:</t>
         <t>
           <list style='symbols'>
-            <t>If the initiating entity included an 'xml:lang' attribute in its initial stream header and the receiving entity supports that language in the human-readable XML character data that it generates and sends to the initiating entity (e.g., in the &lt;text/&gt; element for stream and stanza errors), the value of the 'xml:lang' attribute MUST be the identifier for the initiating entity's preferred language (e.g., "de-CH").</t>
-            <t>If the receiving entity supports a language that closely matches the initiating entity's preferred language (e.g., "de" instead of "de-CH"), then the value of the 'xml:lang' attribute SHOULD be the identifier for the matching language (e.g., "de") but MAY be the identifier for the default language of the receiving entity (e.g., "en").</t>
-            <t>If the receiving entity does not support the initiating entity's preferred language or a closely matching language (or if the initiating entity did not include the 'xml:lang' attribute in its initial stream header), then the value of the 'xml:lang' attribute MUST be the identifier for the default language of the receiving entity (e.g., "en").</t>
+            <t>If the initiating entity included an 'xml:lang' attribute in its initial stream header and the receiving entity supports that language in the human-readable XML character data that it generates and sends to the initiating entity (e.g., in the &lt;text/&gt; element for stream and stanza errors), the value of the 'xml:lang' attribute MUST be the identifier for the initiating entity's preferred language (e.g., "de-CH").<vspace blankLines='1'/></t>
+            <t>If the receiving entity supports a language that matches the initiating entity's preferred language according to the "lookup scheme" specified in Section 3.4 of <xref target='LANGMATCH'/> (e.g., "de" instead of "de-CH"), then the value of the 'xml:lang' attribute SHOULD be the identifier for the matching language (e.g., "de").<vspace blankLines='1'/></t>
+            <t>If the receiving entity does not support the initiating entity's preferred language or a matching language according to the lookup scheme (or if the initiating entity did not include the 'xml:lang' attribute in its initial stream header), then the value of the 'xml:lang' attribute MUST be the identifier for the default language of the receiving entity (e.g., "en").</t>
           </list>
         </t>
         <figure>
@@ -718,7 +717,7 @@ R: <?xml version='1.0'?>
   <message xmlns='jabber:client'>
     <body>foo</body>
   </message>
-</stream:stream>
+</stream>
           ]]></artwork>
         </figure>
         <t>Historically, most XMPP implementations have used the content-namespace-as-default-namespace style rather than the prefix-free canonicalization style for stream headers; however, both styles are acceptable since they are semantically equivalent.</t>
@@ -738,7 +737,7 @@ R: <?xml version='1.0'?>
         <t>This rule also applies to first-level elements that look like stanzas but that are improperly namespaced and therefore really are not stanzas at all (see also <xref target='streams-ns-declarations'/>), for example:</t>
         <figure>
           <artwork><![CDATA[
-  <ns2:message xmlns:pre='http://example.org/ns2'
+  <ns2:message xmlns:ns2='http://example.org/ns2'
                from='romeo@example.net/resource1'
                to='juliet@example.com'>
     <body>hi</body>
@@ -756,7 +755,23 @@ R: <?xml version='1.0'?>
           </list>
         </t>
         <t><list style='empty'><t>Interoperability Note: For historical reasons, an implementation MAY accept only the prefix 'stream' for the stream namespace (resulting in prefixed names such as &lt;stream:stream&gt; and &lt;stream:features&gt;).  If an entity receives a stream header with a stream namespace prefix it does not accept, it MUST return a stream error to the sending entity, which SHOULD be &lt;bad-namespace-prefix/&gt; (although some existing implementations send &lt;bad-format/&gt; instead).</t></list></t>
-        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the content namespace if the content namespace is 'jabber:client' or 'jabber:server' (e.g., &lt;foo:presence/&gt;).  An XMPP entity MUST NOT accept data that violates this rule (in particular, an XMPP server MUST NOT route or deliver such data to another entity); instead it MUST either ignore the data or return a stream error (which SHOULD be &lt;bad-namespace-prefix/&gt;).</t>
+        <t>An implementation MUST NOT generate namespace prefixes for elements qualified by the content namespace (i.e., the default namespace for data sent over the stream) if the content namespace is 'jabber:client' or 'jabber:server'.  For example, the following is illegal:</t>
+        <figure>
+          <artwork><![CDATA[
+<stream:stream
+    from='juliet@im.example.com'
+    to='im.example.com'
+    version='1.0'
+    xml:lang='en'
+    xmlns='jabber:client'
+    xmlns:stream='http://etherx.jabber.org/streams'>
+
+  <foo:message xmlns:foo='jabber:client'>
+    <foo:body>foo</foo:body>
+  </foo:message>
+          ]]></artwork>
+        </figure>
+        <t>An XMPP entity MUST NOT accept data that violates this rule (in particular, an XMPP server MUST NOT route or deliver such data to another entity); instead it MUST either ignore the data or return a stream error (which SHOULD be &lt;bad-namespace-prefix/&gt;).</t>
         <t>Namespaces declared in a stream header MUST apply only to that stream (e.g., the 'jabber:server:dialback' namespace used in Server Dialback <xref target='XEP-0220'/>).  In particular, because XML stanzas intended for routing or delivery over streams with other entities will lose the namespace context declared in the header of the stream in which those stanzas originated, namespaces for extended content within such stanzas MUST NOT be declared in that stream header (see also <xref target='stanzas-extended'/>).  If either party to a stream declares such namespaces, the other party to the stream SHOULD close the stream with a stream error of &lt;invalid-namespace/&gt;.  In any case, an entity MUST ensure that such namespaces are properly declared (according to this section) when routing or delivering stanzas originating from such a stream over streams with other entities.</t>
       </section>
       <section title="XMPP Content Namespaces" anchor="streams-ns-xmpp">
@@ -765,28 +780,28 @@ R: <?xml version='1.0'?>
         <t>An implementation MAY refuse to support any other content namespaces as default namespaces.  If an entity receives a first-level child element qualified by a content namespace it does not support, it MUST return an &lt;invalid-namespace/&gt; stream error.</t>
         <t>Client implementations MUST support the 'jabber:client' content namespace as a default namespace.  The 'jabber:server' content namespace is out of scope for an XMPP client, and a client MUST NOT send stanzas qualified by the 'jabber:server' namespace.</t>
         <t>Server implementations MUST support as default content namespaces both the 'jabber:client' namespace (when the stream is used for communication between a client and a server) and the 'jabber:server' namespace (when the stream is used for communication between two servers).  When communicating with a connected client, a server MUST NOT send stanzas qualified by the 'jabber:server' namespace; when communicating with a peer server, a server MUST NOT send stanzas qualified by the 'jabber:client' namespace.</t>
-        <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose content namespace is 'jabber:client', if a server routes to a peer server a stanza it has received from a connected client then it needs to "re-scope" the stanza so that its content namespace is 'jabber:server'.  Similarly, if a server delivers to a connected client a stanza it has received from a peer server then it needs to "re-scope" the stanza so that its content namespace is 'jabber:client'.  This rule applies to XML stanzas as defined under <xref target='streams-fundamentals'/> (i.e., a first-level &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; element qualified by the 'jabber:client' or 'jabber:server' namespace), and by namespace inheritance to all child elements of a stanza; however the rule does not apply to elements qualified by namespaces other than 'jabber:client' and 'jabber:server' nor to any children of such elements (e.g., a &lt;message/&gt; element contained within an extension element (<xref target='stanzas-extended'/>) for reporting purposes).  Although it is not forbidden for an entity to generate stanzas in which an extension element contains a child element qualified by the 'jabber:client' or 'jabber:server' namespace, existing implementations handle such stanzas inconsistently; therefore implementers are advised to weigh the likely lack of interoperability against the possible utility of such stanzas.</t></list></t>
-      </section>
-    </section>
+        <t><list style='empty'><t>Implementation Note: Because a client sends stanzas over a stream whose content namespace is 'jabber:client', if a server routes to a peer server a stanza it has received from a connected client then it needs to "re-scope" the stanza so that its content namespace is 'jabber:server'.  Similarly, if a server delivers to a connected client a stanza it has received from a peer server then it needs to "re-scope" the stanza so that its content namespace is 'jabber:client'.  This rule applies to XML stanzas as defined under <xref target='streams-fundamentals'/> (i.e., a first-level &lt;message/&gt;, &lt;presence/&gt;, or &lt;iq/&gt; element qualified by the 'jabber:client' or 'jabber:server' namespace), and by namespace inheritance to all child elements of a stanza; however the rule does not apply to elements qualified by namespaces other than 'jabber:client' and 'jabber:server' nor to any children of such elements (e.g., a &lt;message/&gt; element contained within an extension element (<xref target='stanzas-extended'/>) for reporting purposes).  Although it is not forbidden for an entity to generate stanzas in which an extension element contains a child element qualified by the 'jabber:client' or 'jabber:server' namespace, existing implementations handle such stanzas inconsistently; therefore implementers are advised to weigh the likely lack of interoperability against the possible utility of such stanzas.  Finally, servers are advised to apply stanza re-scoping to other stream connection methods and alternative XMPP connection methods, such as those specified in <xref target="XEP-0124"/>, <xref target="XEP-0206"/>, <xref target="XEP-0114"/>, and <xref target="XEP-0225"/>.</t></list></t>
+              </section>
+            </section>
 
-    <section title="Stream Errors" anchor="streams-error">
-      <t>The root stream element MAY contain an &lt;error/&gt; child element that is prefixed by the stream namespace prefix.  The error child SHALL be sent by a compliant entity if it perceives that a stream-level error has occurred.</t>
-      <section title="Rules" anchor="streams-error-rules">
-        <t>The following rules apply to stream-level errors.</t>
-        <section title="Stream Errors Are Unrecoverable" anchor="streams-error-rules-unrecoverable">
-          <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send an &lt;error/&gt; element with an appropriate child element that specifies the error condition and immediately close the stream as described under <xref target='streams-close'/>.</t>
-          <figure>
-            <artwork><![CDATA[
-C: <message><body>No closing tag!</message>
+            <section title="Stream Errors" anchor="streams-error">
+              <t>The root stream element MAY contain an &lt;error/&gt; child element that is prefixed by the stream namespace prefix.  The error child SHALL be sent by a compliant entity if it perceives that a stream-level error has occurred.</t>
+              <section title="Rules" anchor="streams-error-rules">
+                <t>The following rules apply to stream-level errors.</t>
+                <section title="Stream Errors Are Unrecoverable" anchor="streams-error-rules-unrecoverable">
+                  <t>Stream-level errors are unrecoverable.  Therefore, if an error occurs at the level of the stream, the entity that detects the error MUST send an &lt;error/&gt; element with an appropriate child element that specifies the error condition and immediately close the stream as described under <xref target='streams-close'/>.</t>
+                  <figure>
+                    <artwork><![CDATA[
+        C: <message><body>No closing tag!</message>
 
-S: <stream:error>
-     <not-well-formed 
-         xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
+        S: <stream:error>
+             <not-well-formed 
+                 xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
    </stream:error>
    </stream:stream>
             ]]></artwork>
           </figure>
-          <t>The entity that generates the stream error then shall close the stream as explained under <xref target='streams-close'/>.</t>
+          <t>The entity that receives the stream error then shall close the stream as explained under <xref target='streams-close'/>.</t>
           <figure>
             <artwork><![CDATA[
 C: </stream:stream>
@@ -824,7 +839,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="Stream Errors When the Host is Unspecified or Unknown" anchor="streams-error-rules-host">
-          <t>If the initiating entity provides no 'to' attribute or provides an unknown host in the 'to' attribute and the error occurs during stream setup, the value of the 'from' attribute returned by the receiving entity in the stream header sent before closing the stream MUST be either an authoritative hostname for the receiving entity or the empty string.</t>
+          <t>If the initiating entity provides no 'to' attribute or provides an unknown host in the 'to' attribute and the error occurs during stream setup, the value of the 'from' attribute returned by the receiving entity in the stream header sent before closing the stream MUST be either an authoritative FQDN for the receiving entity or the empty string.</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -979,7 +994,7 @@ P: <stream:error>
           <t><list style='empty'><t>Interoperability Note: RFC 3920 specified that the &lt;connection-timeout/&gt; stream error is to be used if the peer has not generated any traffic over the stream for some period of time. That behavior is no longer recommended; instead, the error SHOULD be used only if the connected client or peer server has not responded to data sent over the stream.</t></list></t>
         </section>
         <section title="host-gone" anchor="streams-error-conditions-host-gone">
-          <t>The value of the 'to' attribute provided in the initial stream header corresponds to a hostname that is no longer serviced by the receiving entity.</t>
+          <t>The value of the 'to' attribute provided in the initial stream header corresponds to an FQDN that is no longer serviced by the receiving entity.</t>
           <t>(In the following example, the peer specifies a 'to' address of "foo.im.example.com" when connecting to the "im.example.com" server, but the server no longer hosts a service at that address.)</t>
           <figure>
             <artwork><![CDATA[
@@ -1009,7 +1024,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="host-unknown" anchor="streams-error-conditions-host-unknown">
-          <t>The value of the 'to' attribute provided in the initial stream header does not correspond to a hostname that is serviced by the receiving entity.</t>
+          <t>The value of the 'to' attribute provided in the initial stream header does not correspond to an FQDN that is serviced by the receiving entity.</t>
           <t>(In the following example, the peer specifies a 'to' address of "example.org" when connecting to the "im.example.com" server, but the server knows nothing of that address.)</t>
           <figure>
             <artwork><![CDATA[
@@ -1068,7 +1083,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="invalid-from" anchor="streams-error-conditions-invalid-from">
-          <t>The JID or hostname provided in a 'from' address is not a valid JID or does not match an authorized JID or validated domain as negotiated between servers via SASL or Server Dialback, or as negotiated between a client and a server via authentication and resource binding.</t>
+          <t>The JID or domainpart provided in a 'from' address is not a valid JID or does not match an authorized JID or validated domain as negotiated between servers via SASL or Server Dialback, or as negotiated between a client and a server via authentication and resource binding.</t>
           <t>(In the following example, a peer that has authenticated only as "example.net" attempts to send a stanza from an address at "example.org".)</t> 
           <figure>
             <artwork><![CDATA[
@@ -1155,7 +1170,7 @@ S: <?xml version='1.0'?>
        version='1.0'
        xml:lang='en'
        xmlns='jabber:client'
-       xmlns:stream='http://etherx.jabber.org/streams'
+       xmlns:stream='http://etherx.jabber.org/streams'>
 
 C: <message to='romeo@example.net'>
      <body>Wherefore art thou?</body>
@@ -1296,7 +1311,7 @@ S: <stream:error>
           </figure>
         </section>
         <section title="see-other-host" anchor="streams-error-conditions-see-other-host">
-          <t>The server will not provide service to the initiating entity but is redirecting traffic to another host under the administrative control of the same service provider.  The XML character data of the &lt;see-other-host/&gt; element returned by the server MUST specify the alternate hostname or IP address at which to connect, which MUST be a valid domainpart or a domainpart plus port number (separated by the ':' character in the form "domainpart:port").  If the domainpart is the same as the source domain, derived domain, or resolved IP address to which the initiating entity originally connected (differing only by the port number), then the initiating entity SHOULD simply attempt to reconnect at that address.  Otherwise, the initiating entity MUST resolve the hostname specified in the &lt;see-other-host/&gt; element as described under <xref target='tcp-resolution'/>.</t>
+          <t>The server will not provide service to the initiating entity but is redirecting traffic to another host under the administrative control of the same service provider.  The XML character data of the &lt;see-other-host/&gt; element returned by the server MUST specify the alternate FQDN or IP address at which to connect, which MUST be a valid domainpart or a domainpart plus port number (separated by the ':' character in the form "domainpart:port").  If the domainpart is the same as the source domain, derived domain, or resolved IP address to which the initiating entity originally connected (differing only by the port number), then the initiating entity SHOULD simply attempt to reconnect at that address.  Otherwise, the initiating entity MUST resolve the FQDN specified in the &lt;see-other-host/&gt; element as described under <xref target='tcp-resolution'/>.</t>
           <figure>
             <artwork><![CDATA[
 C: <?xml version='1.0'?>
@@ -1373,7 +1388,7 @@ S: <?xml version='1.0'?>
        version='1.0'
        xml:lang='en'
        xmlns='jabber:client'
-       xmlns:stream='http://etherx.jabber.org/streams'
+       xmlns:stream='http://etherx.jabber.org/streams'>
    <stream:error>
      <unsupported-encoding 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
@@ -1383,7 +1398,7 @@ S: <?xml version='1.0'?>
           </figure>
         </section>
         <section title="unsupported-feature" anchor="streams-error-conditions-unsupported-feature">
-          <t>The receiving entity has advertised a mandatory stream feature that the initiating entity does not support, and has offered no other mandatory feature alongside the unsupported feature.</t>
+          <t>The receiving entity has advertised a mandatory-to-negotiate stream feature that the initiating entity does not support, and has offered no other mandatory-to-negotiate feature alongside the unsupported feature.</t>
           <t>(In the following example, the receiving entity requires negotiation of an example feature but the initiating entity does not support the feature.)</t>
           <figure>
             <artwork><![CDATA[
@@ -1456,7 +1471,7 @@ S: <?xml version='1.0'?>
        version='1.0'
        xml:lang='en'
        xmlns='jabber:client'
-       xmlns:stream='http://etherx.jabber.org/streams'
+       xmlns:stream='http://etherx.jabber.org/streams'>
    <stream:error>
      <unsupported-version 
          xmlns='urn:ietf:params:xml:ns:xmpp-streams'/>
@@ -1613,8 +1628,8 @@ S: <stream:error>
           </list>
         </t>
         <t>Because it is relatively inexpensive to establish streams in XMPP, for the first two cases it is preferable to use an XMPP stream reset (as described under <xref target='streams-error-conditions-reset'/>) instead of performing TLS renegotiation.</t>
-        <t>The third case has improved security characteristics when the TLS client (which might be an XMPP server) presents credentials to the TLS server.  If communicating such credentials to an unauthenticated TLS server might leak private information, it can be appropriate to complete TLS negotiation for the purpose of authenticating the TLS server to the TLS client and then attempt TLS renegotiation for the purpose of authenticating the TLS client to the TLS server.</t>
-        <t>However, the third case is sufficiently rare that XMPP entities SHOULD NOT blindly attempt TLS renegotiation.</t>
+        <t>The third case has improved security characteristics when the TLS client (which might be an XMPP server) presents credentials to the TLS server.  If communicating such credentials to an unauthenticated TLS server might leak private information, it can be appropriate to complete TLS negotiation for the purpose of authenticating the TLS server to the TLS client and then attempt TLS renegotiation for the purpose of authenticating the TLS client to the TLS server.  However, this case is extremely rare because the credentials presented by an XMPP server or XMPP client acting as a TLS client are almost always public (i.e., a PKIX certificate) and therefore providing those credentials before authenticating the XMPP server acting as a TLS server would not in general leak private information.</t>
+        <t>As a result, implementers are encouraged to carefully weigh the costs and benefits of TLS renegotiation before supporting it in their software, and XMPP entities that act as TLS clients are discouraged from blindly attempting TLS renegotiation unless the certificate (or other credential information) sent during TLS negotiation is known to be private.</t>
         <t>If an entity that does not support TLS renegotiation detects a renegotiation attempt, then it MUST immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
         <t>If an entity that supports TLS renegotiation detects a TLS renegotiation attempt that does not use the TLS Renegotiation Extension <xref target='TLS-NEG'/>, then it MUST immediately close the underlying TCP connection without returning a stream error (since the violation has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t> 
         <t>Support for TLS renegotiation is strictly OPTIONAL.  However, implementations that support TLS renegotiation MUST implement and use the TLS Renegotiation Extension <xref target='TLS-NEG'/>.</t>
@@ -1625,7 +1640,7 @@ S: <stream:error>
     </section>
     <section title="Process" anchor="tls-process">
       <section title="Exchange of Stream Headers and Stream Features" anchor="tls-process-stream">
-        <t>The initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity.</t>
+        <t>The initiating entity resolves the FQDN of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity.</t>
         <figure>
           <artwork><![CDATA[
 I: <stream:stream
@@ -1647,11 +1662,11 @@ R: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
         <t>The receiving entity then MUST send stream features to the initiating entity.  If the receiving entity supports TLS, the stream features MUST include an advertisement for support of STARTTLS negotiation, i.e., a &lt;starttls/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-tls' namespace.</t>
-        <t>If the receiving entity considers STARTTLS negotiation to be mandatory, the &lt;starttls/&gt; element SHOULD contain an empty &lt;required/&gt; child element.</t>
+        <t>If the receiving entity considers STARTTLS negotiation to be mandatory-to-negotiate, the &lt;starttls/&gt; element SHOULD contain an empty &lt;required/&gt; child element.</t>
         <figure>
           <artwork><![CDATA[
 R: <stream:features>
@@ -1712,17 +1727,17 @@ R: <proceed xmlns='urn:ietf:params:xml:ns:xmpp-tls'/>
               <t>The entities MUST NOT send any further XML data until the TLS negotiation is complete.<vspace blankLines='1'/></t>
               <t>When using any of the mandatory-to-implement (MTI) ciphersuites specified under <xref target='security-mti'/>, the receiving entity MUST present a certificate.<vspace blankLines='1'/></t>
               <t>So that mutual certificate authentication will be possible, the receiving entity SHOULD send a certificate request to the initiating entity and the initiating entity SHOULD send a certificate (if available) to the receiving entity.<vspace blankLines='1'/></t>
-              <t>The receiving entity SHOULD choose which certificate to present based on the 'to' attribute of the initial stream header.<vspace blankLines='1'/></t>
+              <t>The receiving entity SHOULD choose which certificate to present based on the domainpart contained in the 'to' attribute of the initial stream header (in essence, this domainpart is functionally equivalent to the Server Name Indication defined for TLS in <xref target='TLS-EXT'/>).<vspace blankLines='1'/></t>
               <t>To determine if the TLS negotiation will succeed, the initiating entity MUST attempt to validate the receiving entity's certificate in accordance with the certificate validation procedures specified under <xref target="security-certificates-validation"/>.<vspace blankLines='1'/></t>
               <t>If the initiating entity presents a certificate, the receiving entity too MUST attempt to validate the initiating entity's certificate in accordance with the certificate validation procedures specified under <xref target="security-certificates-validation"/>.<vspace blankLines='1'/></t>
-              <t>Following successful TLS negotiation, all further data transmitted by either party MUST be encrypted.</t>
+              <t>Following successful TLS negotiation, all further data transmitted by either party MUST be protected with the negotiated algorithms, keys, and secrets (i.e., encrypted, integrity-protected, or both depending on the ciphersuite used).</t>
             </list>
           </t>
           <t><list style='empty'><t>Security Note: See <xref target="security-mti"/> regarding ciphersuites that MUST be supported for TLS; naturally, other ciphersuites MAY be supported as well.</t></list></t>
         </section>
         <section title="TLS Failure" anchor="tls-process-neg-failure">
           <t>If the TLS negotiation results in failure, the receiving entity MUST terminate the TCP connection.</t>
-          <t>The receiving entity MUST NOT send a closing &lt;/stream&gt; tag before terminating the TCP connection, since the receiving entity and initiating entity MUST consider the original stream to be replaced upon failure of the TLS negotiation.</t>
+          <t>The receiving entity MUST NOT send a closing &lt;/stream&gt; tag before terminating the TCP connection (since the failure has occurred at the TLS layer, not the XMPP layer; see <xref target='security-layers'/>).</t>
           <t>The initiating entity MAY attempt to reconnect as explained under <xref target='tcp-reconnect'/>, with or without attempting TLS negotiation (in accordance with local service policy, user-configured preferences, etc.).</t>
         </section>
         <section title="TLS Success" anchor="tls-process-neg-success">
@@ -1755,7 +1770,7 @@ R: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
                   ]]></artwork>
                 </figure>
               <vspace blankLines='1'/></t>
@@ -1765,6 +1780,8 @@ R: <stream:stream
 R: <stream:features>
      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
        <mechanism>EXTERNAL</mechanism>
+       <mechanism>SCRAM-SHA-1-PLUS</mechanism>
+       <mechanism>SCRAM-SHA-1</mechanism>
        <mechanism>PLAIN</mechanism>
      </mechanisms>
    </stream:features>
@@ -1793,10 +1810,10 @@ R: <stream:features>
         <t>After SASL negotiation, the parties MUST restart the stream.</t>
       </section>
       <section title="Mechanism Preferences" anchor="sasl-rules-preferences">
-        <t>Any entity that will act as a SASL client or a SASL server MUST maintain an ordered list of its preferred SASL mechanisms according to the client or server, where the list is ordered according to local policy or user configuration (which SHOULD be in order of perceived strength to enable the strongest authentication possible).  A server MUST offer and a client MUST try SASL mechanisms in preference order.  For example, if the server offers the ordered list "PLAIN SCRAM-SHA-1 GSSAPI" or "SCRAM-SHA-1 GSSAPI PLAIN" but the client's ordered list is "GSSAPI SCRAM-SHA-1", the client MUST try GSSAPI first and then SCRAM-SHA-1 but MUST NOT try PLAIN (since PLAIN is not on its list).</t>
+        <t>Any entity that will act as a SASL client or a SASL server MUST maintain an ordered list of its preferred SASL mechanisms according to the client or server, where the list is ordered according to local policy or user configuration (which SHOULD be in order of perceived strength to enable the strongest authentication possible).  The initiating entity MUST maintain its own preference order independent of the preference order of the receiving entity.  A server MUST offer and a client MUST try SASL mechanisms in preference order.  For example, if the server offers the ordered list "PLAIN SCRAM-SHA-1 GSSAPI" or "SCRAM-SHA-1 GSSAPI PLAIN" but the client's ordered list is "GSSAPI SCRAM-SHA-1", the client MUST try GSSAPI first and then SCRAM-SHA-1 but MUST NOT try PLAIN (since PLAIN is not on its list).</t>
       </section>
       <section title="Mechanism Offers" anchor="sasl-rules-offers">
-        <t>If the receiving entity considers <xref target='tls'>TLS negotiation</xref> to be mandatory before it will accept authentication with a particular SASL mechanism, it MUST NOT advertise that mechanism in its list of available SASL mechanisms before TLS negotiation has been completed.</t>
+        <t>If the receiving entity considers <xref target='tls'>TLS negotiation</xref> to be mandatory-to-negotiate before it will accept authentication with a particular SASL mechanism, it MUST NOT advertise that mechanism in its list of available SASL mechanisms before TLS negotiation has been completed.</t>
         <t>The receiving entity SHOULD offer the SASL EXTERNAL mechanism if both of the following conditions hold:</t>
         <t>
           <list style='numbers'>
@@ -1826,13 +1843,13 @@ R: <stream:features>
         <t>Some SASL mechanisms (e.g., CRAM-MD5, DIGEST-MD5, and SCRAM) specify that the authentication identity used in the context of such mechanisms is a "simple user name" (see Section 2 of <xref target='SASL'/> as well as <xref target='SASLPREP'/>).  The exact form of the simple user name in any particular mechanism or deployment thereof is a local matter, and a simple user name does not necessarily map to an application identifier such as a JID or JID component (e.g., a localpart).  However, in the absence of local information provided by the server, an XMPP client SHOULD assume that the authentication identity for such a SASL mechanism is a simple user name equal to the localpart of the user's JID.</t>
       </section>
       <section title="Authorization Identity" anchor="sasl-rules-authzid">
-        <t>An authorization identity is an optional identity specified by the initiating entity; in client-to-server streams it is typically used by an administrator to perform some management task on behalf of another user, whereas in server-to-server streams it is typically used to specify a particular application at a service (e.g., a multi-user chat server at conference.example.com that is hosted by the example.com XMPP service).  If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity SHOULD provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it SHOULD NOT provide an authorization identity.</t>
+        <t>An authorization identity is an optional identity specified by the initiating entity; in client-to-server streams it is typically used by an administrator to perform some management task on behalf of another user, whereas in server-to-server streams it is typically used to specify a particular application at a service (e.g., a multi-user chat server at conference.example.com that is hosted by the example.com XMPP service).  If the initiating entity wishes to act on behalf of another entity and the selected SASL mechanism supports transmission of an authorization identity, the initiating entity MUST provide an authorization identity during SASL negotiation.  If the initiating entity does not wish to act on behalf of another entity, it MUST NOT provide an authorization identity.</t>
         <t>In the case of client-to-server communication, the value of an authorization identity MUST be a bare JID (&lt;localpart@domainpart&gt;) and not a full JID (&lt;localpart@domainpart/resourcepart&gt;).</t>
         <t>In the case of server-to-server communication, the value of an authorization identity MUST be a domainpart only (&lt;domainpart&gt;).</t>
         <t>If the initiating entity provides an authorization identity during SASL negotiation, the receiving entity is responsible for verifying that the initiating entity is in fact allowed to assume the specified authorization identity; if not, the receiving entity MUST return an &lt;invalid-authzid/&gt; SASL error as described under <xref target='sasl-errors-invalid-authzid'/>.</t>
       </section>
       <section title="Realms" anchor="sasl-rules-realms">
-        <t>The receiving entity MAY include a realm when negotiating certain SASL mechanisms.  If the receiving entity does not communicate a realm, the initiating entity MUST NOT assume that any realm exists.  The realm MUST be used only for the purpose of authentication; in particular, an initiating entity MUST NOT attempt to derive an XMPP hostname from the realm information provided by the receiving entity.</t>
+        <t>The receiving entity MAY include a realm when negotiating certain SASL mechanisms (e.g., both the GSSAPI and DIGEST-MD5 mechanisms allow the authentication exchange to include a realm, though in different ways, whereas the EXTERNAL, SCRAM, and PLAIN mechanisms do not).  If the receiving entity does not communicate a realm, the initiating entity MUST NOT assume that any realm exists.  The realm MUST be used only for the purpose of authentication; in particular, an initiating entity MUST NOT attempt to derive an XMPP domainpart from the realm information provided by the receiving entity.</t>
       </section>
       <section title="Round Trips" anchor="sasl-rules-roundtrips">
         <t><xref target='SASL'/> specifies that a using protocol such as XMPP can define two methods by which the protocol can save round trips where allowed for the SASL mechanism:</t>
@@ -1848,7 +1865,7 @@ R: <stream:features>
     <section title="Process" anchor="sasl-process">
       <t>The process for SASL negotiation is as follows.</t>
       <section title="Exchange of Stream Headers and Stream Features" anchor="sasl-process-stream">
-        <t>If SASL negotiation follows successful <xref target='tls'>STARTTLS negotiation</xref>, then the SASL negotiation occurs over the encrypted stream that has already been negotiated.  If not, the initiating entity resolves the hostname of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity.</t>
+        <t>If SASL negotiation follows successful <xref target='tls'>STARTTLS negotiation</xref>, then the SASL negotiation occurs over the encrypted stream that has already been negotiated.  If not, the initiating entity resolves the FQDN of the receiving entity as specified under <xref target='tcp'/>, opens a TCP connection to the advertised port at the resolved IP address, and sends an initial stream header to the receiving entity.  In either case, the receiving entity will receive an initial stream from the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
 I: <stream:stream
@@ -1860,7 +1877,7 @@ I: <stream:stream
      xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>The receiving entity MUST send a response stream header to the initiating entity (for which it MUST generate a new stream ID instead of re-using the old stream ID).</t>
+        <t>When the receiving entity processes an initial stream header from the initiating entity, it MUST send a response stream header to the initiating entity (for which it MUST generate a unique stream ID; if TLS negotiation has already succeeded then this stream ID MUST be different from the stream ID sent before TLS negotiation completed).</t>
         <figure>
           <artwork><![CDATA[
 R: <stream:stream
@@ -1870,16 +1887,25 @@ R: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
-        <t>The receiving entity also MUST send stream features to the initiating entity.  If the receiving entity supports SASL, the stream features SHOULD include an advertisement for support of SASL negotiation, i.e., a &lt;mechanisms/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; typically the only case in which support for SASL negotiation would not be advertised here is before STARTTLS negotiation when TLS is required.</t>
-        <t>The &lt;mechanisms/&gt; element MUST contain one &lt;mechanism/&gt; child element for each authentication mechanism the receiving entity offers to the initiating entity.  The order of &lt;mechanism/&gt; elements in the XML indicates the preference order of the SASL mechanisms according to the receiving entity; however the initiating entity MUST maintain its own preference order independent of the preference order of the receiving entity.</t>
+        <t>The receiving entity also MUST send stream features to the initiating entity.  The stream features SHOULD include an advertisement for support of SASL negotiation, i.e., a &lt;mechanisms/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace.  Typically there are only three cases in which support for SASL negotiation would not be advertised here:</t>
+        <t>
+          <list style='symbols'>
+            <t>TLS negotiation needs to happen before SASL can be offered (i.e., TLS is required and the receiving entity is responding to the very first initial stream header it has received for this connection attempt).<vspace blankLines='1'/></t>
+            <t>SASL negotiation is impossible for a server-to-server connection (i.e., the initiating server has not provided a certificate that would enable strong authentication and therefore the receiving server is falling back to weak identity verification using the Server Dialback protocol <xref target='XEP-0220'/>).<vspace blankLines='1'/></t>
+            <t>SASL has already been negotiated (i.e., the receiving entity is responding to an initial stream header sent as a stream restart after successful SASL negotiation).</t>
+          </list>
+        </t>
+        <t>The &lt;mechanisms/&gt; element MUST contain one &lt;mechanism/&gt; child element for each authentication mechanism the receiving entity offers to the initiating entity.  As noted, the order of &lt;mechanism/&gt; elements in the XML indicates the preference order of the SASL mechanisms according to the receiving entity (which is not necessarily the preference order according to the initiating entity.</t>
         <figure>
           <artwork><![CDATA[
 R: <stream:features>
      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
        <mechanism>EXTERNAL</mechanism>
+       <mechanism>SCRAM-SHA-1-PLUS</mechanism>
+       <mechanism>SCRAM-SHA-1</mechanism>
        <mechanism>PLAIN</mechanism>
      </mechanisms>
    </stream:features>
@@ -1894,7 +1920,7 @@ I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
          mechanism='PLAIN'>AGp1bGlldAByMG0zMG15cjBtMzA=</auth>
           ]]></artwork>
         </figure>
-        <t>If the initiating entity subsequently sends another &lt;auth/&gt; element (even if the ongoing authentication handshake has not yet completed), the server SHOULD discard the ongoing handshake and begin a new handshake for the subsequently requested SASL mechanism.</t>
+        <t>If the initiating entity subsequently sends another &lt;auth/&gt; element and the ongoing authentication handshake has not yet completed, the receiving entity MUST discard the ongoing handshake and MUST process a new handshake for the subsequently requested SASL mechanism.</t>
       </section>
       <section title="Challenge-Response Sequence" anchor="sasl-process-neg-challengeresponse">
         <t>If necessary, the receiving entity challenges the initiating entity by sending a &lt;challenge/&gt; element qualified by the 'urn:ietf:params:xml:ns:xmpp-sasl' namespace; this element MAY contain XML character data (which MUST be generated in accordance with the definition of the SASL mechanism chosen by the initiating entity).</t>
@@ -1936,7 +1962,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
           ]]></artwork>
         </figure>
         <t>Where appropriate for the chosen SASL mechanism, the receiving entity SHOULD allow a configurable but reasonable number of retries (at least 2 and no more than 5); this enables the initiating entity (e.g., an end-user client) to tolerate incorrectly-provided credentials (e.g., a mistyped password) without being forced to reconnect.</t>
-        <t>If the initiating entity attempts a reasonable number of retries with the same SASL mechanism and all attempts fail, it MAY fall back to the next mechanism in its ordered list by sending a new &lt;auth/&gt; request to the receiving entity, this starting a new handshake for that authentication mechanism.  If all handshakes fail and there are no remaining mechanisms in the initiating entity's list of supported and acceptable mechanisms, the initiating entity SHOULD simply close the stream.</t>
+        <t>If the initiating entity attempts a reasonable number of retries with the same SASL mechanism and all attempts fail, it MAY fall back to the next mechanism in its ordered list by sending a new &lt;auth/&gt; request to the receiving entity, thus starting a new handshake for that authentication mechanism.  If all handshakes fail and there are no remaining mechanisms in the initiating entity's list of supported and acceptable mechanisms, the initiating entity SHOULD simply close the stream.</t>
         <t>If the initiating entity exceeds the number of retries, the receiving entity MUST return a stream error, which SHOULD be &lt;policy-violation/&gt; (although some existing implementations send &lt;not-authorized/&gt; instead).</t>
         <t><list style='empty'><t>Implementation Note: For server-to-server streams, if the receiving entity cannot offer the SASL EXTERNAL mechanism or any other SASL mechanism based on the security context established during TLS negotiation, the receiving entity MAY attempt to complete weak identity verification using the Server Dialback protocol <xref target='XEP-0220'/>; however, if according to local service policies weak identity verification is insufficient then the receiving entity SHOULD instead close the stream with a &lt;policy-violation/&gt; stream error.</t></list></t>
       </section>
@@ -1948,7 +1974,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
 R: <success xmlns='urn:ietf:params:xml:ns:xmpp-sasl'/>
           ]]></artwork>
         </figure>
-        <t><list style='empty'><t>Informational Note: The authorization identity communicated during SASL negotiation is used to determine the canonical address for the initiating client according to the receiving server, as described under <xref target='streams-negotiation-address'/>.</t></list></t>
+        <t><list style='empty'><t>Informational Note: For client-to-server streams, the authorization identity communicated during SASL negotiation is used to determine the canonical address for the initiating client according to the receiving server, as described under <xref target='streams-negotiation-address'/>.</t></list></t>
         <t>Upon receiving the &lt;success/&gt; element, the initiating entity MUST initiate a new stream over the existing TCP connection by sending a new initial stream header to the receiving entity.</t>
         <figure>
           <artwork><![CDATA[
@@ -1958,7 +1984,7 @@ I: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
         <t><list style='empty'><t>Implementation Note: The initiating entity MUST NOT send a closing &lt;/stream&gt; tag before sending the new initial stream header, since the receiving entity and initiating entity MUST consider the original stream to be replaced upon sending or receiving the &lt;success/&gt; element.</t></list></t>
@@ -2080,7 +2106,7 @@ R: <failure xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
         </figure>
       </section>
       <section title="invalid-mechanism" anchor="sasl-errors-invalid-mechanism">
-        <t>The initiating entity did not provide a mechanism or requested a mechanism that is not supported by the receiving entity; sent in reply to an &lt;auth/&gt; element.</t>
+        <t>The initiating entity did not specify a mechanism, or requested a mechanism that is not supported by the receiving entity; sent in reply to an &lt;auth/&gt; element.</t>
         <figure>
           <artwork><![CDATA[
 I: <auth xmlns='urn:ietf:params:xml:ns:xmpp-sasl'
@@ -2199,7 +2225,7 @@ S: <stream:features>
    </stream:features>
         ]]></artwork>
       </figure>
-      <t>Upon being informed that resource binding is mandatory, the client MUST bind a resource to the stream as described in the following sections.</t>
+      <t>Upon being informed that resource binding is mandatory-to-negotiate, the client MUST bind a resource to the stream as described in the following sections.</t>
     </section>
     <section title="Generation of Resource Identifiers" anchor="bind-generation">
       <t>A resourcepart MUST at a minimum be unique among the connected resources for that &lt;localpart@domainpart&gt;.  Enforcement of this policy is the responsibility of the server.</t>
@@ -2418,7 +2444,7 @@ S: <iq id='wy2xa82b4' type='result'>
           <t>
             <list style='numbers'>
               <t>A stanza MUST possess a 'to' attribute whose value is an XMPP address; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error.<vspace blankLines='1'/></t>
-              <t>The domainpart of the JID contained in the stanza's 'to' attribute MUST match the hostname of the receiving server (or any validated domain thereof) as communicated via SASL negotiation (see <xref target='sasl'/>), Server Dialback (see <xref target='XEP-0220'/>), or similar means; if a server receives a stanza that does not meet this restriction, it MUST generate a &lt;host-unknown/&gt; or &lt;host-gone/&gt; stream error.</t>
+              <t>The domainpart of the JID contained in the stanza's 'to' attribute MUST match the FQDN of the receiving server (or any validated domain thereof) as communicated via SASL negotiation (see <xref target='sasl'/>), Server Dialback (see <xref target='XEP-0220'/>), or similar means; if a server receives a stanza that does not meet this restriction, it MUST generate a &lt;host-unknown/&gt; or &lt;host-gone/&gt; stream error.</t>
             </list>
           </t>
         </section>
@@ -2438,9 +2464,9 @@ S: <iq id='wy2xa82b4' type='result'>
           <t>
             <list style='numbers'>
               <t>When the server receives an XML stanza from a client, the server MUST add a 'from' attribute to the stanza or override the 'from' attribute specified by the client, where the value of the 'from' attribute is the full JID (&lt;localpart@domainpart/resource&gt;) determined by the server for the connected resource that generated the stanza (see <xref target="streams-negotiation-address"/>), or the bare JID (&lt;localpart@domainpart&gt;) in the case of subscription-related presence stanzas (see <xref target='XMPP-IM'/>).<vspace blankLines='1'/></t>
-              <t>When the server generates a stanza from the server itself for delivery to the client, the stanza MUST include a 'from' attribute whose value is the bare JID (i.e., &lt;domain&gt;) of the server as agreed upon during stream negotiation (e.g., based on the 'to' attribute of the initial stream header).<vspace blankLines='1'/></t>
+              <t>When the server generates a stanza on its own behalf for delivery to the client from the server itself, the stanza MUST include a 'from' attribute whose value is the bare JID (i.e., &lt;domainpart&gt;) of the server as agreed upon during stream negotiation (e.g., based on the 'to' attribute of the initial stream header).<vspace blankLines='1'/></t>
               <t>When the server generates a stanza from the server for delivery to the client on behalf of the account of the connected client (e.g., in the context of data storage services provided by the server on behalf of the client), the stanza MUST either (a) not include a 'from' attribute or (b) include a 'from' attribute whose value is the account's bare JID (&lt;localpart@domainpart&gt;).<vspace blankLines='1'/></t>
-              <t>A server MUST NOT send to the client a stanza without a 'from' attribute if the stanza was not generated by the server (e.g., if it was generated by another client or another server); therefore, when a client receives a stanza that does not include a 'from' attribute, it MUST assume that the stanza is from the user's account on the server.</t>
+              <t>A server MUST NOT send to the client a stanza without a 'from' attribute if the stanza was not generated by the server on its own behalf (e.g., if it was generated by another client or another server and the server is merely delivering it to the client on behalf of some other entity); therefore, when a client receives a stanza that does not include a 'from' attribute, it MUST assume that the stanza is from the user's account on the server.</t>
             </list>
           </t>
         </section>
@@ -2449,7 +2475,7 @@ S: <iq id='wy2xa82b4' type='result'>
           <t>
             <list style='numbers'>
               <t>A stanza MUST possess a 'from' attribute whose value is an XMPP address; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;improper-addressing/&gt; stream error.<vspace blankLines='1'/></t>
-              <t>The domainpart of the JID contained in the stanza's 'from' attribute MUST match the hostname of the sending server (or any validated domain thereof) as communicated via SASL negotiation (see <xref target='sasl'/>), Server Dialback (see <xref target='XEP-0220'/>), or similar means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error.</t>
+              <t>The domainpart of the JID contained in the stanza's 'from' attribute MUST match the FQDN of the sending server (or any validated domain thereof) as communicated via SASL negotiation (see <xref target='sasl'/>), Server Dialback (see <xref target='XEP-0220'/>), or similar means; if a server receives a stanza that does not meet this restriction, it MUST generate an &lt;invalid-from/&gt; stream error.</t>
             </list>
           </t>
           <t>Enforcement of these rules helps to prevent certain denial of service attacks as described under <xref target='security-dos'/>.</t>
@@ -2509,10 +2535,10 @@ S: <presence from='romeo@example.net/orchard'
 
     <section title="Basic Semantics" anchor="stanzas-semantics">
       <section title="Message Semantics" anchor="stanzas-semantics-message">
-        <t>The &lt;message/&gt; stanza can be seen as a "push" mechanism whereby one entity pushes information to another entity, similar to the communications that occur in a system such as email.  All message stanzas SHOULD possess a 'to' attribute that specifies the intended recipient of the message; upon receiving such a stanza, a server SHOULD route or deliver it to the intended recipient (see <xref target="rules"/> for general routing and delivery rules related to XML stanzas).</t>
+        <t>The &lt;message/&gt; stanza can be seen as a "push" mechanism whereby one entity pushes information to another entity, similar to the communications that occur in a system such as email.  All message stanzas SHOULD possess a 'to' attribute that specifies the intended recipient of the message (see <xref target='stanzas-attributes-to'/> and <xref target='rules-noto'/>); upon receiving such a stanza, a server SHOULD if possible route or deliver it to the intended recipient (see <xref target="rules"/> for general routing and delivery rules related to XML stanzas).</t>
       </section>
       <section title="Presence Semantics" anchor="stanzas-semantics-presence">
-        <t>The &lt;presence/&gt; stanza can be seen as a specialized broadcast or "publish-subscribe" mechanism, whereby multiple entities receive information (in this case, network availability information) about an entity to which they have subscribed.  In general, a publishing entity (client) SHOULD send a presence stanza with no 'to' attribute, in which case the server to which the entity is connected SHOULD broadcast that stanza to all subscribed entities.  However, a publishing entity MAY also send a presence stanza with a 'to' attribute, in which case the server SHOULD route or deliver that stanza to the intended recipient.  See <xref target="rules"/> for general routing and delivery rules related to XML stanzas, and <xref target="XMPP-IM"/> for rules specific to presence applications.</t>
+        <t>The &lt;presence/&gt; stanza can be seen as a specialized broadcast or "publish-subscribe" mechanism, whereby multiple entities receive information (in this case, network availability information) about an entity to which they have subscribed.  In general, a publishing entity (client) SHOULD send a presence stanza with no 'to' attribute, in which case the server to which the entity is connected SHOULD if possible broadcast that stanza to all subscribed entities.  However, a publishing entity MAY also send a presence stanza with a 'to' attribute, in which case the server SHOULD if possible route or deliver that stanza to the intended recipient.  See <xref target="rules"/> for general routing and delivery rules related to XML stanzas, and <xref target="XMPP-IM"/> for rules specific to presence applications.</t>
       </section>
       <section title="IQ Semantics" anchor="stanzas-semantics-iq">
         <t>Info/Query, or IQ, is a request-response mechanism, similar in some ways to the Hypertext Transfer Protocol <xref target="HTTP"/>.  The semantics of IQ enable an entity to make a request of, and receive a response from, another entity.  The data content of the request and response is defined by the schema or other structural definition associated with the XML namespace that qualifies the direct child element of the IQ element (see <xref target='stanzas-extended'/>), and the interaction is tracked by the requesting entity through use of the 'id' attribute.  Thus, IQ interactions follow a common pattern of structured data exchange such as get/result or set/result (although an error can be returned in reply to a request if appropriate):</t>
@@ -2629,6 +2655,7 @@ Requesting                  Responding
       </section>
       <section title="Defined Conditions" anchor="stanzas-error-conditions">
         <t>The following conditions are defined for use in stanza errors.</t>
+        <t>The error-type value that is RECOMMENDED for each defined condition is the usual expected type; however, in some circumstances a different type might be more appropriate.</t>
         <section title="bad-request" anchor="stanzas-error-conditions-bad-request">
           <t>The sender has sent a stanza containing XML that does not conform to the appropriate schema or that cannot be processed (e.g., an IQ stanza that includes an unrecognized value of the 'type' attribute, or an element that is qualified by a recognized namespace but that violates the defined syntax for the element); the associated error type SHOULD be "modify".</t>
           <figure>
@@ -2974,7 +3001,7 @@ E: <presence
    </presence>
             ]]></artwork>
           </figure>
-          <t><list style='empty'><t>Security Note: An application receiving a stanza-level redirect SHOULD warn a human user of the redirection attempt and request approval before proceeding to communicated with the entity whose URI or IRI is contained in the XML character data of the &lt;redirect/&gt; element, because that entity might have a different identity or might enforce different security policies.  However, the end-to-end authentication or signing of XMPP stanzas could help to mitigate this risk, since it would enable the sender to determine if the entity to which it has been redirected has the same identity as the entity it originally attempted to contact.</t></list></t>
+          <t><list style='empty'><t>Security Note: An application receiving a stanza-level redirect SHOULD warn a human user of the redirection attempt and request approval before proceeding to communicate with the entity whose URI or IRI is contained in the XML character data of the &lt;redirect/&gt; element, because that entity might have a different identity or might enforce different security policies.  However, the end-to-end authentication or signing of XMPP stanzas could help to mitigate this risk, since it would enable the sender to determine if the entity to which it has been redirected has the same identity as the entity it originally attempted to contact.</t></list></t>
         </section>
         <section title="registration-required" anchor="stanzas-error-conditions-registration-required">
           <t>The requesting entity is not authorized to access the requested service because prior registration is necessary (examples of prior registration include members-only rooms in XMPP multi-user chat <xref target='XEP-0045'/> and gateways to non-XMPP instant messaging services, which traditionally required registration in order to use the gateway <xref target='XEP-0100'/>); the associated error type SHOULD be "auth".</t>
@@ -3310,7 +3337,7 @@ S: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
         <figure>
@@ -3369,7 +3396,7 @@ S: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
 
 S: <stream:features>
      <mechanisms xmlns='urn:ietf:params:xml:ns:xmpp-sasl'>
@@ -3438,7 +3465,7 @@ C: <stream:stream
      version='1.0'
      xml:lang='en'
      xmlns='jabber:client'
-     xmlns:stream='http://etherx.jabber.org/streams'
+     xmlns:stream='http://etherx.jabber.org/streams'>
           ]]></artwork>
         </figure>
       </section>
@@ -3460,7 +3487,7 @@ S: <stream:features>
    </stream:features>
           ]]></artwork>
         </figure>
-        <t>Upon being informed that resource binding is mandatory, the client needs to bind a resource to the stream; here we assume that the client submits a human-readable text string.</t>
+        <t>Upon being informed that resource binding is mandatory-to-negotiate, the client needs to bind a resource to the stream; here we assume that the client submits a human-readable text string.</t>
         <figure>
           <preamble>Step 15: Client binds a resource:</preamble>
           <artwork><![CDATA[
@@ -3762,8 +3789,8 @@ S2: </stream>
       </section>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
-      <t>If the domainpart of the JID contained in the 'to' attribute does not match one of the configured hostnames of the server, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  As described in the following sections, there are two possible cases.</t>
-      <t><list style='empty'><t>Security Note: These rules apply only client-to-server streams.  As described under <xref target='stanzas-attributes-to-s2s'/>, a server MUST NOT accept a stanza over a server-to-server stream if the domainpart of the JID in the 'to' attribute does not match a hostname serviced by the receiving server.</t></list></t>
+      <t>If the domainpart of the JID contained in the 'to' attribute does not match one of the configured FQDNs of the server, the server SHOULD attempt to route the stanza to the remote domain (subject to local service provisioning and security policies regarding inter-domain communication, since such communication is optional for any given deployment).  As described in the following sections, there are two possible cases.</t>
+      <t><list style='empty'><t>Security Note: These rules apply only client-to-server streams.  As described under <xref target='stanzas-attributes-to-s2s'/>, a server MUST NOT accept a stanza over a server-to-server stream if the domainpart of the JID in the 'to' attribute does not match an FQDN serviced by the receiving server.</t></list></t>
       <section title="Existing Stream" anchor="rules-remote-existing">
         <t>If a server-to-server stream already exists between the two domains, the sender's server will attempt to route the stanza to the authoritative server for the remote domain over the existing stream.</t>
       </section>
@@ -3771,7 +3798,7 @@ S2: </stream>
         <t>If there exists no server-to-server stream between the two domains, the sender's server will proceed as follows:</t>
         <t>
           <list style='numbers'>
-            <t>Resolve the hostname of the remote domain, as described under <xref target="security-reuse-dns"/>).<vspace blankLines='1'/></t>
+            <t>Resolve the FQDN of the remote domain, as described under <xref target="security-reuse-dns"/>).<vspace blankLines='1'/></t>
             <t>Negotiate a server-to-server stream between the two domains (as defined under <xref target='tls'/> and <xref target='sasl'/>).<vspace blankLines='1'/></t>
             <t>Route the stanza to the authoritative server for the remote domain over the newly-established stream.</t>
           </list>
@@ -3783,16 +3810,16 @@ S2: </stream>
       </section>
     </section>
     <section title="Local Domain" anchor="rules-local">
-      <t>If the hostname of the domainpart of the JID contained in the 'to' attribute matches one of the configured hostnames of the server, the server MUST first determine if the hostname is serviced by the server itself or by a specialized local service.  If the latter, the server MUST route the stanza to that service.  If the former, the server MUST proceed as follows.  However, the server MUST NOT route or "forward" the stanza to another domain because it is the server's responsibility to process all stanzas for which the domainpart of the 'to' address matches one of the configured hostnames of the server (among other things, this helps to prevent looping).</t>
-      <section title="Mere Domain" anchor="rules-local-domain">
-        <t>If the JID contained in the 'to' attribute is of the form &lt;domain&gt;, then the server MUST either (a) handle the stanza as appropriate for the stanza kind or (b) return an error stanza to the sender.</t>
+      <t>If the domainpart of the JID contained in the 'to' attribute matches one of the configured FQDNs of the server, the server MUST first determine if the FQDN is serviced by the server itself or by a specialized local service.  If the latter, the server MUST route the stanza to that service.  If the former, the server MUST proceed as follows.  However, the server MUST NOT route or "forward" the stanza to another domain because it is the server's responsibility to process all stanzas for which the domainpart of the 'to' address matches one of the configured FQDNs of the server (among other things, this helps to prevent looping).</t>
+      <section title="domainpart" anchor="rules-local-domain">
+        <t>If the JID contained in the 'to' attribute is of the form &lt;domainpart&gt;, then the server MUST either (a) handle the stanza as appropriate for the stanza kind or (b) return an error stanza to the sender.</t>
       </section>
-      <section title="Domain with Resource" anchor="rules-local-domainresource">
+      <section title="domainpart/resourcepart" anchor="rules-local-domainresource">
         <t>If the JID contained in the 'to' attribute is of the form &lt;domainpart/resourcepart&gt;, then the server MUST either (a) handle the stanza as appropriate for the stanza kind or (b) return an error stanza to the sender.</t>
       </section>
-      <section title="Localpart at Domain" anchor="rules-local-localpart">
+      <section title="localpart@domainpart" anchor="rules-local-barejid">
         <t>An address of this type is normally associated with an account on the server.  The following rules provide some general guidelines; more detailed rules in the context of instant messaging and presence applications are provided in <xref target='XMPP-IM'/>.</t>
-        <section title="No Such User" anchor="rules-local-localpart-nosuchuser">
+        <section title="No Such User" anchor="rules-local-barejid-nosuchuser">
           <t>If there is no local account associated with the &lt;localpart@domainpart&gt;, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
@@ -3802,7 +3829,7 @@ S2: </stream>
             </list>
           </t>
         </section>
-        <section title="Bare JID" anchor="rules-local-localpart-barejid">
+        <section title="User Exists" anchor="rules-local-barejid-userexists">
           <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart&gt;, how the stanza is processed depends on the stanza type.</t>
           <t>
             <list style='symbols'>
@@ -3812,10 +3839,10 @@ S2: </stream>
             </list>
           </t>
         </section>
-        <section title="Full JID" anchor="rules-local-localpart-fulljid">
-          <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart/resourcepart&gt; and there is no connected resource that exactly matches the full JID, the stanza SHOULD be processed as if the JID were of the form &lt;localpart@domainpart&gt;.</t>
-          <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart/resourcepart&gt; and there is a connected resource that exactly matches the full JID, the server MUST deliver the stanza to that connected resource.</t>
-        </section>
+      </section>
+      <section title="localpart@domainpart/resourcepart" anchor="rules-local-fulljid">
+        <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart/resourcepart&gt; and the user exists but there is no connected resource that exactly matches the full JID, the stanza SHOULD be processed as if the JID were of the form &lt;localpart@domainpart&gt;.</t>
+        <t>If the JID contained in the 'to' attribute is of the form &lt;localpart@domainpart/resourcepart&gt;, the user exists, and there is a connected resource that exactly matches the full JID, the server MUST deliver the stanza to that connected resource.</t>
       </section>
     </section>
   </section>
@@ -3860,7 +3887,7 @@ S2: </stream>
     </section>
 
     <section title="Validation" anchor="xml-validation">
-      <t>A server is not responsible for ensuring that XML data delivered to a client or routed to another server is valid, in accordance with the definition of "valid" provided in Section 2.8 of <xref target='XML'/>.  An implementation MAY choose to accept or provide only data that has been explicitly validated against the schemas provided in this document, but such behavior is OPTIONAL.  A client SHOULD NOT rely on the ability to send data that does not conform to the schemas, and SHOULD ignore any non-conformant elements or attributes on the incoming XML stream.</t>
+      <t>A server is not responsible for ensuring that XML data delivered to a client or routed to another server is valid, in accordance with the definition of "valid" provided in Section 2.8 of <xref target='XML'/>.  An implementation MAY choose to accept or provide only data that has been explicitly validated against the schemas provided in this document, but such behavior is OPTIONAL.  Clients are advised not to rely on the ability to send data that does not conform to the schemas, and SHOULD ignore any non-conformant elements or attributes on the incoming XML stream.</t>
       <t><list style='empty'><t>Informational Note: The terms "valid" and "well-formed" are distinct in XML.</t></list></t>
     </section>
 
@@ -4098,9 +4125,9 @@ XmppAddr ::= UTF8String
             <t>If the client certificate appears to be certified by a certification path terminating in a trust anchor (as described in Section 6.1 of <xref target="PKIX"/>), the server MUST check the certificate for any instances of the XmppAddr as described under <xref target='security-certificates-generation-xmppaddr'/>.  There are three possible sub-cases:</t>
             <t>
               <list style='hanging'>
-                <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server; the server SHOULD use this represented JID as the validated identity of the client.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #2:'>The server finds more than one XmppAddr for which the domainpart of the represented JID matches one of the configured hostnames of the server; the server SHOULD use one of these represented JIDs as the validated identity of the client, choosing among them according to local service policies or based on the 'to' address of the initial stream header.<vspace blankLines='1'/></t>
-                <t hangText='Sub-Case #3:'>The server finds no XmppAddrs, or finds at least one XmppAddr but the domainpart of the represented JID does not match one of the configured hostnames of the server; the server MUST NOT use the represented JID (if any) as the validated identity of the client but instead MUST validate the identity of the client using other means.  If the identity cannot be so validated, depending on local service policy the server MAY abort the validation process and terminate the TLS negotiation.</t>
+                <t hangText='Sub-Case #1:'>The server finds one XmppAddr for which the domainpart of the represented JID matches one of the configured FQDNs of the server; the server SHOULD use this represented JID as the validated identity of the client.<vspace blankLines='1'/></t>
+                <t hangText='Sub-Case #2:'>The server finds more than one XmppAddr for which the domainpart of the represented JID matches one of the configured FQDNs of the server; the server SHOULD use one of these represented JIDs as the validated identity of the client, choosing among them based on the bare JID contained in the 'from' address of the initial stream header (if any), based on the domainpart contained in the 'to' address of the initial stream header, or in accordance with local service policies (such as a lookup in a user database based on other information contained in the client certificate).<vspace blankLines='1'/></t>
+                <t hangText='Sub-Case #3:'>The server finds no XmppAddrs, or finds at least one XmppAddr but the domainpart of the represented JID does not match one of the configured FQDNs of the server; the server MUST NOT use the represented JID (if any) as the validated identity of the client but instead MUST validate the identity of the client using other means in accordance with local service policies (such as a lookup in a user database based on other information contained in the client certificate).  If the identity cannot be so validated, the server MAY abort the validation process and terminate the TLS negotiation.</t>
               </list>
             </t>
           </section>
@@ -4134,7 +4161,7 @@ XmppAddr ::= UTF8String
         <t><list style='empty'><t>Interoperability Note: The SCRAM-SHA-1 or SASL-SCRAM-SHA-1-PLUS variants of the SCRAM mechanism replace the SASL DIGEST-MD5 mechanism as XMPP's mandatory-to-implement password-based method for authentication only.  For backward-compatibility with existing deployed infrastructure, implementations are encouraged to continue supporting the DIGEST-MD5 mechanism as specified in <xref target='DIGEST-MD5'/>; however, there are known interoperability issues with DIGEST-MD5 that make it impractical in the long term.</t></list></t>
       </section>
       <section title="For Confidentiality Only" anchor="security-mti-conf">
-        <t>For confidentiality only, servers SHOULD support TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite.</t>
+        <t>For confidentiality only, servers MUST support TLS with the TLS_RSA_WITH_AES_128_CBC_SHA ciphersuite.</t>
         <t><list style='empty'><t>Security Note: Because a connection with confidentiality only has weaker security properties than a connection with both confidentiality and authentication, it is RECOMMENDED for servers and clients to prefer connections with both qualities (e.g., by protecting the stream with TLS before attempting authentication with SASL).  In practice, confidentiality only is employed merely for server-to-server connections when the peer server does not present a certificate and the servers use Server Dialback <xref target='XEP-0220'/> for weak identity verification, but TLS is still desirable to protect the connection against casual eavesdropping.</t></list></t>
       </section>
       <section title="For Confidentiality and Authentication With Passwords" anchor="security-mti-bothpass">
@@ -4154,7 +4181,7 @@ XmppAddr ::= UTF8String
         <t>All uses of base 64 encoding MUST follow the definition in Section 4 of <xref target="BASE64"/> and padding bits MUST be set to zero.</t>
       </section>
       <section title="Use of DNS" anchor="security-reuse-dns">
-        <t>XMPP typically relies on the Domain Name System (specifically <xref target='DNS-SRV'/> records) to resolve a fully qualified domain name to an IP address before a client connects to a server or before a peer server connects to another server.  Before attempting to negotiate an XML stream, the initiating entity MUST NOT proceed until it has resolved the DNS domain name of the peer server as specified under <xref target='tcp'/> (although it is not necessary to resolve the DNS domain name before each connection attempt, because DNS resolution results can be temporarily cached in accordance with time-to-live values). However, in the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), a malicious attacker with access to the DNS server data, or able to cause spoofed answers to be cached in a recursive resolver, can potentially cause the initiating entity to connect to any XMPP server chosen by the attacker.  Deployment and validation of server certificates helps to prevent such attacks.</t>
+        <t>XMPP typically relies on the Domain Name System (specifically <xref target='DNS-SRV'/> records) to resolve a fully-qualified domain name to an IP address before a client connects to a server or before a peer server connects to another server.  Before attempting to negotiate an XML stream, the initiating entity MUST NOT proceed until it has resolved the DNS domain name of the peer server as specified under <xref target='tcp'/> (although it is not necessary to resolve the DNS domain name before each connection attempt, because DNS resolution results can be temporarily cached in accordance with time-to-live values). However, in the absence of a secure DNS option (e.g., as provided by <xref target='DNSSEC'/>), a malicious attacker with access to the DNS server data, or able to cause spoofed answers to be cached in a recursive resolver, can potentially cause the initiating entity to connect to any XMPP server chosen by the attacker.  Deployment and validation of server certificates helps to prevent such attacks.</t>
       </section>
       <section title="Use of Hash Functions" anchor="security-reuse-hash">
         <t>XMPP itself does not directly mandate the use of any particular hash function.  However, technologies on which XMPP depends (e.g., TLS and particular SASL mechanisms), as well as various XMPP extensions, might make use of hash functions.  Those who implement XMPP technologies or who develop XMPP extensions are advised to closely monitor the state of the art regarding attacks against cryptographic hashes in Internet protocols as they relate to XMPP.  For helpful guidance, refer to <xref target="HASHES"/>.</t>
@@ -4162,12 +4189,13 @@ XmppAddr ::= UTF8String
       <section title="Use of SASL" anchor="security-reuse-sasl">
         <t>Because the initiating entity chooses an acceptable SASL mechanism from the list presented by the receiving entity, the initiating entity depends on the receiving entity's list for authentication.  This dependency introduces the possibility of a downgrade attack if an attacker can gain control of the channel and therefore present a weak list of mechanisms.  To mitigate this attack, the parties SHOULD protect the channel using TLS before attempting SASL negotiation and either perform full certificate validation as described under <xref target='security-certificates-validation-server'/> or use a SASL mechanism that provides channel bindings, such as SCRAM-SHA-1-PLUS.  (Protecting the channel via TLS with full certificate validation can help to ensure the confidentiality and integrity of the information exchanged during SASL negotiation.)</t>
         <t>The SASL framework itself does not provide a method for binding SASL authentication to a security layer providing confidentiality and integrity protection that was negotiated at a lower layer (e.g., TLS).  Such a binding is known as a "channel binding" (see <xref target='CHANNEL'/>).  Some SASL mechanisms provide channel bindings, which in the case of XMPP would typically be a binding to TLS (see <xref target='CHANNEL-TLS'/>).  If a SASL mechanism provides a channel binding (e.g., this is true of <xref target='SCRAM'/>), then XMPP entities using that mechanism SHOULD prefer the channel binding variant (e.g., preferring "SCRAM-SHA-1-PLUS" over "SCRAM-SHA-1").  If a SASL mechanism does not provide a channel binding, then the mechanism cannot provide a way to verify that the source and destination end points to which the lower layer's security is bound are equivalent to the end points that SASL is authenticating; furthermore, if the end points are not identical, then the lower layer's security cannot be trusted to protect data transmitted between the SASL-authenticated entities.  In such a situation, a SASL security layer SHOULD be negotiated that effectively ignores the presence of the lower-layer security.</t>
-        <t>Many deployed XMPP services authenticate client connections by means of passwords.  It is well-known that most human users choose relatively weak passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.  Because all password-based authentication mechanisms are susceptible to password guessing attacks, XMPP servers MUST implement common rate-limiting mitigations.</t>
+        <t>Many deployed XMPP services authenticate client connections by means of passwords.  It is well-known that most human users choose relatively weak passwords.  Although service provisioning is out of scope for this document, XMPP servers that allow password-based authentication SHOULD enforce minimal criteria for password strength to help prevent dictionary attacks.  Because all password-based authentication mechanisms are susceptible to password guessing attacks, XMPP servers MUST limit the number of retries allowed during SASL authentication, as described under <xref target='sasl-process-neg-failure'/>.</t>
         <t>Some SASL mechanisms (e.g., <xref target='ANONYMOUS'/>) do not provide strong peer entity authentication of the client to the server.  Service administrators are advised to enable such mechanisms with caution.  Best practices for the use of the SASL ANONYMOUS mechanism in XMPP are described in <xref target='XEP-0175'/>.</t>
       </section>
       <section title="Use of TLS" anchor="security-reuse-tls">
-        <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients MUST NOT request, offer, or use SSL 2.0.  See Appendix E.2 of <xref target='TLS'/> for further details.</t>
-        <t>To prevent man-in-the-middle attacks, the TLS client (which might be an XMPP client or an XMPP server) MUST verify the certificate of the TLS server and MUST check its understanding of the server hostname against the server's identity as presented in the TLS Certificate message as described under <xref target='security-certificates-validation-server'/> (for further details, see <xref target='TLS-CERTS'/>.</t>
+        <t>Implementations of TLS typically support multiple versions of the Transport Layer Security protocol as well as the older Secure Sockets Layer (SSL) protocol.  Because of known security vulnerabilities, XMPP servers and clients MUST NOT request, offer, or use SSL 2.0.  For further details, see Appendix E.2 of <xref target='TLS'/> along with <xref target='TLS-SSL2'/>.</t>
+        <t>To prevent man-in-the-middle attacks, the TLS client (which might be an XMPP client or an XMPP server) MUST verify the certificate of the TLS server and MUST check its understanding of the server FQDN against the server's identity as presented in the TLS Certificate message as described under <xref target='security-certificates-validation-server'/> (for further details, see <xref target='TLS-CERTS'/>.</t>
+        <t>Support for TLS renegotiation is strictly OPTIONAL.  However, implementations that support TLS renegotiation MUST implement and use the TLS Renegotiation Extension <xref target='TLS-NEG'/>.</t>
       </section>
       <section title="Use of UTF-8" anchor="security-reuse-utf8">
         <t>The use of UTF-8 makes it possible to transport non-ASCII characters, and thus enables character "spoofing" scenarios, in which a displayed value appears to be something other than it is.  Furthermore, there are known attack scenarios related to the decoding of UTF-8 data.  On both of these points, refer to <xref target='UTF-8'/> for more information.</t>
@@ -4232,7 +4260,7 @@ XmppAddr ::= UTF8String
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-tls</t>
         <t hangText='Specification:'>&rfc.number;</t>
         <t hangText='Description:'>This is the XML namespace name for STARTTLS negotiation data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
+        <t hangText='Registrant Contact:'>IESG &lt;xmpp@ietf.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for SASL Data" anchor="iana-ns-sasl">
@@ -4241,7 +4269,7 @@ XmppAddr ::= UTF8String
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-sasl</t>
         <t hangText='Specification:'>&rfc.number;</t>
         <t hangText='Description:'>This is the XML namespace name for SASL negotiation data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
+        <t hangText='Registrant Contact:'>IESG &lt;xmpp@ietf.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for Stream Errors" anchor="iana-ns-streams">
@@ -4250,7 +4278,7 @@ XmppAddr ::= UTF8String
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-streams</t>
         <t hangText='Specification:'>&rfc.number;</t>
         <t hangText='Description:'>This is the XML namespace name for stream error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
+        <t hangText='Registrant Contact:'>IESG &lt;xmpp@ietf.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for Resource Binding" anchor="iana-ns-bind">
@@ -4259,7 +4287,7 @@ XmppAddr ::= UTF8String
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-bind</t>
         <t hangText='Specification:'>&rfc.number;</t>
         <t hangText='Description:'>This is the XML namespace name for resource binding in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
+        <t hangText='Registrant Contact:'>IESG &lt;xmpp@ietf.org&gt;</t>
       </list></t>
     </section>
     <section title="XML Namespace Name for Stanza Errors" anchor="iana-ns-stanzas">
@@ -4268,7 +4296,7 @@ XmppAddr ::= UTF8String
         <t hangText='URI:'>urn:ietf:params:xml:ns:xmpp-stanzas</t>
         <t hangText='Specification:'>&rfc.number;</t>
         <t hangText='Description:'>This is the XML namespace name for stanza error data in the Extensible Messaging and Presence Protocol (XMPP) as defined by &rfc.number;.</t>
-        <t hangText='Registrant Contact:'>IETF, XMPP Working Group, &lt;xmpp@ietf.org&gt;</t>
+        <t hangText='Registrant Contact:'>IESG &lt;xmpp@ietf.org&gt;</t>
       </list></t>
     </section>
     <section title="GSSAPI Service Name" anchor="iana-gssapi">
@@ -4282,7 +4310,7 @@ XmppAddr ::= UTF8String
           <t hangText='Transport Protocol:'>TCP</t>
           <t hangText='Description:'>A service offering support for connections by XMPP client applications</t>
           <t hangText='Registrant:'>IETF XMPP Working Group</t>
-          <t hangText='Contact:'>IESG, &lt;iesg@ietf.org&gt;</t>
+          <t hangText='Contact:'>IESG &lt;iesg@ietf.org&gt;</t>
           <t hangText='Reference:'>&rfc.number;</t>
           <t hangText='Port Number:'>5222</t>
         </list>
@@ -4293,7 +4321,7 @@ XmppAddr ::= UTF8String
           <t hangText='Transport Protocol:'>TCP</t>
           <t hangText='Description:'>A service offering support for connections by XMPP server applications</t>
           <t hangText='Registrant:'>IETF XMPP Working Group</t>
-          <t hangText='Contact:'>IESG, &lt;iesg@ietf.org&gt;</t>
+          <t hangText='Contact:'>IESG &lt;iesg@ietf.org&gt;</t>
           <t hangText='Reference:'>&rfc.number;</t>
           <t hangText='Port Number:'>5269</t>
         </list>
@@ -4643,8 +4671,8 @@ XmppAddr ::= UTF8String
     </t>
     <t>
       <list style='hanging'>
-        <t hangText="Feature:">stream-hostname-resolution</t>
-        <t hangText="Description:">Resolve hostnames before opening a TCP connection.</t>
+        <t hangText="Feature:">stream-fqdn-resolution</t>
+        <t hangText="Description:">Resolve FQDNs before opening a TCP connection.</t>
         <t hangText="Section:"><xref target='tcp-resolution'/></t>
         <t hangText="Roles:">Client MUST, Server MUST.</t>
       </list>
@@ -4852,6 +4880,17 @@ XmppAddr ::= UTF8String
 <format type='XML' octets='15544' target='http://xml.resource.org/public/rfc/xml/rfc2277.xml' />
 </reference>
 
+<reference anchor='DNS-CONCEPTS'>
+<front>
+<title abbrev='Domain Concepts and Facilities'>Domain names - concepts and facilities</title>
+<author initials='P.' surname='Mockapetris' fullname='P. Mockapetris'>
+<organization>Information Sciences Institute (ISI)</organization></author>
+<date year='1987' day='1' month='November' /></front>
+<seriesInfo name='STD' value='13' />
+<seriesInfo name='RFC' value='1034' />
+<format type='TXT' octets='129180' target='http://www.rfc-editor.org/rfc/rfc1034.txt' />
+</reference>
+
 <reference anchor='DNS-SRV'>
 <front>
 <title abbrev='DNS SRV RR'>A DNS RR for specifying the location of services (DNS SRV)</title>
@@ -4895,6 +4934,29 @@ XmppAddr ::= UTF8String
 <format type='TXT' octets='24013' target='ftp://ftp.isi.edu/in-notes/rfc2782.txt' />
 </reference>
 
+<reference anchor='DNS-TXT'>
+<front>
+<title abbrev='Storing Arbitrary Attributes in DNS'>Using the Domain Name System To Store Arbitrary String Attributes</title>
+<author initials='R.' surname='Rosenbaum' fullname='Rich Rosenbaum'>
+<organization>Digital Equipment Corporation</organization>
+<address>
+<postal>
+<street>550 King Street</street>
+<street>LKG2-2/Z7</street>
+<city>Littleton</city>
+<region>MA</region>
+<code>01460-1289</code>
+<country>US</country></postal>
+<phone>+1 508 486 5922</phone>
+<email>rosenbaum@lkg.dec.com</email></address></author>
+<date year='1993' month='May' />
+<abstract>
+<t>While the Domain Name System (DNS),is generally used to store predefined types of information (e.g., addresses of hosts), it is possible to use it to store information that has not been previously classified.</t>
+<t>This paper describes a simple means to associate arbitrary string information (ASCII text) with attributes that have not been defined by the DNS.  It uses DNS TXT resource records to store the information.  It requires no change to current DNS implementations.</t></abstract></front>
+<seriesInfo name='RFC' value='1464' />
+<format type='TXT' octets='7953' target='ftp://ftp.isi.edu/in-notes/rfc1464.txt' />
+</reference>
+
 <reference anchor="KEYWORDS">
 <front>
 <title abbrev='RFC Key Words'>Key words for use in RFCs to Indicate Requirement Levels</title>
@@ -4934,6 +4996,21 @@ XmppAddr ::= UTF8String
 <format type='TXT' octets='4723' target='ftp://ftp.isi.edu/in-notes/rfc2119.txt' />
 <format type='HTML' octets='14486' target='http://xml.resource.org/public/rfc/html/rfc2119.html' />
 <format type='XML' octets='5661' target='http://xml.resource.org/public/rfc/xml/rfc2119.xml' />
+</reference>
+
+<reference anchor='LANGMATCH'>
+<front>
+<title>Matching of Language Tags</title>
+<author initials='A.' surname='Phillips' fullname='A. Phillips'>
+<organization /></author>
+<author initials='M.' surname='Davis' fullname='M. Davis'>
+<organization /></author>
+<date year='2006' month='September' />
+<abstract>
+<t>This document describes a syntax, called a "language-range", for specifying items in a user's list of language preferences.  It also describes different mechanisms for comparing and matching these to language tags.  Two kinds of matching mechanisms, filtering and lookup, are defined.  Filtering produces a (potentially empty) set of language tags, whereas lookup produces a single language tag.  Possible applications include language negotiation or content selection.  This document, in combination with RFC 4646, replaces RFC 3066, which replaced RFC 1766.  This document specifies an Internet Best Current Practices for the Internet Community, and requests discussion and suggestions for improvements.</t></abstract></front>
+<seriesInfo name='BCP' value='47' />
+<seriesInfo name='RFC' value='4647' />
+<format type='TXT' octets='45595' target='http://www.rfc-editor.org/rfc/rfc4647.txt' />
 </reference>
 
 <reference anchor="LANGTAGS">
@@ -5184,6 +5261,24 @@ XmppAddr ::= UTF8String
         target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-11.txt' />
 </reference>
 
+<reference anchor='TLS-NEG'>
+<front>
+<title>Transport Layer Security (TLS) Renegotiation Indication Extension</title>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<author initials='M.' surname='Ray' fullname='M. Ray'>
+<organization /></author>
+<author initials='S.' surname='Dispensa' fullname='S. Dispensa'>
+<organization /></author>
+<author initials='N.' surname='Oskov' fullname='N. Oskov'>
+<organization /></author>
+<date year='2010' month='February' />
+<abstract>
+<t>Secure Socket Layer (SSL) and Transport Layer Security (TLS) renegotiation are vulnerable to an attack in which the attacker forms a TLS connection with the target server, injects content of his choice, and then splices in a new TLS connection from a client.  The server treats the client's initial TLS handshake as a renegotiation and thus believes that the initial data transmitted by the attacker is from the same entity as the subsequent client data.  This specification defines a TLS extension to cryptographically tie renegotiations to the TLS connections they are being performed over, thus preventing this attack. [STANDARDS TRACK]</t></abstract></front>
+<seriesInfo name='RFC' value='5746' />
+<format type='TXT' octets='33790' target='http://www.rfc-editor.org/rfc/rfc5746.txt' />
+</reference>
+
 <reference anchor="UCS2">
   <front>
     <title>Information Technology - Universal Multiple-octet coded Character Set (UCS) - Amendment 2: UCS Transformation Format 8 (UTF-8)</title>
@@ -5195,17 +5290,14 @@ XmppAddr ::= UTF8String
   <seriesInfo name="ISO" value="Standard 10646-1 Addendum 2" />
 </reference>
 
-<reference anchor="UNICODE">
+<reference anchor="UNICODE" target="http://www.unicode.org/versions/Unicode6.0.0/">
   <front>
-    <title>The Unicode Standard, Version 3.2.0</title>
+    <title>The Unicode Standard, Version 6.0</title>
     <author>
       <organization>The Unicode Consortium</organization>
     </author>
-    <date year="2000" />
+    <date year="2010" />
   </front>
-  <annotation>
-    The Unicode Standard, Version 3.2.0 is defined by The Unicode Standard, Version 3.0 (Reading, MA, Addison-Wesley, 2000. ISBN 0-201-61633-5), as amended by the Unicode Standard Annex #27: Unicode 3.1 (http://www.unicode.org/reports/tr27/) and by the Unicode Standard Annex #28: Unicode 3.2 (http://www.unicode.org/reports/tr28/).
-  </annotation>
 </reference>
 
 <reference anchor='UTF-8'>
@@ -5598,29 +5690,6 @@ Public-key and attribute certificate frameworks</title>
 <t>The Domain Name System Security Extensions (DNSSEC) add data origin authentication and data integrity to the Domain Name System. This document introduces these extensions and describes their capabilities and limitations. This document also discusses the services that the DNS security extensions do and do not provide. Last, this document describes the interrelationships between the documents that collectively describe DNSSEC. [STANDARDS TRACK] </t></abstract></front>
 <seriesInfo name='RFC' value='4033' />
 <format type='TXT' octets='52445' target='ftp://ftp.isi.edu/in-notes/rfc4033.txt' />
-</reference>
-
-<reference anchor='DNS-TXT'>
-<front>
-<title abbrev='Storing Arbitrary Attributes in DNS'>Using the Domain Name System To Store Arbitrary String Attributes</title>
-<author initials='R.' surname='Rosenbaum' fullname='Rich Rosenbaum'>
-<organization>Digital Equipment Corporation</organization>
-<address>
-<postal>
-<street>550 King Street</street>
-<street>LKG2-2/Z7</street>
-<city>Littleton</city>
-<region>MA</region>
-<code>01460-1289</code>
-<country>US</country></postal>
-<phone>+1 508 486 5922</phone>
-<email>rosenbaum@lkg.dec.com</email></address></author>
-<date year='1993' month='May' />
-<abstract>
-<t>While the Domain Name System (DNS),is generally used to store predefined types of information (e.g., addresses of hosts), it is possible to use it to store information that has not been previously classified.</t>
-<t>This paper describes a simple means to associate arbitrary string information (ASCII text) with attributes that have not been defined by the DNS.  It uses DNS TXT resource records to store the information.  It requires no change to current DNS implementations.</t></abstract></front>
-<seriesInfo name='RFC' value='1464' />
-<format type='TXT' octets='7953' target='ftp://ftp.isi.edu/in-notes/rfc1464.txt' />
 </reference>
 
 <reference anchor='DOS'>
@@ -6204,24 +6273,6 @@ Public-key and attribute certificate frameworks</title>
         target='http://www.ietf.org/internet-drafts/draft-ietf-tls-rfc4366-bis-12.txt' />
 </reference>
 
-<reference anchor='TLS-NEG'>
-<front>
-<title>Transport Layer Security (TLS) Renegotiation Indication Extension</title>
-<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
-<organization /></author>
-<author initials='M.' surname='Ray' fullname='M. Ray'>
-<organization /></author>
-<author initials='S.' surname='Dispensa' fullname='S. Dispensa'>
-<organization /></author>
-<author initials='N.' surname='Oskov' fullname='N. Oskov'>
-<organization /></author>
-<date year='2010' month='February' />
-<abstract>
-<t>Secure Socket Layer (SSL) and Transport Layer Security (TLS) renegotiation are vulnerable to an attack in which the attacker forms a TLS connection with the target server, injects content of his choice, and then splices in a new TLS connection from a client.  The server treats the client's initial TLS handshake as a renegotiation and thus believes that the initial data transmitted by the attacker is from the same entity as the subsequent client data.  This specification defines a TLS extension to cryptographically tie renegotiations to the TLS connections they are being performed over, thus preventing this attack. [STANDARDS TRACK]</t></abstract></front>
-<seriesInfo name='RFC' value='5746' />
-<format type='TXT' octets='33790' target='http://www.rfc-editor.org/rfc/rfc5746.txt' />
-</reference>
-
 <reference anchor='TLS-RESUME'>
 <front>
 <title>Transport Layer Security (TLS) Session Resumption without Server-Side State</title>
@@ -6238,6 +6289,23 @@ Public-key and attribute certificate frameworks</title>
 <t>This document describes a mechanism that enables the Transport Layer Security (TLS) server to resume sessions and avoid keeping per-client session state.  The TLS server encapsulates the session state into a ticket and forwards it to the client.  The client can subsequently resume a session using the obtained ticket.  This document obsoletes RFC 4507. [STANDARDS TRACK]</t></abstract></front>
 <seriesInfo name='RFC' value='5077' />
 <format type='TXT' octets='41989' target='http://www.rfc-editor.org/rfc/rfc5077.txt' />
+</reference>
+
+<reference anchor='TLS-SSL2'>
+<front>
+<title>Prohibiting SSL Version 2.0</title>
+<author initials='T' surname='Polk' fullname='Tim Polk'>
+    <organization />
+</author>
+<author initials='S' surname='Turner' fullname='Sean Turner'>
+    <organization />
+</author>
+<date month='November' day='29' year='2010' />
+<abstract><t>This document requires that when TLS clients and servers establish connections that they never negotiate the use of Secure Sockets Layer (SSL) version 2.0.  This document updates the backward compatibility sections found in the Transport Security Layer (TLS) Protocol, RFC 5246.</t></abstract>
+</front>
+<seriesInfo name='Internet-Draft' value='draft-ietf-tls-ssl2-must-not-03' />
+<format type='TXT'
+        target='http://www.ietf.org/internet-drafts/draft-ietf-tls-ssl2-must-not-03.txt' />
 </reference>
 
 <reference anchor='URN-OID'>
@@ -6474,6 +6542,21 @@ Public-key and attribute certificate frameworks</title>
   </front>
   <seriesInfo name="XSF XEP" value="0100"/>
   <format type="HTML" target="http://xmpp.org/extensions/xep-0100.html"/>
+</reference>
+
+<reference anchor="XEP-0114">
+  <front>
+    <title>Jabber Component Protocol</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="03" month="March" year="2005"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0114"/>
+  <format type="HTML" target="http://xmpp.org/extensions/xep-0114.html"/>
 </reference>
 
 <reference anchor="XEP-0124">
@@ -6729,6 +6812,21 @@ Public-key and attribute certificate frameworks</title>
   </front>
   <seriesInfo name="XSF XEP" value="0220"/>
   <format type="HTML" target="http://xmpp.org/extensions/xep-0220.html"/>
+</reference>
+
+<reference anchor="XEP-0225">
+  <front>
+    <title>Component Connections</title>
+    <author initials="P." surname="Saint-Andre" fullname="Peter Saint-Andre">
+      <organization/>
+      <address>
+        <email>stpeter@jabber.org</email>
+      </address>
+    </author>
+    <date day="06" month="October" year="2008"/>
+  </front>
+  <seriesInfo name="XSF XEP" value="0225"/>
+  <format type="HTML" target="http://xmpp.org/extensions/xep-0225.html"/>
 </reference>
 
 <reference anchor="XEP-0288">
@@ -7722,11 +7820,12 @@ Public-key and attribute certificate frameworks</title>
           <t>Specified that support for the SASL EXTERNAL mechanism is required for servers but only recommended for clients (since end-user X.509 certificates are difficult to obtain and not yet widely deployed).</t>
           <t>Removed the hard two-connection rule for server-to-server streams.</t>
           <t>More clearly specified the certificate profile for both public key certificates and issuer certificates.</t>
-          <t>Added the &lt;reset/&gt; streams error condition to handle expired/revoked certificates or the addition of security-critical features to an existing stream.</t>
+          <t>Added the &lt;reset/&gt; stream error condition to handle expired/revoked certificates or the addition of security-critical features to an existing stream.</t>
           <t>Added the &lt;account-disabled/&gt;, &lt;credentials-expired/&gt;, &lt;encryption-required/&gt;, and &lt;malformed-request/&gt; SASL error conditions to handle error flows mistakenly left out of RFC 3920 or discussed in RFC 4422 but not in RFC 2222.</t>
           <t>Removed unnecessary requirement for escaping of characters that map to certain predefined entities, which do not need to be escaped in XML.</t>
           <t>Clarified the process of DNS SRV lookups and fallbacks.</t>
           <t>Clarified the handling of SASL security layers.</t>
+          <t>Clarified that a SASL simple user name is the localpart, not the bare JID.</t>
           <t>Clarified the stream negotiation process and associated flow chart.</t>
           <t>Clarified the handling of stream features.</t>
           <t>Added a 'by' attribute to the &lt;error/&gt; element for stanza errors so that the entity that has detected the error can include its JID for diagnostic or tracking purposes.</t>
