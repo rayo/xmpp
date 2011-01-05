@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-address-08" ipr="trust200902">
+<rfc category="std" docName="draft-ietf-xmpp-address-08" ipr="trust200902" updates="3920">
 
   <front>
     <title abbrev="XMPP Address Format">Extensible Messaging and Presence Protocol (XMPP): Address Format</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2010" month="November" day="30"/>
+    <date year="2010" month="December" day="10"/>
     <area>RAI</area>
     <workgroup>XMPP</workgroup>
     <keyword>Extensible Messaging and Presence Protocol</keyword>
@@ -35,7 +35,7 @@
     <keyword>Extensible Markup Language</keyword>
     <keyword>XML</keyword>
     <abstract>
-      <t>This document defines the format for addresses used in the Extensible Messaging and Presence Protocol (XMPP), including support for non-ASCII characters.</t>
+      <t>This document defines the format for addresses used in the Extensible Messaging and Presence Protocol (XMPP), including support for non-ASCII characters.  This document updates RFC 3920.</t>
     </abstract>
   </front>
 
@@ -47,16 +47,11 @@
       <t>As specified in RFC 3920, the XMPP address format re-uses the "stringprep" technology for preparation of non-ASCII characters <xref target='STRINGPREP'/>, including the Nameprep profile for internationalized domain names as specified in <xref target='NAMEPREP'/> and <xref target='IDNA2003'/> along with two XMPP-specific profiles for the localpart and resourcepart.</t>
       <t>Since the publication of RFC 3920, IDNA2003 has been superseded by IDNA2008 (see <xref target='IDNA-PROTO'/> and related documents), which is not based on stringprep.  Following the lead of the IDNA community, other technology communities that use stringprep have begun discussions about migrating away from stringprep toward more "modern" approaches.  The XMPP community is participating in those discussions in order to find a replacement for the Nodeprep and Resourceprep profiles of stringprep defined in RFC 3920.  However, work on updated handling of internationalized addresses is currently in progress within the PRECIS Working Group and at the time of this writing it seems that such work might take several years to complete.  Because all other aspects of revised documentation for XMPP have been incorporated into <xref target='XMPP'/>, the XMPP Working Group decided to split the XMPP address format into a separate specification so as not to significantly delay publication of improved documentation for XMPP while awaiting the conclusion of work on updated handling of internationalized addresses.</t>
       <t>Therefore, this specification provides corrected documentation of the XMPP address format using the internationalization technologies available in 2004 (when RFC 3920 was published), with the intent that this specification will be superseded as soon as work on a new approach to preparation and comparison of internationalized strings has been defined by the PRECIS Working Group and applied to the specific cases of XMPP localparts and resourceparts.  In the meantime, this document normatively references <xref target='IDNA2003'/> and <xref target='NAMEPREP'/>; XMPP software implementations are encouraged to begin migrating to IDNA2008 (see <xref target='IDNA-PROTO'/> and related documents) because it is nearly certain that the specification superseding this one will re-use IDNA2008.</t>
+      <t>This document updates RFC 3920.</t>
     </section>
     <section title="Terminology" anchor="terms">
       <t>Many important terms used in this document are defined in <xref target='IDNA2003'/>, <xref target='STRINGPREP'/>, <xref target='UNICODE'/>, and <xref target='XMPP'/>.</t>
-      <t>The keywords "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in <xref target='KEYWORDS'/>.</t>
-    </section>
-    <section title="Acknowledgements" anchor="acks">
-      <t>Thanks to Ben Campbell, Waqas Hussain, Jehan Pages and Florian Zeitz for their feedback.  Thanks also to Richard Barnes for his review on behalf of the Security Directorate.</t>
-      <t>The Working Group chairs were Ben Campbell and Joe Hildebrand.</t>
-      <t>The responsible Area Director was Gonzalo Camarillo.</t>
-      <t>Some text in this document was borrowed or adapted from <xref target='IDNA-DEFS'/>, <xref target='IDNA-PROTO'/>, <xref target='IDNA-RATIONALE'/>, and <xref target='XEP-0165'/>.</t>
+      <t>The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "NOT RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in RFC 2119 <xref target='KEYWORDS'/>.</t>
     </section>
   </section>
 
@@ -69,10 +64,13 @@
         <artwork><![CDATA[
    jid           = [ localpart "@" ] domainpart [ "/" resourcepart ]
    localpart     = 1*(nodepoint)
+                   ;
                    ; a "nodepoint" is a UTF-8 encoded Unicode code
                    ; point that satisfies the Nodeprep profile of
                    ; stringprep
+                   ;
    domainpart    = IP-literal / IPv4address / ifqdn
+                   ;
                    ; the "IPv4address" and "IP-literal" rules are
                    ; defined in RFC 3986, and the first-match-wins
                    ; (a.k.a. "greedy") algorithm described in RFC
@@ -83,24 +81,29 @@
                    ; enclosed in square brackets (i.e., beginning 
                    ; with '[' and ending with ']'), which was not
                    ; the case in RFC 3920
+                   ;
    ifqdn         = 1*(namepoint)
+                   ;
                    ; a "namepoint" is a UTF-8 encoded Unicode
                    ; code point that satisfies the Nameprep
                    ; profile of stringprep
+                   ;
    resourcepart  = 1*(resourcepoint)
+                   ;
                    ; a "resourcepoint" is a UTF-8 encoded Unicode
                    ; code point that satisfies the Resourceprep
                    ; profile of stringprep
+                   ;
         ]]></artwork>
       </figure>
-      <t>All JIDs are based on the foregoing structure.  One common use of this structure is to identify a messaging and presence account, the server that hosts the account, and a connected resource (e.g., a specific device) in the form of &lt;localpart@domainpart/resourcepart&gt;.  However, localparts other than clients are possible; for example, a specific chat room offered by a multi-user chat service (see <xref target='XEP-0045'/>) is addressed as &lt;room@service&gt; (where "room" is the name of the chat room and "service" is the hostname of the multi-user chat service) and a specific occupant of such a room could be addressed as &lt;room@service/nick&gt; (where "nick" is the occupant's room nickname).  Many other JID types are possible (e.g., &lt;domainpart/resourcepart&gt; could be a server-side script or service).</t>
+      <t>All JIDs are based on the foregoing structure.</t>
       <t>Each allowable portion of a JID (localpart, domainpart, and resourcepart) MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
       <t>For the purpose of communication over an XMPP network (e.g., in the 'to' or 'from' address of an XMPP stanza), an entity's address MUST be represented as a JID, not as a Uniform Resource Identifier <xref target="URI"/> or Internationalized Resource Identifier <xref target="IRI"/>.  An XMPP IRI <xref target="XMPP-URI"/> is in essence a JID prepended with 'xmpp:'; however, the native addressing format used in XMPP is that of a mere JID without a URI scheme.  <xref target="XMPP-URI"/> is provided only for identification and interaction outside the context of XMPP itself, for example when linking to a JID from a web page.  See <xref target="XMPP-URI"/> for a description of the process for securely extracting a JID from an XMPP URI or IRI.</t>
       <t><list style='empty'><t>Implementation Note: When dividing a JID into its component parts, an implementation needs to match the separator characters '@' and '/' before applying any transformation algorithms, which might decompose certain Unicode code points to the separator characters (e.g., U+FE6B SMALL COMMERCIAL AT might decompose into U+0040 COMMERCIAL AT).</t></list></t>
     </section>
 
     <section title="Domainpart" anchor="addressing-domain">
-      <t>The DOMAINPART of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domainpart is a valid JID).  Typically a domainpart identifies the "home" server to which clients connect for XML routing and data management functionality.  However, it is not necessary for an XMPP domainpart to identify an entity that provides core XMPP server functionality (e.g., a domainpart can identify an entity such as a multi-user chat service, a publish-subscribe service, or a user directory).</t>
+      <t>The domainpart of a JID is that portion after the '@' character (if any) and before the '/' character (if any); it is the primary identifier and is the only REQUIRED element of a JID (a mere domainpart is a valid JID).  Typically a domainpart identifies the "home" server to which clients connect for XML routing and data management functionality.  However, it is not necessary for an XMPP domainpart to identify an entity that provides core XMPP server functionality (e.g., a domainpart can identify an entity such as a multi-user chat service, a publish-subscribe service, or a user directory).</t>
       <t>The domainpart for every XMPP service MUST be a fully qualified domain name ("FQDN"; see <xref target='DNS'/>), IPv4 address, IPv6 address, or unqualifed hostname (i.e., a text label that is resolvable on a local network).</t>
       <t><list style='empty'><t>Interoperability Note: Domainparts that are IP addresses might not be accepted by other services for the sake of server-to-server communication, and domainparts that are unqualified hostnames cannot be used on public networks because they are resolvable only on a local network.</t></list></t>
       <t>If the domainpart includes a final character considered to be a label separator (dot) by <xref target='IDNA2003'/> or <xref target='DNS'/>, this character MUST be stripped from the domainpart before the JID of which it is a part is used for the purpose of routing an XML stanza, comparing against another JID, or constructing an <xref target='XMPP-URI'/>; in particular, the character MUST be stripped before any other canonicalization steps are taken, such as application of the <xref target='NAMEPREP'/> profile of <xref target='STRINGPREP'/> or completion of the ToASCII operation as described in <xref target='IDNA2003'/>.</t>
@@ -110,14 +113,13 @@
     </section>
 
     <section title='Localpart' anchor='addressing-localpart'>
-      <t>The LOCALPART of a JID is an optional identifier placed before the domainpart and separated from the latter by the '@' character.  Typically a localpart uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user chat service).  The entity represented by an XMPP localpart is addressed within the context of a specific domain.</t>
+      <t>The localpart of a JID is an optional identifier placed before the domainpart and separated from the latter by the '@' character.  Typically a localpart uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user chat service).  The entity represented by an XMPP localpart is addressed within the context of a specific domain (i.e., &lt;localpart@domainpart&gt;).</t>
       <t>A localpart MUST be formatted such that the Nodeprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="nodeprep"/>).  Before comparing two localparts, an application MUST first ensure that the Nodeprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
       <t>A localpart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization resulting from application of the Nodeprep profile of stringprep (e.g., in Nodeprep some characters can be mapped to nothing, which might result in a string of zero length).</t>
     </section>
 
     <section title="Resourcepart" anchor="addressing-resource">
-      <t>The resourcepart of a JID is an optional identifier placed after the domainpart and separated from the latter by the '/' character.  A resourcepart can modify either a &lt;localpart@domainpart&gt; address or a mere &lt;domainpart&gt; address.  Typically a resourcepart uniquely identifies a specific connection (e.g., a device or location) or object (e.g., an occupant in a multi-user chat room) belonging to the entity associated with an XMPP localpart at a local domain.</t>
-      <t>When an XMPP address does not include a resourcepart (i.e., when it is of the form &lt;domainpart&gt; or &lt;localpart@domainpart&gt;), it is referred to as a BARE JID.  When an XMPP address includes a resourcepart (i.e., when it is of the form &lt;domainpart/resourcepart&gt; or &lt;localpart@domainpart/resourcepart&gt;), is referred to as a FULL JID.</t>
+      <t>The resourcepart of a JID is an optional identifier placed after the domainpart and separated from the latter by the '/' character.  A resourcepart can modify either a &lt;localpart@domainpart&gt; address or a mere &lt;domainpart&gt; address.  Typically a resourcepart uniquely identifies a specific connection (e.g., a device or location) or object (e.g., an occupant in a multi-user chat room) belonging to the entity associated with an XMPP localpart at a domain (i.e., &lt;localpart@domainpart/resourcepart&gt;).</t>
       <t>A resourcepart MUST be formatted such that the Resourceprep profile of <xref target="STRINGPREP"/> can be applied without failing (see <xref target="resourceprep"/>).  Before comparing two resourceparts, an application MUST first ensure that the Resourceprep profile has been applied to each identifier (the profile need not be applied each time a comparison is made, as long as it has been applied before comparison).</t>
       <t>A resourcepart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization resulting from application of the Resourceprep profile of stringprep (e.g., in Resourceprep some characters can be mapped to nothing, which might result in a string of zero length).</t>
       <t><list style='empty'><t>Informational Note: For historical reasons, the term "resource identifier" is often used in XMPP to refer to the optional portion of an XMPP address that follows the domainpart and the "/" separator character; to help prevent confusion between an XMPP "resource identifier" and the meanings of "resource" and "identifier" provided in Section 1.1 of <xref target="URI"/>, this specification uses the term "resourcepart" instead of "resource identifier" (as in RFC 3920).</t></list></t>
@@ -164,7 +166,7 @@
         <t>
           <list style='symbols'>
             <t>A localpart can be employed as one part of an entity's address in XMPP.  One common usage is as the username of an instant messaging user; another is as the name of a multi-user chat room; and many other kinds of entities could use localparts as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized localpart; for example, a user entering a single internationalized localpart could access another user's account information, or a user could gain access to a hidden or otherwise restricted chat room or service.<vspace blankLines='1'/></t>
-            <t>A resourcepart can be employed as one part of an entity's address in XMPP.  One common usage is as the name for an instant messaging user's connected resource; another is as the nickname of a user in a multi-user chat room; and many other kinds of entities could use resourceparts as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized resourcepart; for example, two or more confusable resources could be bound at the same time to the same account (resulting in inconsistent authorization decisions in an XMPP application), or a user could send a message to someone other than the intended recipient in a multi-user chat room.</t>
+            <t>A resourcepart can be employed as one part of an entity's address in XMPP.  One common usage is as the name for an instant messaging user's connected resource; another is as the nickname of a user in a multi-user chat room; and many other kinds of entities could use resourceparts as part of their addresses.  The security of such services could be compromised based on different interpretations of the internationalized resourcepart; for example, two or more confusable resources could be bound at the same time to the same account (resulting in inconsistent authorization decisions in an XMPP application that uses full JIDs), or a user could send a message to someone other than the intended recipient in a multi-user chat room.</t>
           </list>
         </t>
         <t>Despite the fact that some specific suggestions about identification and handling of confusable characters appear in the Unicode Security Considerations <xref target='UNICODE-SEC'/>, it is also true (as noted in <xref target='IDNA-DEFS'/>) that "there are no comprehensive technical solutions to the problems of confusable characters".  Mimicked JIDs that involve characters from only one script, or from the script typically employed by a particular user or community of language users, are not easy to combat (e.g., the simple typejacking attack previously described, which relies on a surface similarity between the characters "1" and "l" in some presentations).  However, mimicked addresses that involve characters from more than one script, or from a script not typically employed by a particular user or community of language users, can be mitigated somewhat through the application of appropriate registration policies at XMPP services and presentation policies in XMPP client software.  Therefore the following policies are encouraged:</t>
@@ -188,7 +190,7 @@
       </list></t>
       <t>RFC in which the profile is defined:</t>
       <t><list style='hanging'>
-        <t>&rfc.number;</t>
+        <t>RFC &rfc.number;</t>
       </list></t>
       <t>Indicator whether or not this is the newest version of the profile:</t>
       <t><list style='hanging'>
@@ -203,7 +205,7 @@
       </list></t>
       <t>RFC in which the profile is defined:</t>
       <t><list style='hanging'>
-        <t>&rfc.number;</t>
+        <t>RFC &rfc.number;</t>
       </list></t>
       <t>Indicator whether or not this is the newest version of the profile:</t>
       <t><list style='hanging'>
@@ -436,12 +438,12 @@
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='November' day='17' year='2010' />
+<date month='December' day='10' year='2010' />
 <abstract><t>This document defines the core features of the Extensible Messaging and Presence Protocol (XMPP), a technology for streaming Extensible Markup Language (XML) elements in order to exchange structured information in close to real time between any two or more network- aware entities. XMPP provides a generalized, extensible framework for incrementally exchanging XML data, upon which a variety of applications can be built. The framework includes methods for stream setup and teardown, channel encryption, authentication of a client to a server and of one server to another server, and primitives for push-style messages, publication of network availability information ("presence"), and request-response interactions between any two XMPP entities. This document obsoletes RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-19' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-3920bis-20' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-19.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-3920bis-20.txt' />
 </reference>
 
     </references>
@@ -975,13 +977,19 @@ specifications of each URI scheme.
       <t>Based on consensus derived from implementation and deployment experience as well as formal interoperability testing, the following substantive modifications were made from RFC 3920.</t>
       <t>
         <list style='symbols'>
-          <t>Corrected the ABNF syntax to ensure consistency with <xref target='URI'/> and <xref target='IRI'/>; one consequence is that IPv6 addresses are enclosed in square brackets (i.e., beginning with '[' and ending with ']').</t>
+          <t>Corrected the ABNF syntax to ensure consistency with <xref target='URI'/> and <xref target='IRI'/>, including consistency with RFC 3986 and RFC 5952 with regard to IPv6 addresses (e.g., enclosing the IPv6 address in square brackets '[' and ']').</t>
           <t>Corrected the ABNF syntax to prevent zero-length localparts, domainparts, and resourceparts (and also noted that the underlying length limits from the DNS apply to domainparts).</t>
           <t>To avoid confusion with the term "node" as used in <xref target="XEP-0030"/> and <xref target="XEP-0060"/>, changed the term "node identifier" to "localpart" (but retained the name "Nodeprep" for backward compatibility).</t>
           <t>To avoid confusion with the terms "resource" and "identifier" as used in <xref target="URI"/>, changed the term "resource identifier" to "resourcepart".</t>
           <t>Corrected the nameprep processing rules to require use of the UseSTD3ASCIIRules flag.</t>
         </list>
       </t>
+    </section>
+
+    <section title="Acknowledgements" anchor="acks">
+      <t>Thanks to Ben Campbell, Waqas Hussain, Jehan Pages and Florian Zeitz for their feedback.  Thanks also to Richard Barnes and Elwyn Davies for their reviews on behalf of the Security Directorate and the General Area Review Team, respectively.</t>
+      <t>The Working Group chairs were Ben Campbell and Joe Hildebrand.  The responsible Area Director was Gonzalo Camarillo.</t>
+      <t>Some text in this document was borrowed or adapted from <xref target='IDNA-DEFS'/>, <xref target='IDNA-PROTO'/>, <xref target='IDNA-RATIONALE'/>, and <xref target='XEP-0165'/>.</t>
     </section>
 
   </back>
