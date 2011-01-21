@@ -5,7 +5,7 @@
 <?rfc symrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<rfc category="std" docName="draft-ietf-xmpp-3921bis-19" ipr="trust200902" obsoletes="3921">
+<rfc category="std" docName="draft-ietf-xmpp-3921bis-20" ipr="trust200902" obsoletes="3921">
 
   <front>
     <title abbrev="XMPP IM">Extensible Messaging and Presence Protocol (XMPP): Instant Messaging and Presence</title>
@@ -23,7 +23,7 @@
         <email>psaintan@cisco.com</email>
       </address>
     </author>
-    <date year="2011" month="January" day="5"/>
+    <date year="2011" month="January" day="20"/>
     <area>RAI</area>
     <workgroup>XMPP</workgroup>
     <keyword>XMPP</keyword>
@@ -837,7 +837,7 @@ UC: <presence id='xk3h1v69'
         <t>Upon receiving the outbound presence subscription request, the user's server MUST proceed as follows.</t>
         <t>
           <list style='numbers'>
-            <t>Before processing the request, the user's server SHOULD check the syntax of the JID contained in the 'to' attribute.  If the JID is of the form &lt;contact@domainpart/resourcepart&gt; instead of &lt;contact@domainpart&gt;, the user's server SHOULD treat it as if the request had been directed to the contact's bare JID and modify the 'to' address accordingly.  The server MAY also verify that the JID adheres to the format defined in <xref target='XMPP-ADDR'/> and possibly return a &lt;jid-malformed/&gt; stanza error.<vspace blankLines='1'/></t>
+            <t>Before processing the request, the user's server MUST check the syntax of the JID contained in the 'to' attribute (however, it is known that some existing implementations do not perform this check).  If the JID is of the form &lt;contact@domainpart/resourcepart&gt; instead of &lt;contact@domainpart&gt;, the user's server SHOULD treat it as if the request had been directed to the contact's bare JID and modify the 'to' address accordingly.  The server MAY also verify that the JID adheres to the format defined in <xref target='XMPP-ADDR'/> and possibly return a &lt;jid-malformed/&gt; stanza error.<vspace blankLines='1'/></t>
             <t>If the potential contact is hosted on the same server as the user, then the server MUST adhere to the rules specified in the next section when processing the subscription request and delivering it to the (local) contact.<vspace blankLines='1'/></t>
             <t>If the potential contact is hosted on a remote server, subject to local service policies the user's server MUST then route the stanza to that remote domain in accordance with core XMPP stanza processing rules.  (This can result in returning an appropriate stanza error to the user, such as &lt;remote-server-timeout/&gt;.)</t>
           </list>
@@ -909,13 +909,14 @@ CS: <presence from='juliet@example.com'
                 ]]></artwork>
               </figure>
             <vspace blankLines='1'/></t>
-            <t>Otherwise, if there is at least one available resource associated with the contact when the subscription request is received by the contact's server, then the contact's server MUST broadcast that subscription request to all available resources in accordance with <xref target="rules"/>.
+            <t>Otherwise, if there is at least one available resource associated with the contact when the subscription request is received by the contact's server, then the contact's server MUST send that subscription request to all available resources in accordance with <xref target="rules"/>.
             <vspace blankLines='1'/>
             As a way of acknowledging receipt of the presence subscription request, the contact's server MAY send a presence stanza of type "unavailable" from the bare JID of the contact to the bare JID of the user (the user's client MUST NOT assume that this acknowledgement provides presence information about the contact, since it comes from the contact's bare JID and is received before the subscription request has been approved).<vspace blankLines='1'/></t>
             <t>Otherwise, if the contact has no available resources when the subscription request is received by the contact's server, then the contact's server MUST keep a record of the complete presence stanza comprising the subscription request, including any extended content contained therein (see Section 8.4 of <xref target='XMPP-CORE'/>), and then deliver the request when the contact next has an available resource.  The contact's server MUST continue to deliver the subscription request whenever the contact creates an available resource, until the contact either approves or denies the request.  (The contact's server MUST NOT deliver more than one subscription request from any given user when the contact next has an available resource; e.g., if the user sends multiple subscription requests to the contact while the contact is offline, the contact's server SHOULD store only one of those requests, such as the first request or last request, and MUST deliver only one of the requests when the contact next has an available resource; this helps to prevent "subscription request spam".)</t>
           </list>
         </t>
         <t><list style='empty'><t>Security Warning: Until and unless the contact approves the subscription request as described under <xref target='sub-request-handle'/>, the contact's server MUST NOT add an item for the user to the contact's roster.</t></list></t>
+        <t><list style='empty'><t>Security Warning: The mandate for the contact's server to store the complete stanza of the presence subscription request introduces the possibility of an application resource exhaustion attack (see Section 2.1.2 of <xref target='DOS'/>), for example by a rogue server or a coordinated group of users (e.g., a botnet) against the contact's server or particular contact.  Server implementors are advised to consider the possibility of such attacks and provide tools for counteracting it, such as enabling service administrators to set limits on the number or size of inbound presence subscription requests that the server will store in aggregate or for any given contact.</t></list></t>
       </section>
 
       <section title="Client Processing of Inbound Subscription Request" anchor="sub-request-handle">
@@ -1433,7 +1434,7 @@ US: <presence from='juliet@example.com'
       </figure>
       <t><list style='empty'><t>Interoperability Note: RFC 3921 specified that probes are sent from the full JID, not the bare JID (a rule which was changed because subscriptions are based on the bare JID).  Some existing implementations send from the full JID instead of the bare JID.</t></list></t>
       <t>Probes can also be sent by an entity that has received presence outside the context of a presence subscription, typically when the contact has sent directed presence as described under <xref target='presence-directed'/>; in this case the value of the 'from' or 'to' address can be a full JID instead of a bare JID.  See <xref target='presence-directed'/> for a complete discussion.</t>
-      <t><list style='empty'><t>Implementation Note: Presence probes SHOULD NOT be sent by a client because in general a client will not need to send them, since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT use receipt of the presence probe as a cause for returning a stanza or stream error to the client.</t></list></t>
+      <t>Presence probes SHOULD NOT be sent by a client, because in general a client will not need to send them since the task of gathering presence from a user's contacts is managed by the user's server.  However, if a user's client generates an outbound presence probe then the user's server SHOULD route the probe (if the contact is at another server) or process the probe (if the contact is at the same server) and MUST NOT use its receipt of the presence probe from a connected client as the sole cause for returning a stanza or stream error to the client.</t>
 
       <section title="Server Generation of Outbound Presence Probe" anchor="presence-probe-outbound">
         <t>When a server needs to discover the availability of a user's contact, it sends a presence probe from the bare JID &lt;user@domainpart&gt; of the user to the bare JID &lt;contact@domainpart&gt; of the contact.</t>
@@ -1530,7 +1531,70 @@ CS: <presence from='romeo@example.net/bar'
           </figure>
         </t>
         <t><list style='empty'><t>Implementation Note: See <xref target='presence-directed'/> regarding rules that supplement the foregoing for handling of directed presence.</t></list></t>
-        <t><list style='empty'><t>Implementation Note: The handling of the 'id' attribute in relation to presence probes was unspecified in RFC 3921. Although the pattern of "send a probe and receive a reply" might seem like a request-response protocol similar to the XMPP &lt;iq/&gt; stanza, in fact it is not because the response to a probe might consist of multiple presence stanzas (one for each available resource currently active for the contact).  For this reason, if the contact currently has available resources then the contact's server SHOULD preserve the 'id' attribute of the contact's original presence stanza (if any) when sending those presence notifications to the probing entity; by contrast, if the contact currently has no available resources, the probing entity is not authorized (via presence subscription) to see the contact's presence, or an error occurs in relation to the probe, then the contact's server SHOULD mirror the 'id' of the user's presence probe when replying to the probing entity.</t></list></t>
+        <section title="Handling of the 'id' Attribute" anchor="presence-probe-inbound-id">
+          <t>The handling of the 'id' attribute in relation to presence probes was unspecified in RFC 3921. Although the pattern of "send a probe and receive a reply" might seem like a request-response protocol similar to the XMPP &lt;iq/&gt; stanza, in fact it is not because the response to a probe might consist of multiple presence stanzas (one for each available resource currently active for the contact).  For this reason, if the contact currently has available resources then the contact's server SHOULD preserve the 'id' attribute of the contact's original presence stanza (if any) when sending those presence notifications to the probing entity; by contrast, if the contact currently has no available resources, the probing entity is not authorized (via presence subscription) to see the contact's presence, or an error occurs in relation to the probe, then the contact's server SHOULD mirror the 'id' of the user's presence probe when replying to the probing entity.</t>
+          <t>The following examples illustrate the difference.</t>
+          <t>In the first scenario, Juliet sends presence from her "chamber" resource.
+            <figure>
+              <artwork><![CDATA[
+CC: <presence from='juliet@example.com/chamber' id='pres1'>
+      <show>dnd</show>
+      <status>busy!</status>
+    </presence>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>She also sends presence from her "balcony" resource.
+            <figure>
+              <artwork><![CDATA[
+CC: <presence from='juliet@example.com/balcony' id='pres2'>
+      <show>away</show>
+      <status>stepped away</status>
+    </presence>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Romeo's server then sends a probe to Juliet.
+            <figure>
+              <artwork><![CDATA[
+US: <presence from='romeo@example.net' id='probe1' type='probe'/>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Juliet's server then sends both of her presence notifications to Romeo, preserving the 'id' attributes included in the stanzas that her client has sent.
+            <figure>
+              <artwork><![CDATA[
+CS: <presence from='juliet@example.com/chamber' id='pres1'>
+      <show>dnd</show>
+      <status>busy!</status>
+    </presence>
+
+CS: <presence from='juliet@example.com/balcony' id='pres2'>
+      <show>away</show>
+      <status>stepped away</status>
+    </presence>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>In the second scenario, Juliet is offline when Romeo's server sends a probe.
+            <figure>
+              <artwork><![CDATA[
+US: <presence from='romeo@example.net' 
+              id='probe2' 
+              type='probe'/>
+              ]]></artwork>
+            </figure>
+          </t>
+          <t>Juliet's server replies with an unavailable notification, mirroring the 'id' of Rome's presence probe because there is no 'id' to preserve from an available notification that her client has sent.
+            <figure>
+              <artwork><![CDATA[
+CS: <presence from='juliet@example.com'
+              id='probe2'
+              type='unavailable'/>
+              ]]></artwork>
+            </figure>
+          </t>
+        </section>
       </section>
     </section>
 
@@ -1924,7 +1988,7 @@ CS: <presence from='juliet@example.com/balcony'
 </message>
           ]]></artwork>
         </figure>
-        <t>There are no attributes defined for the &lt;body/&gt; element, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;body/&gt; element MAY be included in a message stanza, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which from the sender's perspective can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
+        <t>There are no attributes defined for the &lt;body/&gt; element, with the exception of the 'xml:lang' attribute.  Multiple instances of the &lt;body/&gt; element MAY be included in a message stanza for the purpose of providing alternate versions of the same body, but only if each instance possesses an 'xml:lang' attribute with a distinct language value (either explicitly or by inheritance from the 'xml:lang' value of an element farther up in the XML hierarchy, which from the sender's perspective can include the XML stream header as described in <xref target="XMPP-CORE"/>).</t>
         <figure>
           <artwork><![CDATA[
 <message
@@ -1982,9 +2046,10 @@ CS: <presence from='juliet@example.com/balcony'
       <section title="Thread Element" anchor="message-syntax-thread">
         <t>The primary use of the XMPP &lt;thread/&gt; element is to uniquely identify a conversation thread or "chat session" between two entities instantiated by &lt;message/&gt; stanzas of type 'chat'.  However, the XMPP &lt;thread/&gt; element MAY also be used to uniquely identify an analogous thread between two entities instantiated by &lt;message/&gt; stanzas of type 'headline' or 'normal', or among multiple entities in the context of a multi-user chat room instantiated by &lt;message/&gt; stanzas of type 'groupchat'. It MAY also be used for &lt;message/&gt; stanzas not related to a human conversation, such as a game session or an interaction between plugins.  The &lt;thread/&gt; element is not used to identify individual messages, only conversations or messaging sessions.</t>
         <t>The inclusion of the &lt;thread/&gt; element is OPTIONAL.  Because the &lt;thread/&gt; element identifies the particular conversation thread to which a message belongs, a message stanza MUST NOT contain more than one &lt;thread/&gt; element.</t>
-        <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child; the value of the 'parent' attribute MUST conform to the syntax of the &lt;thread/&gt; element itself.</t>
+        <t>The &lt;thread/&gt; element MAY possess a 'parent' attribute that identifies another thread of which the current thread is an offshoot or child.  The 'parent' attribute MUST conform to the syntax of the &lt;thread/&gt; element itself and its value MUST be different from the XML character data of the &lt;thread/&gt; element on which the 'parent' attribute is included.</t>
+        <t><list style='empty'><t>Implementation Note: The ability to specify both a parent thread and a child thread introduces the possibility of conflicts between thread identifiers for overlapping threads.  For example, one &lt;thread/&gt; element might contain XML character data of "foo" and a 'parent' attribute whose value is "bar", a second &lt;thread/&gt; element might contain XML character data of "bar" and a 'parent' attribute whose value is "baz", and a third &lt;thread/&gt; element might contain XML character data of "baz" and a 'parent' attribute whose value is once again "foo".  It is up to the implementation how it will treat conflicts between such overlapping thread identifiers (e.g., whether it will "chain together" thread identifiers by showing "foo" as both a parent and grandchild of "baz" in a multi-level user interface, or whether it will show only one level of dependency at a time).</t></list></t>
         <t>The value of the &lt;thread/&gt; element is not human-readable and MUST be treated as opaque by entities; no semantic meaning can be derived from it, and only exact comparisons can be made against it.  The value of the &lt;thread/&gt; element MUST uniquely identify the conversation thread either between the conversation partners or more generally (one way to ensure uniqueness is by generating a universally unique identifier (UUID) as described in <xref target='UUID'/>).</t>
-        <t><list style='empty'><t>An application that generates a ThreadID MUST ensure that it does not reveal identifying information about the entity (e.g., the MAC address of the device on which the XMPP application is running).</t></list></t>
+        <t><list style='empty'><t>Security Warning: An application that generates a ThreadID MUST ensure that it does not reveal identifying information about the entity (e.g., the MAC address of the device on which the XMPP application is running).</t></list></t>
         <t>The &lt;thread/&gt; element MUST NOT contain mixed content (as defined in Section 3.2.2 of <xref target="XML"/>).</t>
         <figure>
           <artwork><![CDATA[
@@ -2011,7 +2076,7 @@ CS: <presence from='juliet@example.com/balcony'
       </section>
     </section>
     <section title="Extended Content" anchor="message-syntax-extended">
-      <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any child element that is qualified by a namespace other than the default namespace; this applies to the message stanza as well.</t>
+      <t>As described in <xref target="XMPP-CORE"/>, an XML stanza MAY contain any child element that is qualified by a namespace other than the default namespace; this applies to the message stanza as well.  Guidelines for handling extended content on the part of both routing servers and end recipients are provided in Section 8.4 of <xref target="XMPP-CORE"/>.</t>
       <t>(In the following example, the message stanza includes an XHTML-formatted version of the message as defined in <xref target='XEP-0071'/>).)</t>
       <figure>
         <artwork><![CDATA[
@@ -2368,8 +2433,8 @@ US: </stream:stream>
       <t>If the stanza possesses no 'to' attribute, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
     </section>
     <section title="Remote Domain" anchor="rules-remote">
-      <t>If the domainpart of the address contained in the 'to' attribute of an outbound stanza does not match a configured domain of the server itself, then the server MUST attempt to route the stanza to the remote domain, subject to local security policies.  If there exists an active stream between the two peers, then the server SHOULD route the stanza over that stream for processing by the peer server; if not, then the server SHOULD attempt to resolve the domain name of the remote server in adherence with the rules defined in <xref target="XMPP-CORE"/>, negotiate XML streams with the remote domain, and route the stanza to the remote domain.  However, if the server cannot resolve the remote domain, then it MUST return a &lt;remote-server-not-found/&gt; stanza error to the local sender.</t>
-      <t><list style='empty'><t>Implementation Note: RFC 3921 described use of the _im._xmpp and _pres._xmpp SRV records (defined in <xref target='IMP-SRV'/>) to discover the appropriate protocol for communication with remote instant messaging and presence services.  Because those SRV records have not been widely deployed, this specification no longer actively recommends that they be deployed or supported; see RFC 3921 regarding the proper formats and resolution processes.</t></list></t>
+      <t>If the domainpart of the address contained in the 'to' attribute of an outbound stanza does not match a configured domain of the server itself, then the rules provided in Section 10.4 of <xref target='XMPP-CORE'/> apply.</t>
+      <t><list style='empty'><t>Interoperability Note: RFC 3921 specified how to use the _im._xmpp and _pres._xmpp SRV records <xref target='IMP-SRV'/> as a fallback method for discovering whether a remote instant messaging and presence service communicates via XMPP.  Because those SRV records have not been widely deployed, this document no longer specifies their use, and new implementations are not encouraged.</t></list></t>
     </section>
     <section title="Local Domain" anchor="rules-local">
       <t>If the domainpart of the JID contained in the 'to' attribute matches one of the configured domains of the server, the domain is serviced by the server itself (not by a specialized local service), and the JID is of the form &lt;domainpart&gt; or &lt;domainpart/resourcepart&gt;, the rules defined in <xref target='XMPP-CORE'/> apply.</t>
@@ -2397,16 +2462,16 @@ US: </stream:stream>
             <t>
               <list style='symbols'>
                 <t>If all of the available resources have a negative presence priority then the server SHOULD either (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If there is one available resource with a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources.</t>
+                <t>If there is one available resource with a non-negative presence priority then the server MUST deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server MUST either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources.</t>
               </list>
             </t>
             <t>For a message stanza of type "chat":</t>
             <t>
               <list style='symbols'>
                 <t>If the only available resource has a negative presence priority then the server SHOULD either (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
+                <t>If the only available resource has a non-negative presence priority then the server MUST deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server MUST either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
               </list>
             </t>
             <t>For a message stanza of type "groupchat", the server MUST NOT deliver the stanza to any of the available resources but instead MUST return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.</t>
@@ -2414,8 +2479,8 @@ US: </stream:stream>
             <t>
               <list style='symbols'>
                 <t>If the only available resource has a negative presence priority then the server MUST silently ignore the stanza.<vspace blankLines='1'/></t>
-                <t>If the only available resource has a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
+                <t>If the only available resource has a non-negative presence priority then the server MUST deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server MUST deliver the message to all of the non-negative resources.</t>
               </list>
             </t>
             <t>For a message stanza of type "error", the server MUST silently ignore the message.</t>
@@ -2473,8 +2538,8 @@ US: </stream:stream>
               <list style='symbols'>
                 <t>If there is no available or connected resource, the server MUST either (a) store the message offline for later delivery or (b) return an error stanza to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
                 <t>If all of the available resources have a negative presence priority then the server SHOULD (a) store the message offline for later delivery or (b) return a stanza error to the sender, which SHOULD be &lt;service-unavailable/&gt;.<vspace blankLines='1'/></t>
-                <t>If there is one available resource with a non-negative presence priority then the server SHOULD deliver the message to that resource.<vspace blankLines='1'/></t>
-                <t>If there is more than one resource with a non-negative presence priority then the server SHOULD deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available"); however, if the server supports methods for enabling resources to opt in to receiving every chat message then it is appropriate for the server to instead deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
+                <t>If there is one available resource with a non-negative presence priority then the server MUST deliver the message to that resource.<vspace blankLines='1'/></t>
+                <t>If there is more than one resource with a non-negative presence priority then the server MUST either (a) deliver the message to the "most available" resource or resources (according to the server's implementation-specific algorithm, e.g., treating the resource or resources with the highest presence priority as "most available") or (b) deliver the message to all of the non-negative resources that have opted in to receive chat messages.</t>
               </list>
             </t>
             <t>For a message stanza of type "error", the server MUST silently ignore the stanza.</t>
@@ -2865,6 +2930,22 @@ US: </stream:stream>
 <format type='TXT' octets='30537' target='ftp://ftp.isi.edu/in-notes/rfc3859.txt' />
 </reference>
 
+<reference anchor='DOS'>
+<front>
+<title>Internet Denial-of-Service Considerations</title>
+<author initials='M.' surname='Handley' fullname='M. Handley'>
+<organization /></author>
+<author initials='E.' surname='Rescorla' fullname='E. Rescorla'>
+<organization /></author>
+<author>
+<organization>IAB</organization></author>
+<date year='2006' month='December' />
+<abstract>
+<t>This document provides an overview of possible avenues for denial-of-service (DoS) attack on Internet systems. The aim is to encourage protocol designers and network engineers towards designs that are more robust. We discuss partial solutions that reduce the effectiveness of attacks, and how some solutions might inadvertently open up alternative vulnerabilities. This memo provides information for the Internet community.</t></abstract></front>
+<seriesInfo name='RFC' value='4732' />
+<format type='TXT' octets='91844' target='ftp://ftp.isi.edu/in-notes/rfc4732.txt' />
+</reference>
+
 <reference anchor="IMP-MODEL">
 <front>
 <title>A Model for Presence and Instant Messaging</title>
@@ -3141,12 +3222,12 @@ US: </stream:stream>
 <author initials='J' surname='Hodges' fullname='Jeff Hodges'>
     <organization />
 </author>
-<date month='December' day='13' year='2010' />
-<abstract><t>Many application technologies enable a secure connection between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS).  This document specifies best current practices for representing and verifying the identity of application services in such interactions.</t></abstract>
+<date month='January' day='12' year='2011' />
+<abstract><t>Many application technologies enable a secure connection between two entities by means of Internet Public Key Infrastructure Using X.509 (PKIX) certificates in the context of Transport Layer Security (TLS).  This document specifies procedures for representing and verifying the identity of application services in such interactions.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-12' />
+<seriesInfo name='Internet-Draft' value='draft-saintandre-tls-server-id-check-14' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-12.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-saintandre-tls-server-id-check-14.txt' />
 </reference>
 
 <reference anchor="UNICODE" target="http://www.unicode.org/versions/Unicode6.0.0/">
@@ -3481,12 +3562,12 @@ US: </stream:stream>
 <author initials='P' surname='Saint-Andre' fullname='Peter Saint-Andre'>
     <organization />
 </author>
-<date month='December' day='10' year='2010' />
-<abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP), including support for non- ASCII characters.</t></abstract>
+<date month='January' day='6' year='2011' />
+<abstract><t>This document defines the address format for the Extensible Messaging and Presence Protocol (XMPP), including support for non- ASCII characters.  This document updates RFC 3920.</t></abstract>
 </front>
-<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-08' />
+<seriesInfo name='Internet-Draft' value='draft-ietf-xmpp-address-09' />
 <format type='TXT'
-        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-08.txt' />
+        target='http://www.ietf.org/internet-drafts/draft-ietf-xmpp-address-09.txt' />
 </reference>
 
 <reference anchor='XMPP-URI'>
