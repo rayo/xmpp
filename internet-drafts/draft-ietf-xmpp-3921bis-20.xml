@@ -112,7 +112,7 @@
     <t><list style='empty'><t>Security Warning: Because the user's roster can contain confidential data, the server MUST restrict access to this data so that only authorized entities (typically limited to the account owner) are able to retrieve, modify, or delete it.</t></list></t>
     <t>RFC 3921 assumed that the only place where a user stores their roster is the server where the user's account is registered and at which the user authenticates for access to the XMPP network.  This specification removes that strict coupling of roster storage to account registration and network authentication, with the result that a user could store their roster at another location, or could have multiple rosters that are stored in multiple locations.  However, in the absence of implementation and deployment experience with a more flexible roster storage model, this specification retains the terminology of RFC 3921 by using the terms "client" and server" (and "the roster" instead of "a roster"), rather than coining a new term for "a place where a user stores a roster".  Future documents might provide normative rules for non-server roster storage or for the management of multiple rosters, but such rules are out of scope for this document.</t>
     <section title="Syntax and Semantics" anchor="roster-syntax">
-      <t>Rosters are managed using IQ stanzas, specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The detailed syntax and semantics are defined in the following sections.</t>
+      <t>Rosters are managed using &lt;iq/&gt; stanzas (see Section 8.2.3 of <xref target='XMPP-CORE'/>), specifically by means of a &lt;query/&gt; child element qualified by the 'jabber:iq:roster' namespace.  The detailed syntax and semantics are defined in the following sections.</t>
       <section title="Ver Attribute" anchor="roster-syntax-ver">
         <t>The 'ver' attribute is a string that identifies a particular version of the roster information.  The value MUST be generated only by the server and MUST be treated by the client as opaque.  The server can use any appropriate method for generating the version ID, such as a hash of the roster data or a strictly-increasing sequence number.</t>
         <t>Inclusion of the 'ver' attribute is RECOMMENDED.</t>
@@ -708,15 +708,13 @@ S: <iq id='uj4b1ca8'
 
     <section title="Roster Versioning" anchor="roster-versioning">
       <section title="Stream Feature" anchor="roster-versioning-feature">
-        <t>If a server supports roster versioning, then it MUST advertise the following stream feature during stream negotiation.</t>
+        <t>If a server supports roster versioning, then it MUST advertise the following stream feature during stream negotiation:</t>
         <figure>
           <artwork><![CDATA[
-<ver xmlns='urn:xmpp:features:rosterver'>
-  <optional/>
-</ver>
+   <ver xmlns='urn:xmpp:features:rosterver'/>
           ]]></artwork>
         </figure>
-        <t>The roster versioning stream feature SHOULD always be voluntary-to-negotiate (advertised by means of the &lt;optional/&gt; child element), not mandatory-to-negotiate (advertised by means of the &lt;required/&gt; child element).</t>
+        <t>The roster versioning stream feature is merely informative and therefore is never mandatory-to-negotiate.</t>
       </section>
       <section title="Request" anchor="roster-versioning-request">
         <t>If a client supports roster versioning and the server to which it has connected advertises support for roster versioning as described in the foregoing section, then the client SHOULD include the 'ver' element in its request for the roster. If the server does not advertise support for roster versioning, the client MUST NOT include the 'ver' attribute. If the client includes the 'ver' attribute in its roster get, it sets the attribute's value to the version ID associated with its last cache of the roster.</t>
@@ -838,7 +836,7 @@ UC: <presence id='xk3h1v69'
         <t>
           <list style='numbers'>
             <t>Before processing the request, the user's server MUST check the syntax of the JID contained in the 'to' attribute (however, it is known that some existing implementations do not perform this check).  If the JID is of the form &lt;contact@domainpart/resourcepart&gt; instead of &lt;contact@domainpart&gt;, the user's server SHOULD treat it as if the request had been directed to the contact's bare JID and modify the 'to' address accordingly.  The server MAY also verify that the JID adheres to the format defined in <xref target='XMPP-ADDR'/> and possibly return a &lt;jid-malformed/&gt; stanza error.<vspace blankLines='1'/></t>
-            <t>If the potential contact is hosted on the same server as the user, then the server MUST adhere to the rules specified in the next section when processing the subscription request and delivering it to the (local) contact.<vspace blankLines='1'/></t>
+            <t>If the potential contact is hosted on the same server as the user, then the server MUST adhere to the rules specified under <xref target='sub-request-inbound'/> when processing the subscription request and delivering it to the (local) contact.<vspace blankLines='1'/></t>
             <t>If the potential contact is hosted on a remote server, subject to local service policies the user's server MUST then route the stanza to that remote domain in accordance with core XMPP stanza processing rules.  (This can result in returning an appropriate stanza error to the user, such as &lt;remote-server-timeout/&gt;.)</t>
           </list>
         </t>
@@ -1191,7 +1189,7 @@ UC: <presence id='ul4bs71n'
         <t>Upon receiving the outbound unsubscribe, the user's server MUST proceed as follows.</t>
         <t>
           <list style='numbers'>
-            <t>If the contact is hosted on the same server as the user, then the server MUST adhere to the rules specified in the next section when processing the subscription request.<vspace blankLines='1'/></t>
+            <t>If the contact is hosted on the same server as the user, then the server MUST adhere to the rules specified under <xref target='sub-unsub-inbound'/> when processing the subscription request.<vspace blankLines='1'/></t>
             <t>If the contact is hosted on a remote server, subject to local service policies the user's server MUST then route the stanza to that remote domain in accordance with core XMPP stanza processing rules.  (This can result in returning an appropriate stanza error to the user, such as &lt;remote-server-timeout/&gt;.)<vspace blankLines='1'/></t>
           </list>
         </t>
@@ -1291,10 +1289,10 @@ CS: <presence from='juliet@example.com/chamber'
 
     <section title="Pre-Approving a Subscription Request" anchor="sub-preapproval">
       <t>If a user has not received a subscription request from a contact, the user can "pre-approve" such a request so that it will be automatically approved by the user's server.</t>
-      <t>Support for subscription pre-approvals is OPTIONAL on the part of clients and servers.  If a server supports subscription pre-approvals, then it MUST advertise the following stream feature during stream negotiation.</t>
+      <t>Support for subscription pre-approvals is OPTIONAL on the part of clients and servers.  If a server supports subscription pre-approvals, then it MUST advertise the following stream feature during stream negotiation:</t>
       <figure>
         <artwork><![CDATA[
-<sub xmlns='urn:xmpp:features:pre-approval'/>
+   <sub xmlns='urn:xmpp:features:pre-approval'/>
         ]]></artwork>
       </figure>
       <t>The subscription pre-approval stream feature is merely informative and therefore is never mandatory-to-negotiate.</t>
