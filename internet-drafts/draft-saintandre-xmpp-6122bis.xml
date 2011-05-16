@@ -1,14 +1,12 @@
-<?xml version="1.0" encoding="US-ASCII"?>
+<?xml version="1.0"?>
 <!DOCTYPE rfc SYSTEM "rfc2629.dtd">
 <?rfc compact="yes"?>
-<?rfc subcompact="no"?>
+<?rfc strict="yes"?>
 <?rfc symrefs="yes"?>
-<?rfc sortrefs="yes"?>
 <?rfc toc="yes"?>
 <?rfc tocdepth="4"?>
-<?rfc rfcedstyle="yes" ?> 
 
-<rfc category="std" docName="draft-saintandre-6122bis-00" ipr="trust200902" obsoletes="6122">
+<rfc category="std" docName="draft-saintandre-xmpp-6122bis-00" ipr="trust200902" obsoletes="6122">
 
   <front>
     <title abbrev="XMPP Address Format">Extensible Messaging and Presence Protocol (XMPP): Address Format</title>
@@ -27,7 +25,7 @@
       </address>
     </author>
 
-    <date year="2011" month="May" day="13"/>
+    <date year="2011" month="May" day="17"/>
 
     <area>RAI</area>
     <workgroup>XMPP</workgroup>
@@ -105,8 +103,8 @@
       </figure>
       <t>All JIDs are based on the foregoing structure.</t>
       <t>Each allowable portion of a JID (localpart, domainpart, and resourcepart) MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length, resulting in a maximum total size (including the '@' and '/' separators) of 3071 bytes.</t>
-      <t>For the purpose of communication over an XMPP network (e.g., in the 'to' or 'from' address of an XMPP stanza), an entity's address MUST be represented as a JID, not as a Uniform Resource Identifier <xref target="URI"/> or Internationalized Resource Identifier <xref target="IRI"/>.  An XMPP IRI <xref target="XMPP-URI"/> is in essence a JID prepended with 'xmpp:'; however, the native addressing format used in XMPP is that of a mere JID without a URI scheme.  <xref target="XMPP-URI"/> is provided only for identification and interaction outside the context of XMPP itself, for example when linking to a JID from a web page.  See <xref target="XMPP-URI"/> for a description of the process for securely extracting a JID from an XMPP URI or IRI.</t>
-      <t><list style='empty'><t>Implementation Note: When dividing a JID into its component parts, an implementation needs to match the separator characters '@' and '/' before applying any transformation algorithms, which might decompose certain Unicode code points to the separator characters (e.g., U+FE6B SMALL COMMERCIAL AT might decompose into U+0040 COMMERCIAL AT).</t></list></t> 
+      <t>For the purposes of communication over an XMPP network (e.g., in the 'to' or 'from' address of an XMPP stanza), an entity's address MUST be represented as a JID, not as a Uniform Resource Identifier <xref target="URI"/> or Internationalized Resource Identifier <xref target="IRI"/>.  An XMPP URI or IRI <xref target="XMPP-URI"/> is in essence a JID prepended with 'xmpp:'; however, the native addressing format used in XMPP is that of a mere JID without a URI scheme.  <xref target="XMPP-URI"/> is provided only for identification and interaction outside the context of XMPP itself, for example when linking to a JID from a web page.  See <xref target="XMPP-URI"/> for information about securely extracting a JID from an XMPP URI or IRI.</t>
+      <t><list style='empty'><t>Implementation Note: When dividing a JID into its component parts, an implementation needs to match the separator characters '@' and '/' before applying any transformation algorithms, which might decompose certain Unicode code points to the separator characters (e.g., U+FE6B SMALL COMMERCIAL AT might decompose to U+0040 COMMERCIAL AT).</t></list></t> 
     </section>
 
     <section title="Domainpart" anchor="addressing-domain">
@@ -114,7 +112,7 @@
       <t>The domainpart for every XMPP service MUST be a fully qualified domain name (FQDN; see <xref target='DNS'/>), IPv4 address, IPv6 address, or unqualified hostname (i.e., a text label that is resolvable on a local network).</t>
       <t><list style='empty'><t>Interoperability Note: Domainparts that are IP addresses might not be accepted by other services for the sake of server-to-server communication, and domainparts that are unqualified hostnames cannot be used on public networks because they are resolvable only on a local network.</t></list></t>
       <t>If the domainpart includes a final character considered to be a label separator (dot) by <xref target='DNS'/>, this character MUST be stripped from the domainpart before the JID of which it is a part is used for the purpose of routing an XML stanza, comparing against another JID, or constructing an <xref target='XMPP-URI'/>. In particular, the character MUST be stripped before any other canonicalization steps are taken.</t>
-      <t>A domainpart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization resulting from application of the Nameprep profile of stringprep (e.g., in Nameprep some characters can be mapped to nothing, which might result in a string of zero length).  Naturally, the length limits of <xref target='DNS'/> apply, and nothing in this document is to be interpreted as overriding those more fundamental limits.</t>
+      <t>A domainpart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization of code points.  Naturally, the length limits of <xref target='DNS'/> apply, and nothing in this document is to be interpreted as overriding those more fundamental limits.</t>
       <t>In the terms of IDNA2008 <xref target='IDNA-DEFS'/>, the domainpart of a JID is a "domain name slot".</t>
       <t>A domainpart consisting of a fully qualified domain name MUST be an "internationalized domain name" as defined in <xref target='IDNA-DEFS'/> and MUST consist only of Unicode code points that conform to the rules specified in <xref target='IDNA-CODE'/>.</t>
       <t>For the purposes of communication over XMPP, the domainpart of a JID MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
@@ -122,15 +120,14 @@
         <list style='numbers'>
           <t>Uppercase and titlecase characters MUST be mapped to their lowercase equivalents.</t>
           <t>All characters MUST be mapped using Unicode Normalization Form C (NFC).</t>
-          <t>If the domainpart is in ACE form, it MUST be converted to an A-label by applying the Punycode algorithm <xref target='PUNYCODE'/> and then adding the ACE prefix ("xn--").</t>
+          <t>Each A-label SHOULD be converted to a U-label (however, if it is not converted then the application MUST apply the Punycode algorithm <xref target='PUNYCODE'/> to each A-label and prepend the ACE prefix ("xn--") to the resulting DNS domain name).</t>
         </list>
       </t>
-      <t>If an XMPP application receives as input an ACE label, it SHOULD convert that ACE label to an internationalized label using the ToUnicode operation (see <xref target='IDNA2003'/>) before including the label in an XMPP domainpart that will be communicated over the wire on an XMPP network (however, instead of converting the label, there are legitimate reasons why an application might instead refuse the input altogether and return an error to the entity that provided the offending data).</t>
     </section>
 
     <section title='Localpart' anchor='addressing-localpart'>
       <t>The localpart of a JID is an optional identifier placed before the domainpart and separated from the latter by the '@' character.  Typically a localpart uniquely identifies the entity requesting and using network access provided by a server (i.e., a local account), although it can also represent other kinds of entities (e.g., a chat room associated with a multi-user chat service).  The entity represented by an XMPP localpart is addressed within the context of a specific domain (i.e., &lt;localpart@domainpart&gt;).</t>
-      <t>A localpart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization resulting from application of the Nodeprep profile of stringprep (e.g., in Nodeprep some characters can be mapped to nothing, which might result in a string of zero length).</t>
+      <t>A localpart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization of code points.</t>
       <t>A localpart MUST consist only of Unicode code points that conform to the "nameything" base string class defined in <xref target='FRAMEWORK'/>, with the exception of the following characters that are explicitly disallowed in XMPP localparts:</t>
       <t>
         <list style='hanging'>
@@ -156,7 +153,7 @@
     <section title="Resourcepart" anchor="addressing-resource">
       <t>The resourcepart of a JID is an optional identifier placed after the domainpart and separated from the latter by the '/' character.  A resourcepart can modify either a &lt;localpart@domainpart&gt; address or a mere &lt;domainpart&gt; address.  Typically a resourcepart uniquely identifies a specific connection (e.g., a device or location) or object (e.g., an occupant in a multi-user chat room) belonging to the entity associated with an XMPP localpart at a domain (i.e., &lt;localpart@domainpart/resourcepart&gt;).</t>
       <t><list style='empty'><t>Informational Note: For historical reasons, the term "resource identifier" is often used in XMPP to refer to the optional portion of an XMPP address that follows the domainpart and the "/" separator character; to help prevent confusion between an XMPP "resource identifier" and the meanings of "resource" and "identifier" provided in Section 1.1 of <xref target="URI"/>, this specification uses the term "resourcepart" instead of "resource identifier" (as in RFC 3920).</t></list></t>
-      <t>A resourcepart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization resulting from application of the Resourceprep profile of stringprep (e.g., in Resourceprep some characters can be mapped to nothing, which might result in a string of zero length).</t>
+      <t>A resourcepart MUST NOT be zero bytes in length and MUST NOT be more than 1023 bytes in length.  This rule is to be enforced after any mapping or normalization of code points.</t>
       <t>A resourcepart MUST consist only of Unicode code points that conform to the "stringything" base string class defined in <xref target='FRAMEWORK'/>.</t>
       <t>For the purposes of communication over XMPP, the localpart of a JID MUST be treated as follows, where the operations specified MUST be completed in the order shown:</t>
       <t>
@@ -178,6 +175,7 @@
 
   <section title="Internationalization Considerations" anchor="i18n">
     <t>XMPP applications MUST support IDNA2008 for domainparts, the nameything string class from <xref target="FRAMEWORK"/> for localparts (with the exception of certain ASCII characters specified under <xref target='addressing-localpart'/>), and the stringything string class from <xref target="FRAMEWORK"/> for resourceparts.  This enables XMPP addresses to include a wide variety of characters outside the US-ASCII range.  Rules for enforcement of the XMPP address format are provided in <xref target='XMPP'/> and relevant XMPP extensions.</t>
+    <t>For backward compatibility, many XMPP applications support <xref target='IDNA2003'/> for domain parts, and the <xref target='STRINGPREP'/> profiles Nodeprep and Resourceprep <xref target='RFC3920'/>.</t>
   </section>
 
   <section title="Security Considerations" anchor="security">
