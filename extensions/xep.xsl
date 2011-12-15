@@ -786,6 +786,122 @@ OR OTHER DEALINGS IN THE SOFTWARE.
     </div>
   </xsl:template>
 
+    <xsl:template match='section5' mode='toc'>
+    <xsl:param name='prevnum' select='""'/>
+    <xsl:variable name='oid'>
+      <xsl:call-template name='object.id'/>
+    </xsl:variable>
+    <xsl:variable name='anch'>
+      <xsl:value-of select='@anchor'/>
+    </xsl:variable>
+    <xsl:variable name='num'>
+      <xsl:value-of select='$prevnum'/><xsl:number level='multiple' count='section5'/><xsl:text>.</xsl:text>
+    </xsl:variable>
+    <br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+      <xsl:value-of select='$num'/> <xsl:text>  </xsl:text>
+      <a>
+        <xsl:attribute name='href'>
+          <xsl:text>#</xsl:text>
+          <xsl:choose>
+            <xsl:when test='$anch != ""'>
+              <xsl:value-of select='@anchor'/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:text>sect-</xsl:text><xsl:value-of select='$oid'/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:attribute>
+        <xsl:value-of select='@topic' />
+      </a>
+  </xsl:template>
+
+  <xsl:template match='section5'>
+    <xsl:variable name='oid'>
+      <xsl:call-template name='object.id'/>
+    </xsl:variable>
+    <xsl:variable name='anch'>
+      <xsl:value-of select='@anchor'/>
+    </xsl:variable>
+    <div class='indent'>
+    <h3>
+      <xsl:number level='single' count='section1'/>.<xsl:number level='single' count='section2'/>.<xsl:number level='single' count='section3'/>.<xsl:number level='single' count='section4'/>.<xsl:number level='single' count='section5'/>
+      <xsl:text> </xsl:text>
+      <a>
+        <xsl:attribute name='name'>
+          <xsl:choose>
+            <xsl:when test='$anch != ""'>
+              <xsl:value-of select='@anchor'/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:text>sect-</xsl:text><xsl:value-of select='$oid'/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:attribute>
+        <xsl:value-of select='@topic' />
+      </a>
+    </h3>
+    <xsl:apply-templates/>
+    </div>
+  </xsl:template>
+
+    <xsl:template match='section6' mode='toc'>
+    <xsl:param name='prevnum' select='""'/>
+    <xsl:variable name='oid'>
+      <xsl:call-template name='object.id'/>
+    </xsl:variable>
+    <xsl:variable name='anch'>
+      <xsl:value-of select='@anchor'/>
+    </xsl:variable>
+    <xsl:variable name='num'>
+      <xsl:value-of select='$prevnum'/><xsl:number level='multiple' count='section6'/><xsl:text>.</xsl:text>
+    </xsl:variable>
+    <br />&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;
+      <xsl:value-of select='$num'/> <xsl:text>  </xsl:text>
+      <a>
+        <xsl:attribute name='href'>
+          <xsl:text>#</xsl:text>
+          <xsl:choose>
+            <xsl:when test='$anch != ""'>
+              <xsl:value-of select='@anchor'/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:text>sect-</xsl:text><xsl:value-of select='$oid'/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:attribute>
+        <xsl:value-of select='@topic' />
+      </a>
+  </xsl:template>
+
+  <xsl:template match='section6'>
+    <xsl:variable name='oid'>
+      <xsl:call-template name='object.id'/>
+    </xsl:variable>
+    <xsl:variable name='anch'>
+      <xsl:value-of select='@anchor'/>
+    </xsl:variable>
+    <div class='indent'>
+    <h3>
+      <xsl:number level='single' count='section1'/>.<xsl:number level='single' count='section2'/>.<xsl:number level='single' count='section3'/>.<xsl:number level='single' count='section4'/>.<xsl:number level='single' count='section5'/>.<xsl:number level='single' count='section6'/>
+      <xsl:text> </xsl:text>
+      <a>
+        <xsl:attribute name='name'>
+          <xsl:choose>
+            <xsl:when test='$anch != ""'>
+              <xsl:value-of select='@anchor'/>
+            </xsl:when>
+            <xsl:otherwise>
+              <xsl:text>sect-</xsl:text><xsl:value-of select='$oid'/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:attribute>
+        <xsl:value-of select='@topic' />
+      </a>
+    </h3>
+    <xsl:apply-templates/>
+    </div>
+  </xsl:template>
+
   <xsl:template match='remark'>
     <xsl:apply-templates/>
   </xsl:template>
