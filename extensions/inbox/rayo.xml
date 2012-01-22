@@ -632,12 +632,35 @@
 
   <!-- Offer Event -->
   <element name="offer">
+    <annotation>
+      <documentation>
+        Informs the recipient that a new call is available for control and invites it to take control using progress commands below.
+      </documentation>
+    </annotation>
     <complexType>
+      <attribute name="to" type="anyURI" use="required">
+        <annotation>
+          <documentation>
+            The target URI for the call. May me a tel URI, SIP URI, a JID (for Jingle) or some other platform-specific addressing mechanism.
+          </documentation>
+        </annotation>
+      </attribute>
+      <attribute name="from" type="anyURI" use="optional">
+        <annotation>
+          <documentation>
+            The caller ID URI for the call. May me a tel URI, SIP URI, a JID (for Jingle) or some other platform-specific addressing mechanism.
+          </documentation>
+        </annotation>
+      </attribute>
       <sequence>
-        <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
+        <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded">
+          <annotation>
+            <documentation>
+              Set of header variables sent by the originating party (eg SIP INVITE headers).
+            </documentation>
+          </annotation>
+        </element>
       </sequence>
-      <attribute name="to" type="anyURI" use="required" />
-      <attribute name="from" type="anyURI" use="optional" />
     </complexType>
   </element>
 
@@ -647,23 +670,90 @@
     </sequence>
   </complexType>
 
-  <!-- Answered Event -->
-  <element name="answered" type="tns:callProgressType" />
-
   <!-- Ringing Event -->
-  <element name="ringing" type="tns:callProgressType" />
+  <element name="ringing" type="tns:callProgressType">
+    <annotation>
+      <documentation>
+        Indication that an outbound call has begun ringing, or accepted by the remote party.
+      </documentation>
+    </annotation>
+  </element>
+
+  <!-- Answered Event -->
+  <element name="answered" type="tns:callProgressType">
+    <annotation>
+      <documentation>
+        Indication that an outbound call has been answered and that the 3rd party negotiation has completed. At this point, the media stream should be open.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- End Event -->
   <element name="end">
+    <annotation>
+      <documentation>
+        Indicated to a call's controlling party that the call has come to an end, giving the reason.
+      </documentation>
+    </annotation>
     <complexType>
       <sequence>
         <choice>
-          <element name="hungup" type="tns:empty" />
-          <element name="timeout" type="tns:empty" />
-          <element name="busy" type="tns:empty" />
-          <element name="reject" type="tns:empty" />
-          <element name="error" type="tns:empty" />
+          <element name="hungup" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indication that the call ended due to a normal hangup by either party.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="timeout" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indication that the call ended due to a timeout in contacting the remote party.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="busy" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indication that the call ended due to being rejected by the remote party subsequent to being accepted.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="reject" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indication that the call ended due to being rejected by the remote party before being accepted.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="error" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indication that the call ended due to a system error.
+              </documentation>
+            </annotation>
+          </element>
         </choice>
+        <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded">
+          <annotation>
+            <documentation>
+             Set of header variables sent by the remote party along with the indication of the call ending.
+            </documentation>
+          </annotation>
+        </element>
+      </sequence>
+    </complexType>
+  </element>
+
+  <!-- Accept Command -->
+  <element name="accept">
+    <annotation>
+      <documentation>
+        Instructs the server to send notification to the calling party that the call will be dealt with and that ringing may begin.
+      </documentation>
+    </annotation>
+    <complexType>
+      <sequence>
         <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
       </sequence>
     </complexType>
@@ -671,6 +761,11 @@
 
   <!-- Answer Command -->
   <element name="answer">
+    <annotation>
+      <documentation>
+        Instructs the server to pick up an incoming call and connect the media stream.
+      </documentation>
+    </annotation>
     <complexType>
       <sequence>
         <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
@@ -680,6 +775,11 @@
 
   <!-- Redirect Command -->
   <element name="redirect">
+    <annotation>
+      <documentation>
+        Instructs the calling party that the call will not be accepted and that instead it should try to call the URI indicated in the command.
+      </documentation>
+    </annotation>
     <complexType>
       <attribute name="to" type="anyURI" />
       <sequence>
@@ -690,12 +790,35 @@
 
   <!-- Reject Command -->
   <element name="reject">
+    <annotation>
+      <documentation>
+        Instructs the server to reject the call with a given reason.
+      </documentation>
+    </annotation>
     <complexType mixed="true">
       <sequence>
         <choice>
-          <element name="decline" type="tns:empty" />
-          <element name="busy" type="tns:empty" />
-          <element name="error" type="tns:empty" />
+          <element name="decline" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indicates that the controlling party refused the call for an unspecified reason, such as access control.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="busy" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indicates that the controlling party refused the call due to excess load.
+              </documentation>
+            </annotation>
+          </element>
+          <element name="error" type="tns:empty">
+            <annotation>
+              <documentation>
+                Indicates that the controlling party refused the call because some error occurred.
+              </documentation>
+            </annotation>
+          </element>
         </choice>
         <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
       </sequence>
@@ -704,6 +827,11 @@
 
   <!-- Hangup Command -->
   <element name="hangup">
+    <annotation>
+      <documentation>
+        Instructs the server to bring the call to an end naturally.
+      </documentation>
+    </annotation>
     <complexType>
       <sequence>
         <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
@@ -713,73 +841,207 @@
 
   <!-- Dial Command -->
   <element name="dial">
+    <annotation>
+      <documentation>
+        Instructs the server to create a new call and surrender control of it to the requesting party.
+      </documentation>
+    </annotation>
     <complexType>
-      <attribute name="to" type="anyURI" use="required" />
-      <attribute name="from" type="anyURI" use="optional" />
-      <attribute name="timeout" type="tns:durationType" use="optional" />
+      <attribute name="to" type="anyURI" use="required">
+        <annotation>
+          <documentation>
+            Indicates the party to whom the call should be directed.
+          </documentation>
+        </annotation>
+      </attribute>
+      <attribute name="from" type="anyURI" use="optional">
+        <annotation>
+          <documentation>
+            Indicates the caller ID with which the call should appear to originate.
+          </documentation>
+        </annotation>
+      </attribute>
+      <attribute name="timeout" type="tns:durationType" use="optional">
+        <annotation>
+          <documentation>
+            Indicates the maximum time allowed for a response to be provided by the third party before the call should be considered to have come to an end.
+          </documentation>
+        </annotation>
+      </attribute>
       <sequence>
         <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
-        <element name="join" type="tns:joinCommandType" minOccurs="0" maxOccurs="unbounded" />
+        <element name="join" type="tns:joinCommandType" minOccurs="0" maxOccurs="unbounded">
+          <annotation>
+            <documentation>
+              Instructs the server to join the new call in the indicated mannor rather than the default (join to the local media server).
+            </documentation>
+          </annotation>
+        </element>
       </sequence>
     </complexType>
   </element>
 
   <!-- Join Command -->
-  <element name="join" type="tns:joinCommandType" />
+  <element name="join" type="tns:joinCommandType">
+    <annotation>
+      <documentation>
+        Instructs the server to join the media streams of the call and the specified party, given direction and media negotiation parameters.
+      </documentation>
+    </annotation>
+    <complexType>
+      <complexContent>
+        <extension base="tns:joinType">
+          <attribute name="direction" type="string" use="optional" default="duplex">
+            <annotation>
+              <documentation>
+                Indicates the direction in which the media should flow between the call and the 3rd party.
+              </documentation>
+            </annotation>
+            <simpleType>
+              <restriction base="string">
+                <enumeration value="duplex">
+                  <annotation>
+                    <documentation>
+                      Indicates that media should flow in both directions between the parties.
+                    </documentation>
+                  </annotation>
+                </enumeration>
+                <enumeration value="send">
+                  <annotation>
+                    <documentation>
+                      Indicates that media should only flow from the target call to the third party.
+                    </documentation>
+                  </annotation>
+                </enumeration>
+                <enumeration value="recv">
+                  <annotation>
+                    <documentation>
+                      Indicates that media should only flow from the third party to the target call.
+                    </documentation>
+                  </annotation>
+                </enumeration>
+              </restriction>
+            </simpleType>
+          </attribute>
+          <attribute name="media" type="string" use="optional" default="bridge">
+            <annotation>
+              <documentation>
+                Indicates the manner in which the server should negotiate media between the two parties.
+              </documentation>
+            </annotation>
+            <simpleType>
+              <restriction base="string">
+                <enumeration value="bridge">
+                  <annotation>
+                    <documentation>
+                      Instructs the server to bridge the parties media streams via its local media server.
+                    </documentation>
+                  </annotation>
+                </enumeration>
+                <enumeration value="direct">
+                  <annotation>
+                    <documentation>
+                      Instructs the server to have the parties negotiate media directly with one another.
+                    </documentation>
+                  </annotation>
+                </enumeration>
+              </restriction>
+            </simpleType>
+          </attribute>
+        </extension>
+      </complexContent>
+    </complexType>
+  </element>
 
   <!-- Unjoin Command -->
-  <element name="unjoin" type="tns:joinCommandType" />
+  <element name="unjoin" type="tns:joinType">
+    <annotation>
+      <documentation>
+        Instructs the server to unjoin the media streams of the call and the specified party.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- Joined Event -->
-  <element name="joined" type="tns:joinType" />
+  <element name="joined" type="tns:joinType">
+    <annotation>
+      <documentation>
+        Indicates that the call was successfully joined to the specified party.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- Unjoined Event -->
-  <element name="unjoined" type="tns:joinType" />
+  <element name="unjoined" type="tns:joinType">
+    <annotation>
+      <documentation>
+        Indicates that the call ceased to be joined to the specified party.
+      </documentation>
+    </annotation>
+  </element>
 
   <complexType name="joinType">
-    <attribute name="call-id" type="string" use="optional" />
-    <attribute name="mixer-name" type="string" use="optional" />
-  </complexType>
-
-  <complexType name="joinCommandType">
-    <complexContent>
-      <extension base="tns:joinType">
-        <attribute name="direction" type="string" use="optional" default="duplex">
-          <simpleType>
-            <restriction base="string">
-              <enumeration value="duplex" />
-              <enumeration value="send" />
-              <enumeration value="recv" />
-            </restriction>
-          </simpleType>
-        </attribute>
-        <attribute name="media" type="string" use="optional" default="bridge">
-          <simpleType>
-            <restriction base="string">
-              <enumeration value="bridge" />
-              <enumeration value="direct" />
-            </restriction>
-          </simpleType>
-        </attribute>
-      </extension>
-    </complexContent>
+    <attribute name="call-id" type="string" use="optional">
+      <annotation>
+        <documentation>
+          Indicates the 3rd party call ID to which the target call should be joined. May not be set if the mixer-name attribute is set.
+        </documentation>
+      </annotation>
+    </attribute>
+    <attribute name="mixer-name" type="string" use="optional">
+      <annotation>
+        <documentation>
+          Indicates the mixer name to which the target call should be joined. May not be set if the call-id attribute is set.
+        </documentation>
+      </annotation>
+    </attribute>
   </complexType>
 
   <!-- Started Speaking Event -->
-  <element name="started-speaking" type="tns:activeSpeakerType" />
+  <element name="started-speaking" type="tns:activeSpeakerType">
+    <annotation>
+      <documentation>
+        Indicates that a call joined to a mixer with which the controlling party has an events subscription has activated a speech detector, providing its ID.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- Stopped Speaking Event -->
-  <element name="stopped-speaking" type="tns:activeSpeakerType" />
+  <element name="stopped-speaking" type="tns:activeSpeakerType">
+    <annotation>
+      <documentation>
+        Indicates that a call joined to a mixer with which the controlling party has an events subscription has ceased activation of a speech detector, providing its ID.
+      </documentation>
+    </annotation>
+  </element>
 
   <complexType name="activeSpeakerType">
-    <attribute name="call-id" type="string" use="required" />
+    <attribute name="call-id" type="string" use="required">
+      <annotation>
+        <documentation>
+          Indicates the ID of the call which has triggered the speech detector.
+        </documentation>
+      </annotation>
+    </attribute>
   </complexType>
 
   <!-- Resource Reference -->
-  <element name="ref" type="tns:ref" />
-  <complexType name="ref">
-    <attribute name="id" type="string" use="required" />
-  </complexType>
+  <element name="ref">
+    <annotation>
+      <documentation>
+        Used to give an indication of the identity of a newly created resource, either a call or a component.
+      </documentation>
+    </annotation>
+    <complexType>
+      <attribute name="id" type="string" use="required">
+        <annotation>
+          <documentation>
+            Gives the ID of the new resource.
+          </documentation>
+        </annotation>
+      </attribute>
+    </complexType>
+  </element>
 
   <!-- Utility: Empty Type -->
   <simpleType name="empty">
@@ -817,13 +1079,30 @@
   </annotation>
 
   <!-- Stop Command -->
-  <element name="stop" type="tns:empty" />
+  <element name="stop" type="tns:empty">
+    <annotation>
+      <documentation>
+        Instructs a component to come to an end before it completes naturally.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- Complete Event -->
   <element name="complete">
+    <annotation>
+      <documentation>
+        Indicates that the component has come to an end and no further processing will occurr. Gives the reason for the termination.
+      </documentation>
+    </annotation>
     <complexType mixed="true">
       <choice minOccurs="1" maxOccurs="1">
-        <any />
+        <any>
+          <annotation>
+            <documentation>
+              The reason for component termination. May be either one of the core termination reasons (stop, hangup, error) or a component specific reason.
+            </documentation>
+          </annotation>
+        </any>
       </choice>
     </complexType>
   </element>
@@ -864,16 +1143,40 @@
   </annotation>
 
   <!-- Complete due to a <stop/> command -->
-  <element name="stop" type="tns:completeReason" />
+  <element name="stop" type="tns:completeReason">
+    <annotation>
+      <documentation>
+        Indicates that the component came to an end because it was issued a stop command by the controlling party.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- Complete due to a hangup -->
-  <element name="hangup" type="tns:completeReason" />
+  <element name="hangup" type="tns:completeReason">
+    <annotation>
+      <documentation>
+        Indicates that the component came to an end because the call ended.
+      </documentation>
+    </annotation>
+  </element>
 
   <!-- Complete due to a system error -->
-  <element name="error" type="string" />
+  <element name="error" type="string">
+    <annotation>
+      <documentation>
+        Indicates that the component came to an end because it encountered an error.
+      </documentation>
+    </annotation>
+  </element>
 
   <complexType name="completeReason" mixed="true">
-    <any />
+    <any minOccurs="0" maxOccurs="unbounded">
+      <annotation>
+        <documentation>
+          May be any component specific meta-data elements.
+        </documentation>
+      </annotation>
+    </any>
   </complexType>
 
   <!-- Utility: Empty Type -->
