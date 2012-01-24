@@ -76,15 +76,7 @@
   <p>This document defines the core Rayo protocol, and contains provisions for its extension by further specifications. Additionally, further documents specify implementation best practices, such as <a href='rayo-clustering.xml'>clustering</a>.</p>
 </section1>
 <section1 topic='How it works' anchor='howitworks'>
-  <!-- TODO: Friendly introduction, explain basic nature of interaction -->
-  <ol>
-    <li>A call arrives to the Rayo Server</li>
-    <li>The Rayo Server uses the incoming call's matadata (e.g. SIP headers) to determine the JID of the controlling party</li>
-    <li>An &lt;offer/&gt; is sent to the controlling party</li>
-    <li></li>
-    <li></li>
-    <li></li>
-  </ol>
+  <p>In order to understand the nature of a Rayo interaction, here we show a simple example of a control session.</p>
 
   <example caption="New call announces itself to a potential controlling party"><![CDATA[
 <presence from='9f00061@call.shakespeare.lit'
@@ -94,6 +86,10 @@
          from='tel:+13058881212'/>
 </presence>
 ]]></example>
+
+  <p>In this example, a call from 'tel:+13058881212' has reached the Rayo server 'shakespeare.lit' by calling 'tel:+18003211212', and been assigned an ID '9f00061'. The server has determined that 'juliet@capulet.lit' is a valid candidate for delegating control of the call, and so has directed an <a href='def-offer'>offer event</a> to her 'balcony' resource.</p>
+
+  <p>The client then decides that it is able to handle the incoming call, and so accepts it from the server, thus gaining exclusive control and indicating to the calling party that the call will be processed and that it should ring.</p>
 
   <example caption="Potential controlling party attempts to become difinitive controlling party by sending the call an accept command"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
@@ -111,7 +107,9 @@
     id='hd721'/>
 ]]></example>
 
-  <example caption="Controlling party answers the call, connecting the media stream between the caller and the server"><![CDATA[
+  <p>Following confirmation from the server that the attempt to gain control of the call was successful, the client proceeds to answer the call, opening up the media stream between the caller and the server.</p>
+
+  <example caption="Controlling party answers the call"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='9f00061@call.shakespeare.lit'
     type='set'
@@ -127,7 +125,9 @@
     id='43jo3'/>
 ]]></example>
 
-  <example caption="Controlling party plays a message to the caller using a Text-to-speech (TTS) engine"><![CDATA[
+  <p>Once the client has confirmation that the call has been answered, it triggers the start of a media output component in order to play a message to the caller using a Text-to-speech (TTS) engine.</p>
+
+  <example caption="Controlling party requests a new output component"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='9f00061@call.shakespeare.lit'
     type='set'
@@ -150,6 +150,8 @@
 </iq>
 ]]></example>
 
+  <p>After confirmation that the output component was successfully created, the client then awaits notification of its completion.</p>
+
   <example caption="Output component announces its completion, giving the reason"><![CDATA[
 <presence from='9f00061@call.shakespeare.lit/fgh4590'
           to='juliet@capulet.lit/balcony'
@@ -159,6 +161,8 @@
  </complete>
 </presence>
 ]]></example>
+
+  <p>The client then decides it has no further operations to perform on the call, and that the call should end. It instructs the server to hang up the call gracefully.</p>
 
   <example caption="Controlling party hangs up the call"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
