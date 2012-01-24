@@ -48,17 +48,8 @@
   </revision>
 </header>
 <section1 topic='Introduction' anchor='intro'>
-  <!-- TODO: Explain Rayo's modularity (components), extra commands, deployment flexibility) and define the forum for such extensions -->
   <p>Rayo is a protocol for controlling media sessions, audio/video mixers and a variety of advanced media resources such as speech recognizers, speech synthesizers and audio/video recorders. These capabilities can be combined to create a wide variety of applications such as menu-based phone systems, in-game conferencing and anonymous dating services. Unlike <a href='xep-0166.html'>Jingle</a> or even <a href='http://en.wikipedia.org/wiki/Session_Initiation_Protocol'>SIP</a>, a Rayo client is not concerned with being a party to either the session negotiation or the media stream itself.</p>
 
-  <!-- TODO: What Rayo provides as a 3PCC protocol that is not provided by others:
-    * Cross-platform standard
-    * Federation
-    * Authentication / authorization
-    * Asynchronous
-    * Scaleable
-    * Flexible routing
-   -->
   <ul>
     <li>A Rayo server takes on the role of negotiating a session between itself and some other endpoint, or between two distinct endpoints, by way of an implementation-specific means, be that Jingle, SIP, connection to the public telephone network, or anything else. The server may even bridge multiple networks.</li>
     <li>The server then presents the Rayo protocol as an interface to a client, allowing it to monitor and/or exercise third-party control over a particular session.</li>
@@ -191,7 +182,7 @@
 ]]></example>
 </section1>
 <section1 topic='Requirements' anchor='reqs'>
-  <p>The protocol defined herein is designed to meet the following requirements:</p>
+  <p></p>
   <ol>
     <li><strong>Call Control:</strong> Incoming calls are "offered" to clients at which point they can be answered, rejected, redirected to another destination, etc. Evey attempt is made to be shield the Rayo client from the low level telephony protocol (e.g. SIP, Jingle, PSTN, etc.)</li>
     <li><strong>Audio File Playback:</strong> A compatible Rayo server will fetch a file from a a specified URL and play the containing audio to the caller.</li>
@@ -202,7 +193,29 @@
     <li><strong>Mixing:</strong> Typically referred to as an audio "conference"; calls can be joined together so that the participants can hear each other in real-time.</li>
   </ol>
 
-  <!-- TODO: Explain how Rayo fits with SIP/Jingle and point to documents recommending best practices for such mapping -->
+  <p>Many third-party call control protocols have preceeded Rayo (see Asterisk's AGI/AMI, FreeSWITCH's eventsocket, Microsoft's TAPI, Java's JTAPI, Novell/AT&amp;T's TSAPI, CSTA, etc). None of these protocols is ideal, and all have at least one or more of the following drawbacks:</p>
+  <ul>
+    <li>Totally ground-up wire protocol requiring implementation all the way down to the socket</li>
+    <li>Platform/vendor/hardware specific</li>
+    <li>Synchronous interface</li>
+    <li>Inconsistent - evolved, rather than designed</li>
+    <li>Lacking in scaleability - client/server sometimes tied one-to-one, servers rarely clustered, advanced message routing not possible</li>
+    <li>Poor security - lack of wire-level encryption, lack of or sub-standard authentication mechanisms, lack of or limited authorization mechanisms, lack of or poor sandboxing between multiple tenants on one system</li>
+    <li>Inextensible</li>
+  </ul>
+
+  <p>Rayo has been designed with these failings in mind, and intends to address many concerns not addressed by these earlier attempts. The following considerations were made:</p>
+  <ul>
+    <li><strong>Simple client library implementation</strong> - XMPP client libraries exist in all modern languages, and many are of a high standard.</li>
+    <li><strong>Cross-platform standard</strong> - The protocol must not expose any platform specifics and all elements should be candidates for implementation on any suitable platform. Addiditionally, the protocol must be ratified as a standard following a community discussion.</li>
+    <li><strong>Asynchronous interface</strong> - The protocol should present an asynchronous interface for the purposes of performance and flexibility in performing paralell operations.</li>
+    <li><strong>Consistent</strong> - The protocol must provide a considered, unobtrusive, logically and philisophically consistent interface.</li>
+    <li><strong>Federated</strong> - The protocol must support communication between client and server entities on separately owned, operated and addressed networks.</li>
+    <li><strong>Flexible routing</strong> - The protocol must lend itself to routing across wide networks such as the internet, and to potential complex routing such as proxying or redirection. Additionally, the client and server should each be aware of the presence of the other and be able to use such information to make routing decisions.</li>
+    <li><strong>Extensible</strong> - The protocol must provide for the possibility of extra functionality being added by future specifications or an individual implementation.</li>
+  </ul>
+
+  <p>Additionally, the protocol is required to abstract away the complexity of the raw negotioation/transport protocols such as SIP, but to map conceptually to such protocols. Best practices for the implementation of Rayo on top of <a href='rayo-sip.xml'>SIP</a> and <a href='rayo-jingle.html'>Jingle</a> environments, as well as the public APIs of <a href='rayo-asterisk.html'>Jingle</a> and <a href='rayo-freeswitch.html'>FreeSWITCH</a> are made in the respective specifications.</p>
 </section1>
 <section1 topic='Terminology' anchor='terms'>
   <section2 topic='Glossary' anchor='terms-glossary'>
@@ -742,6 +755,9 @@
 </iq>
   ]]></example>
   <p>In order for an application to determine whether an entity supports this protocol, where possible it SHOULD use the dynamic, presence-based profile of service discovery defined in &xep0115;. However, if an application has not received entity capabilities information from an entity, it SHOULD use explicit service discovery instead.</p>
+</section1>
+<section1 topic='Extending Rayo' anchor='extensions'>
+  <!-- TODO: Explain Rayo's extensibility (components, extra commands, deployment flexibility) and define the forum for such extensions -->
 </section1>
 <section1 topic='Implementation Notes' anchor='impl'>
   <!-- TODO: Translation on Asterisk/FreeSWITCH -->
