@@ -256,36 +256,81 @@
 <section1 topic='Concepts and Approach' anchor='concepts'>
   <p>A complete Rayo deployment has several elements and interacting entities which must be understood.</p>
 
-  <section2 topic='Server' anchor='concepts-server'>
-    <p>A Rayo server is an entity which is capable of receiving and intiating calls and being party to their media stream, while exposing a Rayo interface to a client in order to permit control over its calls. The Rayo server may handle calls in any way supported by the implementation, such as SIP, Jingle, etc, and should expose a full XMPP domain at the root level of the service deployment (eg shakespeare.lit).</p>
-    <p>The Rayo server is responsible for keeping track of valid clients, routing calls to the correct potential controlling parties, performing authorization measures on received stanzas, etc.</p>
-    <p>For the purposes of this specification, complex server-side deployments such as clusters, proxies, gateways, protocol translators, etc are not considered. Further details of such concepts may be found in their relevant specifications.</p>
-  </section2>
-  <section2 topic='Client(s)' anchor='concepts-client'>
-    <p>A Rayo client is an entity which implements the Rayo protocol for the purpose of asserting control over calls made available by a Rayo server. The method by which such control measures are determined is outside the scope of this document, but may be the result of human interaction or some automated decision-making process.</p>
-    <p>A Rayo client is responsible for indicating its availability to a Rayo server and responding to offer messages appropriately.</p>
-  </section2>
-  <section2 topic='Calls' anchor='concepts-calls'>
-    <p>A Rayo call is a short-lived XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a single session. It is usually a simple alias for the main server process.</p>
-    <p>A Rayo call is the entity with which most client interactions are made, and is responsible for sending its events to and receiving commands from a client.</p>
-    <p>Calls have separate presence from the root domain of the service and thus appear to be separate entities.</p>
-  </section2>
-  <section2 topic='Mixers' anchor='concepts-mixers'>
-    <p>A Rayo call is an XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a service for the linking of media streams from several calls. It is usually a simple alias for the main server process.</p>
-    <p>A Rayo mixer is responsible for sending its events to and receiving commands from a client, and may have some components executed on it directly.</p>
-    <p>Mixers have separate presence from the root domain of the service and its calls and thus appear to be separate entities.</p>
-  </section2>
-  <section2 topic='Commands' anchor='concepts-commands'>
-    <p>A Rayo command is a simple combination of request and response and may be issued directly to the service, or to a call or mixer. Commands are executed serially and are generally very short-lived.</p>
-  </section2>
-  <section2 topic='Components' anchor='concepts-components'>
-    <p>Components extend the Rayo protocol by providing additional media and call control functionality.</p>
+  <section2 topic='Actors' anchor='concepts-actors'>
+    <section3 topic='Server' anchor='concepts-actors-server'>
+      <p>A Rayo server is an entity which is capable of receiving and intiating calls and being party to their media stream, while exposing a Rayo interface to a client in order to permit control over its calls. The Rayo server may handle calls in any way supported by the implementation, such as SIP, Jingle, etc, and should expose a full XMPP domain at the root level of the service deployment (eg shakespeare.lit).</p>
+      <p>The Rayo server is responsible for keeping track of valid clients, routing calls to the correct potential controlling parties, performing authorization measures on received stanzas, etc.</p>
+      <p>For the purposes of this specification, complex server-side deployments such as clusters, proxies, gateways, protocol translators, etc are not considered. Further details of such concepts may be found in their relevant specifications.</p>
+    </section3>
+    <section3 topic='Client(s)' anchor='concepts-actors-client'>
+      <p>A Rayo client is an entity which implements the Rayo protocol for the purpose of asserting control over calls made available by a Rayo server. The method by which such control measures are determined is outside the scope of this document, but may be the result of human interaction or some automated decision-making process.</p>
+      <p>A Rayo client is responsible for indicating its availability to a Rayo server and responding to offer messages appropriately.</p>
+    </section3>
+    <section3 topic='Calls' anchor='concepts-actors-calls'>
+      <p>A Rayo call is a short-lived XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a single session. It is usually a simple alias for the main server process.</p>
+      <p>A Rayo call is the entity with which most client interactions are made, and is responsible for sending its events to and receiving commands from a client.</p>
+      <p>Calls have separate presence from the root domain of the service and thus appear to be separate entities.</p>
+    </section3>
+    <section3 topic='Mixers' anchor='concepts-actors-mixers'>
+      <p>A Rayo call is an XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a service for the linking of media streams from several calls. It is usually a simple alias for the main server process.</p>
+      <p>A Rayo mixer is responsible for sending its events to and receiving commands from a client, and may have some components executed on it directly.</p>
+      <p>Mixers have separate presence from the root domain of the service and its calls and thus appear to be separate entities.</p>
+    </section3>
+    <section3 topic='Commands' anchor='concepts-actors-commands'>
+      <p>A Rayo command is a simple combination of request and response and may be issued directly to the service, or to a call or mixer. Commands are executed serially and are generally very short-lived.</p>
+    </section3>
+    <section3 topic='Components' anchor='concepts-actors-components'>
+      <p>Components extend the Rayo protocol by providing additional media and call control functionality.</p>
 
-    <p>Components are started by sending a specialized command to a call or mixer. Unlike basic commands, components have a lifecycle. Thus, a request for creation of a component will return a reference to the component's ID, and the component will continue to execute until it completes, potentially sending events and processing commands along the way (such as an instruction to pause or terminate), before finally issuing an event indicating its completion and thus unavailability. Multiple components may be active on a call or mixer at any one time, and commands may be executed on any entity during the execution of a component.</p>
+      <p>Components are started by sending a specialized command to a call or mixer. Unlike basic commands, components have a lifecycle. Thus, a request for creation of a component will return a reference to the component's ID, and the component will continue to execute until it completes, potentially sending events and processing commands along the way (such as an instruction to pause or terminate), before finally issuing an event indicating its completion and thus unavailability. Multiple components may be active on a call or mixer at any one time, and commands may be executed on any entity during the execution of a component.</p>
+    </section3>
   </section2>
-</section1>
-<section1 topic="Addressing Scheme" anchor='addressing'>
-  <!-- TODO: Explain how controlling parties, the service, calls, mixers and components are addressed and how they may communicate -->
+
+  <section2 topic="Addressing Scheme" anchor='addressing'>
+    <p>All of the actors described in the previous section (with the exception of commands) are represented by XMPP entities with a JID of their own. Thus, a scheme for determining the JIDs of each of these entities is required. The following is the required naming scheme for Rayo deployments.</p>
+    <table>
+      <tr>
+        <th>Actor</th>
+        <th>JID format</th>
+        <th>Example JID</th>
+      </tr>
+      <tr>
+        <td>Server</td>
+        <td>[service domain]</td>
+        <td>shakespeare.lit</td>
+      </tr>
+      <tr>
+        <td>Client</td>
+        <td>any JID</td>
+        <td>juliet@capulet.lit/balcony</td>
+      </tr>
+      <tr>
+        <td>Call</td>
+        <td>[call ID]@[call sub-domain].[service domain]</td>
+        <td>f88eh2@call.shakespeare.lit</td>
+      </tr>
+      <tr>
+        <td>Mixer</td>
+        <td>[mixer name]@[mixer sub-domain].[service domain]</td>
+        <td>conf1@mixer.shakespeare.lit</td>
+      </tr>
+      <tr>
+        <td>Call Component</td>
+        <td>[call ID]@[call sub-domain].[service domain]/[component ID]</td>
+        <td>f88eh2@call.shakespeare.lit/8f83jf</td>
+      </tr>
+      <tr>
+        <td>Mixer Component</td>
+        <td>[mixer name]@[mixer sub-domain].[service domain]/[component ID]</td>
+        <td>conf1@mixer.shakespeare.lit/932eu</td>
+      </tr>
+      <tr>
+        <td>Server Component</td>
+        <td>[service domain]/[component ID]</td>
+        <td>shakespeare.lit/f3fg4</td>
+      </tr>
+    </table>
+  </section2>
 </section1>
 <section1 topic='Session Flow' anchor='session'>
   <section2 topic='Session Establishment' anchor='session-establishment'>
