@@ -893,90 +893,10 @@
 
     <section3 topic='Media Input' anchor='def-component-input'>
       <p>An input component is used to instruct the server to gather media input from a call or mixer, using either DTMF or ASR.</p>
-      <p>The input element MUST contain one or more grammar elements (for which see <link url='#def-comoponent-input-grammar'>Grammar Element</link>).</p>
-      <p>The attributes of the input element are as follows.</p>
-      <table caption='Attributes of Input Element'>
-        <tr>
-          <th>Attribute</th>
-          <th>Definition</th>
-          <th>Possible Values</th>
-          <th>Default</th>
-          <th>Inclusion</th>
-        </tr>
-        <tr>
-          <td>mode</td>
-          <td>The method by which to collect input.</td>
-          <td>any|dtmf|speech</td>
-          <td>any</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>hotword-timeout</td>
-          <td>The amount of time for which to discard invalid input, awaiting a match.</td>
-          <td>A positive integer in ms, or -1 to disable.</td>
-          <td>-1</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>partial-match</td>
-          <td>Wether or not the component should trigger match events whenever a partial match is detected.</td>
-          <td>true|false</td>
-          <td>false</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>terminator</td>
-          <td>The terminator digit by which to force completion of the grammar.</td>
-          <td>0-9,#,*</td>
-          <td>none</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>recognizer</td>
-          <td></td>
-          <td>Any valid ISO 639‑3 language code</td>
-          <td>en-US</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>initial-timeout</td>
-          <td>The timeout to be applied before the first digit is captured in the case of DTMF input, or before the beginning of an utterance is detected.</td>
-          <td>Any positive integer in miliseconds, or -1 for no timeout.</td>
-          <td>-1</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>inter-digit-timeout</td>
-          <td>The timeout to be applied between the first and subsequent captured digits.</td>
-          <td>Any positive integer in miliseconds, or -1 for no timeout.</td>
-          <td>-1</td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>sensitivity</td>
-          <td></td>
-          <td>A decimal value between 0 and 1.</td>
-          <td></td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>min-confidence</td>
-          <td></td>
-          <td>A decimal value between 0 and 1.</td>
-          <td></td>
-          <td>OPTIONAL</td>
-        </tr>
-        <tr>
-          <td>max-silence</td>
-          <td>The maximum period of silence permitted before a timeout is triggered.</td>
-          <td>Any positive integer in miliseconds, or -1 for no timeout.</td>
-          <td>-1</td>
-          <td>OPTIONAL</td>
-        </tr>
-      </table>
-      <section4 topic='Grammar Element' anchor='def-component-input-grammar'>
-        <p>The grammar element defines the grammar by which input should be matched.</p>
-        <p>The grammar element MUST have either a url attribute set OR a content type and a body.</p>
+
+      <section4 topic='Input Element' anchor='def-component-input-input'>
+        <p>Instructs the server to begin an input detector of the specified mode, with certain attributes, governed by the rules provided in one or more grammar documents.</p>
+        <p>The input element MUST contain one or more <link url='#def-comoponent-input-input-grammar'>grammar elements</link>.</p>
         <p>The attributes of the input element are as follows.</p>
         <table caption='Attributes of Input Element'>
           <tr>
@@ -987,88 +907,165 @@
             <th>Inclusion</th>
           </tr>
           <tr>
-            <td>url</td>
-            <td>A URL to a grammar definition.</td>
-            <td>Any valid URI scheme supported by the server (eg HTTP).</td>
-            <td>none</td>
-            <td>REQUIRED unless content-type and content are set</td>
+            <td>mode</td>
+            <td>The method by which to collect input.</td>
+            <td>any|dtmf|speech</td>
+            <td>any</td>
+            <td>OPTIONAL</td>
           </tr>
           <tr>
-            <td>content-type</td>
-            <td>The content type of the grammar contained within the grammar element.</td>
-            <td>application/grammar+voxeo|application/grammar+grxml</td>
+            <td>terminator</td>
+            <td>Indicates a terminator token which, when encountered, should cause the input detection to cease.</td>
+            <td>A token string</td>
             <td>none</td>
-            <td>REQUIRED unless url is set</td>
+            <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>recognizer</td>
+            <td>Indicates the name of the particular input processor to be engaged. Usually only applies to speech input, in order to specify the recognition language.</td>
+            <td>Any valid ISO 639‑3 language code</td>
+            <td>en-US</td>
+            <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>initial-timeout</td>
+            <td>Indicates the amount of time preceding input which may expire before a timeout is triggered.</td>
+            <td>Any positive integer in miliseconds, or -1 to disable.</td>
+            <td>-1</td>
+            <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>inter-digit-timeout</td>
+            <td>Indicates (in the case of DTMF input) the amount of time between input digits which may expire before a timeout is triggered.</td>
+            <td>Any positive integer in miliseconds, or -1 to disable.</td>
+            <td>-1</td>
+            <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>sensitivity</td>
+            <td>Indicates how sensitive the interpreter should be to loud versus quiet input. Higher values represent greater sensitivity.</td>
+            <td>A decimal value between 0 and 1.</td>
+            <td>0.5</td>
+            <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>min-confidence</td>
+            <td>Indicates the confidence threshold, below which a match is to be considered unreliable.</td>
+            <td>A decimal value between 0 and 1.</td>
+            <td>0</td>
+            <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>max-silence</td>
+            <td>Indicates the maximum period of silence which may be encountered during input gathering before a timeout is triggered.</td>
+            <td>Any positive integer in miliseconds, or -1 to disable.</td>
+            <td>-1</td>
+            <td>OPTIONAL</td>
           </tr>
         </table>
-      </section4>
-      <section4 topic='Commands' anchor='def-component-input-commands'>
-        <p>The input component supports only the component Stop command.</p>
-      </section4>
-      <section4 topic='Events' anchor='def-component-input-events'>
-        <section5 topic='Match' anchor='def-component-input-events-match'>
-          <p>Indicates that the input received triggered a match with the specified grammar, and provides results. This constitutes a partial match, and does not signal the end of the grammar.</p>
-          <p>The match element MUST contain valid interpretation and utterance elements.</p>
-          <p>The attributes of the match element are as follows.</p>
-          <table caption='Attributes of Match Element'>
+
+        <section5 topic='Grammar Element' anchor='def-component-input-grammar'>
+          <p>Provides the grammar document by which the input detection should be governed.</p>
+          <p>The grammar element MUST have either a url attribute set OR a content type and a body.</p>
+          <p>The attributes of the input element are as follows.</p>
+          <table caption='Attributes of Input Element'>
             <tr>
               <th>Attribute</th>
               <th>Definition</th>
               <th>Possible Values</th>
+              <th>Default</th>
               <th>Inclusion</th>
             </tr>
             <tr>
-              <td>mode</td>
-              <td>The method by which detection occurred.</td>
-              <td>speech|dtmf</td>
-              <td>REQUIRED</td>
+              <td>url</td>
+              <td>Provides a URI at which the grammar document is available.</td>
+              <td>Any valid URI scheme supported by the server (eg HTTP).</td>
+              <td>none</td>
+              <td>REQUIRED unless content-type and content are set</td>
             </tr>
             <tr>
-              <td>confidence</td>
-              <td>The confidence with which the interpretation matches the utterance</td>
-              <td>A decimal value between 0 and 1.</td>
-              <td>REQUIRED</td>
+              <td>content-type</td>
+              <td>Indicates the content type of the grammar document provided as CDATA.</td>
+              <td>A grammar content type token</td>
+              <td>application/grammar+grxml</td>
+              <td>REQUIRED unless url is set</td>
             </tr>
           </table>
         </section5>
-        <section5 topic='Complete' anchor='def-component-input-events-complete'>
-          <p>The complete element MUST contain a valid completion reason element. Possible completion reasons are as follows, in addition to the standard component completion reasons.</p>
-          <section6 topic='Success' anchor='def-component-input-events-complete-success'>
-            <p>Indicates that the input received matches the specified grammar, and provides results.</p>
-            <p>The success element MUST contain valid interpretation and utterance elements.</p>
-            <p>The attributes of the success element are as follows.</p>
-            <table caption='Attributes of Success Element'>
-              <tr>
-                <th>Attribute</th>
-                <th>Definition</th>
-                <th>Possible Values</th>
-                <th>Inclusion</th>
-              </tr>
-              <tr>
-                <td>mode</td>
-                <td>The method by which detection occurred.</td>
-                <td>speech|dtmf</td>
-                <td>REQUIRED</td>
-              </tr>
-              <tr>
-                <td>confidence</td>
-                <td>The confidence with which the interpretation matches the utterance</td>
-                <td>A decimal value between 0 and 1.</td>
-                <td>REQUIRED</td>
-              </tr>
-            </table>
-          </section6>
-          <section6 topic='Nomatch' anchor='def-component-input-events-complete-nomatch'>
-            <p>Indicates that the input received did not match the specified grammar.</p>
-            <p>The nomatch element MUST be empty.</p>
-            <p>The nomatch element has no attributes.</p>
-          </section6>
-          <section6 topic='Noinput' anchor='def-component-input-events-complete-noinput'>
-            <p>Indicates that the component did not receive any input.</p>
-            <p>The noinput element MUST be empty.</p>
-            <p>The noinput element has no attributes.</p>
-          </section6>
+      </section4>
+
+      <section4 topic='Match' anchor='def-component-input-match'>
+        <p>Provides the result of a match between the input received and the specified grammar.</p>
+        <p>The match element MUST contain valid interpretation and utterance elements.</p>
+        <p>The attributes of the match element are as follows.</p>
+        <table caption='Attributes of Match Element'>
+          <tr>
+            <th>Attribute</th>
+            <th>Definition</th>
+            <th>Possible Values</th>
+            <th>Inclusion</th>
+          </tr>
+          <tr>
+            <td>mode</td>
+            <td>Indicates the mode by which the match occurred.</td>
+            <td>speech|dtmf</td>
+            <td>REQUIRED</td>
+          </tr>
+          <tr>
+            <td>confidence</td>
+            <td>Indicates the confidence with which the match has been made.</td>
+            <td>A decimal value between 0 and 1.</td>
+            <td>REQUIRED</td>
+          </tr>
+        </table>
+
+        <section5 topic='Interpretation Element' anchor='def-component-input-match-interpretation'>
+          <p>Provides the result of the grammar match after any symantic processing which may have been performed.</p>
+          <p>The interpretation element SHOULD contain an interpretation as CDATA.</p>
+          <p>The interpretation element has no attributes.</p>
         </section5>
+
+        <section5 topic='Utterance Element' anchor='def-component-input-match-utterance'>
+          <p>Provides the raw string of the detected input.</p>
+          <p>The utterance element SHOULD contain an utterance as textual content.</p>
+          <p>The utterance element has no attributes.</p>
+        </section5>
+      </section4>
+
+      <section4 topic='Finish Element' anchor='def-component-input-finish'>
+        <p>Indicates that the component came to an end due to one of its grammars matching the received input.</p>
+        <p>The finish element MUST contain a valid match element.</p>
+        <p>The finish element has no attributes.</p>
+      </section4>
+
+      <section4 topic='Initial Timeout Element' anchor='def-component-input-initial-timeout'>
+        <p>Indicates that the component came to an end because the initial timeout was triggered.</p>
+        <p>The initial-timeout element MUST be empty.</p>
+        <p>The initial-timeout element has no attributes.</p>
+      </section4>
+
+      <section4 topic='Inter-digit Timeout Element' anchor='def-component-input-inter-digit-timeout'>
+        <p>Indicates that the component came to an end because the inter-digit timeout was triggered.</p>
+        <p>The inter-digit-timeout element MUST be empty.</p>
+        <p>The inter-digit-timeout element has no attributes.</p>
+      </section4>
+
+      <section4 topic='Max Silence Element' anchor='def-component-input-max-silence'>
+        <p>Indicates that the component came to an end because the max-silence timeout was triggered.</p>
+        <p>The max-silence element MUST be empty.</p>
+        <p>The max-silence element has no attributes.</p>
+      </section4>
+
+      <section4 topic='Min Confidence Element' anchor='def-component-input-min-confidence'>
+        <p>Indicates that the component came to an end because the minimum confidence threshold was not reached.</p>
+        <p>The min-confidence element MUST be empty.</p>
+        <p>The min-confidence element has no attributes.</p>
+      </section4>
+
+      <section4 topic='Nomatch' anchor='def-component-input-nomatch'>
+        <p>Indicates that the component came to an end because input was received which did not match any of the specified grammars.</p>
+        <p>The nomatch element MUST be empty.</p>
+        <p>The nomatch element has no attributes.</p>
       </section4>
     </section3>
   </section2>
@@ -2014,7 +2011,7 @@
         <attribute name="mode" use="optional" default="any">
           <annotation>
             <documentation>
-              Indicates the particular variety of input detector to be started.
+              The method by which to collect input.
             </documentation>
           </annotation>
           <simpleType>
@@ -2106,6 +2103,44 @@
     </documentation>
   </annotation>
 
+  <!-- Match Data -->
+  <complexType name="matchType">
+    <attribute name="mode" use="required">
+      <annotation>
+        <documentation>
+          Indicates the mode by which the match occurred.
+        </documentation>
+      </annotation>
+      <simpleType>
+        <restriction base="token">
+          <enumeration value="speech" />
+          <enumeration value="dtmf" />
+        </restriction>
+      </simpleType>
+    </attribute>
+    <attribute name="confidence" type="core:fractionDecimalType" use="required">
+      <annotation>
+        <documentation>
+          Indicates the confidence with which the match has been made.
+        </documentation>
+      </annotation>
+    </attribute>
+    <element name="interpretation" type="CDATA">
+      <annotation>
+        <documentation>
+          Provides the result of the grammar match after any symantic processing which may have been performed.
+        </documentation>
+      </annotation>
+    </element>
+    <element name="utterance" type="string">
+      <annotation>
+        <documentation>
+          Provides the raw string of the detected input.
+        </documentation>
+      </annotation>
+    </element>
+  </complexType>
+
   <!-- Finish reason -->
   <element name="finish">
     <annotation>
@@ -2162,44 +2197,6 @@
       </documentation>
     </annotation>
   </element>
-
-  <!-- Match Data -->
-  <complexType name="matchType">
-    <attribute name="mode" use="required">
-      <annotation>
-        <documentation>
-          Indicates the mode by which the match occurred.
-        </documentation>
-      </annotation>
-      <simpleType>
-        <restriction base="token">
-          <enumeration value="speech" />
-          <enumeration value="dtmf" />
-        </restriction>
-      </simpleType>
-    </attribute>
-    <attribute name="confidence" type="core:fractionDecimalType" use="required">
-      <annotation>
-        <documentation>
-          Indicates the confidence with which the match has been made.
-        </documentation>
-      </annotation>
-    </attribute>
-    <element name="interpretation" type="CDATA">
-      <annotation>
-        <documentation>
-          Provides the result of the grammar match after any symantic processing which may have been performed.
-        </documentation>
-      </annotation>
-    </element>
-    <element name="utterance" type="string">
-      <annotation>
-        <documentation>
-          Provides the raw string of the detected input.
-        </documentation>
-      </annotation>
-    </element>
-  </complexType>
 
 </schema>
     ]]></code>
