@@ -364,24 +364,67 @@
 
   <section2 topic='Session Establishment' anchor='session-establishment'>
     <section3 topic='Inbound Call' anchor='session-establishment-inbound'>
-
+      <!--
+        * Incoming call
+        * Identify registered JIDs based on routing system (implementation specific)
+        * Identify potential controlling parties from registered JIDs based on directed presence
+        * If no PCPs are available, reject the call with reason <decline/>
+        * Gather to/from/header data for session
+        * Send offer to PCPs
+        * Await the receipt of a command against the session (serialized)
+        * First PCP to issue a command gains a lock on control of the session and becomes DCP
+        * Any further commands issued by PCPs once a DCP has been determined should return an error
+        * Accept command should indicate acceptance/ringback to the remote party, including headers
+        * Answer command should answer the call including headers, establish media joined to the media server
+        * Any command other than session termination commands or accept/answer should implicitly answer the call
+      -->
     </section3>
 
     <section3 topic='Outbound Call' anchor='session-establishment-outbound'>
-
+      <!--
+        * Dial command
+        * Create outbound session, including headers
+        * Send reference to new call ID
+        * Detect acceptance and send ringing event, including headers
+        * Detect answer & media establishment and send answered event, including headers
+        * If a join is specified use that rather than joining to media server
+      -->
     </section3>
   </section2>
 
   <section2 topic='Component Execution' anchor='session-component-execution'>
-
+    <!--
+      * Certain commands from a client trigger the execution of a component.
+      * Command should be parsed and component prepared (with command validation performed up-front where it is brief), with either a reference to the component ID or an error returned
+      * Component should begin execution and emit any relevant events as directed presence to the requesting party
+      * Component should accept relevant commands (at least Stop) during execution from the requesting party only
+        * Commands should be executed and have a response/error returned
+        * Commands from those other than the requesting party should have an error returned stating a lack of authorization
+      * When the component ceases to execute, it should send a complete event with a valid reason to the requesting party as directed presence with a type of 'unavailable'
+    -->
   </section2>
 
   <section2 topic='Joining Calls' anchor='session-joining'>
-
+    <!--
+      * Completed joins should result in joined events being sent to both parties with the opposite call-id/mixer-name
+      * Completed unjoins should result in unjoined events being sent to both parties with the opposite call-id/mixer-name
+      * Join command should establish a join with the specified entity, using the direction and media rules specified
+      * Unjoin command with a call-id or mixer-name should remove the join from the specified entity
+      * Join/unjoin command with both call-id and mixer-name should return an error
+      * If a speech detection facility is available on a join:
+        * When a joined party triggers the speech detector, started speaking events should be sent to all other parties to the join including the call ID of the triggering call
+        * When a joined party ceases to trigger the speech detector, finished speaking events should be sent to all other parties to the join including the call ID of the triggering call
+    -->
   </section2>
 
   <section2 topic='Session Termination' anchor='session-termination'>
-
+    <!--
+      * Redirect command should issue a redirection to the underlying session and respond
+      * Reject command should reject the underlying session and respond
+      * Hangup command should terminate a session gracefully
+      * Ending components, removing joins
+      * End event - reason determination, sending event, unavailable presence
+    -->
   </section2>
 </section1>
 <section1 topic='Formal Definition' anchor='def'>
