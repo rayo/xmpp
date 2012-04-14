@@ -363,6 +363,159 @@
   </section2>
 
   <section2 topic='Session Establishment' anchor='session-establishment'>
+    <p>Sessions may be established either at the request of the Rayo client (an outbound call) or as a result of a 3rd party request (an inbound call). Each scenario differs in the Rayo protocol only up to the point at which the session is established and media begins to flow. First we shall examine the sequence of stanzas passed between server and client in each of these scenarios.</p>
+
+    <section3 topic='Outbound Call' anchor='session-establishment-outbound'>
+      <p>In order for a client to establish a new outbound call, it MUST first send a <link url="def-dial">dial command</link> to the server, indicating the proposed target for the call, its apparent source, and any meta-data to send to the target as headers.</p>
+
+      <example caption="Client requests establishment of a new outbound session"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </dial>
+</iq>
+      ]]></example>
+
+      <p>On successfully receiving and parsing the dial command, the server SHOULD perform its own proprietary authorization measures to ensure that only desireable outbound sessions are created. If it is established that the command should not be allowed, the server MUST return an error giving an authorization reason.</p>
+
+      <section4 topic='Errors' anchor='session-establishment-outbound-errors'>
+        <p>There are several reasons why the server might immediately return an error instead of acknowledging the creation of a new call:</p>
+        <ul>
+          <li>The client is unknown to the server and the server does not permit session creation by unknown clients.</li>
+          <li>The client is not authorized to create this new session.</li>
+          <li>The server does not support outbound calls.</li>
+          <li>The server does not have sufficient resources to create a new session.</li>
+          <li>The dial command was malformed.</li>
+        </ul>
+
+        <p>If the client is unknown to the server and the server does not permit session creation by unknown clients, the server MUST return a &lt;registration-required/&gt; error with a type of 'auth'.</p>
+        <example caption="Server indicates client is unknown and the server does not permit session creation by unknown clients"><![CDATA[
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </dial>
+  <error type='auth'>
+    <registration-required xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the client is not authorized (as determined by an implementation/deployment-specific algorithm) to create a new outbound session given the parameters provided, the server MUST return a &lt;not-authorized/&gt; error with a type of 'auth'.</p>
+        <example caption="Server indicates client is not authorized to create a new outbound session given the parameters provided"><![CDATA[
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </dial>
+  <error type='auth'>
+    <not-authorized xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the server does not support outbound calls, the server MUST return a &lt;feature-not-implemented/&gt; error with a type of 'cancel'.</p>
+        <example caption="Server indicates that it does not support outbound calls"><![CDATA[
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </dial>
+  <error type='cancel'>
+    <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the server does not have sufficient resources to create a new session, the server MUST return a &lt;resource-constraint/&gt; error with a type of 'wait'.</p>
+        <example caption="Server indicates that it does not have sufficient resources to create a new session"><![CDATA[
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </dial>
+  <error type='wait'>
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the dial command was malformed, the server MUST return a &lt;not-acceptable/&gt; error with a type of 'modify'.</p>
+        <example caption="Server indicates the dial command was malformed"><![CDATA[
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='foo:bar'
+        from='tel:+14152226789'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </dial>
+  <error type='modify'>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+      </section4>
+
+      <p>If the command is successfull and the call is queued, however, confirmation of such should be sent to the client, including a reference to the unique ID of the call. This call ID may be used to execute commands and filter events for the duration of the session.</p>
+      <example caption="Confirmation of successful dial request and call ID"><![CDATA[
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'>
+  <ref xmlns='urn:xmpp:rayo:1' id='9f00061'/>
+</iq>
+      ]]></example>
+
+      <p>Once the server receives notification that the session has been accepted by the third party, it should send a ringing event to the client to indicate such:</p>
+      <example caption="Call announces its ringing state (accepted by 3rd party but not yet answered)."><![CDATA[
+<presence from='9f00061@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <ringing xmlns='urn:xmpp:rayo:1'/>
+</presence>
+      ]]></example>
+
+      <p>Similarly, once the server receives notification that the session has been answered and that media is flowing, it should send an answered event to the client to indicate such:</p>
+      <example caption="Call announces its answered state (media connected)."><![CDATA[
+<presence from='9f00061@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <answered xmlns='urn:xmpp:rayo:1'/>
+</presence>
+      ]]></example>
+
+      <!--
+        * If a join is specified use that rather than joining to media server
+      -->
+    </section3>
+
     <section3 topic='Inbound Call' anchor='session-establishment-inbound'>
       <!--
         * Incoming call
@@ -377,17 +530,6 @@
         * Accept command should indicate acceptance/ringback to the remote party, including headers
         * Answer command should answer the call including headers, establish media joined to the media server
         * Any command other than session termination commands or accept/answer should implicitly answer the call
-      -->
-    </section3>
-
-    <section3 topic='Outbound Call' anchor='session-establishment-outbound'>
-      <!--
-        * Dial command
-        * Create outbound session, including headers
-        * Send reference to new call ID
-        * Detect acceptance and send ringing event, including headers
-        * Detect answer & media establishment and send answered event, including headers
-        * If a join is specified use that rather than joining to media server
       -->
     </section3>
   </section2>
