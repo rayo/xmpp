@@ -233,11 +233,11 @@
         <dd>Components extend the Rayo protocol by providing additional media and call control functionality. Components are similar to commands, but have a lifecycle attached to them. A component, once created and attached to a call or mixer, will respond giving an ID that it is known by. The component will then begin execution, and may trigger events or have commands issued to it. Finally, once the component is stopped or comes to an end naturally, it will issue a special &lt;complete/&gt; event</dd>
       </di>
       <di>
-        <dt>Potential controlling party</dt>
+        <dt>Potential controlling party (PCP)</dt>
         <dd>An XMPP entity to which an offer to control an incoming call may be sent.</dd>
       </di>
       <di>
-        <dt>Difinitive controlling party</dt>
+        <dt>Difinitive controlling party (DCP)</dt>
         <dd>The XMPP entity which gains a lock on control of a session, either by requesting the session's creation, or being the first respondent to an offer.</dd>
       </di>
     </dl>
@@ -517,25 +517,49 @@
     </section3>
 
     <section3 topic='Inbound Call' anchor='session-establishment-inbound'>
-      <!--
-        * Incoming call
-        * Identify registered JIDs based on routing system (implementation specific)
-        * Identify potential controlling parties from registered JIDs based on directed presence
-        * If no PCPs are available, reject the call with reason <decline/>
-        * Gather to/from/header data for session
-        * Send offer to PCPs
-        * Await the receipt of a command against the session (serialized)
-        * First PCP to issue a command gains a lock on control of the session and becomes DCP
-        * Any further commands issued by PCPs once a DCP has been determined should return an error
-        * Accept command should indicate acceptance/ringback to the remote party, including headers
-        * Answer command should answer the call including headers, establish media joined to the media server
-        * Any command other than session termination commands or accept/answer should implicitly answer the call
-      -->
+      <p>When the system receives a call from one of its connected networks, it MUST then expose that requested session to Rayo clients. It SHOULD use an implementation-specific routing mechanism to map incoming calls to some set of registered JIDs which are considered appropriate controlling parties. From this set, it MUST then remove any parties whom it can identify as being temporarily inappropropriate for control (either unavailable based on presence, under too much load, or any other metric which the server has available. If, as a result, the set of Potentially Controlling Parties is empty, the server MUST reject the call with a 'decline' reason.</p>
+
+      <p>If the server can identify active Potential Controlling Parties, it MUST offer them control of the call simultaneously. The server must broadcast an offer on behalf of the call to all Potential Controlling Parties, using applicable to/from/header data from the incoming session.</p>
+      <example caption="New call announces itself to a potential controlling party"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <offer xmlns='urn:xmpp:rayo:1'
+         to='tel:+18003211212'
+         from='tel:+13058881212'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </offer>
+</presence>
+      ]]></example>
+
+      <p>Once the server has offered control, it MUST wait indefinitely for a response from a PCP. The server SHOULD monitor the availability of PCPs to whom offers have been sent. If they all cease to be PCPs (eg by going offline) then the call should be rejected in the same way as if there had not been any available PCPs to begin with.</p>
+
+      <p>If an offered PCP executes a command against the call, by sending a command node to the call's JID inside an IQ 'set', the server should execute the following routine:</p>
+      <ol>
+        <li>If the call does not have a DCP, set it to the PCP from which the command originated.</li>
+        <li>If the call has a DCP, and the command did not originate from the DCP, return a (INSERT ERROR TYPE HERE AND FIX EXAMPLE) error in response to the command of the following format:
+        <example caption="Server indicates that the call already has another DCP and that control of the call is no longer available."><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <accept xmlns='urn:xmpp:rayo:1'/>
+  <error type='wait'>
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+        otherwise;
+        </li>
+        <li>If the command is an accept command, notify the remote calling party that the call has been accepted. Return an empty IQ result to the command issuing party to confirm successful execution.</li>
+        <li>If the command is an answer command, notify the remote calling party that the call has been answered and negotiate media between the calling party and the server's local media server. Return an empty IQ result to the command issuing party to confirm successful execution.</li>
+      </ol>
     </section3>
   </section2>
 
   <section2 topic='Component Execution' anchor='session-component-execution'>
     <!--
+      * Implicitly answer the call
       * Certain commands from a client trigger the execution of a component.
       * Command should be parsed and component prepared (with command validation performed up-front where it is brief), with either a reference to the component ID or an error returned
       * Component should begin execution and emit any relevant events as directed presence to the requesting party
