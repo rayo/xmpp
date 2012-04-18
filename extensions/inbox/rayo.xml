@@ -553,6 +553,7 @@
         </li>
         <li>If the command is an accept command, notify the remote calling party that the call has been accepted. Return an empty IQ result to the command issuing party to confirm successful execution.</li>
         <li>If the command is an answer command, notify the remote calling party that the call has been answered and negotiate media between the calling party and the server's local media server. Return an empty IQ result to the command issuing party to confirm successful execution.</li>
+        <li>If the command is any other, handle it in the manner detailed in the following sections.</li>
       </ol>
     </section3>
   </section2>
@@ -584,13 +585,93 @@
   </section2>
 
   <section2 topic='Session Termination' anchor='session-termination'>
-    <!--
-      * Redirect command should issue a redirection to the underlying session and respond
-      * Reject command should reject the underlying session and respond
-      * Hangup command should terminate a session gracefully
-      * Ending components, removing joins
-      * End event - reason determination, sending event, unavailable presence
-    -->
+    <section3 topic='Call Redirection' anchor='session-termination-redirection'>
+      <p>If a client can determine a more appropriate target for an incoming call, it may wish to relay this information to the caller in the form of a URI (eg SIP). The client MUST do this before accepting a call. The target URI must be specified in the 'to' attribute of the redirect element.</p>
+      <example caption="Client instructs a call to redirect, with some headers"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <redirect xmlns='urn:xmpp:rayo:1'
+            to='sip:other@there.com'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </redirect>
+</iq>
+      ]]></example>
+
+      <p>The server should send an appropriate redirection instruction to the underlying session.</p>
+
+      <p>If the server is able to successfully relay the redirection to the calling party, it should send an empty IQ result to confirm the command has completed execution:</p>
+      <example caption="Server acknowledges successful redirect"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+      ]]></example>
+
+      <p>If the server is unable to perform the redirect because the call has already been accepted, it should return a not-allowed (cancel) error indicating such:</p>
+      <example caption="Server indicates that the call already has another DCP and that control of the call is no longer available."><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <redirect xmlns='urn:xmpp:rayo:1'
+            to='sip:other@there.com'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </redirect>
+  <error type='cancel'>
+    <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+    </section3>
+
+    <section3 topic='Call Rejection' anchor='session-termination-rejection'>
+      <p>If a client cannot handle an incoming call, it SHOULD reject it. The client MUST do this before accepting the call. The target URI must be specified in the 'to' attribute of the redirect element.</p>
+      <example caption="Client instructs a call to reject, with some headers"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <reject xmlns='urn:xmpp:rayo:1'>
+    <header name="x-reject-description" value="Sorry, she cannae take it!" />
+  </reject>
+</iq>
+      ]]></example>
+
+      <p>The server should reject the underlying session. If the server is able to do so successfully, it should send an empty IQ result to confirm the command has completed execution:</p>
+      <example caption="Server acknowledges successful rejection"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+      ]]></example>
+
+      <p>If the server is unable to perform the rejection because the call has already been accepted, it should return a not-allowed (cancel) error indicating such:</p>
+      <example caption="Server indicates that the call already has another DCP and that control of the call is no longer available."><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <reject xmlns='urn:xmpp:rayo:1'>
+    <header name="x-reject-description" value="Sorry, she cannae take it!" />
+  </reject>
+  <error type='cancel'>
+    <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+    </section3>
+
+    <section3 topic='Call Hangup' anchor='session-termination-hangup'>
+      <!--
+        * Hangup command should terminate a session gracefully
+        * Ending components, removing joins
+        * End event - reason determination, sending event, unavailable presence
+      -->
+    </section3>
   </section2>
 </section1>
 <section1 topic='Formal Definition' anchor='def'>
