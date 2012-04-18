@@ -710,7 +710,43 @@
     </section3>
 
     <section3 topic='Call End Notification' anchor='session-termination-end'>
-      <!-- End event - reason determination, sending event, unavailable presence -->
+      <p>The server MUST monitor a call's underlying session and react appropriately in the case that it comes to an end:</p>
+      <ul>
+        <li>The server MUST determine the reason for the call ending to be one of <link url='#def-end-reason'>the appropriate end reasons</link>.</li>
+        <li>If the call ending was not a result of a hangup command from a client, the server MUST terminate all components on the call, which MUST send a complete event indicating hangup as the cause. The server MUST additionally terminate all joins on the call, sending unjoined events.</li>
+        <li>The server MUST send an end event (of type unavailable) on behalf of the call, specifying the above determined reason as a child element, to all JIDs to which an offer was sent or from which a command was received.</li>
+        <li>The server MUST NOT send any more events from a call which has ended and declared itself unavailable.</li>
+        <li>The server MUST respond to any commands sent to an ended call (or one which never existed) with an item-not-found (cancel) error.</li>
+      </ul>
+
+      <example caption="Controlling party receives notification of the call being terminated due to a remote party hangup"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'
+          type='unavailable'>
+  <end xmlns='urn:xmpp:rayo:1'>
+    <hangup/>
+  </end>
+</presence>
+      ]]></example>
+
+      <example caption="Non-existant call receives a command"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <answer xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <answer xmlns='urn:xmpp:rayo:1'/>
+  <error type='cancel'>
+    <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
     </section3>
   </section2>
 </section1>
