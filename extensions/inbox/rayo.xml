@@ -559,16 +559,125 @@
   </section2>
 
   <section2 topic='Component Execution' anchor='session-component-execution'>
+    <p>Components are long-lived elements of a call or mixer which may execute in paralell, have a lifecycle (may send events and/or process commands during their execution, indicate their completion asynchronously) and typically implement media operations. A server SHOULD implement components in such a way that it is acceptable to execute multiple components of the same type or of differing types simultaneously. A server SHOULD implement all core components.</p>
+
+    <p>In the event that a call or mixer receives a command which triggers the execution of a component, it MUST use the normal command handling routine, and schedule the component for immediate execution and return a reference to the requesting client as confirmation of the component's completion. Additionally, the component JID MUST send available presence to the executing party:</p>
+
+    <example caption="Client requests execution of an output component"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+    ]]></example>
+
+    <example caption="Server provides reference to output component, and component announces its availablility"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'>
+  <ref xmlns='urn:xmpp:rayo:1' id='eh3u82'/>
+</iq>
+
+<presence from='9f00061@call.shakespeare.lit/eh3u82' to='juliet@capulet.lit/balcony'/>
+    ]]></example>
+
+    <p>If a component execution command is received prior to the call being answered, the server MUST implicitly answer the underlying session and negotiate media as if an answer command had been received before it begins processing the component.</p>
+
+    <p>The whole command MUST be parsed up-front, and any applicable validation performed before acknowledgement of the command.</p>
+
+    <section4 topic='Initial Errors' anchor='session-component-initial-errors'>
+      <p>There are several reasons why the server might immediately return an error instead of acknowledging the creation of a new component:</p>
+      <ul>
+        <li>The server does not implement the component/command.</li>
+        <li>The server does not implement a particular option value for the command/component.</li>
+        <li>Some aspect of the component/command does not comply with this specification.</li>
+        <li>The server does not have sufficient resources to create a new component on this call/mixer.</li>
+        <li>The component would cause a resource conflict with another component on this call/mixer.</li>
+      </ul>
+
+      <p>If the server does not implement the command/component, it should return a feature-not-implemented (cancel) error:</p>
+      <example caption="Server indicates a lack of support for the requested component/command"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'/>
+  <error type='cancel'>
+    <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the server does not implement a particular option value for the command/component, it should return a feature-not-implemented (modify) error:</p>
+      <example caption="Server indicates a lack of support for some aspect of the requested component/command"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'
+          repeat-times='4'/>
+  <error type='modify'>
+    <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the command does not meet the specification, the server should return a bad-request (modify) error:</p>
+      <example caption="Server indicates the requested component/command does not meet the specification"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'
+          repeat-times='foo'/>
+  <error type='modify'>
+    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the server does not have sufficient resources to create the component, it should return a resource-constraint (wait) error:</p>
+      <example caption="Server indicates a lack of resources to create the requested component"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'/>
+  <error type='wait'>
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the server is not able to create the component due to a resource conflict with another component, it should return a resource-constraint (wait) error:</p>
+      <example caption="Server indicates a resource conflict with another component"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'/>
+  <error type='wait'>
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+    </section4>
+
+    <p>Once acknowleged, the component MUST begin execution according to its particular specification. During its execution, it MAY emit events relevant to its progress, and an implementation MUST be cabable of emitting events specified for each component. Any events should be sent inside a directed presence element to the executing party.</p>
+
     <!--
-      * Implicitly answer the call
-      * Certain commands from a client trigger the execution of a component.
-      * Command should be parsed and component prepared (with command validation performed up-front where it is brief), with either a reference to the component ID or an error returned
-      * Component should begin execution and emit any relevant events as directed presence to the requesting party
       * Component should accept relevant commands (at least Stop) during execution from the requesting party only
         * Commands should be executed and have a response/error returned
         * Commands from those other than the requesting party should have an error returned stating a lack of authorization
       * When the component ceases to execute, it should send a complete event with a valid reason to the requesting party as directed presence with a type of 'unavailable'
     -->
+
+    <section3 topic='Output Component' anchor='session-component-execution-output'></section3>
+    <section3 topic='Input Component' anchor='session-component-execution-input'></section3>
+    <section3 topic='Record Component' anchor='session-component-execution-record'></section3>
   </section2>
 
   <section2 topic='Joining Calls' anchor='session-joining'>
