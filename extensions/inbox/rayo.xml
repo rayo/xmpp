@@ -668,12 +668,129 @@
 
     <p>Once acknowleged, the component MUST begin execution according to its particular specification. During its execution, it MAY emit events relevant to its progress, and an implementation MUST be cabable of emitting events specified for each component. Any events should be sent inside a directed presence element to the executing party.</p>
 
-    <!--
-      * Component should accept relevant commands (at least Stop) during execution from the requesting party only
-        * Commands should be executed and have a response/error returned
-        * Commands from those other than the requesting party should have an error returned stating a lack of authorization
-      * When the component ceases to execute, it should send a complete event with a valid reason to the requesting party as directed presence with a type of 'unavailable'
-    -->
+    <p>During execution, the component MUST respond to commands addressed to it. Each component has its own set of commands, but all components have the 'stop' command in common. On receipt of the stop command, the component MUST acknowledge that it has been instructed to stop and gracefully cease its execution in whatever way is appropriate to the particular component.</p>
+
+    <example caption="Client requests component stop, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+    ]]></example>
+
+    <section3 topic='Command Errors' anchor='session-component-command-errors'>
+      <p>There are several reasons why a component might return an error instead of acknowledging a command:</p>
+      <ul>
+        <li>The component does not implement the command.</li>
+        <li>The component does not implement a particular option value for the command.</li>
+        <li>Some aspect of the command does not comply with the components specification.</li>
+        <li>The command is not appropriate for the component at its current stage of execution.</li>
+        <li>The command is issued by a party other than that which created the component.</li>
+      </ul>
+
+      <p>If the component does not implement the command, it should return a feature-not-implemented (cancel) error:</p>
+      <example caption="Component indicates a lack of support for the requested command"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+  <error type='cancel'>
+    <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the component does not implement a particular option/value for the command, it should return a feature-not-implemented (modify) error:</p>
+      <example caption="Component indicates a lack of support for some option/value on the command"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+  <error type='modify'>
+    <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If some aspect of the command does not comply with the component's spec, it should return a bad-request (modify) error:</p>
+      <example caption="Component indicates some aspect of the command is not spec compliant"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+  <error type='modify'>
+    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the command is not appropriate for the component's current stage of execution, it should return a unexpected-request (wait) error:</p>
+      <example caption="Component indicates a lack of a lack of support for the requested command"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+  <error type='wait'>
+    <unexpected-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the command is issued by a party other than the component creator, it should return a conflict (cancel) error:</p>
+      <example caption="Component indicates command cannot be executed by anyone other than the component owner"><![CDATA[
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/courtyard'
+    type='error'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+  <error type='cancel'>
+    <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+    </section3>
+
+    <p>When the component ceases to execute, it MUST send a <link url='#def-components-complete'>complete event</link> with a valid reason to the requesting party as directed presence with a type of 'unavailable'.</p>
+    <example caption="Component indicates it has completed due to being stopped"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit/eh3u28'
+          to='juliet@capulet.lit/courtyard'
+          type='unavailable'>
+  <complete xmlns='urn:xmpp:rayo:ext:1'>
+    <stop xmlns='urn:xmpp:rayo:ext:complete:1'/>
+  </complete>
+</presence>
+    ]]></example>
+
+    <p>Once a component is completed, or if it did not exist, the server should return an item-not-found (cancel) error:</p>
+    <example caption="Non-existant component receives a command"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <stop xmlns='urn:xmpp:rayo:ext:1'/>
+  <error type='cancel'>
+    <item-not-found xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+    ]]></example>
 
     <section3 topic='Output Component' anchor='session-component-execution-output'></section3>
     <section3 topic='Input Component' anchor='session-component-execution-input'></section3>
