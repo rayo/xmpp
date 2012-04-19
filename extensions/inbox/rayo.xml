@@ -503,7 +503,7 @@
 </presence>
       ]]></example>
 
-      <p>Similarly, once the server receives notification that the session has been answered and that media is flowing, it should send an answered event to the client to indicate such:</p>
+      <p>Similarly, once the server receives notification that the session has been answered, it should negotiate media between the dialed party and its local media server. Once media negotiation is complete, it should send an answered event to the client to indicate such:</p>
       <example caption="Call announces its answered state (media connected)."><![CDATA[
 <presence from='9f00061@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
@@ -511,9 +511,23 @@
 </presence>
       ]]></example>
 
-      <!--
-        * If a join is specified use that rather than joining to media server
-      -->
+      <section4 topic='Nested join' anchor='session-establishment-outbound-nested-join'>
+        <p>When sending a dial request, a client MAY specify a join target within the dial element:</p>
+        <example caption="Client requests establishment of a new outbound session, with a nested join"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <join call-id='e8u398d902i90' />
+  </dial>
+</iq>
+        ]]></example>
+
+        <p>In this case, the server MUST treat the session creation in the same way as without the join element, until the point of media negotiation. Here, the server should negotiate media as specified by the join element, in accordance with the rules defined in <link url='#session-joining'>joining calls</link>. Media MUST NOT be negotiated with the local media server, unless the join specifies so. The join operation MUST behave as described in <link url='#session-joining'>joining calls</link>.</p>
+      </section4>
     </section3>
 
     <section3 topic='Inbound Call' anchor='session-establishment-inbound'>
