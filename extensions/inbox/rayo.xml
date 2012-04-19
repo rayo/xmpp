@@ -573,16 +573,198 @@
   </section2>
 
   <section2 topic='Joining Calls' anchor='session-joining'>
-    <!--
-      * Completed joins should result in joined events being sent to both parties with the opposite call-id/mixer-name
-      * Completed unjoins should result in unjoined events being sent to both parties with the opposite call-id/mixer-name
-      * Join command should establish a join with the specified entity, using the direction and media rules specified
-      * Unjoin command with a call-id or mixer-name should remove the join from the specified entity
-      * Join/unjoin command with both call-id and mixer-name should return an error
-      * If a speech detection facility is available on a join:
-        * When a joined party triggers the speech detector, started speaking events should be sent to all other parties to the join including the call ID of the triggering call
-        * When a joined party ceases to trigger the speech detector, finished speaking events should be sent to all other parties to the join including the call ID of the triggering call
-    -->
+    <p>Calls in a Rayo system are capable of having their media streams moved/manipulated. Once such manipulation is to join the media streams of two calls. In a scenario where callA and callB should be joined, the client MUST send a join command to either call (not both) specifying the call ID of the other call, like so:</p>
+    <example caption="Client instructs callA to join to callB"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</iq>
+    ]]></example>
+
+    <p>The server MUST join the media streams of the two calls and return an empty IQ result to confirm that the operation has been successful. Additionally, both calls MUST dispatch joined events specifying who they have been joined to:</p>
+    <example caption="CallA acknowledges join to callB, both calls emit joined events"><![CDATA[
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+
+<presence from='callA@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</presence>
+
+<presence from='callB@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+    ]]></example>
+
+    <p>By default, the server MUST join the calls by bridging their audio through its local media server, with bidirectional media. In order to specify alternative behaviour, the client MAY specify a media option (either 'bridge' or 'direct') and/or a direction option (either 'duplex', 'send' or 'recv'), and the server MUST bridge accordingly.</p>
+
+    <section3 topic='Errors' anchor='session-joining-errors'>
+      <p>There are several reasons why the call might return an error instead of acknowledging a join:</p>
+        <ul>
+          <li>The specified join party does not exist or cannot be found.</li>
+          <li>The server does not have sufficient resources to complete the join.</li>
+          <li>The join command was malformed.</li>
+          <li>The specified media/direction options or their combination are not possible/supported.</li>
+        </ul>
+
+        <p>If the specified join party does not exist or cannot be found, the server MUST return a &lt;service-unavailable/&gt; error with a type of 'cancel'.</p>
+        <example caption="Call indicates that the specified join party does not exist or cannot be found"><![CDATA[
+<iq from='callA@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <error type='cancel'>
+    <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the server does not have sufficient resources to complete the join, the server MUST return a &lt;resource-constraint/&gt; error with a type of 'wait'.</p>
+        <example caption="Call indicates that there are not sufficient resources to complete the join"><![CDATA[
+<iq from='callA@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <error type='wait'>
+    <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the join command was malformed (eg no call ID specified), the server MUST return a &lt;bad-request/&gt; error with a type of 'modify'.</p>
+        <example caption="Call indicates that the join command was malformed"><![CDATA[
+<iq from='callA@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id=''/>
+  <error type='modify'>
+    <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the specified media/direction options or their combination are not possible/supported, the server MUST return a &lt;not-acceptable/&gt; error with a type of 'modify'.</p>
+        <example caption="Call indicates that the specified join party does not exist or cannot be found"><![CDATA[
+<iq from='callA@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callB' media='direct' direction='recv'/>
+  <error type='modify'>
+    <not-acceptable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+    </section3>
+
+    <section3 topic='Unjoin Command' anchor='session-joining-unjoin-command'>
+      <p>When the client wishes to terminate an existing join, it MUST send an unjoin command specifying the join to break (call-id).</p>
+      <example caption="Client instructs callA to unjoin from callB"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <unjoin xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</iq>
+      ]]></example>
+
+      <p>The server MUST unjoin the media streams of the two calls, rejoin both to the media server and return an empty IQ result to confirm that the operation has been successful:</p>
+      <example caption="CallA acknowledges unjoin from callB"><![CDATA[
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+      ]]></example>
+
+      <p>Optionally, if no join is specified on the unjoin command, all existing joins must be broken:</p>
+      <example caption="Client instructs callA to unjoin from every existing join"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <unjoin xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+      ]]></example>
+
+      <section4 topic='Errors' anchor='session-joining-unjoin-command-errors'>
+        <p>There are several reasons why the call might return an error instead of acknowledging an unjoin command:</p>
+          <ul>
+            <li>The specified join does not exist.</li>
+            <li>The unjoin command was malformed.</li>
+          </ul>
+
+          <p>If the specified join does not exist, the server MUST return a &lt;service-unavailable/&gt; error with a type of 'cancel'.</p>
+          <example caption="Call indicates that the specified join does not exist"><![CDATA[
+  <iq from='callA@shakespeare.lit'
+      to='juliet@capulet.lit/balcony'
+      type='error'
+      id='h7ed2'>
+    <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+    <error type='cancel'>
+      <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    </error>
+  </iq>
+          ]]></example>
+
+          <p>If the unjoin command was malformed (eg an empty call ID specified), the server MUST return a &lt;bad-request/&gt; error with a type of 'modify'.</p>
+          <example caption="Call indicates that the join command was malformed"><![CDATA[
+  <iq from='callA@shakespeare.lit'
+      to='juliet@capulet.lit/balcony'
+      type='error'
+      id='h7ed2'>
+    <unjoin xmlns='urn:xmpp:rayo:1' call-id=''/>
+    <error type='modify'>
+      <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+    </error>
+  </iq>
+          ]]></example>
+      </section4>
+    </section3>
+
+    <section3 topic='Unjoined Event' anchor='session-joining-unjoined-event'>
+      <p>Calls may be unjoined from other calls either in response to an unjoin command, as the result of one of the calls disconnecting, or as the result of an error. The server MUST monitor calls for being unjoined from another call, and emit an unjoined event when this is detected.</p>
+      <example caption="CallA announces that it has been unjoined from callB, and vice versa"><![CDATA[
+<presence from='callA@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <unjoined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</presence>
+
+<presence from='callB@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <unjoined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+      ]]></example>
+    </section3>
+
+    <section3 topic='Multiple Joins' anchor='session-joining-multiple'>
+
+    </section3>
+
+    <section3 topic='Joining Mixers' anchor='session-joining-mixers'>
+      <!--
+        * Completed join should result in joined event being sent to both parties with the opposite call-id/mixer-name
+        * Completed unjoins should result in unjoined events being sent to both parties with the opposite call-id/mixer-name
+        * Join command should establish a join with the specified entity, using the direction and media rules specified
+        * Unjoin command with a call-id or mixer-name should remove the join from the specified entity
+        * Join/unjoin command with both call-id and mixer-name should return an error
+        * If a speech detection facility is available on a join:
+          * When a joined party triggers the speech detector, started speaking events should be sent to all other parties to the join including the call ID of the triggering call
+          * When a joined party ceases to trigger the speech detector, finished speaking events should be sent to all other parties to the join including the call ID of the triggering call
+      -->
+    </section3>
   </section2>
 
   <section2 topic='Component Execution' anchor='session-component-execution'>
