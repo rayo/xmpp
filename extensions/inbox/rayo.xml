@@ -1267,7 +1267,111 @@
     </section3>
 
     <section3 topic='Input Component' anchor='session-component-execution-input'>
+      <p>Media input is a core concept in Rayo, and is provided by the input component. The component allows input to be collected from a call by way of either DTMF (dual-tone multi-frequency) or ASR (automatic speech recognition), using the server's local media server. The component is created using an <link url='def-component-input'>&lt;input/&gt; command</link>, containing one or more grammar documents by which to control input, along with a set of options to determine the nature of the collection.</p>
 
+      <example caption='Client requests DTMF input collection from a call'><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <input xmlns='urn:xmpp:rayo:input:1' mode='dtmf'>
+    <grammar content-type='application/grammar+grxml'>
+      <?xml version="1.0"?>
+      <grammar mode="dtmf" version="1.0"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.w3.org/2001/06/grammar
+                                   http://www.w3.org/TR/speech-grammar/grammar.xsd"
+               xmlns="http://www.w3.org/2001/06/grammar">
+
+        <rule id="digit">
+          <one-of>
+            <item> 0 </item>
+            <item> 1 </item>
+            <item> 2 </item>
+            <item> 3 </item>
+            <item> 4 </item>
+            <item> 5 </item>
+            <item> 6 </item>
+            <item> 7 </item>
+            <item> 8 </item>
+            <item> 9 </item>
+          </one-of>
+        </rule>
+
+        <rule id="pin" scope="public">
+          <one-of>
+            <item>
+              <item repeat="4"><ruleref uri="#digit"/></item>
+              #
+            </item>
+            <item>
+              * 9
+            </item>
+          </one-of>
+        </rule>
+      </grammar>
+    </document>
+  </output>
+</iq>
+      ]]></example>
+
+      <p>The server MUST validate that it has appropriate resources/mechanisms to collect the requested input before acknowledging the component creation.</p>
+
+      <section4 topic='Join considerations' anchor='session-component-exection-input-joins'>
+        <p>In the case that an input component is executed on a call joined to other calls or mixers, the input SHOULD be collected only from the call and not the joined parties. Input components cannot be executed on a mixer.</p>
+      </section4>
+
+      <section4 topic='Commands' anchor='session-component-execution-input-commands'>
+        <p>The input component does not implement any intermediate commands, other than those specified for all components.</p>
+      </section4>
+
+      <section4 topic='Events' anchor='session-component-execution-input-events'>
+        <p>The output component does not provide any intermediate events.</p>
+      </section4>
+
+      <section4 topic='Completion' anchor='session-component-execution-input-completion'>
+        <p>The output completion reason MUST be one of the <link url='#def-components-complete-reason'>core Rayo reasons</link>, or one of the following reasons. Input component completion provides match metadata for the &lt;finish/&gt; reason only.</p>
+        <ul>
+          <li>
+            <link url='#def-component-input-finish'>finish</link> (indicating that one of the grammars matched the received input)
+          </li>
+          <li>
+            <link url='#def-component-input-initial-timeout'>initial-timeout</link> (indicating that the initial timeout was triggered)
+          </li>
+          <li>
+            <link url='#def-component-input-inter-digit-timeout'>inter-digit-timeout</link> (indicating that the inter-digit timeout was triggered)
+          </li>
+          <li>
+            <link url='#def-component-input-max-silence'>max-silence</link> (indicating that the max-silence timeout was triggered)
+          </li>
+          <li>
+            <link url='#def-component-input-min-confidence'>min-confidence</link> (indicating that the minimum confidence threshold was not reached)
+          </li>
+          <li>
+            <link url='#def-component-input-nomatch'>no-match</link> (indicating that input was received which did not match any of the specified grammars)
+          </li>
+        </ul>
+
+        <p>If the media server reports a match to one of the provided grammars, the server MUST present the results of the match to the client by way of match meta-data on a finish complete reason. It MUST provide mode, confidence, interpretation and utterance data as specified on the <link url='#def-component-input-match'>match element</link>.</p>
+        <example caption="Component indicates it has completed due to one of the grammars returning a match"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit/eh3u28'
+          to='juliet@capulet.lit/courtyard'
+          type='unavailable'>
+  <complete xmlns='urn:xmpp:rayo:ext:1'>
+    <finish xmlns='urn:xmpp:rayo:input:complete:1'>
+      <match mode='dtmf' confidence='1.0'>
+        <utterance>
+          1 2 3 4 #
+        </utterance>
+        <interpretation>
+          dtmf-1 dtmf-2 dtmf-3 dtmf-4 dtmf-pound
+        </interpretation>
+      </match>
+    </finish>
+  </complete>
+</presence>
+        ]]></example>
+      </section4>
     </section3>
 
     <section3 topic='Record Component' anchor='session-component-execution-record'></section3>
