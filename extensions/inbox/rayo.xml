@@ -1374,7 +1374,97 @@
       </section4>
     </section3>
 
-    <section3 topic='Record Component' anchor='session-component-execution-record'></section3>
+    <section3 topic='Record Component' anchor='session-component-execution-record'>
+      <p>Call recording is a core concept in Rayo, and is provided by the record component. The component allows media to be captured from a call or a mixer, using the server's local media server, stored, and made available to clients. The component is created using a <link url='def-component-record'>&lt;record/&gt; command</link>, with a set of options to determine the nature of the recording.</p>
+
+      <example caption='Client requests a simple recording'><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <record xmlns='urn:xmpp:rayo:record:1'/>
+</iq>
+      ]]></example>
+
+      <p>The server MUST validate that it has apropriate resources/mechanisms to make the recording before acknowledging the component creation.</p>
+
+      <section4 topic='Join considerations' anchor='session-component-exection-record-joins'>
+        <p>In the case that a record component is executed on a call joined to other calls or mixers, the recording SHOULD be made of both sides of the join. In the case that a record component is executed on a mixer, the recording should be made of the mixer audio, such that all participants' audio is present in the recording.</p>
+      </section4>
+
+      <section4 topic='Commands' anchor='session-component-execution-record-commands'>
+        <p>The record component implements several commands for manipulating the recording during its execution.</p>
+
+        <section5 topic='Pause' anchor='session-component-execution-record-pause'>
+          <p>A client may instruct a record component to pause by sending a pause command. The server MUST cause the media server to pause recording, allowing for later appending.</p>
+
+          <example caption="Client requests record component pause, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <pause xmlns='urn:xmpp:rayo:record:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='Resume' anchor='session-component-execution-record-resume'>
+          <p>A client may instruct a record component to resume recording if it has previously been paused. The server MUST cause the media server to resume recording, appending to the original file.</p>
+
+          <example caption="Client requests record component resume, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <resume xmlns='urn:xmpp:rayo:record:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+        </section5>
+      </section4>
+
+      <section4 topic='Events' anchor='session-component-execution-record-events'>
+        <p>The record component does not provide any intermediate events.</p>
+      </section4>
+
+      <section4 topic='Completion' anchor='session-component-execution-record-completion'>
+        <p>The record completion reason MUST be one of the <link url='#def-components-complete-reason'>core Rayo reasons</link>, or one of the following reasons. Record component completion provides recording metadata in all cases.</p>
+        <ul>
+          <li>
+            <link url='#def-component-record-max-duration'>max-duration</link> (indicating that the max duration was reached)
+          </li>
+          <li>
+            <link url='#def-component-record-initial-timeout'>initial-timeout</link> (indicating that the initial timeout was triggered)
+          </li>
+          <li>
+            <link url='#def-component-record-final-timeout'>final-timeout</link> (indicating that the final timeout was triggered)
+          </li>
+        </ul>
+
+        <p>The server MUST present the recording for consumption by the client by way of recording meta-data on the complete reason, including a URI at which the recording may be fetched. It MUST provide uri, duration &amp; size data as specified on the <link url='#def-component-record-recording'>recording element</link>.</p>
+        <example caption="Component indicates it has completed due to being stopped, providing the recording"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit/eh3u28'
+          to='juliet@capulet.lit/courtyard'
+          type='unavailable'>
+  <complete xmlns='urn:xmpp:rayo:ext:1'>
+    <stop xmlns='urn:xmpp:rayo:ext:complete:1'>
+      <recording xmlns='urn:xmpp:rayo:record:complete:1' uri='http://rayo.io/recordings/foo.mp3' duration='20000' size='12287492817'/>
+    </stop>
+  </complete>
+</presence>
+        ]]></example>
+      </section4>
+    </section3>
   </section2>
 
   <section2 topic='Session Termination' anchor='session-termination'>
