@@ -1079,7 +1079,195 @@
 </iq>
     ]]></example>
 
-    <section3 topic='Output Component' anchor='session-component-execution-output'></section3>
+    <section3 topic='Output Component' anchor='session-component-execution-output'>
+      <p>Media output is a core concept in Rayo, and is provided by the output component. The component allows media to be rendered to a call or a mixer, using the server's local media server. The component is created using an <link url='def-component-output'>&lt;output/&gt; command</link>, containing one or more documents to render, along with a set of options to determine the nature of the rendering.</p>
+
+      <example caption='Client renders a simple SSML document to a call'><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'>
+    <document content-type='application/ssml+xml'>
+      <![CDATA[
+        <?xml version="1.0"?>
+        <!DOCTYPE speak PUBLIC "-//W3C//DTD SYNTHESIS 1.0//EN"
+                          "http://www.w3.org/TR/speech-synthesis/synthesis.dtd">
+        <speak version="1.0"
+               xmlns="http://www.w3.org/2001/10/synthesis"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.w3.org/2001/10/synthesis
+                           http://www.w3.org/TR/speech-synthesis/synthesis.xsd"
+               xml:lang="en-US">
+          <p>
+            <s>You have 4 new messages.</s>
+            <s>The first is from Stephanie Williams and arrived at <break/> 3:45pm.</s>
+            <s>
+              The subject is <prosody rate="-20%">ski trip</prosody>
+            </s>
+          </p>
+        </speak>
+      ]]>
+    </document>
+  </output>
+</iq>
+      ]]></example>
+
+      <p>The server MUST validate that it has apropriate resources/mechanisms to render the requested document before acknowledging the component creation.</p>
+
+      <section4 topic='Join considerations' anchor='session-component-exection-output-joins'>
+        <p>In the case that an output component is executed on a call joined to other calls or mixers, the output SHOULD be rendered only to the call and not the joined parties (also known as 'whisper'). In the case that an output component is executed on a mixer, the output should be rendered into the mixer, such that all participants receive the output (also known as 'announce').</p>
+      </section4>
+
+      <section4 topic='Commands' anchor='session-component-execution-output-commands'>
+        <p>The output component implements several commands for manipulating the output during its execution.</p>
+
+        <section5 topic='Pause' anchor='session-component-execution-output-pause'>
+          <p>A client may instruct an output component to pause by sending a pause command. The server MUST cause the media server to pause rendering, maintaining position within the document and allowing for later resumption.</p>
+
+          <example caption="Client requests output component pause, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <pause xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='Resume' anchor='session-component-execution-output-resume'>
+          <p>A client may instruct an output component to resume rendering if it has previously been paused. The server MUST cause the media server to resume rendering at the last pause marker.</p>
+
+          <example caption="Client requests output component resume, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <resume xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='SpeedUp' anchor='session-component-execution-output-speedup'>
+          <p>A client may instruct an output component to increase the rendering rate by a unit amount, defined by the media server. The server MUST cause the media server to perform the rate increase and acknowledge the command.</p>
+
+          <example caption="Client requests output component speed up, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <speed-up xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='SpeedDown' anchor='session-component-execution-output-speeddown'>
+          <p>A client may instruct an output component to decrease the rendering rate by a unit amount, defined by the media server. The server MUST cause the media server to perform the rate decrease and acknowledge the command.</p>
+
+          <example caption="Client requests output component speed down, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <speed-down xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='VolumeUp' anchor='session-component-execution-output-volumeup'>
+          <p>A client may instruct an output component to increase the rendering volume by a unit amount, defined by the media server. The server MUST cause the media server to perform the volume increase and acknowledge the command.</p>
+
+          <example caption="Client requests output component volume up, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <volume-up xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='VolumeDown' anchor='session-component-execution-output-volumedown'>
+          <p>A client may instruct an output component to decrease the rendering volume by a unit amount, defined by the media server. The server MUST cause the media server to perform the volume decrease and acknowledge the command.</p>
+
+          <example caption="Client requests output component volume down, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <volume-down xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+
+        <section5 topic='Seek' anchor='session-component-execution-output-seek'>
+          <p>A client may instruct an output component to move the play marker forward or back in time by a specified amount before resuming output. The server MUST cause the media to seek as instructed and acknowledge the command.</p>
+          <p>The attributes of the &lt;seek/&gt; element are as follows.</p>
+          <example caption="Client requests output seek forward by 20s, server confirms"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit/eh3u28'
+    type='set'
+    id='h7ed2'>
+  <seek xmlns='urn:xmpp:rayo:output:1' direction='forward' amount='20000'/>
+</iq>
+
+<iq from='9f00061@call.shakespeare.lit/eh3u28'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+          ]]></example>
+        </section5>
+      </section4>
+
+      <section4 topic='Events' anchor='session-component-execution-output-events'>
+        <p>The output component does not provide any intermediate events.</p>
+      </section4>
+
+      <section4 topic='Completion' anchor='session-component-execution-output-completion'>
+        <p>The output completion reason MUST be one of the <link url='#def-components-complete-reason'>core Rayo reasons</link>, <link url='#def-component-output-finish'>finish</link> (indicating that the document finished rendering naturally) or <link url='#def-component-output-maxtime'>max-time</link> (indicating that the maximum time was exceeded). Output component completion does not provide any metadata.</p>
+
+        <example caption="Component indicates it has completed due to reaching the end of the document"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit/eh3u28'
+          to='juliet@capulet.lit/courtyard'
+          type='unavailable'>
+  <complete xmlns='urn:xmpp:rayo:ext:1'>
+    <finish xmlns='urn:xmpp:rayo:output:complete:1'/>
+  </complete>
+</presence>
+        ]]></example>
+      </section4>
+    </section3>
+
     <section3 topic='Input Component' anchor='session-component-execution-input'></section3>
     <section3 topic='Record Component' anchor='session-component-execution-record'></section3>
   </section2>
@@ -1696,8 +1884,31 @@
 
         <section5 topic='Document Element' anchor='def-component-output-output-document'>
           <p>Presents a document for rendering by the output engine.</p>
-          <p>The &lt;document/&gt; element MUST contain a document for output rendering enclosed within CDATA.</p>
-          <p>The &lt;document/&gt; element has no attributes.</p>
+          <p>The &lt;document/&gt; element MUST have either a url attribute set OR a content type and a body, containing a document for output rendering enclosed within CDATA.</p>
+          <p>The attributes of the &lt;document/&gt; element are as follows.</p>
+          <table caption='Attributes of Document Element'>
+            <tr>
+              <th>Attribute</th>
+              <th>Definition</th>
+              <th>Possible Values</th>
+              <th>Default</th>
+              <th>Inclusion</th>
+            </tr>
+            <tr>
+              <td>url</td>
+              <td>Provides a URI at which the document is available.</td>
+              <td>Any valid URI scheme supported by the server (eg HTTP).</td>
+              <td>none</td>
+              <td>REQUIRED unless content-type and content are set</td>
+            </tr>
+            <tr>
+              <td>content-type</td>
+              <td>Indicates the content type of the document provided as CDATA.</td>
+              <td>A document content type token</td>
+              <td>application/ssml+xml</td>
+              <td>REQUIRED unless url is set</td>
+            </tr>
+          </table>
         </section5>
       </section4>
 
@@ -1769,7 +1980,7 @@
         <p>The &lt;finish/&gt; element has no attributes.</p>
       </section4>
 
-      <section4 topic='MaxTime Element' anchor='def-component-output-finish'>
+      <section4 topic='MaxTime Element' anchor='def-component-output-maxtime'>
         <p>Indicates that the output component came to an end due to the maximum time limit being reached.</p>
         <p>The &lt;max-time/&gt; element MUST be empty.</p>
         <p>The &lt;max-time/&gt; element has no attributes.</p>
@@ -2809,6 +3020,27 @@
     </documentation>
   </annotation>
 
+  <complexType name="documentType">
+    <simpleContent>
+      <attribute name="url" type="anyURI" use="optional">
+        <annotation>
+          <documentation>
+            Provides a URI at which the document is available. Must not be provided if the content-type attribute is set or the element contains a document as CDATA.
+          </documentation>
+        </annotation>
+      </attribute>
+      <attribute name="content-type" type="string" use="optional">
+        <annotation>
+          <documentation>
+            Indicates the content type of the document provided as CDATA. Must not be set if the url attribute is set.
+          </documentation>
+        </annotation>
+      </attribute>
+
+      <restriction base="CDATA" />
+    </simpleContent>
+  </complexType>
+
   <!-- Main output command -->
   <element name="output">
     <annotation>
@@ -2854,10 +3086,10 @@
       </attribute>
 
       <sequence>
-        <element name="document" type="string" minOccurs="1" maxOccurs="unbounded">
+        <element name="document" type="tns:documentType" minOccurs="1" maxOccurs="unbounded">
           <annotation>
             <documentation>
-              An document for rendering (contained within CDATA).
+              Provides the document for rendering.
             </documentation>
           </annotation>
         </element>
