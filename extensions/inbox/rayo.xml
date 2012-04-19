@@ -750,7 +750,85 @@
     </section3>
 
     <section3 topic='Multiple Joins' anchor='session-joining-multiple'>
+      <p>If a client wishes to modify the parameters of a join, it MUST send a new join command to the target call with the new parameters. The server MUST renegotiate media using the new parameters, and acknowledge the command's completion. The server MUST NOT re-send joined events.</p>
+      <example caption="Client joins callA to callB in receive-only mode, and then 'upgrades' the join to full-duplex"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callB' direction='recv'/>
+</iq>
 
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+
+<presence from='callA@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</presence>
+
+<presence from='callB@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed3'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callB' direction='duplex'/>
+</iq>
+
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed3'/>
+      ]]></example>
+
+      <p>Rayo calls SHOULD support being joined to more than one other call at a time, each join having different parameters. Creating a new join MUST NOT destroy existing joins. If a join is requested but cannot be created without destroying existing joins, the call MUST return a conflict (cancel) error.</p>
+
+      <example caption="Call indicates that the requested joins cannot be created in parallel"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</iq>
+
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+
+<presence from='callA@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</presence>
+
+<presence from='callB@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed3'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+</iq>
+
+<iq from='callA@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed3'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <error type='cancel'>
+    <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
     </section3>
 
     <section3 topic='Joining Mixers' anchor='session-joining-mixers'>
