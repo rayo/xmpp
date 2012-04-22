@@ -833,16 +833,74 @@
   </section2>
 
   <section2 topic='Mixers' anchor='session-mixers'>
-    <!--
-      * Completed join should result in joined event being sent to both parties with the opposite call-id/mixer-name
-      * Completed unjoins should result in unjoined events being sent to both parties with the opposite call-id/mixer-name
-      * Join command should establish a join with the specified entity, using the direction and media rules specified
-      * Unjoin command with a call-id or mixer-name should remove the join from the specified entity
-      * Join/unjoin command with both call-id and mixer-name should return an error
-      * If a speech detection facility is available on a join:
-        * When a joined party triggers the speech detector, started speaking events should be sent to all other parties to the join including the call ID of the triggering call
-        * When a joined party ceases to trigger the speech detector, finished speaking events should be sent to all other parties to the join including the call ID of the triggering call
-    -->
+    <p>While in general, calls may be joined peer-to-peer in any desireable combination, such an implimentation it not necessarily scaleable or practical to manage. Rayo, therefore, includes the concept of mixers, which are entities like calls, to which calls or other mixers may be joined in the same way as joining multiple calls directly. A mixer MUST be implicitly created the first time a call attempts to join it, and it MUST emit events (joined, unjoined) to all controlling parties who have calls joined to it, using the same semantics as joining calls.</p>
+    <example caption="Client instructs call to join a mixer"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='callA@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' mixer-name='myMixer'/>
+</iq>
+
+<iq from='callA@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'/>
+
+<presence from='callA@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' mixer-name='myMixer'/>
+</presence>
+
+<presence from='myMixer@mixer.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+    ]]></example>
+
+    <p>If a client sends directed presence to a mixer, the mixer MUST subscribe the client to its events. On receiving unavailable presence, the mixer MUST stop sending events to the client.</p>
+
+    <p>The error conditions on joining a mixer are the same as for calls, as are the unjoin and join modification semantics. Additionally, mixers may host components just like calls, following the rules defined for each component.</p>
+
+    <example caption="Client renders output to a mixer"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='myMixer@mixer.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <output xmlns='urn:xmpp:rayo:output:1'/>
+</iq>
+
+<iq from='myMixer@mixer.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'>
+  <ref xmlns='urn:xmpp:rayo:1' id='d38d3'/>
+</iq>
+    ]]></example>
+
+    <p>If the media server providing the mixer supports active speaker detection, it SHOULD emit active speaker events to all clients with an event subscription. Such events MUST indicate the start and end of speaking for a particular call ID joined to the mixer.</p>
+
+    <example caption="Mixer indicates overlapping speaking status of two joined calls"><![CDATA[
+<presence from='myMixer@mixer.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <started-speaking xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+
+<presence from='myMixer@mixer.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <started-speaking xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</presence>
+
+<presence from='myMixer@mixer.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <stopped-speaking xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+</presence>
+
+<presence from='myMixer@mixer.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <stopped-speaking xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+</presence>
+    ]]></example>
   </section2>
 
   <section2 topic='Component Execution' anchor='session-component-execution'>
