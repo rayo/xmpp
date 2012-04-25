@@ -184,7 +184,7 @@
 <section1 topic='Requirements' anchor='reqs'>
   <p>The protocol defined herein is designed to provide the following features:</p>
   <ol>
-    <li><strong>Call Control:</strong> Incoming calls are "offered" to clients at which point they can be answered, rejected, redirected to another destination, etc. Every attempt is made to be shield the Rayo client from the low level telephony protocol (e.g. SIP, Jingle, PSTN, etc.)</li>
+    <li><strong>Call Control:</strong> Incoming calls are "offered" to clients at which point they can be answered, rejected, redirected to another destination, etc. Outbound calls may also be made and monitored. Every attempt is made to be shield the Rayo client from the low level telephony protocol (e.g. SIP, Jingle, PSTN, etc.)</li>
     <li><strong>Audio File Playback:</strong> A compatible Rayo server will fetch a file from a a specified URL and play the containing audio to the caller.</li>
     <li><strong>Speech Synthesis / TTS:</strong> In cases where dynamic data must be spoken, a Speech Synthesis engine many be used to play computer generated speech to the caller.</li>
     <li><strong>Touch-tone Events / DTMF:</strong> Rayo surfaces real-time event when the caller presses keys on their touch-tone keypad.</li>
@@ -196,12 +196,12 @@
   <p>Many third-party call control protocols have preceeded Rayo (see Asterisk's AGI/AMI, FreeSWITCH's eventsocket, Microsoft's TAPI, Java's JTAPI, Novell/AT&amp;T's TSAPI, CSTA, etc). None of these protocols is ideal, and all have at least one or more of the following drawbacks:</p>
   <ul>
     <li><strong>Totally ground-up wire protocol</strong> requiring implementation all the way down to the socket</li>
-    <li><strong>Platform/vendor/hardware specific</strong></li>
-    <li><strong>Synchronous interface</strong></li>
+    <li><strong>Platform/vendor/hardware specific</strong> - each system implements its own proprietary protocol which does not allow easily porting an application from one back-end to another.</li>
+    <li><strong>Synchronous interface</strong> - Operations on calls or other entities are often blocking, and one must serialise all control messaged.</li>
     <li><strong>Inconsistent</strong> - evolved, rather than designed</li>
     <li><strong>Lacking in scalability</strong> - client/server sometimes tied one-to-one, servers rarely clustered, advanced message routing not possible</li>
     <li><strong>Poor security</strong> - lack of wire-level encryption, lack of or sub-standard authentication mechanisms, lack of or limited authorization mechanisms, lack of or poor sandboxing between multiple tenants on one system</li>
-    <li><strong>Inextensible</strong></li>
+    <li><strong>Inextensible</strong> - The specification of extensions to the core protocol is either impossible or very difficult.</li>
   </ul>
 
   <p>Rayo has been designed with these failings in mind, and intends to address many concerns not addressed by these earlier attempts. The following considerations were made:</p>
@@ -213,7 +213,10 @@
     <li><strong>Federated</strong> - The protocol must support communication between client and server entities on separately owned, operated and addressed networks.</li>
     <li><strong>Flexible routing</strong> - The protocol must lend itself to routing across wide networks such as the internet, and to potential complex routing such as proxying or redirection. Additionally, the client and server should each be aware of the presence of the other and be able to use such information to make routing decisions.</li>
     <li><strong>Extensible</strong> - The protocol must provide for the possibility of extra functionality being added by future specifications or an individual implementation.</li>
+    <li><strong>Secure</strong> - The protocol should include appropriate measures for authentication and authorization of participants, as well as preventing third-parties from intercepting control messages.</li>
   </ul>
+
+  <p>Many of the features in the above list are available to Rayo at no specification or implementation cost, since they are core to XMPP itself and thus Rayo inherits these 'for free'.</p>
 
   <p>Additionally, the protocol is required to abstract away the complexity of the raw negotiation/transport protocols such as SIP, but to map conceptually to such protocols. Best practices for the implementation of Rayo on top of <a href='rayo-sip.xml'>SIP</a> and <a href='rayo-jingle.html'>Jingle</a> environments, as well as the public APIs of <a href='rayo-asterisk.html'>Asterisk</a> and <a href='rayo-freeswitch.html'>FreeSWITCH</a> are made in the respective specifications.</p>
 </section1>
@@ -226,11 +229,11 @@
       </di>
       <di>
         <dt>Command</dt>
-        <dd>Commands instruct the receiving entity to perform some atomic action. Commands may be executed against a given call, component or mixer and can be considered completed as soon as they receive a response.</dd>
+        <dd>Commands instruct the receiving entity to perform some atomic action. Commands may be executed against a given call, component or mixer and can be considered completed as soon as they receive a response. Some commands create components, and return a reference to the component in their response.</dd>
       </di>
       <di>
         <dt>Component</dt>
-        <dd>Components extend the Rayo protocol by providing additional media and call control functionality. Components are similar to commands, but have a lifecycle attached to them. A component, once created and attached to a call or mixer, will respond giving an ID that it is known by. The component will then begin execution, and may trigger events or have commands issued to it. Finally, once the component is stopped or comes to an end naturally, it will issue a special &lt;complete/&gt; event</dd>
+        <dd>Components extend the Rayo protocol by providing additional media and call control functionality. Components are created by an appropriate command, which returns a reference to the component. Components are executed asynchronously, and have a lifecycle attached to them, with the ability to trigger events or have commands issued to it. Once a component is stopped or comes to an end naturally, it will issue a special &lt;complete/&gt; event, indicating that it has ceased execting and deliver any required data.</dd>
       </di>
       <di>
         <dt>Potential controlling party (PCP)</dt>
@@ -268,12 +271,12 @@
     </section3>
     <section3 topic='Calls' anchor='concepts-actors-calls'>
       <p>A Rayo call is a short-lived XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a single session. It is usually a simple alias for the main server process.</p>
-      <p>A Rayo call is the entity with which most client interactions are made, and is responsible for sending its events to and receiving commands from a client.</p>
+      <p>A Rayo call is the entity with which most client interactions are made, and is responsible for sending its events to and receiving commands from a client. Calls may host components.</p>
       <p>Calls have separate presence from the root domain of the service and thus appear to be separate entities.</p>
     </section3>
     <section3 topic='Mixers' anchor='concepts-actors-mixers'>
       <p>A Rayo mixer is an XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a service for the linking of media streams from several calls. It is usually a simple alias for the main server process.</p>
-      <p>A Rayo mixer is responsible for sending its events to and receiving commands from a client, and may have some components executed on it directly.</p>
+      <p>A Rayo mixer is responsible for sending its events to and receiving commands from one or more clients, and can host components.</p>
       <p>Mixers have separate presence from the root domain of the service and its calls and thus appear to be separate entities.</p>
     </section3>
     <section3 topic='Commands' anchor='concepts-actors-commands'>
@@ -282,7 +285,7 @@
     <section3 topic='Components' anchor='concepts-actors-components'>
       <p>Components extend the Rayo protocol by providing additional media and call control functionality.</p>
 
-      <p>Components are started by sending a specialized command to a call or mixer. Unlike basic commands, components have a lifecycle. Thus, a request for creation of a component will return a reference to the component's ID, and the component will continue to execute until it completes, potentially sending events and processing commands along the way (such as an instruction to pause or terminate), before finally issuing an event indicating its completion and thus unavailability. Multiple components may be active on a call or mixer at any one time, and commands may be executed on any entity during the execution of a component.</p>
+      <p>Components are started by sending a specialized command to a call or mixer, and have a lifecycle. Thus, a request for creation of a component will return a reference to the component's ID, and the component will continue to execute until it completes, potentially sending events and processing commands along the way (such as an instruction to pause or terminate), before finally issuing an event indicating its completion and thus unavailability. Multiple components may be active on a call or mixer at any one time, and commands may be executed on any entity during the execution of a component.</p>
     </section3>
   </section2>
 
@@ -531,7 +534,7 @@
     </section3>
 
     <section3 topic='Inbound Call' anchor='session-establishment-inbound'>
-      <p>When the system receives a call from one of its connected networks, it MUST then expose that requested session to Rayo clients. It SHOULD use an implementation-specific routing mechanism to map incoming calls to some set of registered JIDs which are considered appropriate controlling parties. From this set, it MUST then remove any parties whom it can identify as being temporarily inappropriate for control (either unavailable based on presence, under too much load, or any other metric which the server has available). If, as a result, the set of Potentially Controlling Parties is empty, the server MUST reject the call with a 'decline' reason.</p>
+      <p>When the system receives a call from one of its connected networks, it MUST then expose that requested session to Rayo clients. It SHOULD use an implementation-specific routing mechanism to map incoming calls to some set of registered JIDs which are considered appropriate controlling parties. From this set, it SHOULD then remove any parties whom it can identify as being temporarily inappropriate for control (either unavailable based on presence, under too much load, or any other metric which the server has available). If, as a result, the set of Potentially Controlling Parties is empty, the server MUST reject the call with a 'decline' reason.</p>
 
       <p>If the server can identify active Potential Controlling Parties, it MUST offer them control of the call simultaneously. The server must broadcast an offer on behalf of the call to all Potential Controlling Parties, using applicable to/from/header data from the incoming session.</p>
       <example caption="New call announces itself to a potential controlling party"><![CDATA[
