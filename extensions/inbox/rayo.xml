@@ -1425,22 +1425,19 @@
           </li>
         </ul>
 
-        <p>If the media server reports a match to one of the provided grammars, the server MUST present the results of the match to the client by way of match meta-data on a finish complete reason. It MUST provide mode, confidence, interpretation and utterance data as specified on the <link url='#def-component-input-match'>match element</link>.</p>
+        <p>If the media server reports a match to one of the provided grammars, the server MUST present the results of the match to the client by way of match meta-data on a finish complete reason. It MUST provide an NLSML fragment as specified on the <link url='#def-component-input-match'>match element</link>.</p>
         <example caption="Component indicates it has completed due to one of the grammars returning a match"><![CDATA[
 <presence from='9f00061@call.shakespeare.lit/eh3u28'
           to='juliet@capulet.lit/courtyard'
           type='unavailable'>
   <complete xmlns='urn:xmpp:rayo:ext:1'>
-    <finish xmlns='urn:xmpp:rayo:input:complete:1'>
-      <match mode='dtmf' confidence='1.0'>
-        <utterance>
-          1 2 3 4 #
-        </utterance>
-        <interpretation>
-          dtmf-1 dtmf-2 dtmf-3 dtmf-4 dtmf-pound
-        </interpretation>
-      </match>
-    </finish>
+    <match xmlns='urn:xmpp:rayo:input:complete:1'>
+      <result xmlns="http://www.w3c.org/2000/11/nlsml" xmlns:xf="http://www.w3.org/2000/xforms" grammar="http://foodorder">
+        <input>
+          <input mode="dtmf" confidence="100">1 2 3 4</input>
+        </input>
+      </result>
+    </match>
   </complete>
 </presence>
         ]]></example>
@@ -2359,40 +2356,8 @@
 
       <section4 topic='Match' anchor='def-component-input-match'>
         <p>Provides the result of a match between the input received and the specified grammar.</p>
-        <p>The &lt;match/&gt; element MUST contain valid &lt;interpretation/&gt; and &lt;utterance/&gt; elements.</p>
-        <p>The attributes of the &lt;match/&gt; element are as follows.</p>
-        <table caption='Attributes of Match Element'>
-          <tr>
-            <th>Attribute</th>
-            <th>Definition</th>
-            <th>Possible Values</th>
-            <th>Inclusion</th>
-          </tr>
-          <tr>
-            <td>mode</td>
-            <td>Indicates the mode by which the match occurred.</td>
-            <td>speech|dtmf</td>
-            <td>REQUIRED</td>
-          </tr>
-          <tr>
-            <td>confidence</td>
-            <td>Indicates the confidence with which the match has been made.</td>
-            <td>A decimal value between 0 and 1.</td>
-            <td>REQUIRED</td>
-          </tr>
-        </table>
-
-        <section5 topic='Interpretation Element' anchor='def-component-input-match-interpretation'>
-          <p>Provides the result of the grammar match after any symantic processing which may have been performed.</p>
-          <p>The &lt;interpretation/&gt; element SHOULD contain an interpretation as CDATA.</p>
-          <p>The &lt;interpretation/&gt; element has no attributes.</p>
-        </section5>
-
-        <section5 topic='Utterance Element' anchor='def-component-input-match-utterance'>
-          <p>Provides the raw string of the detected input.</p>
-          <p>The &lt;utterance/&gt; element SHOULD contain an utterance as textual content.</p>
-          <p>The &lt;utterance/&gt; element has no attributes.</p>
-        </section5>
+        <p>The &lt;match/&gt; element MUST contain a valid NLSML fragment (&lt;result/&gt; element).</p>
+        <p>The &lt;match/&gt; element has no attributes.</p>
       </section4>
 
       <section4 topic='Finish Element' anchor='def-component-input-finish'>
@@ -3642,37 +3607,10 @@
 
   <!-- Match Data -->
   <complexType name="matchType">
-    <attribute name="mode" use="required">
+    <element name="result">
       <annotation>
         <documentation>
-          Indicates the mode by which the match occurred.
-        </documentation>
-      </annotation>
-      <simpleType>
-        <restriction base="token">
-          <enumeration value="speech" />
-          <enumeration value="dtmf" />
-        </restriction>
-      </simpleType>
-    </attribute>
-    <attribute name="confidence" type="core:fractionDecimalType" use="required">
-      <annotation>
-        <documentation>
-          Indicates the confidence with which the match has been made.
-        </documentation>
-      </annotation>
-    </attribute>
-    <element name="interpretation" type="CDATA">
-      <annotation>
-        <documentation>
-          Provides the result of the grammar match after any symantic processing which may have been performed.
-        </documentation>
-      </annotation>
-    </element>
-    <element name="utterance" type="string">
-      <annotation>
-        <documentation>
-          Provides the raw string of the detected input.
+          Provides the NLSML result of the grammar match after any symantic processing which may have been performed. See the NLSML spec for details.
         </documentation>
       </annotation>
     </element>
