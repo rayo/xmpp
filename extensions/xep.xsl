@@ -2,7 +2,7 @@
 
 <!--
 
-Copyright (c) 1999 - 2011 XMPP Standards Foundation
+Copyright (c) 1999 - 2012 XMPP Standards Foundation
 
 Permission is hereby granted, free of charge, to any 
 person obtaining a copy of this software and 
@@ -126,7 +126,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
           </xsl:if>
           <tr valign='top'>
             <td><strong>Copyright:</strong></td>
-            <td>&#169; 1999 - 2011 XMPP Standards Foundation. <a href='#appendix-legal'>SEE LEGAL NOTICES</a>.</td>
+            <td>&#169; 1999 - 2012 XMPP Standards Foundation. <a href='#appendix-legal'>SEE LEGAL NOTICES</a>.</td>
           </tr>
           <tr valign='top'>
             <td><strong>Status:</strong></td>
@@ -145,6 +145,8 @@ OR OTHER DEALINGS IN THE SOFTWARE.
             <td><xsl:value-of select='/xep/header/revision[position()=1]/date'/></td>
           </tr>
         </table>
+        <!-- COUNCIL NOTE -->
+        <xsl:apply-templates select='/xep/header/councilnote'/>
         <!-- DEPLOYABILITY -->
         <hr />
         <xsl:variable name='thestatus' select='/xep/header/status'/>
@@ -342,7 +344,7 @@ OR OTHER DEALINGS IN THE SOFTWARE.
         <!-- XMPP NOTICE -->
         <a name='appendix-xmpp'></a>
         <h3>Appendix D: Relation to XMPP</h3>
-        <p class='indent'>The Extensible Messaging and Presence Protocol (XMPP) is defined in the XMPP Core (RFC 3920) and XMPP IM (RFC 3921) specifications contributed by the XMPP Standards Foundation to the Internet Standards Process, which is managed by the Internet Engineering Task Force in accordance with RFC 2026. Any protocol defined in this document has been developed outside the Internet Standards Process and is to be understood as an extension to XMPP rather than as an evolution, development, or modification of XMPP itself.</p>
+        <p class='indent'>The Extensible Messaging and Presence Protocol (XMPP) is defined in the XMPP Core (RFC 6120) and XMPP IM (RFC 6121) specifications contributed by the XMPP Standards Foundation to the Internet Standards Process, which is managed by the Internet Engineering Task Force in accordance with RFC 2026. Any protocol defined in this document has been developed outside the Internet Standards Process and is to be understood as an extension to XMPP rather than as an evolution, development, or modification of XMPP itself.</p>
         <hr />
         <!-- DISCUSSION VENUE -->
         <a name='appendix-discuss'></a>
@@ -430,7 +432,15 @@ OR OTHER DEALINGS IN THE SOFTWARE.
     </p>
     </div>
   </xsl:template>
-    
+  
+  <xsl:template match='councilnote'>
+    <hr />
+    <div>
+      <h3>COUNCIL NOTE</h3>
+      <xsl:apply-templates/>
+    </div>
+  </xsl:template>
+
   <xsl:template match='author' mode='meta'>
     <meta>
       <xsl:attribute name='name'><xsl:text>DC.Creator</xsl:text></xsl:attribute>

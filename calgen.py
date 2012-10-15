@@ -236,11 +236,12 @@ def genAllEventsCalendar( cal_file ):
 
 def main(argv):
 	os.umask(0012)
-	# TODO jabbers anniversary January 4 1999 in the all and XSF calendar 
+
 	# General XSF
 	genCalendarFromEventsFile("council/events.xml", CALPATH + "/xsf-council.ics")
 	genCalendarFromEventsFile("xsf/board/events.xml", CALPATH + "/xsf-board.ics")
 	genCalendarFromEventsFile("xsf/events.xml", CALPATH + "/xsf-xsf.ics")
+	genCalendarFromEventsFile("xsf/gsoc.xml", CALPATH + "/xsf-gsoc.ics")
 	
 	# XSF Teams
 	genCalendarForTeam("communication")

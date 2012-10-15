@@ -1,16 +1,18 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <!DOCTYPE xep SYSTEM 'xep.dtd' [
   <!ENTITY % ents SYSTEM 'xep.ent'>
+  <!ENTITY ADDITION "&lt;AdditionalData/&gt;">
+  <!ENTITY JID "&lt;jid/&gt;">
 %ents;
 ]>
 <?xml-stylesheet type='text/xsl' href='xep.xsl'?>
 <xep>
 <header>
-  <title>Incident Reporting</title>
-  <abstract>This specification defines methods for incident reporting among XMPP server deployments.</abstract>
+  <title>Incident Handling</title>
+  <abstract>This specification defines methods for incident reporting among XMPP server deployments using the IODEF format produced by the IETF's INCH Working Group.</abstract>
   &LEGALNOTICE;
   <number>0268</number>
-  <status>Deferred</status>
+  <status>Experimental</status>
   <type>Standards Track</type>
   <sig>Standards</sig>
   <approver>Council</approver>
@@ -40,12 +42,25 @@
     <jid>mremond@process-one.net</jid>
   </author>
   &stpeter;
-  <author>
-    <firstname>Matthew</firstname>
-    <surname>Wild</surname>
-    <email>mwild1@gmail.com</email>
-    <jid>mwild1@jaim.at</jid>
-  </author>
+  &mwild;
+  <revision>
+    <version>0.6</version>
+    <date>2012-05-29</date>
+    <initials>psa</initials>
+    <remark><p>Aligned document with the IETF guidelines for defining extensions to IODEF; defined several more IODEF NodeRole categories; added schema for the JID element; noted that the JID element might be moved to a separate specification.</p></remark>
+  </revision>
+  <revision>
+    <version>0.5</version>
+    <date>2012-05-16</date>
+    <initials>psa</initials>
+    <remark><p>Simplified the processing model to send reports only in IQ-sets (not in IQ-results); filled out the sections on inquiries, requests, and responses; corrected the schema and examples.</p></remark>
+  </revision>
+  <revision>
+    <version>0.4</version>
+    <date>2012-04-17</date>
+    <initials>psa</initials>
+    <remark><p>Changed the XML format from a custom schema to IODEF (RFC 5070); incremented namespace version from 1 to 2.</p></remark>
+  </revision>
   <revision>
     <version>0.3</version>
     <date>2009-11-17</date>
@@ -85,164 +100,331 @@
 </header>
 
 <section1 topic='Introduction' anchor='intro'>
-  <p>As XMPP technologies have been deployed more widely, the open XMPP network has become a more significant target for attacks. This specification defines ways for XMPP server deployments to share information with each other and therefore to handle such attacks in a more real-time fashion. In particular, it defines a format for sharing incident reports among XMPP server deployments. (For some related considerations, see &rfc2350;, &rfc3067;, and &rfc5070;.)</p>
+  <p>As XMPP technologies have been deployed more widely, the open XMPP network has become a more significant target for attacks. This specification defines ways for XMPP server deployments to share information with each other and therefore to handle such attacks in a more real-time fashion. In particular, it defines a way to use the IODEF format (defined in &rfc5070; and produced by the IETF's INCH Working Group) as the basis for sharing incident reports among XMPP server deployments. (For some related considerations, see &rfc2350; and &rfc3067;.)</p>
 </section1>
 
-<section1 topic='Incident Reports' anchor='reports'>
-  <p>An incident report consists of an XMPP &MESSAGE; stanza containing an &lt;incident/&gt; child element that includes an 'id' attribute whose value is a UUID as described in &rfc4122;. An example is shown below. A server deployment SHOULD send incident reports only to peer servers that it trusts, for example peers that are in its "server roster" as described in &xep0267;.</p>
-  <example caption="An incident report"><![CDATA[
-<message from='jabber.org' to='im.flosoft.biz'>
-  <incident xmlns='urn:xmpp:incident:0'
-            id='BA51A035-7710-4558-9BBF-34838A4C5B24'>
-    <description>
-      <discuss>
-        <admin>stpeter@jabber.org</admin>
-        <muc>operators@conference.jabber.org</muc>
-      </discuss>
-      <info>
-        <category>muc</category>
-        <type>presence</type>
-        <type>long-messages</type>
-      </info>
-      <locs>
-        <loc>jdev@conference.jabber.org</loc>
-        <loc>jabber@conference.jabber.org</loc>
-      </locs>
-      <rels>
-        <rel>133BCE2E-E669-4ECE-B0F8-766B9E65630D</rel>
-      </rels>
-      <severity>2</severity>
-      <source>
-        <jids>
-          <jid>abuser@abuse.lit</jid>
-          <jid>loser@abuse.lit</jid>
-        </jids>
-      </source>
-      <text xml:lang='en'>lots of MUC spammers from abuse.lit!</text>
-      <time>
-        <begin>2009-04-13T19:05:20Z</begin>
-        <end>2009-04-13T19:27:22Z</end>
-        <report>2009-04-13T19:31:07Z</report>
-      </time>
-    </description>
-  </incident>
-</message>
+<section1 topic='Interactions' anchor='interactions'>
+  <p>This document defines several interactions (similar to those in RID, see &rfc6045;) between XMPP server deployments with respect to incident handling. These interactions are transported using the XMPP &IQ; stanza as described below, where each element (qualified by the 'urn:xmpp:incident:2' namespace) is used as a wrapper for IODEF data.</p>
+  <ol>
+    <li><p>The &lt;report/&gt; element (contained in an &IQ; stanza of type "set") describes the nature of an incident and also flags the 'status' of the incident as "new", "updated", or "resolved"; it is sent from one server to another for informative purposes but without requesting assistance (for which see the &lt;request/&gt; element). This element is similar to a RID message type of "Report".</p></li>
+    <li><p>The &lt;inquiry/&gt; element (contained in an &IQ; stanza of type "get") asks for information about an incident; it is expected that the reply will contain a &lt;report/&gt; element. This element is similar to a RID message type of "IncidentQuery".</p></li>
+    <li><p>The &lt;request/&gt; element (contained in an &IQ; stanza of type "get") asks for assistance in resolving an incident, e.g., by requesting that the server take some action. This element is similar to a RID message type of "Investigation" or "TraceRequest".</p></li>
+    <li><p>The &lt;response/&gt; element (contained in an &IQ; stanza of type "set") provides assistance in resolving an incident. This element is similar to a RID message type of "Result".</p></li>
+  </ol>
+</section1>
+
+<section1 topic='Report Format and Processing' anchor='report'>
+  <p>When one server wants to send information about an incident, it sends a incident report to another server. The report consists of an XMPP &IQ; stanza of type "set" containing a &lt;report/&gt; element that in turn contains an IODEF document. An example is shown below.</p>
+  <example caption="A report of trouble"><![CDATA[
+<iq from='jabber.org' id='vk2x91g47' to='im.flosoft.biz' type='set'>
+  <report xmlns='urn:xmpp:incident:2'>
+    <Incident xmlns='urn:ietf:params:xml:ns:iodef-1.0'
+              purpose='reporting'>
+      <IncidentID name='jabber.org'>4BF5D2CE-7C90-4860-BEF2-43A7D777D5FF</IncidentID>
+      <StartTime>2009-04-13T19:05:20Z</StartTime>
+      <EndTime>2009-04-13T19:27:22Z</EndTime>
+      <ReportTime>2009-04-13T19:31:07Z</ReportTime>
+      <Description xml:lang='en'>lots of MUC spammers from clueless.lit!</Description>
+      <Contact role='admin' type='person'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:incident:2'>stpeter@jabber.org</jid>
+        </AdditionalData>
+      </Contact>
+      <Contact role='admin' type='person'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:jid:0'>stpeter@jabber.org</jid>
+        </AdditionalData>
+      </Contact>
+      <Contact role='ext-type' ext-type='chatroom'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:jid:0'>operators@muc.xmpp.org</jid>
+        </AdditionalData>
+      </Contact>
+      <RelatedActivity>
+        <IncidentID name='im.example.com'>133BCE2E-E669-4ECE-B0F8-766B9E65630D</IncidentID>
+      </RelatedActivity>
+      <Assessment>
+        <Impact lang='en' severity='medium' completion='succeeded' type='dos'/>
+      </Assessment>
+      <EventData>
+        <Flow>
+          <System category='source'>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>abuser@clueless.lit</Address>
+              <Counter type='ext-type' ext-type='xmpp-presence'>123</Counter>
+            </Node>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>luser27@clueless.lit</Address>
+              <Counter type='ext-type' ext-type='xmpp-presence'>47</Counter>
+            </Node>
+          </System>
+          <System category='target'>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>jdev@conference.jabber.org</Address>
+              <Address category='ext-category' ext-category='xmpp'>jabber@conference.jabber.org</Address>
+              <NodeRole category='ext-category' ext-category='xmpp-muc'/>
+            </Node>
+          </System>
+        </Flow>
+      </EventData>
+    </Incident>
+  </report>
+</iq>
   ]]></example>
-  <p>The defined children of the &lt;description/&gt; element are as follows:</p>
-  <table caption='&lt;description/&gt; children'>
-    <tr>
-      <th>Element Name</th>
-      <th>Description</th>
-    </tr>
-    <tr>
-      <td>&lt;discuss/&gt;</td>
-      <td>The JID of the server admin who generated the incident report (&lt;admin/&gt;), as well as a &xep0045; room where the incident can be discussed (&lt;muc/&gt;).</td>
-    </tr>
-    <tr>
-      <td>&lt;info/&gt;</td>
-      <td>Structured information about the incident. The defined values of the &lt;category/&gt; and &lt;type/&gt; elements shall be provided via a registry. It is envisioned that the &lt;category/&gt; values shall be "muc" for &xep0045; incidents, "pubsub" for &xep0060; incidents, "reg" for account registration (&xep0077;) incidents, and "stanzas" for general XMPP incidents.</td>
-    </tr>
-    <tr>
-      <td>&lt;locs/&gt;</td>
-      <td>The place or places on the XMPP network where the incident has occurred (such as a multi-user chat room, a publish-subscribe service, or a general XMPP server), each contained in a separate &lt;loc/&gt; element.</td>
-    </tr>
-    <tr>
-      <td>&lt;rels/&gt;</td>
-      <td>The IDs of one or more incidents to which this incident might be related, each contained in a separate &lt;rel/&gt; element.</td>
-    </tr>
-    <tr>
-      <td>&lt;severity/&gt;</td>
-      <td>The seriousness of the problem, from 5 (least serious) to 1 (most serious).</td>
-    </tr>
-    <tr>
-      <td>&lt;source/&gt;</td>
-      <td>The IPv4 or IPv6 address (optionally including port) and JabberID where the incident originated (multiple instance of each source type can be included).</td>
-    </tr>
-    <tr>
-      <td>&lt;text/&gt;</td>
-      <td>A natural-language description of the event. This element SHOULD possess an 'xml:lang' attribute. Multiple &lt;text/&gt; elements MAY be included, each with a different 'xml:lang' value.</td>
-    </tr>
-    <tr>
-      <td>&lt;time/&gt;</td>
-      <td>The time when the incident began and ended (include an empty &lt;end/&gt; element if the incident is still happening) and, optionally, was reported. The dates MUST conform to the DateTime profile specified in &xep0082;</td>
-    </tr>
-  </table>
+  <p>If the recipient is able to process the report, it MUST return an &IQ; stanza of type "result"; if not, it MUST return an &IQ; stanza of type "error" (error handling will be defined in a future version of this specification).</p>
 </section1>
 
-<section1 topic='Incident Solutions' anchor='solutions'>
-  <p>If the reporting entity determines a solution to the problem or a receiving entity has a suggested solution to the problem, it SHOULD send out a revised incident report containing a &lt;solution/&gt; element (alternatively, the reporting entity can include a solution in its initial report). The solution element can include any of the elements defined for the &lt;description/&gt; element, such as the &lt;ip/&gt; element (since the XMPP server of a source JID might know the IP address and port of the connected entity).</p>
-  <example caption="An incident solution"><![CDATA[
-<message from='jabber.org' to='im.flosoft.biz'>
-  <incident xmlns='urn:xmpp:incident:0'
-            id='BA51A035-7710-4558-9BBF-34838A4C5B24'>
-    <description>
-      ...
-    </description>
-    <solution>
-      <source>
-        <ips>
-          <ip>192.0.2.1:53667</ip>
-        </ips>
-      </source>
-      <text xml:lang='en'>iptables -A INPUT -s 192.0.2.1 -j DROP</text>
-    </solution>
-  </incident>
-</message>
+<section1 topic='Inquiry Format and Processing' anchor='inquiry'>
+  <p>When one server wants to find out more information about an incident, it sends an inquiry to another server (not necessarily the server where the incident occurred).</p>
+  <example caption="An inquiry about an incident"><![CDATA[
+<iq from='tigase.org' id='br6a31m9' to='im.flosoft.biz' type='get'>
+  <inquiry xmlns='urn:xmpp:incident:2'>
+    <Incident xmlns='urn:ietf:params:xml:ns:iodef-1.0'
+              purpose='traceback'>
+      <IncidentID name='jabber.org'>4BF5D2CE-7C90-4860-BEF2-43A7D777D5FF</IncidentID>
+    </Incident>
+  </inquiry>
+</iq>
   ]]></example>
+  <p>If the recipient is able to process the inquiry, it MUST return an &IQ; stanza of type "result" and then send a report about the incident using an &IQ; stanza of type "set" as defined above; if not, it MUST return an &IQ; stanza of type "error" (error handling will be defined in a future version of this specification).</p>
 </section1>
 
-<section1 topic='Processing of Incident Reports' anchor='processing'>
-  <p>Unless explicitly configured to do so, a receiving server SHOULD NOT automatically modify its configuration based on receipt of an incident report, even from a trusted server, but instead SHOULD prompt the human administrators so that they can take appropriate action.</p>
-  <p>A receiving server MAY accept incident reports from peers that are not on its "trust list", but SHOULD treat such reports with caution and provide them to the human administrator(s) of the server.</p>
-  <p>A receiving server MAY forward reports that it receives to other servers it trusts.</p>
+<section1 topic='Request Format and Processing' anchor='request'>
+  <p>When one server wants to ask for assistance in resolving an incident, it sends a request to another server (not necessarily the server where the incident occurred).</p>
+  <p>Here, the server where the attack occurred requests that the server where the attack originated will disable the offending accounts (via the "block-host" value for the 'action' attribute of the IODEF &lt;Expectation/&gt; element).</p>
+  <example caption="A request for assistance"><![CDATA[
+<iq from='jabber.org' id='kq62vx31' to='clueless.lit' type='get'>
+  <request xmlns='urn:xmpp:incident:2'>
+    <Incident xmlns='urn:ietf:params:xml:ns:iodef-1.0'
+              purpose='mitigation'>
+      <IncidentID name='jabber.org'>4BF5D2CE-7C90-4860-BEF2-43A7D777D5FF</IncidentID>
+      <StartTime>2009-04-13T19:05:20Z</StartTime>
+      <EndTime>2009-04-13T19:27:22Z</EndTime>
+      <ReportTime>2009-04-13T19:31:07Z</ReportTime>
+      <Description xml:lang='en'>lots of MUC spammers from clueless.lit!</Description>
+      <Contact role='admin' type='person'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:incident:2'>stpeter@jabber.org</jid>
+        </AdditionalData>
+      </Contact>
+      <Contact role='admin' type='person'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:jid:0'>stpeter@jabber.org</jid>
+        </AdditionalData>
+      </Contact>
+      <Contact role='ext-type' ext-type='chatroom'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:jid:0'>operators@muc.xmpp.org</jid>
+        </AdditionalData>
+      </Contact>
+      <RelatedActivity>
+        <IncidentID name='im.example.com'>133BCE2E-E669-4ECE-B0F8-766B9E65630D</IncidentID>
+      </RelatedActivity>
+      <Assessment>
+        <Impact lang='en' severity='medium' completion='succeeded' type='dos'/>
+      </Assessment>
+      <EventData>
+        <Flow>
+          <System category='source'>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>abuser@clueless.lit</Address>
+              <Counter type='ext-type' ext-type='xmpp-presence'>123</Counter>
+            </Node>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>luser27@clueless.lit</Address>
+              <Counter type='ext-type' ext-type='xmpp-presence'>47</Counter>
+            </Node>
+          </System>
+          <System category='target'>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>jdev@conference.jabber.org</Address>
+              <Address category='ext-category' ext-category='xmpp'>jabber@conference.jabber.org</Address>
+              <NodeRole category='ext-category' ext-category='xmpp-muc'/>
+            </Node>
+          </System>
+        </Flow>
+        <Expectation action='block-host'/>
+      </EventData>
+    </Incident>
+  </request>
+</iq>
+  ]]></example>
+  <p>If the recipient is able to process the report, it MUST return an &IQ; stanza of type "result"; if not, it MUST return an &IQ; stanza of type "error" (error handling will be defined in a future version of this specification).</p>
+</section1>
+
+<section1 topic='Response Format and Processing' anchor='response'>
+  <p>When one server provides assistance in resolving an incident, it sends a response to another server (not necessarily the server where the incident occurred).</p>
+  <p>Here, the server where the attack originated informs the server where the attack occurred that it has disabled the offending accounts (via the IODEF &lt;HistoryItem/&gt; element).</p>
+  <example caption="A response to a request for assistance"><![CDATA[
+<iq from='clueless.list' id='ic1fa53v' to='jabber.org' type='set'>
+  <response xmlns='urn:xmpp:incident:2'>
+    <Incident xmlns='urn:ietf:params:xml:ns:iodef-1.0'
+              purpose='mitigation'>
+      <IncidentID name='jabber.org'>4BF5D2CE-7C90-4860-BEF2-43A7D777D5FF</IncidentID>
+      <StartTime>2009-04-13T19:05:20Z</StartTime>
+      <EndTime>2009-04-13T19:27:22Z</EndTime>
+      <ReportTime>2009-04-13T19:31:07Z</ReportTime>
+      <Description xml:lang='en'>lots of MUC spammers from clueless.lit!</Description>
+      <Contact role='admin' type='person'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:incident:2'>stpeter@jabber.org</jid>
+        </AdditionalData>
+      </Contact>
+      <Contact role='admin' type='person'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:jid:0'>stpeter@jabber.org</jid>
+        </AdditionalData>
+      </Contact>
+      <Contact role='ext-type' ext-type='chatroom'>
+        <AdditionalData>
+          <jid xmlns='urn:xmpp:jid:0'>operators@muc.xmpp.org</jid>
+        </AdditionalData>
+      </Contact>
+      <RelatedActivity>
+        <IncidentID name='im.example.com'>133BCE2E-E669-4ECE-B0F8-766B9E65630D</IncidentID>
+      </RelatedActivity>
+      <Assessment>
+        <Impact lang='en' severity='medium' completion='succeeded' type='dos'/>
+      </Assessment>
+      <EventData>
+        <Flow>
+          <System category='source'>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>abuser@clueless.lit</Address>
+              <Counter type='ext-type' ext-type='xmpp-presence'>123</Counter>
+            </Node>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>luser27@clueless.lit</Address>
+              <Counter type='ext-type' ext-type='xmpp-presence'>47</Counter>
+            </Node>
+          </System>
+          <System category='target'>
+            <Node>
+              <Address category='ext-category' ext-category='xmpp'>jdev@conference.jabber.org</Address>
+              <Address category='ext-category' ext-category='xmpp'>jabber@conference.jabber.org</Address>
+              <NodeRole category='ext-category' ext-category='xmpp-muc'/>
+            </Node>
+          </System>
+        </Flow>
+        <Expectation action='block-host'/>
+      </EventData>
+      <History>
+        <HistoryItem action='blockquote'>
+          <DateTime>2009-04-13T19:47:11Z</DateTime>
+          <Description>Account disabled</Description>
+        </HistoryItem>
+      </History>
+    </Incident>
+  </response>
+</iq>
+  ]]></example>
+  <p>If the recipient is able to process the report, it MUST return an &IQ; stanza of type "result"; if not, it MUST return an &IQ; stanza of type "error" (error handling will be defined in a future version of this specification).</p>
+</section1>
+
+<section1 topic='Definition of IODEF Extensions' anchor='iodef'>
+  <p>This document defines the following IODEF extensions, described in accordance with the guidelines in &miletemplate;.</p>
+  <section2 topic='Contact' anchor='iodef-contact'>
+    <p>This specification defines an extended Contact role of "chatroom", i.e., a new enumerated value for the Contact@role attribute. This value specifies a text conference where discussion of the incident can take place, e.g., an IRC channel or an XMPP &xep0045; room. Since there are many different chatroom technologies, the address of the chatroom shall be specified as the child of an &ADDITION; element. For XMPP chatrooms, the address is the XML character data of a &JID; element qualified by the 'urn:xmpp:jid:0' namespace.</p>
+    <p>Note: Definition of the &JID; element might be moved to a separate specification.</p>
+  </section2>
+  <section2 topic='Address' anchor='iodef-address'>
+    <p>This specification defines an extended Address category of "xmpp", i.e., a new enumerated value for the Address@category attribute. This value specifies the JabberID of a network entity, in conformance with &rfc6122; or its successor.</p>
+  </section2>
+  <section2 topic='NodeRole' anchor='iodef-noderole'>
+    <p>This specification defines several extended NodeRole categories, i.e., new enumerated values for the NodeRole@category attribute:</p>
+    <ul>
+      <li>"xmpp" -- the network role of an XMPP service or core router as defined by &rfc6120; and &rfc6121;</li>
+      <li>"xmpp-bytestreams" -- the network role of an XMPP SOCKS5 byestreams service as defined by &xep0065;</li>
+      <li>"xmpp-muc" -- the network role of an XMPP multi-user chat service as defined by <cite>XEP-0045</cite></li>
+      <li>"xmpp-pubsub" -- the network role of an XMPP pubsub service as defined by &xep0060;</li>
+    </ul>
+  </section2>
+  <section2 topic='AdditionalData' anchor='iodef-additionaldata'>
+    <p>This specification defines an AdditionalData element of &JID; qualified by the 'urn:xmpp:jid:0' namespace. The XML character data of this element is a JabberID (i.e., an XMPP address) that conforms to RFC 6122 or its successor.</p>
+    <p>Note: Definition of the &JID; element might be moved to a separate specification.</p>
+  </section2>
+</section1>
+
+<section1 topic='Internationalization Considerations' anchor='i18n'>
+  <p>The &JID; element qualified by the 'urn:xmpp:incident:2' namespace is a "JID slot" as described in &rfc6122bis;.</p>
+  <p>Note: Definition of the &JID; element might be moved to a separate specification.</p>
 </section1>
 
 <section1 topic='Security Considerations' anchor='security'>
+  <p>It is RECOMMENDED for a server deployment to exchange incident reports only with peer servers that it trusts, for example peers that are in its "server roster" as described in &xep0267;.</p>
   <p>This technology is designed to help mitigate attacks on the XMPP network. However, incident reporting is itself vulnerable to the following attacks:</p>
   <ul>
     <li>False reports could lead a server to deny service to legitimate users or peer servers (see also &xep0205;). To help mitigate such attacks, a server SHOULD treat with caution any incident reports that it might receive from untrusted entities.</li>
     <li>If traffic between two servers is not protected using Transport Layer Security (TLS), a passive eavesdropper could gain access to incident reports and therefore adjust its behavior in response. To prevent such attacks, servers SHOULD use TLS.</li>
   </ul>
+  <p>Use of the XMPP channel is convenient for communication among XMPP servers; however, if a denial of service attack is severe enough then that channel itself might be unusable.</p>
+  <p>Unless explicitly configured to do so, a receiving server SHOULD NOT automatically modify its configuration based on receipt of an incident report, even from a trusted server, but instead SHOULD prompt the human administrators so that they can take appropriate action.</p>
+  <p>A receiving server MAY accept incident reports from peers that are not on its "trust list", but SHOULD treat such reports with caution and provide them to the human administrator(s) of the server.</p>
+  <p>A receiving server MAY forward reports that it receives to other servers it trusts.</p>
 </section1>
 
 <section1 topic='IANA Considerations' anchor='iana'>
-  <p>This document requires no interaction with &IANA;.</p> 
+  <p>This document might require interaction with &IANA; to register various IODEF extensions, in accordance with <cite>draft-ietf-mile-template</cite>.</p> 
 </section1>
 
 <section1 topic='XMPP Registrar Considerations' anchor='reg'>
   <section2 topic='Protocol Namespaces' anchor='registrar-ns'>
     <p>This specification defines the following XML namespace:</p>
     <ul>
-      <li>urn:xmpp:incident:0</li>
+      <li>urn:xmpp:incident:2</li>
+      <li>urn:xmpp:jid:0</li>
     </ul>
     <p>Upon advancement of this specification from a status of Experimental to a status of Draft, the &REGISTRAR; shall add the foregoing namespace to the registry located at &NAMESPACES;, as described in Section 4 of &xep0053;.</p>
+    <p>Note: Registration of the 'urn:xmpp:jid:0' namespace might be moved to a separate specification.</p>
   </section2>
   <section2 topic='Protocol Versioning' anchor='registrar-versioning'>
     &NSVER;
   </section2>
 </section1>
 
-<section1 topic='XML Schema' anchor='schema'>
-  <code><![CDATA[
+<section1 topic='XML Schemas' anchor='schemas'>
+  <section2 topic='Incident Namespace' anchor='schemas-incident'>
+    <code><![CDATA[
 <?xml version='1.0' encoding='UTF-8'?>
 
 <xs:schema
     xmlns:xs='http://www.w3.org/2001/XMLSchema'
-    targetNamespace='urn:xmpp:incident:0'
-    xmlns='urn:xmpp:incident:0'
+    targetNamespace='urn:xmpp:incident:2'
+    xmlns='urn:xmpp:incident:2'
     elementFormDefault='qualified'>
 
-  <xs:element name='incident'>
-  </xs:element>
+  <xs:import namespace='urn:ietf:params:xml:ns:iodef-1.0'/>
 
-  <xs:simpleType name='empty'>
-    <xs:restriction base='xs:string'>
-      <xs:enumeration value=''/>
-    </xs:restriction>
-  </xs:simpleType>
+  <xs:element name='inquiry' type='IODEFContainerType'/>
+  <xs:element name='report' type='IODEFContainerType'/>
+  <xs:element name='request' type='IODEFContainerType'/>
+  <xs:element name='response' type='IODEFContainerType'/>
+
+  <xs:complexType name="IODEFContainerType">
+    <xs:sequence xmlns:i='urn:ietf:params:xml:ns:iodef-1.0'>
+      <xs:element ref='i:Incident' minOccurs='1' maxOccurs='1'/>
+    </xs:sequence>
+  </xs:complexType>
 
 </xs:schema>
-  ]]></code>
+    ]]></code>
+  </section2>
+  <section2 topic='JID Namespace' anchor='schemas-jid'>
+    <p>Note: This schema and associated text might be moved to a separate specification.</p>
+    <code><![CDATA[
+<?xml version='1.0' encoding='UTF-8'?>
+
+<xs:schema
+    xmlns:xs='http://www.w3.org/2001/XMLSchema'
+    targetNamespace='urn:xmpp:jid:0'
+    xmlns='urn:xmpp:jid:0'
+    elementFormDefault='qualified'>
+
+  <xs:element name='jid' type='xs:string'/>
+
+</xs:schema>
+    ]]></code>
+  </section2>
 </section1>
 
 </xep>
