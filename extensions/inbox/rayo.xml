@@ -1459,7 +1459,11 @@
       <p>The server MUST validate that it has apropriate resources/mechanisms to make the recording before acknowledging the component creation. The component MUST ignore any hints that it does not understand.</p>
 
       <section4 topic='Join considerations' anchor='session-component-exection-record-joins'>
-        <p>In the case that a record component is executed on a call joined to other calls or mixers, the recording SHOULD be made of both sides of the join. In the case that a record component is executed on a mixer, the recording should be made of the mixer audio, such that all participants' audio is present in the recording.</p>
+        <p>In the case that a record component is executed on a call joined to other calls or mixers, the direction attibute will specify if the sent audio, received audio, or both will be present in the recording.</p>
+        <p>In send mode, only the audio sent by the caller is recorded.</p>
+        <p>In recv mode, when just joined to the media server, should record TTS, audio playback, etc; when joined to another call, should record that other call's sending audio (probably a human talking) also. When joined to a mixer, should record the audio send from the mixer (other people talking) also.</p>
+        <p>Duplex mode is a combination of send and recv. The platform may mix these or record them as separate channels.</p>
+        <p>When executing a record against a mixer, send mode is not supported. Recv mode records audio from all mixer participants. Duplex is a clone of recv.</p>
       </section4>
 
       <section4 topic='Commands' anchor='session-component-execution-record-commands'>
@@ -2461,6 +2465,19 @@
             <td>Any positive integer in miliseconds, or -1 to disable.</td>
             <td>-1</td>
             <td>OPTIONAL</td>
+          </tr>
+          <tr>
+            <td>direction</td>
+            <td>
+              <p>Indicates the direction of the call to record, meaning which call legs(s) are included in the resulting file, in case the call is joined to another or a mixer.</p>
+              <ul>
+                <li><strong>"duplex"</strong> - Records both sent and received audio.</li>
+                <li><strong>"send"</strong> - Indicates that only the audio sent from the caller is to be recorded. Not supported when Record is executed against a mixer.</li>
+                <li><strong>"recv"</strong> - Indicates that only and all audio received by the caller is recorded.</li>
+              </ul>
+            </td>
+            <td>OPTIONAL</td>
+            <td>duplex</td>
           </tr>
         </table>
 
@@ -3741,6 +3758,38 @@
             Controls the length of a period of silence after callers have spoken to conclude they finished.
           </documentation>
         </annotation>
+      </attribute>
+      <attribute name="direction" use="optional" default="duplex">
+        <annotation>
+          <documentation>
+            Indicates the direction of the call to record, as in media produced or received by the calling party.
+          </documentation>
+        </annotation>
+        <simpleType>
+          <restriction base="token">
+            <enumeration value="duplex">
+              <annotation>
+                <documentation>
+                  Records both sent and received audio.
+                </documentation>
+              </annotation>
+            </enumeration>
+            <enumeration value="send">
+              <annotation>
+                <documentation>
+                  Indicates that only the audio sent from the caller is to be recorded. Not supported when Record is executed against a mixer.
+                </documentation>
+              </annotation>
+            </enumeration>
+            <enumeration value="recv">
+              <annotation>
+                <documentation>
+                  Indicates that only and all audio received by the caller is recorded.
+                </documentation>
+              </annotation>
+            </enumeration>
+          </restriction>
+        </simpleType>
       </attribute>
 
       <sequence>
