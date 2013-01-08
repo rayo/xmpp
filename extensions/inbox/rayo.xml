@@ -1444,6 +1444,94 @@
       </section4>
     </section3>
 
+    <section3 topic='Prompt Component' anchor='session-component-execution-prompt'>
+      <p>Prompt is a convenience component to wrap input and output components, combine their lifecycles, and allow input to barge-in on an output component in the standard sense.</p>
+
+      <example caption='Client requests DTMF input collection from a call'><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@call.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <prompt xmlns='urn:xmpp:rayo:prompt:1'>
+    <output xmlns='urn:xmpp:rayo:output:1'>
+      <document content-type='application/ssml+xml'>
+        <?xml version="1.0"?>
+        <!DOCTYPE speak PUBLIC "-//W3C//DTD SYNTHESIS 1.0//EN"
+                          "http://www.w3.org/TR/speech-synthesis/synthesis.dtd">
+        <speak version="1.0"
+               xmlns="http://www.w3.org/2001/10/synthesis"
+               xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="http://www.w3.org/2001/10/synthesis
+                           http://www.w3.org/TR/speech-synthesis/synthesis.xsd"
+               xml:lang="en-US">
+          <p>
+            <s>Please enter your pin number now.</s>
+          </p>
+        </speak>
+      </document>
+    </output>
+
+    <input xmlns='urn:xmpp:rayo:input:1' mode='dtmf'>
+      <grammar content-type='application/grammar+grxml'>
+        <?xml version="1.0"?>
+        <grammar mode="dtmf" version="1.0"
+                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                 xsi:schemaLocation="http://www.w3.org/2001/06/grammar
+                                     http://www.w3.org/TR/speech-grammar/grammar.xsd"
+                 xmlns="http://www.w3.org/2001/06/grammar">
+
+          <rule id="digit">
+            <one-of>
+              <item> 0 </item>
+              <item> 1 </item>
+              <item> 2 </item>
+              <item> 3 </item>
+              <item> 4 </item>
+              <item> 5 </item>
+              <item> 6 </item>
+              <item> 7 </item>
+              <item> 8 </item>
+              <item> 9 </item>
+            </one-of>
+          </rule>
+
+          <rule id="pin" scope="public">
+            <one-of>
+              <item>
+                <item repeat="4"><ruleref uri="#digit"/></item>
+                #
+              </item>
+              <item>
+                * 9
+              </item>
+            </one-of>
+          </rule>
+        </grammar>
+      </grammar>
+    </input>
+  </prompt>
+</iq>
+      ]]></example>
+
+      <p>The server MUST validate that it has appropriate resources/mechanisms to render the requested output and collect the requested input before acknowledging the component creation.</p>
+
+      <section4 topic='Join considerations' anchor='session-component-exection-prompt-joins'>
+        <p>The prompt component follows the same combined join considerations as output and input components.</p>
+      </section4>
+
+      <section4 topic='Commands' anchor='session-component-execution-prompt-commands'>
+        <p>The prompt component implements implements all intermediate commands from output and input and behaves the same.</p>
+      </section4>
+
+      <section4 topic='Events' anchor='session-component-execution-prompt-events'>
+        <p>The prompt component emits intermediate events from the nested output and input components.</p>
+      </section4>
+
+      <section4 topic='Completion' anchor='session-component-execution-prompt-completion'>
+        <p>The input completion reason MUST be one of the <link url='#def-components-complete-reason'>core Rayo reasons</link>, or one of the <link url='#session-component-execution-input-completion'>Input component reasons</link>. Events signalling completion of the output components are suppressed.</p>
+      </section4>
+    </section3>
+
     <section3 topic='Record Component' anchor='session-component-execution-record'>
       <p>Call recording is a core concept in Rayo, and is provided by the record component. The component allows media to be captured from a call or a mixer, using the server's local media server, stored, and made available to clients. The component is created using a <link url='def-component-record'>&lt;record/&gt; command</link>, with a set of options to determine the nature of the recording.</p>
 
@@ -2399,6 +2487,32 @@
         <p>Indicates that the component came to an end because input was received which did not match any of the specified grammars.</p>
         <p>The &lt;nomatch/&gt; element MUST be empty.</p>
         <p>The &lt;nomatch/&gt; element has no attributes.</p>
+      </section4>
+    </section3>
+
+    <section3 topic='Prompt' anchor='def-component-prompt'>
+      <p>An prompt component is a mixture of audio output and input, and is used to link the lifecycle of both such input may interrupt output via an arbitrary grammar.</p>
+
+      <section4 topic='Prompt Element' anchor='def-component-input-input'>
+        <p>Instructs the server to begin an input detector of the specified mode, with certain attributes, governed by the rules provided in one or more grammar documents, while simultaneously rendering output.</p>
+        <p>The &lt;prompt/&gt; element MUST contain an <link url='#def-comoponent-input-input'>&lt;input/&gt; element</link> and an <link url='#def-comoponent-output-output'>&lt;output/&gt; element</link>.</p>
+        <p>The attributes of the &lt;prompt/&gt; element are as follows.</p>
+        <table caption='Attributes of Prompt Element'>
+          <tr>
+            <th>Attribute</th>
+            <th>Definition</th>
+            <th>Possible Values</th>
+            <th>Default</th>
+            <th>Inclusion</th>
+          </tr>
+          <tr>
+            <td>barge-in</td>
+            <td>Whether or not the input detector is permitted to interrupt the output.</td>
+            <td>true|false</td>
+            <td>true</td>
+            <td>OPTIONAL</td>
+          </tr>
+        </table>
       </section4>
     </section3>
 
@@ -3691,6 +3805,63 @@
         Indicates that the component came to an end because input was received which did not match any of the specified grammars.
       </documentation>
     </annotation>
+  </element>
+
+</schema>
+    ]]></code>
+  </section2>
+  <section2 topic='Rayo Prompt' anchor='schema-rayo-prompt'>
+  <code><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="urn:xmpp:rayo:prompt:1"
+  xmlns:tns="urn:xmpp:rayo:prompt:1"
+  elementFormDefault="qualified"
+  xmlns:core="urn:xmpp:rayo:1"
+  xmlns:output="urn:xmpp:rayo:output:1"
+  xmlns:input="urn:xmpp:rayo:input:1">
+
+  <annotation>
+    <documentation>
+      The protocol documented by this schema is defined at http://rayo.org/xep
+    </documentation>
+  </annotation>
+
+  <!-- Main Prompt command -->
+  <element name="prompt">
+    <annotation>
+      <documentation>
+        Instructs the server to begin an input detector of the specified mode, with certain attributes, governed by the rules provided in one or more grammar documents, while simultaneously rendering output.
+      </documentation>
+    </annotation>
+    <complexType>
+      <simpleContent>
+        <attribute name="barge-in" type="boolean" use="optional" default="true">
+          <annotation>
+            <documentation>
+              Whether or not the input detector is permitted to interrupt the output.
+            </documentation>
+          </annotation>
+        </attribute>
+
+        <sequence>
+          <element name="output" type="output:outputType" minOccurs="1" maxOccurs="1">
+            <annotation>
+              <documentation>
+                Provides the output component to be executed
+              </documentation>
+            </annotation>
+          </element>
+          <element name="input" type="input:inputType" minOccurs="1" maxOccurs="1">
+            <annotation>
+              <documentation>
+                Provides the input component to be executed
+              </documentation>
+            </annotation>
+          </element>
+        </sequence>
+      </simpleContent>
+    </complexType>
   </element>
 
 </schema>
