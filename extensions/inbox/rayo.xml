@@ -72,6 +72,10 @@
   <example caption="New call announces itself to a potential controlling party"><![CDATA[
 <presence from='9f00061@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:call:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
   <offer xmlns='urn:xmpp:rayo:1'
          to='tel:+18003211212'
          from='tel:+13058881212'/>
@@ -354,6 +358,10 @@
     <example caption="Client presents itself as available to the Rayo server"><![CDATA[
 <presence from='juliet@capulet.lit/balcony'
           to='shakespeare.lit'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:client:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
  <show>chat</show>
 </presence>
 ]]></example>
@@ -362,6 +370,10 @@
     <example caption="Client presents itself as unavailable to the Rayo server"><![CDATA[
 <presence from='juliet@capulet.lit/balcony'
           to='shakespeare.lit'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:client:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
  <show>dnd</show>
 </presence>
 ]]></example>
@@ -538,10 +550,14 @@
     <section3 topic='Inbound Call' anchor='session-establishment-inbound'>
       <p>When the system receives a call from one of its connected networks, it MUST then expose that requested session to Rayo clients. It SHOULD use an implementation-specific routing mechanism to map incoming calls to some set of registered JIDs which are considered appropriate controlling parties. From this set, it SHOULD then remove any parties whom it can identify as being temporarily inappropriate for control (either unavailable based on presence, under too much load, or any other metric which the server has available). If, as a result, the set of Potentially Controlling Parties is empty, the server MUST reject the call with a 'decline' reason.</p>
 
-      <p>If the server can identify active Potential Controlling Parties, it MUST offer them control of the call simultaneously. The server must broadcast an offer on behalf of the call to all Potential Controlling Parties, using applicable to/from/header data from the incoming session.</p>
+      <p>If the server can identify active Potential Controlling Parties, it MUST offer them control of the call simultaneously. The server must broadcast an offer on behalf of the call to all Potential Controlling Parties, using applicable to/from/header data from the incoming session. The server MUST also include entity capabilities information in the presence stanza containing the offer, in order to advertise the fact that the entity is a call, qualified by the node name "urn:xmpp:rayo:call:1".</p>
       <example caption="New call announces itself to a potential controlling party"><![CDATA[
 <presence from='9f00061@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:call:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
   <offer xmlns='urn:xmpp:rayo:1'
          to='tel:+18003211212'
          from='tel:+13058881212'>
@@ -838,7 +854,7 @@
   </section2>
 
   <section2 topic='Mixers' anchor='session-mixers'>
-    <p>While calls may generally be joined peer-to-peer in any desirable combination, such an implementation is not necessarily scalable or practical to manage. Rayo, therefore, includes the concept of mixers, which are entities like calls, to which calls or other mixers may be joined in the same way as joining multiple calls directly. A mixer MUST be implicitly created the first time a call attempts to join it, and it MUST emit events (joined, unjoined) to all controlling parties who have calls joined to it, using the same semantics as joining calls.</p>
+    <p>While calls may generally be joined peer-to-peer in any desirable combination, such an implementation is not necessarily scalable or practical to manage. Rayo, therefore, includes the concept of mixers, which are entities like calls, to which calls or other mixers may be joined in the same way as joining multiple calls directly. A mixer MUST be implicitly created the first time a call attempts to join it, and MUST broadcast presence to all controlling parties who have calls joined to it before any other events are sent. The server MUST include entity capabilities information in the first presence stanza it sends, in order to advertise the fact that the entity is a mixer, qualified by the node name "urn:xmpp:rayo:mixer:1". A mixer MUST emit events (joined, unjoined) to all controlling parties who have calls joined to it, using the same semantics as joining calls.</p>
     <example caption="Client instructs call to join a mixer"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='callA@call.shakespeare.lit'
@@ -846,6 +862,14 @@
     id='h7ed2'>
   <join xmlns='urn:xmpp:rayo:1' mixer-name='myMixer'/>
 </iq>
+
+<presence from='myMixer@mixer.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:mixer:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
+</presence>
 
 <iq from='callA@call.shakespeare.lit'
     to='juliet@capulet.lit/balcony'
@@ -2818,6 +2842,8 @@
     <ul>
       <li>urn:xmpp:rayo:1</li>
       <li>urn:xmpp:rayo:client:1</li>
+      <li>urn:xmpp:rayo:call:1</li>
+      <li>urn:xmpp:rayo:mixer:1</li>
       <li>urn:xmpp:rayo:ext:1</li>
       <li>urn:xmpp:rayo:ext:complete:1</li>
       <li>urn:xmpp:rayo:output:1</li>
