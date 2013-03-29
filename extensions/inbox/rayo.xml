@@ -249,6 +249,10 @@
         <dt>Definitive controlling party (DCP)</dt>
         <dd>The XMPP entity which gains a lock on control of a session, either by requesting the session's creation, or being the first respondent to an offer.</dd>
       </di>
+      <di>
+        <dt>Security Zone</dt>
+        <dd>A security zone is the conceptual border around a call which defines which parties may interact with the call's media or signaling. A security zone MUST contain the rayo server's internal implementation, the media server to which the call is joined, the DCP, and any JID whose bare form is the same as the DCP. A server MAY relax this definition further, for example to consider all JIDs at the same domain to be in the same security zone.</dd>
+      </di>
     </dl>
   </section2>
 
@@ -595,22 +599,24 @@
 
   <section2 topic='Joining Calls' anchor='session-joining'>
     <p>Calls in a Rayo system are capable of having their media streams moved/manipulated. Once such manipulation is to join the media streams of two calls. In a scenario where callA and callB should be joined, the client MUST send a join command to either call (not both) specifying the call ID of the other call, like so:</p>
-    <example caption="Client instructs callA to join to callB"><![CDATA[
+    <example caption="Client instructs callA to join to callB and the server acknowledges the join was completed"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
   <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
 </iq>
-    ]]></example>
 
-    <p>The server MUST join the media streams of the two calls and return an empty IQ result to confirm that the operation has been successful. Additionally, both calls MUST dispatch joined events specifying who they have been joined to:</p>
-    <example caption="CallA acknowledges join to callB, both calls emit joined events"><![CDATA[
 <iq from='callA@call.shakespeare.lit'
     to='juliet@capulet.lit/balcony'
     type='result'
     id='h7ed2'/>
+    ]]></example>
 
+    <p>If the calls to be joined to each other are in the same security zone, the server MUST join the media streams of the two calls and return an empty IQ result to confirm that the operation has been successful. If the parties to be joined are not within the same security zone, an error should be returned as detailed below.</p>
+
+    <p>When calls are joined to each other by any mechanism, each call MUST dispatch a joined event specifying who they have been joined to:</p>
+    <example caption="Call A and B were joined, both calls emit joined events"><![CDATA[
 <presence from='callA@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
   <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
@@ -628,6 +634,7 @@
       <p>There are several reasons why the call might return an error instead of acknowledging a join:</p>
         <ul>
           <li>The specified join party does not exist or cannot be found.</li>
+          <li>The specified join party is inaccessible for the purposes of being joined due to security restrictions.</li>
           <li>The server does not have sufficient resources to complete the join.</li>
           <li>The join command was malformed.</li>
           <li>The specified media/direction options or their combination are not possible/supported.</li>
@@ -642,6 +649,19 @@
   <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
   <error type='cancel'>
     <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+        ]]></example>
+
+        <p>If the specified join party is inaccessible for the purposes of being joined due to security restrictions, the server MUST return a &lt;not-allowed/&gt; error with a type of 'cancel'.</p>
+        <example caption="Call indicates that the specified join party is inaccessible for the purposes of being joined due to security restrictionss"><![CDATA[
+<iq from='callA@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <error type='cancel'>
+    <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
         ]]></example>
