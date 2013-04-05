@@ -1495,18 +1495,20 @@
           </li>
         </ul>
 
-        <p>If the media server reports a match to one of the provided grammars, the server MUST present the results of the match to the client by way of match meta-data on a finish complete reason. It MUST provide an NLSML fragment as specified on the <link url='#def-component-input-match'>match element</link>.</p>
+        <p>If the media server reports a match to one of the provided grammars, the server MUST present the results of the match to the client by way of a match document in the format requested by the client. A server MUST be capable of supporting NLSML, and may support other formats.</p>
         <example caption="Component indicates it has completed due to one of the grammars returning a match"><![CDATA[
 <presence from='9f00061@call.shakespeare.lit/eh3u28'
           to='juliet@capulet.lit/courtyard'
           type='unavailable'>
   <complete xmlns='urn:xmpp:rayo:ext:1'>
-    <match xmlns='urn:xmpp:rayo:input:complete:1'>
-      <result xmlns="http://www.w3c.org/2000/11/nlsml" xmlns:xf="http://www.w3.org/2000/xforms" grammar="http://foodorder">
-        <input>
-          <input mode="dtmf" confidence="100">1 2 3 4</input>
-        </input>
-      </result>
+    <match xmlns='urn:xmpp:rayo:input:complete:1' content-type="application/nlsml+xml">
+      <![CDATA[
+        <result xmlns="http://www.ietf.org/xml/ns/mrcpv2" grammar="http://foodorder">
+          <interpretation>
+            <input mode="dtmf" confidence="100">1 2 3 4</input>
+          </interpretation>
+        </result>
+      ]]]]><![CDATA[>
     </match>
   </complete>
 </presence>
@@ -2523,6 +2525,13 @@
             <td>-1</td>
             <td>OPTIONAL</td>
           </tr>
+          <tr>
+            <td>match-content-type</td>
+            <td>Indicates the required response document format.</td>
+            <td>Must support at least application/nlsml+xml, but may support others such as application/emma+xml.</td>
+            <td>application/nlsml+xml</td>
+            <td>OPTIONAL</td>
+          </tr>
         </table>
 
         <section5 topic='Grammar Element' anchor='def-component-input-input-grammar'>
@@ -2557,8 +2566,24 @@
 
       <section4 topic='Match' anchor='def-component-input-match'>
         <p>Indicates that the component came to an end due to one of its grammars matching the received input.</p>
-        <p>The &lt;match/&gt; element MUST contain a valid NLSML fragment (&lt;result/&gt; element).</p>
-        <p>The &lt;match/&gt; element has no attributes.</p>
+        <p>The &lt;match/&gt; element MUST contain a valid response document within CDATA.</p>
+        <p>The attributes of the &lt;matchr/&gt; element are as follows.</p>
+          <table caption='Attributes of Grammar Element'>
+            <tr>
+              <th>Attribute</th>
+              <th>Definition</th>
+              <th>Possible Values</th>
+              <th>Default</th>
+              <th>Inclusion</th>
+            </tr>
+            <tr>
+              <td>content-type</td>
+              <td>Indicates the content type of the result document provided as CDATA.</td>
+              <td>A result document content type token</td>
+              <td>application/nlsml+xml</td>
+              <td>REQUIRED</td>
+            </tr>
+          </table>
       </section4>
 
       <section4 topic='Initial Timeout Element' anchor='def-component-input-initial-timeout'>
@@ -3839,6 +3864,13 @@
             </documentation>
           </annotation>
         </attribute>
+        <attribute name="match-content-type" type="token" use="optional" default="application/nlsml+xml">
+          <annotation>
+            <documentation>
+              Indicates the required response document format.
+            </documentation>
+          </annotation>
+        </attribute>
 
         <sequence>
           <element name="grammar" type="tns:grammarType" minOccurs="1" maxOccurs="unbounded">
@@ -3878,6 +3910,18 @@
         Indicates that the component came to an end due to one of its grammars matching the received input. Provides the NLSML result of the grammar match after any symantic processing which may have been performed. See the NLSML spec for details.
       </documentation>
     </annotation>
+
+    <complexType>
+      <simpleContent>
+        <attribute name="content-type" type="token" use="required" default="application/nlsml+xml">
+          <annotation>
+            <documentation>
+              Indicates the content type of the result document provided as CDATA.
+            </documentation>
+          </annotation>
+        </attribute>
+      </simpleContent>
+    </complexType>
   </element>
 
   <!-- Initial timeout reason -->
