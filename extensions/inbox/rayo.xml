@@ -872,7 +872,10 @@
   </section2>
 
   <section2 topic='Mixers' anchor='session-mixers'>
-    <p>While calls may generally be joined peer-to-peer in any desirable combination, such an implementation is not necessarily scalable or practical to manage. Rayo, therefore, includes the concept of mixers, which are entities like calls, to which calls or other mixers may be joined in the same way as joining multiple calls directly. A mixer MUST be implicitly created the first time a call attempts to join it, and MUST broadcast presence to all controlling parties who have calls joined to it before any other events are sent. The server MUST include entity capabilities information in the first presence stanza it sends, in order to advertise the fact that the entity is a mixer, qualified by the node name "urn:xmpp:rayo:mixer:1". A mixer MUST emit events (joined, unjoined) to all controlling parties who have calls joined to it, using the same semantics as joining calls.</p>
+    <p>While calls may generally be joined peer-to-peer in any desirable combination, such an implementation is not necessarily scalable or practical to manage. Rayo, therefore, includes the concept of mixers, which are entities like calls, to which calls or other mixers may be joined in the same way as joining multiple calls directly. A mixer MUST be implicitly created the first time a call attempts to join it, MUST immediately broadcast presence to all controlling parties who have calls joined to it, and must respond to the join command with a reference to the mixer. The server MUST include entity capabilities information in the first presence stanza it sends, in order to advertise the fact that the entity is a mixer, qualified by the node name "urn:xmpp:rayo:mixer:1". A mixer MUST emit events (joined, unjoined) to all controlling parties who have calls joined to it, using the same semantics as joining calls.</p>
+
+    <p>In order to support friendly-named mixers without causing naming collisions between security zones, a server SHOULD represent a mixer internally using some alternative name scoped to the client's security zone and mapped to the friendly name/URI presented to the client for the emission of events and processing of commands. A server MUST NOT allow clients to interact with mixers allocated within other security zones either by observing their status or media.</p>
+
     <example caption="Client instructs call to join a mixer"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='callA@call.shakespeare.lit'
@@ -892,7 +895,9 @@
 <iq from='callA@call.shakespeare.lit'
     to='juliet@capulet.lit/balcony'
     type='result'
-    id='h7ed2'/>
+    id='h7ed2'>
+  <ref xmlns='urn:xmpp:rayo:1' uri='xmpp:myMixer@mixer.shakespeare.lit'/>
+</iq>
 
 <presence from='callA@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
