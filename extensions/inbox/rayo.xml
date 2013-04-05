@@ -261,8 +261,6 @@
     <ul>
       <li><strong>juliet@capulet.lit/balcony, romeo@montague.lit/orchard</strong> - Potential controlling parties</li>
       <li><strong>shakespeare.lit</strong> - The root domain of the Rayo service</li>
-      <li><strong>call.shakespeare.lit</strong> - The Rayo service's call domain</li>
-      <li><strong>mixer.shakespeare.lit</strong> - The Rayo service's mixer domain</li>
     </ul>
   </section2>
 </section1>
@@ -280,12 +278,12 @@
       <p>A Rayo client is responsible for indicating its availability to a Rayo server and responding to offer messages appropriately.</p>
     </section3>
     <section3 topic='Calls' anchor='concepts-actors-calls'>
-      <p>A Rayo call is a short-lived XMPP entity within the scope of the deployment's root domain, usually at a sub-domain, with the purpose of representing a single session. It is usually a simple alias for the main server process.</p>
+      <p>A Rayo call is a short-lived XMPP entity within the scope of the deployment's root domain, perhaps at a sub-domain, with the purpose of representing a single session. It is usually a simple alias for the main server process.</p>
       <p>A Rayo call is the entity with which most client interactions are made, and is responsible for sending its events to and receiving commands from a client. Calls may host components.</p>
       <p>Calls have separate presence from the root domain of the service and thus appear to be separate entities.</p>
     </section3>
     <section3 topic='Mixers' anchor='concepts-actors-mixers'>
-      <p>A Rayo mixer is an XMPP entity within the scope of the deployment's root domain (usually at a sub-domain) with the purpose of representing a service for the linking of media streams from several calls. It is usually a simple alias for the main server process.</p>
+      <p>A Rayo mixer is an XMPP entity within the scope of the deployment's root domain, perhaps at a sub-domain, with the purpose of representing a service for the linking of media streams from several calls. It is usually a simple alias for the main server process.</p>
       <p>A Rayo mixer is responsible for sending its events to and receiving commands from one or more clients, and can host components.</p>
       <p>Mixers have separate presence from the root domain of the service and its calls and thus appear to be separate entities.</p>
     </section3>
@@ -512,7 +510,7 @@
     to='juliet@capulet.lit/balcony'
     type='result'
     id='h7ed2'>
-  <ref xmlns='urn:xmpp:rayo:1' id='9f00061'/>
+  <ref xmlns='urn:xmpp:rayo:1' uri='xmpp:9f00061@call.shakespeare.lit'/>
 </iq>
       ]]></example>
 
@@ -542,7 +540,7 @@
   <dial xmlns='urn:xmpp:rayo:1'
         to='tel:+13055195825'
         from='tel:+14152226789'>
-    <join call-id='e8u398d902i90' />
+    <join call-uri='xmpp:e8u398d902i90@call.shakespeare.lit' />
   </dial>
 </iq>
         ]]></example>
@@ -604,7 +602,7 @@
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </iq>
 
 <iq from='callA@call.shakespeare.lit'
@@ -619,12 +617,12 @@
     <example caption="Call A and B were joined, both calls emit joined events"><![CDATA[
 <presence from='callA@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </presence>
 
 <presence from='callB@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
     ]]></example>
 
@@ -646,7 +644,7 @@
     to='juliet@capulet.lit/balcony'
     type='error'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callC@call.shakespeare.lit'/>
   <error type='cancel'>
     <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
@@ -659,7 +657,7 @@
     to='juliet@capulet.lit/balcony'
     type='error'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callC@call.shakespeare.lit'/>
   <error type='cancel'>
     <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
@@ -672,20 +670,20 @@
     to='juliet@capulet.lit/balcony'
     type='error'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
   <error type='wait'>
     <resource-constraint xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
         ]]></example>
 
-        <p>If the join command was malformed (eg no call ID specified), the server MUST return a &lt;bad-request/&gt; error with a type of 'modify'.</p>
+        <p>If the join command was malformed (eg no call URI specified), the server MUST return a &lt;bad-request/&gt; error with a type of 'modify'.</p>
         <example caption="Call indicates that the join command was malformed"><![CDATA[
 <iq from='callA@shakespeare.lit'
     to='juliet@capulet.lit/balcony'
     type='error'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id=''/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:'/>
   <error type='modify'>
     <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
@@ -698,7 +696,7 @@
     to='juliet@capulet.lit/balcony'
     type='error'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callB' media='direct' direction='recv'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit' media='direct' direction='recv'/>
   <error type='modify'>
     <feature-not-implemented xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
@@ -713,7 +711,7 @@
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
-  <unjoin xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <unjoin xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </iq>
       ]]></example>
 
@@ -753,20 +751,20 @@
       to='juliet@capulet.lit/balcony'
       type='error'
       id='h7ed2'>
-    <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+    <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callC@call.shakespeare.lit'/>
     <error type='cancel'>
       <service-unavailable xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     </error>
   </iq>
           ]]></example>
 
-          <p>If the unjoin command was malformed (eg an empty call ID specified), the server MUST return a &lt;bad-request/&gt; error with a type of 'modify'.</p>
+          <p>If the unjoin command was malformed (eg an empty call URI specified), the server MUST return a &lt;bad-request/&gt; error with a type of 'modify'.</p>
           <example caption="Call indicates that the join command was malformed"><![CDATA[
   <iq from='callA@shakespeare.lit'
       to='juliet@capulet.lit/balcony'
       type='error'
       id='h7ed2'>
-    <unjoin xmlns='urn:xmpp:rayo:1' call-id=''/>
+    <unjoin xmlns='urn:xmpp:rayo:1' call-uri='xmpp:'/>
     <error type='modify'>
       <bad-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
     </error>
@@ -780,12 +778,12 @@
       <example caption="CallA announces that it has been unjoined from callB, and vice versa"><![CDATA[
 <presence from='callA@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <unjoined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <unjoined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </presence>
 
 <presence from='callB@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <unjoined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <unjoined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
       ]]></example>
     </section3>
@@ -797,7 +795,7 @@
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callB' direction='recv'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit' direction='recv'/>
 </iq>
 
 <iq from='callA@call.shakespeare.lit'
@@ -807,19 +805,19 @@
 
 <presence from='callA@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </presence>
 
 <presence from='callB@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
 
 <iq from='juliet@capulet.lit/balcony'
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed3'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callB' direction='duplex'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit' direction='duplex'/>
 </iq>
 
 <iq from='callA@call.shakespeare.lit'
@@ -835,7 +833,7 @@
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </iq>
 
 <iq from='callA@call.shakespeare.lit'
@@ -845,26 +843,26 @@
 
 <presence from='callA@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </presence>
 
 <presence from='callB@call.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
 
 <iq from='juliet@capulet.lit/balcony'
     to='callA@call.shakespeare.lit'
     type='set'
     id='h7ed3'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callC@call.shakespeare.lit'/>
 </iq>
 
 <iq from='callA@shakespeare.lit'
     to='juliet@capulet.lit/balcony'
     type='error'
     id='h7ed3'>
-  <join xmlns='urn:xmpp:rayo:1' call-id='callC'/>
+  <join xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callC@call.shakespeare.lit'/>
   <error type='cancel'>
     <conflict xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
@@ -903,7 +901,7 @@
 
 <presence from='myMixer@mixer.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <joined xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <joined xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
     ]]></example>
 
@@ -923,7 +921,7 @@
     to='juliet@capulet.lit/balcony'
     type='result'
     id='h7ed2'>
-  <ref xmlns='urn:xmpp:rayo:1' id='d38d3'/>
+  <ref xmlns='urn:xmpp:rayo:1' uri='xmpp:myMixer@mixer.shakespeare.lit/d38d3'/>
 </iq>
     ]]></example>
 
@@ -932,22 +930,22 @@
     <example caption="Mixer indicates overlapping speaking status of two joined calls"><![CDATA[
 <presence from='myMixer@mixer.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <started-speaking xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <started-speaking xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
 
 <presence from='myMixer@mixer.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <started-speaking xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <started-speaking xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </presence>
 
 <presence from='myMixer@mixer.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <stopped-speaking xmlns='urn:xmpp:rayo:1' call-id='callB'/>
+  <stopped-speaking xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callB@call.shakespeare.lit'/>
 </presence>
 
 <presence from='myMixer@mixer.shakespeare.lit'
           to='juliet@capulet.lit/balcony'>
-  <stopped-speaking xmlns='urn:xmpp:rayo:1' call-id='callA'/>
+  <stopped-speaking xmlns='urn:xmpp:rayo:1' call-uri='xmpp:callA@call.shakespeare.lit'/>
 </presence>
     ]]></example>
   </section2>
@@ -973,7 +971,7 @@
     to='juliet@capulet.lit/balcony'
     type='result'
     id='h7ed2'>
-  <ref xmlns='urn:xmpp:rayo:1' id='eh3u82'/>
+  <ref xmlns='urn:xmpp:rayo:1' uri='xmpp:9f00061@call.shakespeare.lit/eh3u82'/>
 </iq>
     ]]></example>
 
@@ -1690,7 +1688,7 @@
           type='unavailable'>
   <complete xmlns='urn:xmpp:rayo:ext:1'>
     <stop xmlns='urn:xmpp:rayo:ext:complete:1'/>
-    <recording xmlns='urn:xmpp:rayo:record:complete:1' uri='http://rayo.io/recordings/foo.mp3' duration='20000' size='12287492817'/>
+    <recording xmlns='urn:xmpp:rayo:record:complete:1' uri='xmpp:http://rayo.io/recordings/foo.mp3' duration='20000' size='12287492817'/>
   </complete>
 </presence>
         ]]></example>
@@ -2108,15 +2106,15 @@
         <td>bridge</td>
       </tr>
       <tr>
-        <td>call-id</td>
-        <td>Indicates the 3rd party call ID to which the target call should be joined.</td>
+        <td>call-uri</td>
+        <td>Indicates the 3rd party call URI to which the target call should be joined.</td>
         <td>REQUIRED unless mixer-name is set. MUST NOT be set if mixer-name is set.</td>
         <td></td>
       </tr>
       <tr>
         <td>mixer-name</td>
         <td>Indicates the mixer name to which the target call should be joined.</td>
-        <td>REQUIRED unless call-id is set. MUST NOT be set if call-id is set.</td>
+        <td>REQUIRED unless call-uri is set. MUST NOT be set if call-uri is set.</td>
         <td></td>
       </tr>
     </table>
@@ -2133,14 +2131,14 @@
         <th>Inclusion</th>
       </tr>
       <tr>
-        <td>call-id</td>
-        <td>Indicates the 3rd party call ID from which the target call should be unjoined.</td>
+        <td>call-uri</td>
+        <td>Indicates the 3rd party call URI from which the target call should be unjoined.</td>
         <td>REQUIRED unless mixer-name is set. MUST NOT be set if mixer-name is set.</td>
       </tr>
       <tr>
         <td>mixer-name</td>
         <td>Indicates the mixer name from which the target call should be unjoined.</td>
-        <td>REQUIRED unless call-id is set. MUST NOT be set if call-id is set.</td>
+        <td>REQUIRED unless call-uri is set. MUST NOT be set if call-uri is set.</td>
       </tr>
     </table>
   </section2>
@@ -2156,14 +2154,14 @@
         <th>Inclusion</th>
       </tr>
       <tr>
-        <td>call-id</td>
-        <td>Indicates the 3rd party call ID to which the target call was joined.</td>
+        <td>call-uri</td>
+        <td>Indicates the 3rd party call URI to which the target call was joined.</td>
         <td>REQUIRED unless mixer-name is set. MUST NOT be set if mixer-name is set.</td>
       </tr>
       <tr>
         <td>mixer-name</td>
         <td>Indicates the mixer name to which the target call was joined.</td>
-        <td>REQUIRED unless call-id is set. MUST NOT be set if call-id is set.</td>
+        <td>REQUIRED unless call-uri is set. MUST NOT be set if call-uri is set.</td>
       </tr>
     </table>
   </section2>
@@ -2179,20 +2177,20 @@
         <th>Inclusion</th>
       </tr>
       <tr>
-        <td>call-id</td>
-        <td>Indicates the 3rd party call ID from which the target call was unjoined.</td>
+        <td>call-uri</td>
+        <td>Indicates the 3rd party call URI from which the target call was unjoined.</td>
         <td>REQUIRED unless mixer-name is set. MUST NOT be set if mixer-name is set.</td>
       </tr>
       <tr>
         <td>mixer-name</td>
         <td>Indicates the mixer name from which the target call was unjoined.</td>
-        <td>REQUIRED unless call-id is set. MUST NOT be set if call-id is set.</td>
+        <td>REQUIRED unless call-uri is set. MUST NOT be set if call-uri is set.</td>
       </tr>
     </table>
   </section2>
 
   <section2 topic='Started Speaking Element' anchor='def-started-speaking'>
-    <p>Indicates that a call joined to a mixer with which the controlling party has an events subscription has activated a speech detector, providing its ID.</p>
+    <p>Indicates that a call joined to a mixer with which the controlling party has an events subscription has activated a speech detector, providing its URI.</p>
     <p>The &lt;started-speaking/&gt; element MUST be empty.</p>
     <p>The attributes of the &lt;started-speaking/&gt; element are as follows.</p>
     <table caption='Attributes of Started Speaking Element'>
@@ -2202,15 +2200,15 @@
         <th>Inclusion</th>
       </tr>
       <tr>
-        <td>call-id</td>
-        <td>Indicates the ID of the call which has triggered the speech detector.</td>
+        <td>call-uri</td>
+        <td>Indicates the URI of the call which has triggered the speech detector.</td>
         <td>REQUIRED</td>
       </tr>
     </table>
   </section2>
 
   <section2 topic='Stopped Speaking Element' anchor='def-stopped-speaking'>
-    <p>Indicates that a call joined to a mixer with which the controlling party has an events subscription has ceased activation of a speech detector, providing its ID.</p>
+    <p>Indicates that a call joined to a mixer with which the controlling party has an events subscription has ceased activation of a speech detector, providing its URI.</p>
     <p>The &lt;stopped-speaking/&gt; element MUST be empty.</p>
     <p>The attributes of the &lt;stopped-speaking/&gt; element are as follows.</p>
     <table caption='Attributes of Stopped Speaking Element'>
@@ -2220,15 +2218,15 @@
         <th>Inclusion</th>
       </tr>
       <tr>
-        <td>call-id</td>
-        <td>Indicates the ID of the call which has triggered the speech detector.</td>
+        <td>call-uri</td>
+        <td>Indicates the URI of the call which has triggered the speech detector.</td>
         <td>REQUIRED</td>
       </tr>
     </table>
   </section2>
 
   <section2 topic='Ref Element' anchor='def-ref'>
-    <p>Used to give an indication of the identity of a newly created resource, either a call or a component.</p>
+    <p>Used to give the address of a newly created resource, either a call or a component.</p>
     <p>The &lt;ref/&gt; element MUST be empty.</p>
     <p>The attributes of the &lt;ref/&gt; element are as follows.</p>
     <table caption='Attributes of Ref Element'>
@@ -2238,8 +2236,8 @@
         <th>Inclusion</th>
       </tr>
       <tr>
-        <td>id</td>
-        <td>Gives the ID of the new resource.</td>
+        <td>uri</td>
+        <td>Gives the URI of the new resource.</td>
         <td>REQUIRED</td>
       </tr>
     </table>
@@ -3288,10 +3286,10 @@
   </element>
 
   <complexType name="joinType">
-    <attribute name="call-id" type="token" use="optional">
+    <attribute name="call-uri" type="anyURI" use="optional">
       <annotation>
         <documentation>
-          Indicates the 3rd party call ID to which the target call should be joined. May not be set if the mixer-name attribute is set.
+          Indicates the 3rd party call URI to which the target call should be joined. May not be set if the mixer-name attribute is set.
         </documentation>
       </annotation>
     </attribute>
@@ -3323,10 +3321,10 @@
   </element>
 
   <complexType name="activeSpeakerType">
-    <attribute name="call-id" type="token" use="required">
+    <attribute name="call-uri" type="anyURI" use="required">
       <annotation>
         <documentation>
-          Indicates the ID of the call which has triggered the speech detector.
+          Indicates the URI of the call which has triggered the speech detector.
         </documentation>
       </annotation>
     </attribute>
@@ -3340,10 +3338,10 @@
       </documentation>
     </annotation>
     <complexType>
-      <attribute name="id" type="token" use="required">
+      <attribute name="uri" type="anyURI" use="required">
         <annotation>
           <documentation>
-            Gives the ID of the new resource.
+            Gives the URI of the new resource.
           </documentation>
         </annotation>
       </attribute>
