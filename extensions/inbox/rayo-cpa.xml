@@ -53,33 +53,16 @@
 
   <p>CPA is achieved as a special case of the core input component. All rules regarding component execution and the input component in particular apply from the core specification. When a call's controlling party wishes to begin detection of signals from the suported set, it SHOULD begin an input component with the mode attribute set as 'cpa'.</p>
 
-  <p>The provided grammar MUST be a special-case of an SRGS grammar of the format described <link url="#def-grammar">below</link>. If a Rayo server supports this specification, it MUST parse the provided grammar and invoke its supported CPA function using the parameters provided from the grammar; if it does not support this specification or any of the supplied parameters within the grammar, it MUST raise an error according to the rules in the core specification.</p>
+  <p>The grammars supplied determine the types of signal detected and parameters applied to their detection. The grammars MUST be referenced by URI in the format described <link url="#def-grammar">below</link>. If a Rayo server supports this specification, it MUST invoke its supported CPA function using the parameters provided from the grammars; if it does not support this specification or any of the supplied parameters within the grammar, it MUST raise an error according to the rules in the core specification.</p>
 
-  <example caption='Client requests CPA from a call, indicating interest only in speech detection'><![CDATA[
+  <example caption='Client requests CPA from a call, indicating interest in speech detection and DTMF'><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='9f00061@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
   <input xmlns='urn:xmpp:rayo:input:1' mode='cpa'>
-    <grammar content-type='application/srgs+xml'>
-      <![CDATA[
-        <?xml version="1.0"?>
-        <grammar mode="dtmf" version="1.0"
-                 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                 xsi:schemaLocation="http://www.w3.org/2001/06/grammar
-                                     http://www.w3.org/TR/speech-grammar/grammar.xsd"
-                 xmlns="http://www.w3.org/2001/06/grammar">
-
-          <meta name="maxTime" content="4000"/>
-          <meta name="minSpeechDuration" content="4000"/>
-          <meta name="minVolume" content="10"/>
-          <meta name="finalSilence" content="2000"/>
-          <meta name="terminate" content="true"/>
-
-          <ruleref uri="urn:xmpp:rayo:cpa:speech:1"/>
-        </grammar>
-      ]]]]><![CDATA[>
-    </grammar>
+    <grammar url="urn:xmpp:rayo:cpa:speech:1?maxTime=4000;minSpeechDuration=4000;minVolume=10;finalSilence=2000;terminate=true" />
+    <grammar url="urn:xmpp:rayo:cpa:dtmf:1" />
   </input>
 </iq>
   ]]></example>
@@ -89,10 +72,9 @@
   <section2 topic='Events' anchor='session-events'>
     <p>If the meta-attribute named 'terminate' is set to true in the grammar, the component MUST terminate on the first signal match it detects. If it is set to false, signals MUST be reported as events until the component is instructed to stop.</p>
 
-    <example caption="Component indicates it has completed due to one of the grammars matching a detected signal"><![CDATA[
-<presence from='9f00061@call.shakespeare.lit/eh3u28'
-      to='juliet@capulet.lit/courtyard'>
-  <signal xmlns="urn:xmpp:rayo:cpa:1" duration="4690" source="machine" type="speech"/>
+    <example caption="Component indicates that a signal was detected"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit/eh3u28' to='juliet@capulet.lit/courtyard'>
+  <signal xmlns="urn:xmpp:rayo:cpa:1" type="urn:xmpp:rayo:cpa:dtmf:1" duration="4690" value="1"/>
 </presence>
     ]]></example>
   </section2>
@@ -105,7 +87,7 @@
       to='juliet@capulet.lit/courtyard'
       type='unavailable'>
   <complete xmlns='urn:xmpp:rayo:ext:1'>
-    <signal xmlns="urn:xmpp:rayo:cpa:1" duration="4690" source="machine" type="speech"/>
+    <signal xmlns="urn:xmpp:rayo:cpa:1" type="urn:xmpp:rayo:cpa:speech:1" duration="4690" value="machine"/>
   </complete>
 </presence>
     ]]></example>
@@ -113,7 +95,7 @@
 </section1>
 <section1 topic='Formal Definition' anchor='def'>
   <section2 topic='Grammar Format' anchor='def-grammar'>
-    <p>The grammar format to declare the signal types of interest and the parameters which apply to their detection is a special case of <link url='http://www.w3.org/TR/speech-grammar/'>SRGS</link>. The requested signal types are specified as SRGS rule references where the URI is one of those listed in <link url='#def-signal-types'>the following list of allowed signal types</link>. Parameters to modify their detection are supplied as SRGS metadata, and the names and allowed values of these parameters are implementation specific. Servers MUST support one reserved parameter named 'terminate', whose value indicates the termination behaviour of the component on signal detection as described <link url='#session-events'>abov</link>.</p>
+    <p>The grammar URI declares the signal type of interest and the parameters which apply to their detection. The URI should be composed of a URN from <link url='#def-signal-types'>the following list of allowed signal types</link>, and parameters to modify their detection as a query string. The names and allowed values of these parameters are implementation specific. Servers MUST support one reserved parameter named 'terminate', whose value indicates the termination behaviour of the component on signal detection as described <link url='#session-events'>abov</link>.</p>
   </section2>
 
   <section2 topic='Signal Element' anchor='def-signal'>
