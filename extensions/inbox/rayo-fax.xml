@@ -77,6 +77,7 @@
   <complete xmlns='urn:xmpp:rayo:ext:1'>
     <finish xmlns='urn:xmpp:rayo:fax:complete:1'/>
     <fax xmlns='urn:xmpp:rayo:fax:complete:1' uri='http://shakespere.lit/faxes/fax1.tiff' resolution='595x841' size='12287492817' pages='3'/>
+    <metadata name="fax-transfer-rate" value="10000" />
   </complete>
 </presence>
       ]]></example>
@@ -143,9 +144,32 @@
     </table>
   </section2>
 
+  <section2 topic='Metadata Element' anchor='def-metadata'>
+    <p>Provides implementation-specific key-value pairs of metadata regarding the transmission or receipt of a fax document.</p>
+    <p>The &lt;metadata/&gt; element MUST be empty.</p>
+    <p>The attributes of the &lt;metadata/&gt; element are as follows.</p>
+    <table caption='Attributes of Metadata Element'>
+      <tr>
+        <th>Attribute</th>
+        <th>Definition</th>
+        <th>Inclusion</th>
+      </tr>
+      <tr>
+        <td>name</td>
+        <td>A token giving the name by which the metadata may be known.</td>
+        <td>REQUIRED</td>
+      </tr>
+      <tr>
+        <td>value</td>
+        <td>The string value of the named metadata.</td>
+        <td>REQUIRED</td>
+      </tr>
+    </table>
+  </section2>
+
   <section2 topic='Finish Element' anchor='def-finish'>
     <p>Indicates that the component came to an end due to the document being received successfully.</p>
-    <p>The &lt;final-timeout/&gt; element MUST be empty.</p>
+    <p>The &lt;final-timeout/&gt; element MAY contain one or more <link url='#def-metadata'>&lt;metadata/&gt; elements</link>.</p>
     <p>The &lt;final-timeout/&gt; element has no attributes.</p>
   </section2>
 </section1>
@@ -276,6 +300,23 @@
     </attribute>
   </element>
 
+  <complexType name="metadataType">
+    <attribute name="name" type="token" use="required">
+      <annotation>
+        <documentation>
+          A token giving the name by which the metadata may be known.
+        </documentation>
+      </annotation>
+    </attribute>
+    <attribute name="value" type="string" use="required">
+      <annotation>
+        <documentation>
+          The string value of the named metadata.
+        </documentation>
+      </annotation>
+    </attribute>
+  </complexType>
+
   <!-- Finish reason -->
   <element name="finish" type="core:empty">
     <annotation>
@@ -283,6 +324,17 @@
         Indicates that the component came to an end due to the document being received successfully.
       </documentation>
     </annotation>
+    <complexType>
+      <sequence>
+        <element name="metadata" type="tns:metadataType" minOccurs="0" maxOccurs="unbounded">
+          <annotation>
+            <documentation>
+              Set of metadata associated with the transmission or receipt of a fax document.
+            </documentation>
+          </annotation>
+        </element>
+      </sequence>
+    </complexType>
   </element>
 </schema>
     ]]></code>
