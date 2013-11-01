@@ -85,15 +85,15 @@
   </section2>
 
   <section2 topic='Sending Faxes' anchor='session-receiving'>
-    <p>Sending faxes can be achieved by using the Rayo core output component. A server supporting this specification MUST treat output components with a 'renderer' attribute value of 'fax' as fax output. A conformant server MUST support image/tiff documents, and MAY also support others. A conformant server MUST support fetching documents via an HTTP URL and MAY accept inline documents.</p>
+    <p>Sending faxes can be achieved by using the Rayo core output component. A server supporting this specification MUST render fax document elements (a <link url='#def-document'>&lt;document/&gt; elements</link> in the urn:xmpp:rayo:fax:1 namespace) as a fax. A conformant server MUST support image/tiff documents, and MAY also support others. A conformant server MUST support fetching documents via an HTTP URL and MAY support other URL schemes.</p>
 
     <example caption='Client sends a fax document to a call'><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='9f00061@call.shakespeare.lit'
     type='set'
     id='h7ed2'>
-  <output xmlns='urn:xmpp:rayo:output:1' renderer='fax'>
-    <document url='http://shakespere.lit/my_fax.tiff'/>
+  <output xmlns='urn:xmpp:rayo:output:1'>
+    <document xmlns='urn:xmpp:rayo:fax:1' uri='http://shakespere.lit/my_fax.tiff'/>
   </output>
 </iq>
     ]]></example>
@@ -120,7 +120,7 @@
   </section2>
 
   <section2 topic='Fax Element' anchor='def-fax'>
-    <p>Provides the result of a recording, as a reference to its location.</p>
+    <p>Provides the result of a received fax, as a reference to its location.</p>
     <p>The &lt;fax/&gt; element MUST be empty.</p>
     <p>The attributes of the &lt;fax/&gt; element are as follows.</p>
     <table caption='Attributes of Fax Element'>
@@ -153,6 +153,38 @@
         <td>Indicates the filesize of the received fax.</td>
         <td>A positive integer in bytes.</td>
         <td>REQUIRED</td>
+      </tr>
+    </table>
+  </section2>
+
+  <section2 topic='Document Element' anchor='def-document'>
+    <p>Provides data for a document to be sent as a fax.</p>
+    <p>The &lt;document/&gt; element MUST be empty.</p>
+    <p>The attributes of the &lt;document/&gt; element are as follows.</p>
+    <table caption='Attributes of Fax Element'>
+      <tr>
+        <th>Attribute</th>
+        <th>Definition</th>
+        <th>Possible Values</th>
+        <th>Inclusion</th>
+      </tr>
+      <tr>
+        <td>uri</td>
+        <td>Indicates the URI at which the document to send is available.</td>
+        <td>A valid URI</td>
+        <td>REQUIRED</td>
+      </tr>
+      <tr>
+        <td>identity</td>
+        <td>Indicates the identity from which the fax should appear to be sent.</td>
+        <td>A phone number string in E.164 format.</td>
+        <td>OPTIONAL</td>
+      </tr>
+      <tr>
+        <td>header</td>
+        <td>The header line to add to each page of the transmitted fax.</td>
+        <td>A string.</td>
+        <td>OPTIONAL</td>
       </tr>
     </table>
   </section2>
@@ -257,6 +289,36 @@
         Instructs the server to begin receiving a fax.
       </documentation>
     </annotation>
+  </element>
+
+  <!-- Fax document data -->
+  <element name="document" type="core:empty">
+    <annotation>
+      <documentation>
+        Provides the result of a received fax, including a reference to its location.
+      </documentation>
+    </annotation>
+    <attribute name="uri" type="anyURI" use="required">
+      <annotation>
+        <documentation>
+          Indicates the URI at which the document to send is available.
+        </documentation>
+      </annotation>
+    </attribute>
+    <attribute name="identity" type="string" use="optional">
+      <annotation>
+        <documentation>
+          Indicates the identity from which the fax should appear to be sent.
+        </documentation>
+      </annotation>
+    </attribute>
+    <attribute name="header" type="string" use="optional">
+      <annotation>
+        <documentation>
+          The header line to add to each page of the transmitted fax.
+        </documentation>
+      </annotation>
+    </attribute>
   </element>
 </schema>
     ]]></code>
