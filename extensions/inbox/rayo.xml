@@ -1711,7 +1711,7 @@
     </ul>
 
     <section3 topic='Call Redirection' anchor='session-termination-redirection'>
-      <p>If a client can determine a more appropriate target for an incoming call, it may wish to relay this information to the caller in the form of a URI (eg SIP). The client MUST do this before accepting a call. The target URI must be specified in the 'to' attribute of the redirect element.</p>
+      <p>If a client can determine a more appropriate target for an incoming call, it may wish to relay this information to the caller in the form of a URI (eg SIP). The target URI must be specified in the 'to' attribute of the redirect element.</p>
       <example caption="Client instructs a call to redirect, with some headers"><![CDATA[
 <iq from='juliet@capulet.lit/balcony'
     to='9f00061@call.shakespeare.lit'
@@ -1735,7 +1735,7 @@
     id='h7ed2'/>
       ]]></example>
 
-      <p>If the server is unable to perform the redirect because the call has already been accepted, it should return a not-allowed (cancel) error indicating such:</p>
+      <p>If the server is unable to perform the redirect because the call is under the control of another DCP, it should return a not-allowed (cancel) error indicating such:</p>
       <example caption="Server indicates that the call already has another DCP and that control of the call is no longer available."><![CDATA[
 <iq from='9f00061@call.shakespeare.lit'
     to='juliet@capulet.lit/balcony'
@@ -1748,6 +1748,23 @@
   </redirect>
   <error type='cancel'>
     <not-allowed xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
+  </error>
+</iq>
+      ]]></example>
+
+      <p>If the server is unable to perform the redirect because the call is in a state where a redirect is not possible, it should return an unexpected-request (wait) error indicating such:</p>
+      <example caption="Server indicates that the call is in a state where a redirect is not possible."><![CDATA[
+<iq from='9f00061@call.shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='error'
+    id='h7ed2'>
+  <redirect xmlns='urn:xmpp:rayo:1'
+            to='sip:other@there.com'>
+    <header name="x-skill" value="agent" />
+    <header name="x-customer-id" value="8877" />
+  </redirect>
+  <error type='wait'>
+    <unexpected-request xmlns='urn:ietf:params:xml:ns:xmpp-stanzas'/>
   </error>
 </iq>
       ]]></example>
