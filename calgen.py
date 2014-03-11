@@ -245,6 +245,7 @@ def main(argv):
 	
 	# XSF Teams
 	genCalendarForTeam("communication")
+	genCalendarForTeam("editor")
 	genCalendarForTeam("infrastructure")
 	genCalendarForTeam("techreview")
 	
