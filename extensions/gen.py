@@ -45,6 +45,11 @@ from xeputil import getLatestXEPFilename
 
 from xml.dom.minidom import parse,parseString,Document,getDOMImplementation
 
+# for serializing inline images
+import base64
+import urlparse
+import urllib
+
 XEPPATH = "/var/www/vhosts/xmpp.org/extensions"
 CONFIGPATH = "/var/local/xsf"
 
@@ -53,6 +58,37 @@ fast = False
 last_build = {}
 
 files_to_delete = [];
+
+def serializeInlineImage(output_dir, xep_nr, no, attrValue):
+	up = urlparse.urlparse(attrValue)
+	if up.scheme == 'data':
+		head, data = up.path.split(',')
+		bits = head.split(';')
+		mime_type = bits[0] if bits[0] else 'text/plain'
+		charset, b64 = 'ASCII', False
+		for bit in bits[1]:
+			if bit.startswith('charset='):
+				charset = bit[8:]
+			elif bit == 'base64':
+				b64 = True
+	
+		# Do something smart with charset and b64 instead of assuming
+		plaindata = base64.b64decode(data)
+	
+		# Do something smart with mime_type
+		if mime_type in ('image/png', 'image/jpeg'):
+			file_ext = mime_type.split('/')[1]
+			f = open(output_dir + '/' + 'inlineimage-' + xep_nr + '-' + str(no) + '.' + file_ext, 'wb')
+			f.write(plaindata)
+	elif up.scheme == 'http':
+		file_name, file_ext = os.path.splitext(up.path)
+		urllib.urlretrieve(attrValue, output_dir + '/' + 'inlineimage-' + xep_nr + '-' + str(no) + file_ext)
+
+def serializeXEPInlineImages(output_dir, xep_nr, filename):
+	dom = parse(filename)
+	imgs = dom.getElementsByTagName('img')
+	for (no, img) in enumerate(imgs):
+		serializeInlineImage(output_dir, xep_nr, no, img.attributes["src"].value)
 
 def getText(nodelist):
     thisText = ""
@@ -239,7 +275,8 @@ def buildXHTML( file, nr ):
 	return True
 
 def buildPDF( file, nr ):
-    	
+	serializeXEPInlineImages("/tmp/xepbuilder", nr, file)
+
 	error, desc = executeCommand("xsltproc -o /tmp/xepbuilder/xep-" + nr + ".tex.xml xep2texml.xsl " + file)
 	if not checkError(error, desc):
 		return False
@@ -370,7 +407,7 @@ def main(argv):
 	executeCommand("mkdir /tmp/xepbuilder")
 	executeCommand("cp ../images/xmpp.pdf /tmp/xepbuilder/xmpp.pdf")
 	executeCommand("cp ../images/xmpp-text.pdf /tmp/xepbuilder/xmpp-text.pdf")
-	executeCommand("cp deps/tabu.sty /tmp/xepbuilder/tabu.sty")
+	executeCommand("cp -r deps/* /tmp/xepbuilder/")
 	
 	executeCommand("cp xep.ent /tmp/xep.ent")
 	files_to_delete.append("/tmp/xep.ent")
