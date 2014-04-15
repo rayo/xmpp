@@ -48,10 +48,17 @@
   </revision>
 </header>
 <section1 topic='Introduction' anchor='intro'>
-
+  <p>The core rayo specification (XEP-0327) documents the behaviour of an individual Rayo server and its interaction with a client. Two of the goals of Rayo, however, are to support clustering of servers and multi-tenancy. This specification outlines how that is to be achieved.</p>
 </section1>
 <section1 topic='Requirements' anchor='reqs'>
+  <p>This specification is required to provide a framework for implementation of the following goals:</p>
 
+  <ul>
+    <li>Routing of Rayo messages between clients and server nodes in a cluster.</li>
+    <li>Load balancing of calls between multiple clients and server nodes in a cluster.</li>
+    <li>Failover of calls between clients and server nodes, and management of the cluster.</li>
+    <li>Enforcement of security and multi-tenancy concerns.</li>
+  </ul>
 </section1>
 <section1 topic='Terminology' anchor='terms'>
   <section2 topic='Glossary' anchor='terms-glossary'>
@@ -63,22 +70,16 @@
       <di>
         <dt>Gateway</dt>
         <dd>
-          The Rayo Gateway is the main element that differentiates a Rayo Cluster from a stand-alone Rayo deployment. The Rayo Gateway is an intermediate component that is in charge of coordinating the communication from applications to Rayo Nodes and from Rayo Nodes to applications. The Rayo Gateway has several responsabilities:
-
-          <ul>
-            <li><strong>Load Balancing outgoing calls.</strong> The Rayo Gateway is in charge of load balancing outgoing call requests from Rayo applications through the different Rayo Nodes.</li>
-            <li><strong>Load Balancing incoming calls.</strong> The Rayo Gateay load balances incoming calls across the different resources of the registered Rayo applications.</li>
-            <li><strong>Message routing.</strong> A Rayo Gateway has to route incoming Rayo commands to the appropriate nodes and incoming Rayo Node events to the appropriate client applications.</li>
-            <li><strong>Distributed database.</strong> A Rayo Gateway contains a distributed database that stores a complete snapshot of what is going on through the Rayo cluster. This database is used for message routing, monitoring, statistics or resource management.</li>
-            <li><strong>Scalability.</strong> At any time the Rayo Gateway can enroll more Rayo Nodes in the Rayo cluster providing a great degree of scalability.</li>
-            <li><strong>Failover.</strong> A Rayo Gateway deals also with is in charge of cluster failover management. The Rayo Gateway for example will transparently retry failed operations like dial requests or will automatically take out the Rayo Nodes that keep failing repeatedly from the cluster.</li>
-            <li><strong>Security management.</strong> The Rayo Gateway will validate permissions on incoming/outgoing calls as on all the different rayo commands and events for each Rayo application if necessary.</li>
-          </ul>
+          The Rayo Gateway is the main element that differentiates a Rayo Cluster from a stand-alone Rayo deployment. The Rayo Gateway is an intermediate component that is in charge of coordinating the communication from clients to Rayo Nodes and from Rayo Nodes to clients. When a cluster contains multiple gateways, the protocol for coordination of multiple gateways is considered implementation specific.
         </dd>
       </di>
       <di>
         <dt>Node</dt>
-        <dd></dd>
+        <dd>The Rayo Node is an individual instance of a Rayo server from XEP-0327, which presents call control capability via Rayo on top of a signaling protocol such as SIP or Jingle. It presents as a member of the cluster under the management of the Gateway(s).</dd>
+      </di>
+      <di>
+        <dt>Third-party XMPP server</dt>
+        <dd>An arbitrary third-party XMPP server used for registration of Rayo clients. MAY form part of the cluster.</dd>
       </di>
     </dl>
   </section2>
@@ -91,9 +92,9 @@
     </ul>
   </section2>
 </section1>
-<section1 topic='How it works' anchor='howitworks'>
-  <section2 topic='Message Routing' anchor='howitworks-message-routing'>
-    <p>The Rayo Gateway communicates both with Rayo Nodes and the XMPP Server through S2S XMPP connections. To differentiate from the messages that come from Rayo Nodes and from client applications, the Rayo Gateway needs to have associated two separate domain names. It is what in Rayo-terms we would call external and internal interfaces.</p>
+<section1 topic='Session Flow' anchor='session'>
+  <section2 topic='Message Routing' anchor='session-message-routing'>
+    <p>The Rayo Gateway communicates both with Rayo Nodes and third-party XMPP servers through S2S XMPP connections. To differentiate the messages that come from Rayo Nodes and from client applications, the Rayo Gateway MUST present two separate domains, an internal (for communication with cluster nodes) and an external (for communication with Rayo clients) interface.</p>
 
     <p>Inbound call workflow is the following:</p>
     <ol>
@@ -113,27 +114,17 @@
     </ol>
     <p>It will be obvious from the examples above that to get a Rayo cluster working properly it is vital to define correctly the external and internal interfaces. You will find in the section below how to configure your Rayo cluster.</p>
   </section2>
-</section1>
-<section1 topic='Concepts and Approach' anchor='concepts'>
-
-</section1>
-<section1 topic="Addressing Scheme" anchor='addressing'>
-
-</section1>
-<section1 topic='Session Flow' anchor='session'>
-
-</section1>
-<section1 topic='Formal Definition' anchor='def'>
-
-</section1>
-<section1 topic='Use Cases' anchor='usecases'>
-  <p>STRONGLY RECOMMENDED.</p>
+  <section2 topic='Load balancing' anchor='session-load-balancing'>
+  </section2>
+  <section2 topic='Failover' anchor='session-failover'>
+    <p>A Rayo Gateway MAY transparently retry failed operations like dial requests, or MAY automatically remove from rotation the Rayo Nodes that fail to satisfy such requests repeatedly.</p>
+  </section2>
+  <section2 topic='Security' anchor='session-security'>
+    <p>The Rayo Gateway will validate permissions on incoming/outgoing calls as on all the different rayo commands and events for each Rayo application if necessary.</p>
+  </section2>
 </section1>
 <section1 topic='Determining Support' anchor='support'>
-
-</section1>
-<section1 topic='Implementation Notes' anchor='impl'>
-
+  <p>Rayo gateways MUST advertise support for "urn:xmpp:rayo:1" on their external interface, and "urn:xmpp:rayo:gateway:1" on their internal interface. Rayo nodes MUST advertise support for "urn:xmpp:rayo:node:1", indicating that they may be used as part of a cluster, and additionally "urn:xmpp:rayo:1" if they may also be used separately from the cluster.</p>
 </section1>
 <section1 topic='Security Considerations' anchor='security'>
   <section2 topic='Denial of Service' anchor='security-dos'>
@@ -161,8 +152,6 @@
   <section2 topic='Namespace Versioning' anchor='registrar-versioning'>
     <p>If the protocol defined in this specification undergoes a major revision that is not fully backward-compatible with an older version, or that contains significant new features, the XMPP Registrar shall increment the protocol version number found at the end of the XML namespaces defined herein, as described in Section 4 of <cite>XEP-0053</cite>.</p>
   </section2>
-</section1>
-<section1 topic='History' anchor='history'>
 </section1>
 <section1 topic='Acknowledgements' anchor='acknowledgements'>
   <p>The authors would like to acknowledge the input of teams at Tropo, Mojo Lingo and Grasshopper in the development of the specification.</p>
