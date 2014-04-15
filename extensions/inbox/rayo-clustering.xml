@@ -96,23 +96,203 @@
   <section2 topic='Message Routing' anchor='session-message-routing'>
     <p>The Rayo Gateway communicates both with Rayo Nodes and third-party XMPP servers through S2S XMPP connections. To differentiate the messages that come from Rayo Nodes and from client applications, the Rayo Gateway MUST present two separate domains, an internal (for communication with cluster nodes) and an external (for communication with Rayo clients) interface.</p>
 
-    <p>Inbound call workflow is the following:</p>
+    <p>Inbound call flow is:</p>
     <ol>
-      <li>An event is generated in a Rayo Node. In this case an event.</li>
-      <li>The Rayo Node forwards the event to the Rayo Gateway using the internal interface.</li>
-      <li>The Rayo Gateway notices that a message comes to its internal interface and therefore it knows that it comes from a Rayo Node. It analyzes the nature of the message and finds that it is an offer.</li>
-      <li>The Rayo Gateway forwards the event to a Rayo application. To do that, first it needs to change the to and from fields from the original message. In this case the to field is the destination application's jid and the from field is the Rayo Gateway's external interface.</li>
-      <li>The application receives the event. The application will always interact with the Rayo Cluster using the external interface.</li>
+      <li>The Rayo Node generates events for the call as usual, beginning with an offer event.</li>
+      <li>The Rayo Node sends the event to the Rayo Gateway using the internal interface.</li>
+      <li>The Rayo Gateway receives events on its internal interface, decides on the correct client to route the event to (the calls DCP or its set of PCPs).</li>
+      <li>The Rayo Gateway forwards the event to relevant clients via the external interface, replacing the presence "to" and "from" attributes. The "to" attribute is the client's jid and the "from" is based on the Rayo Gateway's external interface.</li>
+      <li>The client(s) receive the event, responding to the Gateway. The Gateway correspondingly rewrites commands received from the client to the relevant Node for each call, and responses to those commands in reverse.</li>
     </ol>
 
-    <p>Outbound call workflow is the following:</p>
+    <example caption="Simple inbound call scenario"><![CDATA[
+<presence from='9f00061@node1.shakespeare.lit'
+          to='gateway1.shakespeare.lit'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:call:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
+  <offer xmlns='urn:xmpp:rayo:1'
+         to='tel:+18003211212'
+         from='tel:+13058881212'/>
+</presence>
+
+<presence from='9f00061@shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <c xmlns='http://jabber.org/protocol/caps'
+     hash='sha-1'
+     node='urn:xmpp:rayo:call:1'
+     ver='QgayPKawpkPSDYmwT/WM94uAlu0='/>
+  <offer xmlns='urn:xmpp:rayo:1'
+         to='tel:+18003211212'
+         from='tel:+13058881212'/>
+</presence>
+
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@shakespeare.lit'
+    type='set'
+    id='hd721'>
+  <accept xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='gateway1.shakespeare.lit'
+    to='9f00061@node1.shakespeare.lit'
+    type='set'
+    id='hd721'>
+  <accept xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='9f00061@node1.shakespeare.lit'
+    to='gateway1.shakespeare.lit'
+    type='result'
+    id='hd721'/>
+
+<iq from='9f00061@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='hd721'/>
+
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@shakespeare.lit'
+    type='set'
+    id='f3wh8'>
+  <hangup xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='gateway1.shakespeare.lit'
+    to='9f00061@node1.shakespeare.lit'
+    type='set'
+    id='f3wh8'>
+  <hangup xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='9f00061@node1.shakespeare.lit'
+    to='gateway1.shakespeare.lit'
+    type='result'
+    id='f3wh8'/>
+
+<iq from='9f00061@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='f3wh8'/>
+
+<presence from='9f00061@node1.shakespeare.lit'
+          to='gateway1.shakespeare.lit'
+          type='unavailable'>
+  <end xmlns='urn:xmpp:rayo:1'>
+    <hangup-command/>
+  </end>
+</presence>
+
+<presence from='9f00061@shakespeare.lit'
+          to='juliet@capulet.lit/balcony'
+          type='unavailable'>
+  <end xmlns='urn:xmpp:rayo:1'>
+    <hangup-command/>
+  </end>
+</presence>
+    ]]></example>
+
+    <p>Outbound call flow is:</p>
     <ol>
-      <li>An application sends a request to the Rayo Cluster. It will use the external interface.</li>
-      <li>The Rayo Gateway notices that the message comes to its external interface and therefore it knows that it comes from a client application. It analyzes the nature of the message and finds that is a dial request.</li>
-      <li>The Rayo Gateway finds an available Rayo Node and forwards the message to it. But before forwarding, it changes the from field to its own internal interface and the to field to the match the Rayo Node's domain name.</li>
-      <li>The Rayo Node receives the message and starts the outbound call.</li>
+      <li>A client sends a dial command to the Rayo Cluster, arriving on the external interface of a Gateway.</li>
+      <li>The Rayo Gateway finds an available Rayo Node and forwards the command to it, replacing the "from" attribute with its own internal interface and the "to" attribute based on the Node's domain.</li>
+      <li>The Rayo Node receives the dial command, processes the outbound call and returns responses/events to the Gateway for rewriting to the client.</li>
     </ol>
-    <p>It will be obvious from the examples above that to get a Rayo cluster working properly it is vital to define correctly the external and internal interfaces. You will find in the section below how to configure your Rayo cluster.</p>
+
+    <example caption="Simple outbound call scenario"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'/>
+</iq>
+
+<iq from='gateway1.shakespeare.lit'
+    to='node1.shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'/>
+</iq>
+
+<iq from='node1.shakespeare.lit'
+    to='gateway1.shakespeare.lit'
+    type='result'
+    id='h7ed2'>
+  <ref xmlns='urn:xmpp:rayo:1' uri='xmpp:9f00061@shakespeare.lit'/>
+</iq>
+
+<iq from='shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='h7ed2'>
+  <ref xmlns='urn:xmpp:rayo:1' uri='xmpp:9f00061@shakespeare.lit'/>
+</iq>
+
+<presence from='9f00061@node1.shakespeare.lit'
+          to='gateway1.shakespeare.lit'>
+  <ringing xmlns='urn:xmpp:rayo:1'/>
+</presence>
+
+<presence from='9f00061@shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <ringing xmlns='urn:xmpp:rayo:1'/>
+</presence>
+
+<presence from='9f00061@node1.shakespeare.lit'
+          to='gateway1.shakespeare.lit'>
+  <answered xmlns='urn:xmpp:rayo:1'/>
+</presence>
+
+<presence from='9f00061@shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <answered xmlns='urn:xmpp:rayo:1'/>
+</presence>
+
+<iq from='juliet@capulet.lit/balcony'
+    to='9f00061@shakespeare.lit'
+    type='set'
+    id='f3wh8'>
+  <hangup xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='gateway1.shakespeare.lit'
+    to='9f00061@node1.shakespeare.lit'
+    type='set'
+    id='f3wh8'>
+  <hangup xmlns='urn:xmpp:rayo:1'/>
+</iq>
+
+<iq from='9f00061@node1.shakespeare.lit'
+    to='gateway1.shakespeare.lit'
+    type='result'
+    id='f3wh8'/>
+
+<iq from='9f00061@shakespeare.lit'
+    to='juliet@capulet.lit/balcony'
+    type='result'
+    id='f3wh8'/>
+
+<presence from='9f00061@node1.shakespeare.lit'
+          to='gateway1.shakespeare.lit'
+          type='unavailable'>
+  <end xmlns='urn:xmpp:rayo:1'>
+    <hangup-command/>
+  </end>
+</presence>
+
+<presence from='9f00061@shakespeare.lit'
+          to='juliet@capulet.lit/balcony'
+          type='unavailable'>
+  <end xmlns='urn:xmpp:rayo:1'>
+    <hangup-command/>
+  </end>
+</presence>
+    ]]></example>
   </section2>
   <section2 topic='Load balancing' anchor='session-load-balancing'>
   </section2>
