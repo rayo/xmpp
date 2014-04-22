@@ -297,6 +297,8 @@
   </end>
 </presence>
     ]]></example>
+
+    <p>In addition to re-writing the to/from attributes of top-level XMPP stanzas, a Rayo Gateway MUST rewrite the 'uri' attributes of &lt;dial&gt; and &lt;ref&gt; elements, as well as the 'call-uri' attributes of &lt;join&gt;, &lt;unjoin&gt;, &lt;joined&gt;, &lt;unjoined&gt; elements.</p>
   </section2>
   <section2 topic='Load balancing' anchor='session-load-balancing'>
     <p>The Gateway(s) in a Cluster are responsible for managing the routing of calls between relevant nodes and clients, and SHOULD retain knowledge of the presence of each for this purpose. Nodes and Clients SHOULD NOT be aware of each others identity of presence, and SHOULD only communicate with the Gateway(s).</p>
@@ -334,6 +336,11 @@
   </section2>
   <section2 topic='Security' anchor='session-security'>
     <p>The Rayo Gateway MUST validate permissions on incoming Rayo commands from Clients (check that they are one of the call's DCP/PCP as appropriate to the rules defined in &xep0327;). The Rayo Gateway MUST enforce its own rules on Node membership of the Cluster, ensuring communication via its internal interface with only trusted Nodes. The rules by which inbound calls are permitted are implementation specific. When configured as members of a cluster, Rayo Nodes SHOULD accept communication *only* with the gateway.</p>
+  </section2>
+  <section2 topic='Joining Calls' anchor='session-joining-calls'>
+    <p>In cases where calls must be joined together, they SHOULD be joined in the normal way specified by &xep0327; if both calls are present on the same node. A Rayo Gateway MAY use a nested join as a hint to arrange calls such that they are present on the same node in order to utilise a local join.</p>
+
+    <p>In all other cases where calls must be joined across nodes, the nodes SHOULD negotiate a channel between them to act as a local proxy on each node for the call on the opposing node. The originating node SHOULD immediately join the media of this new channel to its local call using the parameters specified on the join command. Upon receiving a call of this type from another node (signaled using the 'X-Rayo-Join-Local' header with a value matching the Rayo JID of the target call on the remote node, while 'X-Rayo-Join-Remote' is the Rayo JID of the originating call), the receiving node SHOULD join its media to the local join target and emit a Rayo joined event prior to signaling that the call was answered. Upon receiving notification that the remote end of the join was successful (the channel becomes answered), the originating node SHOULD respond to the join command and send a joined event. This channel MUST be nogotiated securely, ensuring that an incoming call of this type may only be received from another trusted node.</p>
   </section2>
 </section1>
 <section1 topic='Determining Support' anchor='support'>
