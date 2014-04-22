@@ -338,9 +338,76 @@
     <p>The Rayo Gateway MUST validate permissions on incoming Rayo commands from Clients (check that they are one of the call's DCP/PCP as appropriate to the rules defined in &xep0327;). The Rayo Gateway MUST enforce its own rules on Node membership of the Cluster, ensuring communication via its internal interface with only trusted Nodes. The rules by which inbound calls are permitted are implementation specific. When configured as members of a cluster, Rayo Nodes SHOULD accept communication *only* with the gateway.</p>
   </section2>
   <section2 topic='Joining Calls' anchor='session-joining-calls'>
-    <p>In cases where calls must be joined together, they SHOULD be joined in the normal way specified by &xep0327; if both calls are present on the same node. A Rayo Gateway MAY use a nested join as a hint to arrange calls such that they are present on the same node in order to utilise a local join.</p>
+    <p>In cases where calls must be joined together, they SHOULD be joined in the normal way specified by &xep0327; if both calls are present on the same node. A Rayo Gateway MAY use a nested join as a hint to arrange calls such that they are present on the same node in order to utilise a local join. Similarly, a Client MAY include a hint to co-locate calls on a particular node if it expects that they may be joined in the future, and a Gateway MAY use this to optimise call distribution across the cluster. Such a hint can be provided by nesting a &lt;colocate&gt; element within the dial command in place of a nested join.</p>
+
+    <example caption="Client hints that a call should be co-located with an existing Rayo call"><![CDATA[
+<iq from='juliet@capulet.lit/balcony'
+    to='shakespeare.lit'
+    type='set'
+    id='h7ed2'>
+  <dial xmlns='urn:xmpp:rayo:1'
+        to='tel:+13055195825'
+        from='tel:+14152226789'>
+    <colocate xmlns='urn:xmpp:rayo:clustering:1' with='xmpp:other@shakespeare.lit'/>
+  </dial>
+</iq>
+]]></example>
 
     <p>In all other cases where calls must be joined across nodes, the nodes SHOULD negotiate a channel between them to act as a local proxy on each node for the call on the opposing node. The originating node SHOULD immediately join the media of this new channel to its local call using the parameters specified on the join command. Upon receiving a call of this type from another node (signaled using the 'X-Rayo-Join-Local' header with a value matching the Rayo JID of the target call on the remote node, while 'X-Rayo-Join-Remote' is the Rayo JID of the originating call), the receiving node SHOULD join its media to the local join target and emit a Rayo joined event prior to signaling that the call was answered. Upon receiving notification that the remote end of the join was successful (the channel becomes answered), the originating node SHOULD respond to the join command and send a joined event. This channel MUST be authenticated appropriately to ensure that an incoming call of this type may only be received from another trusted node; deployments are free to choose simple firewall techniques, ACLs, SIP Digest auth or any other appropriate mechanism.</p>
+  </section2>
+</section1>
+<section1 topic='Formal Definition' anchor='def'>
+  <section2 topic='Colocate Element' anchor='def-header'>
+    <p>The &lt;colocate/&gt; element MUST be empty.</p>
+    <p>The attributes of the &lt;colocate/&gt; element are as follows.</p>
+    <table caption='Attributes of Header Element'>
+      <tr>
+        <th>Attribute</th>
+        <th>Definition</th>
+        <th>Inclusion</th>
+      </tr>
+      <tr>
+        <td>with</td>
+        <td>The Rayo URI of the call with which to colocate.</td>
+        <td>REQUIRED</td>
+      </tr>
+    </table>
+  </section2>
+</section1>
+<section1 topic='XML Schema' anchor='schema'>
+  <section2 topic='Rayo Clustering' anchor='schema-rayo-clustering'>
+  <code><![CDATA[
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema"
+  targetNamespace="urn:xmpp:rayo:clustering:1"
+  xmlns:tns="urn:xmpp:rayo:clustering:1"
+  elementFormDefault="qualified">
+
+  <annotation>
+    <documentation>
+      The protocol documented by this schema is defined at http://xmpp.org/extensions/xep-XXXX.html
+    </documentation>
+  </annotation>
+
+  <!-- Colocation Hint -->
+  <element name="colocate">
+    <annotation>
+      <documentation>
+        Hints that an outbound call should be colocated on the same node as an existing call.
+      </documentation>
+    </annotation>
+    <complexType>
+      <attribute name="with" type="anyURI" use="required">
+        <annotation>
+          <documentation>
+            The Rayo URI of the call with which to colocate.
+          </documentation>
+        </annotation>
+      </attribute>
+    </complexType>
+  </element>
+</schema>
+    ]]></code>
   </section2>
 </section1>
 <section1 topic='Determining Support' anchor='support'>
@@ -364,6 +431,7 @@
     <section2 topic='Protocol Namespaces' anchor='registrar-ns'>
     <p>This specification defines the following XML namespaces:</p>
     <ul>
+      <li>urn:xmpp:rayo:clustering:1</li>
       <li>urn:xmpp:rayo:gateway:1</li>
       <li>urn:xmpp:rayo:node:1</li>
     </ul>
