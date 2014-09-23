@@ -42,7 +42,8 @@ import traceback
 
 from xml.dom.minidom import parse,parseString,Document,getDOMImplementation
 from datetime import datetime, timedelta
-from icalendar import Calendar, Event, Alarm, UTC, vText
+from icalendar import Calendar, Event, Alarm, vText
+from pytz import UTC
 
 CALPATH = "/var/www/vhosts/xmpp.org/calendar"
 
@@ -166,7 +167,7 @@ def genExtensionsCalendar( cal_file ):
 		parseXEP( cal, file)
 	
 	f = open( cal_file , 'wb')
-	f.write(cal.as_string())
+	f.write(cal.to_ical())
 	f.close()
 
 def genCalendarFromEventsFile( events_file, cal_file ):
@@ -213,7 +214,7 @@ def genCalendarFromEventsFile( events_file, cal_file ):
 			allevents.append(event)
 	
 		f = open( cal_file , 'wb')
-		f.write(cal.as_string())
+		f.write(cal.to_ical())
 		f.close()
 	except:
 		print "File not found! - " + events_file
@@ -231,7 +232,7 @@ def genAllEventsCalendar( cal_file ):
 		cal.add_component(event)
 	
 	f = open( cal_file , 'wb')
-	f.write(cal.as_string())
+	f.write(cal.to_ical())
 	f.close()
 
 def main(argv):
@@ -245,6 +246,7 @@ def main(argv):
 	
 	# XSF Teams
 	genCalendarForTeam("communication")
+	genCalendarForTeam("editor")
 	genCalendarForTeam("infrastructure")
 	genCalendarForTeam("techreview")
 	

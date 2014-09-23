@@ -91,6 +91,8 @@
 \usepackage{varwidth}
 \usepackage{titling}
 \usepackage{titletoc}
+\usepackage{float}
+\usepackage{adjustbox}
 
 \usepackage{hyphenat}
 
@@ -401,6 +403,14 @@
     </TeXML>
     </env>                          
   </xsl:if>
+</xsl:template>
+
+<!-- img -->
+<xsl:template match="img">
+  <env name="figure"><opt>H</opt>
+    <cmd name="centering" />
+    <cmd name="adjustimage"><parm><TeXML escape="0">max size={.9\textwidth}{.9\textheight}</TeXML></parm><parm>inlineimage-<xsl:value-of select="/xep/header/number" />-<xsl:value-of select="count(preceding::img)" /></parm></cmd>
+  </env>
 </xsl:template>
 
 <!-- section3 -->
