@@ -635,6 +635,21 @@
     </section3>
   </section2>
 
+  <section2 topic="Session progress" anchor="session-progress">
+    <p>An active call, whether inbound or outbound, may undergo transitions in signaling throught its duration.</p>
+
+    <section3 topic="Remote redirect" anchor="session-progress-remote-redirect"/>
+      <p>The remote party to a call may indicate to the Rayo server that the call should be redirected. The mechanics of the signalling between the endpoint and the Rayo server are unspecified here, but SHOULD result in a redirected event being issued to the DCP.</p>
+
+      <example caption="Call announces that it wishes to be redirected"><![CDATA[
+<presence from='9f00061@call.shakespeare.lit'
+          to='juliet@capulet.lit/balcony'>
+  <redirected xmlns='urn:xmpp:rayo:1' to='sip:other@there.com' />
+</presence>
+      ]]></example>
+    </section3>
+  </section2>
+
   <section2 topic='Joining Calls' anchor='session-joining'>
     <p>Calls in a Rayo system are capable of having their media streams moved/manipulated. Once such manipulation is to join the media streams of two calls. In a scenario where callA and callB should be joined, the client MUST send a join command to either call (not both) specifying the call ID of the other call, like so:</p>
     <example caption="Client instructs callA to join to callB and the server acknowledges the join was completed"><![CDATA[
@@ -2014,6 +2029,24 @@ Art thou not Romeo, and a Montague?
     <p>The &lt;answered/&gt; element has no attributes.</p>
   </section2>
 
+  <section2 topic='Redirected Element' anchor='def-redirected'>
+    <p>Indication that the call has received a request to redirect to some remote location indicated by the URI in the event.</p>
+    <p>The &lt;redirected/&gt; element MAY contain one or more <link url='#def-header'>&lt;header/&gt; elements</link>.</p>
+    <p>The attributes of the &lt;redirected/&gt; element are as follows.</p>
+    <table caption='Attributes of Redirected Element'>
+      <tr>
+        <th>Attribute</th>
+        <th>Definition</th>
+        <th>Inclusion</th>
+      </tr>
+      <tr>
+        <td>to</td>
+        <td>The new target URI for the call to be redirected to.</td>
+        <td>REQUIRED</td>
+      </tr>
+    </table>
+  </section2>
+
   <section2 topic='End Element' anchor='def-end'>
     <p>Indication that the call has come to an end, giving the reason.</p>
     <p>The &lt;end/&gt; element MUST contain a single <link url='#def-end-reason'>end reason element</link>. It MAY also contain one or more <link url='#def-header'>&lt;header/&gt; elements</link>.</p>
@@ -2081,7 +2114,7 @@ Art thou not Romeo, and a Montague?
     <p>Instructs the calling party that the call will not be accepted and that instead it should try to call the URI indicated in the command.</p>
     <p>The &lt;redirect/&gt; element MAY contain one or more <link url='#def-header'>&lt;header/&gt; elements</link>.</p>
     <p>The attributes of the &lt;redirect/&gt; element are as follows.</p>
-    <table caption='Attributes of Offer Element'>
+    <table caption='Attributes of Redirect Element'>
       <tr>
         <th>Attribute</th>
         <th>Definition</th>
@@ -3098,6 +3131,27 @@ Art thou not Romeo, and a Montague?
         Indication that an outbound call has been answered and that the 3rd party negotiation has completed. At this point, the media stream should be open.
       </documentation>
     </annotation>
+  </element>
+
+  <!-- Redirected Event -->
+  <element name="redirected">
+    <annotation>
+      <documentation>
+        Indication that the call has received a request to redirect to some remote location indicated by the URI in the event.
+      </documentation>
+    </annotation>
+    <complexType>
+      <attribute name="to" type="anyURI" use="required">
+        <annotation>
+          <documentation>
+            The new target URI for the call to be redirected to.
+          </documentation>
+        </annotation>
+      </attribute>
+      <sequence>
+        <element name="header" type="tns:headerType" minOccurs="0" maxOccurs="unbounded" />
+      </sequence>
+    </complexType>
   </element>
 
   <complexType name="endReasonType">
